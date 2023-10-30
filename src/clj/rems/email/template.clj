@@ -1,7 +1,7 @@
 (ns rems.email.template
   (:require [clojure.string :as str]
-            [rems.common.application-util :as application-util]
             [rems.application.model :as model]
+            [rems.common.application-util :as application-util]
             [rems.config :refer [env]]
             [rems.context :as context]
             [rems.db.user-settings :as user-settings]
@@ -263,24 +263,25 @@
 
 (defmethod event-to-emails :application.event/expiration-notifications-sent [event application]
   (vec
-   (for [recipient (application-util/applicant-and-members application)]
-     (with-language (:language (user-settings/get-user-settings (:userid recipient)))
-       {:to-user (:userid recipient)
-        :subject (text-format :t.email.application-expiration-notification/subject-to-member
+   (let [last-activity (:event/time (application-util/get-last-applying-user-event application))]
+     (for [recipient (application-util/applicant-and-members application)]
+       (with-language (:language (user-settings/get-user-settings (:userid recipient)))
+         {:to-user (:userid recipient)
+          :subject (text-format :t.email.application-expiration-notification/subject-to-member
+                                (application-util/get-member-name recipient)
+                                (format-application-for-email application)
+                                (localize-utc-date last-activity)
+                                (localize-utc-date (:application/expires-on event))
+                                (link-to-application (:application/id application)))
+          :body (str
+                 (text-format :t.email.application-expiration-notification/message-to-member
                               (application-util/get-member-name recipient)
                               (format-application-for-email application)
-                              (localize-utc-date (:last-activity event))
-                              (localize-utc-date (:expires-on event))
+                              (localize-utc-date last-activity)
+                              (localize-utc-date (:application/expires-on event))
                               (link-to-application (:application/id application)))
-        :body (str
-               (text-format :t.email.application-expiration-notification/message-to-member
-                            (application-util/get-member-name recipient)
-                            (format-application-for-email application)
-                            (localize-utc-date (:last-activity event))
-                            (localize-utc-date (:expires-on event))
-                            (link-to-application (:application/id application)))
-               (text :t.email/regards)
-               (text :t.email/footer))}))))
+                 (text :t.email/regards)
+                 (text :t.email/footer))})))))
 
 ;; TODO member-joined?
 

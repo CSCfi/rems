@@ -110,7 +110,6 @@
          (s/optional-key :duo-codes) [schema-base/DuoCode]))
 (s/defschema SendExpirationNotificationsCommand
   (assoc CommandBase
-         :last-activity DateTime
          :expires-on DateTime))
 (s/defschema SubmitCommand
   CommandBase)
@@ -721,8 +720,7 @@
   [cmd _application _injections]
   (or (invalid-expiration-error cmd)
       (ok {:event/type :application.event/expiration-notifications-sent
-           :last-activity (:last-activity cmd)
-           :expires-on (:expires-on cmd)})))
+           :application/expires-on (:expires-on cmd)})))
 
 (defn- add-common-event-fields-from-command [event cmd]
   (-> event

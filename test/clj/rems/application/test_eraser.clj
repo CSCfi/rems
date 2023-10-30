@@ -185,8 +185,8 @@
               (testing "expiration notifications sent event was created for draft expiring in 6 days"
                 (let [events (expiration-notification-events draft-expires-in-6d)]
                   (is (= 1 (count events)))
-                  (is (time/equal? (time/plus now (time/days 6)) (:expires-on (first events))))
-                  (is (time/equal? (time/minus now (time/days 84)) (:last-activity (first events))))
+                  (is (time/equal? (time/plus now (time/days 6)) (:application/expires-on (first events))))
+
                   (is (time/equal? now (:event-time (first events))))))
               (is (= [{:outbox/deadline (time/date-time 2022)
                        :outbox/email {:subject (str "Your unsubmitted application " draft-expires-in-6d " will be deleted soon")
@@ -217,7 +217,5 @@
                 (testing "expiration notifications events have not changed for draft expiring in 6 days"
                   (let [events (expiration-notification-events draft-expires-in-6d)]
                     (is (= 1 (count events)))
-                    (is (time/equal? (time/plus now (time/days 6)) (:expires-on (first events))))
-                    (is (time/equal? (time/minus now (time/days 84)) (:last-activity (first events))))
+                    (is (time/equal? (time/plus now (time/days 6)) (:application/expires-on (first events))))
                     (is (time/equal? now (:event-time (first events))))))))))))))
-

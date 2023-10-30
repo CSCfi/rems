@@ -1,6 +1,7 @@
 (ns rems.common.application-util
   (:require [clojure.set]
             [clojure.test :refer [deftest is testing]]
+            [medley.core :refer [find-first]]
             [rems.common.util :as util]))
 
 (def states
@@ -45,6 +46,11 @@
 
 (def +applying-user-roles+ #{:applicant :member})
 (def +handling-user-roles+ #{:handler :reviewer :decider :past-reviewer :past-decider})
+
+;; TODO combine these functions
+(defn is-applying-userid? [application userid]
+  (contains? (set (map :userid (applicant-and-members application)))
+             userid))
 
 (defn is-applying-user?
   "Returns true if current user is applying for `application`.
@@ -138,3 +144,9 @@
     (let [applicant-attachment {:attachment/user {:userid "alice"}}]
       (is (not (can-redact-attachment? applicant-attachment #{} "alice")))
       (is (not (can-redact-attachment? applicant-attachment #{:handler} "handler"))))))
+
+(defn get-last-applying-user-event [application]
+  (->> application
+       :application/events
+       reverse
+       (find-first #(is-applying-userid? application (:event/actor %)))))
