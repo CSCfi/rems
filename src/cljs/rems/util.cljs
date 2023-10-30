@@ -71,7 +71,8 @@
 
 (defn- wrap-default-finally-handler [handler {:keys [request-id]}]
   (fn []
-    (rf/dispatch [:rems.spa/on-request-finished request-id])
+    (when request-id
+      (rf/dispatch [:rems.spa/on-request-finished request-id]))
     (when handler
       (handler))))
 
@@ -92,10 +93,8 @@
   Additionally calls event hooks."
   [url opts]
   (let [fetch-defaults {:response-format :transit
-                        :handler (constantly nil)}
-        opts (update opts :request-id (fnil identity url))]
+                        :handler (constantly nil)}]
     (js/window.rems.hooks.get url (clj->js opts))
-    (rf/dispatch [:rems.spa/on-request (:request-id opts)])
     (GET url (merge fetch-defaults
                     (wrap-default-handlers opts)))))
 
