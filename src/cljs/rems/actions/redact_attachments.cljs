@@ -1,7 +1,6 @@
 (ns rems.actions.redact-attachments
   (:require [re-frame.core :as rf]
-            [rems.actions.components :refer [action-attachment action-button action-form-view command! select-attachments-field comment-field comment-public-field]]
-            [rems.atoms :as atoms]
+            [rems.actions.components :refer [action-attachment action-button action-form-view command! select-attachments-field comment-field comment-public-field perform-action-button]]
             [rems.text :refer [text]]))
 
 (def ^:private action-form-id "redact-attachments")
@@ -49,14 +48,13 @@
 (defn redact-attachments-view [{:keys [application-id user redactable-attachments new-attachments on-submit]}]
   [action-form-view action-form-id
    (text :t.actions/redact-attachments)
-   [[atoms/rate-limited-button {:id action-form-id
-                                :text (if (seq new-attachments)
-                                        (text :t.actions/replace-attachments)
-                                        (text :t.actions/remove-attachments))
-                                :class :btn-danger
-                                :disabled (or (nil? on-submit)
-                                              @(rf/subscribe [:rems.spa/pending-request :application.command/redact-attachments]))
-                                :on-click on-submit}]]
+   [[perform-action-button {:id action-form-id
+                            :text (if (seq new-attachments)
+                                    (text :t.actions/replace-attachments)
+                                    (text :t.actions/remove-attachments))
+                            :class :btn-danger
+                            :disabled (nil? on-submit)
+                            :on-click on-submit}]]
    [:<>
     [select-attachments-field {:field-key action-form-id
                                :attachments redactable-attachments

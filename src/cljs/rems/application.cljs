@@ -14,6 +14,7 @@
             [rems.actions.change-applicant :refer [change-applicant-action-button change-applicant-form]]
             [rems.actions.change-resources :refer [change-resources-action-button change-resources-form]]
             [rems.actions.close :refer [close-action-button close-form]]
+            [rems.actions.components :refer [perform-action-button]]
             [rems.actions.decide :refer [decide-action-button decide-form]]
             [rems.actions.delete :refer [delete-action-button delete-form]]
             [rems.actions.invite-decider-reviewer :refer [invite-decider-action-link invite-reviewer-action-link invite-decider-form invite-reviewer-form]]
@@ -231,8 +232,7 @@
          description [text :t.applications/continue-existing-application]]
      (flash-message/clear-message! :actions)
      (post! "/api/applications/validate"
-            {:request-id :application-request-id
-             :params {:application-id (:application/id application)
+            {:params {:application-id (:application/id application)
                       :field-values (field-values-to-api application (:field-values edit-application))
                       :duo-codes (duo-codes-to-api (vals (:duo-codes edit-application)))}
              :handler (fn [response]
@@ -245,8 +245,7 @@
 (defn- save-draft! [description application edit-application handler & [{:keys [error-handler]}]]
   (flash-message/clear-message! :actions)
   (post! "/api/applications/save-draft"
-         {:request-id :application-request-id
-          :params {:application-id (:application/id application)
+         {:params {:application-id (:application/id application)
                    :field-values (field-values-to-api application (:field-values edit-application))
                    :duo-codes (duo-codes-to-api (vals (:duo-codes edit-application)))}
           :handler handler
@@ -308,8 +307,7 @@
                     (if-not (:success response)
                       (handle-validations! response description application)
                       (post! "/api/applications/submit"
-                             {:request-id :application-request-id
-                              :params {:application-id (:application/id application)}
+                             {:params {:application-id (:application/id application)}
                               :handler (fn [response]
                                          (handle-validations!
                                           response
@@ -327,8 +325,7 @@
    (let [application-id (get-in db [::application :data :application/id])
          description [text :t.form/copy-as-new]]
      (post! "/api/applications/copy-as-new"
-            {:request-id :application-request-id
-             :params {:application-id application-id}
+            {:params {:application-id application-id}
              :handler (flash-message/default-success-handler
                        :top ; the message will be shown on the new application's page
                        description
@@ -507,32 +504,24 @@
      :attachment [attachment-license application license]
      [fields/unsupported-field license])])
 
-(rf/reg-sub
- ::pending-application-request
- :<- [:rems.spa/pending-request :application-request-id]
- :<- [::autosaving]
- (fn [[pending-request autosaving] _]
-   (when-not autosaving
-     pending-request)))
-
 (defn- save-button []
-  [atoms/rate-limited-button {:id "save"
-                              :text (text :t.form/save)
-                              :disabled @(rf/subscribe [::pending-application-request])
-                              :on-click #(rf/dispatch [::save-application [text :t.form/save]])}])
+  [perform-action-button {:id "save"
+                          :text (text :t.form/save)
+                          :loading? @(rf/subscribe [::autosaving])
+                          :on-click #(rf/dispatch [::save-application [text :t.form/save]])}])
 
 (defn- submit-button []
-  [atoms/rate-limited-button {:id "submit"
-                              :text (text :t.form/submit)
-                              :class :btn-primary
-                              :disabled @(rf/subscribe [::pending-application-request])
-                              :on-click #(rf/dispatch [::submit-application [text :t.form/submit]])}])
+  [perform-action-button {:id "submit"
+                          :text (text :t.form/submit)
+                          :class :btn-primary
+                          :loading? @(rf/subscribe [::autosaving])
+                          :on-click #(rf/dispatch [::submit-application [text :t.form/submit]])}])
 
 (defn- copy-as-new-button []
-  [atoms/rate-limited-button {:id "copy-as-new"
-                              :text (text :t.form/copy-as-new)
-                              :disabled @(rf/subscribe [::pending-application-request])
-                              :on-click #(rf/dispatch [::copy-as-new-application])}])
+  [perform-action-button {:id "copy-as-new"
+                          :text (text :t.form/copy-as-new)
+                          :loading? @(rf/subscribe [::autosaving])
+                          :on-click #(rf/dispatch [::copy-as-new-application])}])
 
 (rf/reg-sub
  ::get-field-value

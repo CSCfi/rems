@@ -3,8 +3,8 @@
             [cljs-time.core :as time]
             [cljs-time.format :as time-format]
             [re-frame.core :as rf]
-            [rems.actions.components :refer [action-attachment action-button comment-field action-form-view command!]]
-            [rems.atoms :as atoms :refer [close-symbol]]
+            [rems.actions.components :refer [action-attachment action-button comment-field action-form-view command! perform-action-button]]
+            [rems.atoms :as atoms]
             [rems.text :refer [text localize-utc-date]]))
 
 (def ^:private action-form-id "approve-reject")
@@ -64,18 +64,14 @@
   [{:keys [application-id end on-set-entitlement-end on-approve on-reject]}]
   [action-form-view action-form-id
    (text :t.actions/approve-reject)
-   [[atoms/rate-limited-button {:id "reject"
-                                :text (text :t.actions/reject)
-                                :class "btn-danger"
-                                :disabled @(rf/subscribe [:rems.spa/any-pending-request #{:application.command/approve
-                                                                                          :application.command/reject}])
-                                :on-click on-reject}]
-    [atoms/rate-limited-button {:id "approve"
-                                :text (text :t.actions/approve)
-                                :class "btn-success"
-                                :disabled @(rf/subscribe [:rems.spa/any-pending-request #{:application.command/approve
-                                                                                          :application.command/reject}])
-                                :on-click on-approve}]]
+   [[perform-action-button {:id "reject"
+                            :text (text :t.actions/reject)
+                            :class "btn-danger"
+                            :on-click on-reject}]
+    [perform-action-button {:id "approve"
+                            :text (text :t.actions/approve)
+                            :class "btn-success"
+                            :on-click on-approve}]]
    [:<>
     [comment-field {:field-key action-form-id
                     :label (text :t.form/add-comments-shown-to-applicant)}]
@@ -98,7 +94,7 @@
          [:button.btn.btn-outline-secondary
           {:on-click #(on-set-entitlement-end nil)
            :aria-label (text :t.actions/clear)}
-          [close-symbol]]])]]]])
+          [atoms/close-symbol]]])]]]])
 
 (defn approve-reject-form [application-id on-finished]
   (let [comment @(rf/subscribe [:rems.actions.components/comment action-form-id])

@@ -1,7 +1,6 @@
 (ns rems.actions.decide
   (:require [re-frame.core :as rf]
-            [rems.actions.components :refer [action-attachment action-button comment-field action-form-view command!]]
-            [rems.atoms :as atoms]
+            [rems.actions.components :refer [action-attachment action-button comment-field action-form-view command! perform-action-button]]
             [rems.text :refer [text]]))
 
 (def ^:private action-form-id "decide")
@@ -35,16 +34,14 @@
   [{:keys [application-id on-send]}]
   [action-form-view action-form-id
    (text :t.actions/decide)
-   [[atoms/rate-limited-button {:id "decide-reject"
-                                :text (text :t.actions/reject)
-                                :class "btn-danger"
-                                :disabled @(rf/subscribe [:rems.spa/pending-request :application.command/decide])
-                                :on-click #(on-send :rejected)}]
-    [atoms/rate-limited-button {:id "decide-approve"
-                                :text (text :t.actions/approve)
-                                :class "btn-success"
-                                :disabled @(rf/subscribe [:rems.spa/pending-request :application.command/decide])
-                                :on-click #(on-send :approved)}]]
+   [[perform-action-button {:id "decide-reject"
+                            :text (text :t.actions/reject)
+                            :class "btn-danger"
+                            :on-click #(on-send :rejected)}]
+    [perform-action-button {:id "decide-approve"
+                            :text (text :t.actions/approve)
+                            :class "btn-success"
+                            :on-click #(on-send :approved)}]]
    [:<>
     [comment-field {:field-key action-form-id
                     :label (text :t.form/add-comments-not-shown-to-applicant)}]

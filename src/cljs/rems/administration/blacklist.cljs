@@ -2,6 +2,7 @@
   "Implements both a blacklist component and the blacklist-page"
   (:require [re-frame.core :as rf]
             [rems.administration.administration :as administration]
+            [rems.administration.components :refer [perform-action-button]]
             [rems.common.application-util]
             [rems.atoms :as atoms]
             [rems.dropdown :as dropdown]
@@ -175,22 +176,18 @@
      [:div.form-group.row
       [:div.col-sm-1]
       [:div.col-sm-6
-       [atoms/rate-limited-button
+       [perform-action-button
         {:id :blacklist-add
          :class "btn-primary"
          :type :submit
-         :disabled @(rf/subscribe [:rems.spa/any-pending-request #{"/api/blacklist/add"
-                                                                   "/api/blacklist/remove"}])
          :text (text :t.administration/add)}]]]]))
 
 (defn add-user-form [resource]
   [roles/show-when +blacklist-add-roles+ [add-user-form-impl resource]])
 
 (defn- remove-button [resource user]
-  [atoms/rate-limited-button
+  [perform-action-button
    {:class "btn-secondary button-min-width"
-    :disabled @(rf/subscribe [:rems.spa/any-pending-request #{"/api/blacklist/add"
-                                                              "/api/blacklist/remove"}])
     :on-click (fn [_event]
                 ;; TODO add form & field for comment
                 (rf/dispatch [::remove-from-blacklist resource user ""]))

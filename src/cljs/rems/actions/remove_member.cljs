@@ -1,7 +1,6 @@
 (ns rems.actions.remove-member
   (:require [re-frame.core :as rf]
-            [rems.actions.components :refer [action-button action-form-view comment-field collapse-action-form]]
-            [rems.atoms :as atoms]
+            [rems.actions.components :refer [action-button action-form-view comment-field collapse-action-form perform-action-button]]
             [rems.flash-message :as flash-message]
             [rems.text :refer [text]]
             [rems.util :refer [post!]]))
@@ -48,12 +47,10 @@
   (let [element-id (qualify-parent-id parent-id)]
     [action-form-view element-id
      (text :t.actions/remove-member)
-     [[atoms/rate-limited-button {:id (str element-id "-submit")
-                                  :text (text :t.actions/remove-member)
-                                  :class "btn-primary"
-                                  :disabled @(rf/subscribe [:rems.spa/any-pending-request #{"/api/applications/remove-member"
-                                                                                            "/api/applications/uninvite-member"}])
-                                  :on-click on-send}]]
+     [[perform-action-button {:id (str element-id "-submit")
+                              :text (text :t.actions/remove-member)
+                              :class "btn-primary"
+                              :on-click on-send}]]
      [comment-field {:field-key (str element-id "-comment")
                      :label (text :t.form/add-comments-shown-to-applicant)}]
      {:collapse-id parent-id}]))

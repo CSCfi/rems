@@ -1,7 +1,6 @@
 (ns rems.actions.review
   (:require [re-frame.core :as rf]
-            [rems.actions.components :refer [action-attachment action-button comment-field action-form-view command!]]
-            [rems.atoms :as atoms]
+            [rems.actions.components :refer [action-attachment action-button comment-field action-form-view command! perform-action-button]]
             [rems.text :refer [text]]))
 
 (def ^:private action-form-id "review")
@@ -33,12 +32,11 @@
   [{:keys [application-id disabled on-send]}]
   [action-form-view action-form-id
    (text :t.actions/review)
-   [[atoms/rate-limited-button {:id "review-button"
-                                :text (text :t.actions/review)
-                                :class "btn-primary"
-                                :disabled (or disabled
-                                              @(rf/subscribe [:rems.spa/pending-request :application.command/review]))
-                                :on-click on-send}]]
+   [[perform-action-button {:id "review-button"
+                            :text (text :t.actions/review)
+                            :class "btn-primary"
+                            :disabled disabled
+                            :on-click on-send}]]
    [:<>
     [comment-field {:field-key action-form-id
                     :label (text :t.form/add-comments-not-shown-to-applicant)}]

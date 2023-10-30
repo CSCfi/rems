@@ -1,7 +1,6 @@
 (ns rems.actions.invite-member
   (:require [re-frame.core :as rf]
-            [rems.actions.components :refer [action-button action-form-view collapse-action-form email-field name-field]]
-            [rems.atoms :as atoms]
+            [rems.actions.components :refer [action-button action-form-view collapse-action-form email-field name-field perform-action-button]]
             [rems.flash-message :as flash-message]
             [rems.text :refer [text]]
             [rems.util :refer [post!]]))
@@ -46,11 +45,10 @@
   [{:keys [on-send]}]
   [action-form-view action-form-id
    (text :t.actions/invite-member)
-   [[atoms/rate-limited-button {:id "invite-member"
-                                :text (text :t.actions/invite-member)
-                                :class "btn-primary"
-                                :disabled @(rf/subscribe [:rems.spa/pending-request "/api/applications/invite-member"])
-                                :on-click on-send}]]
+   [[perform-action-button {:id "invite-member"
+                            :text (text :t.actions/invite-member)
+                            :class "btn-primary"
+                            :on-click on-send}]]
    [:div
     [flash-message/component :invite-member-errors]
     [name-field {:field-key action-form-id}]

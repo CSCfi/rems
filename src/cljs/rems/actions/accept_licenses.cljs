@@ -1,6 +1,6 @@
 (ns rems.actions.accept-licenses
   (:require [re-frame.core :as rf]
-            [rems.atoms :as atoms]
+            [rems.actions.components :refer [perform-action-button]]
             [rems.flash-message :as flash-message]
             [rems.text :refer [text]]
             [rems.util :refer [post!]]))
@@ -18,10 +18,9 @@
    {}))
 
 (defn accept-licenses-action-button [application-id licenses on-finished]
-  [atoms/rate-limited-button {:id "accept-licenses-button"
-                              :text (text :t.actions/accept-licenses)
-                              :class "btn-primary"
-                              :disabled @(rf/subscribe [:rems.spa/pending-request "/api/applications/accept-licenses"])
-                              :on-click #(rf/dispatch [::send-accept-licenses {:application-id application-id
-                                                                               :licenses licenses
-                                                                               :on-finished on-finished}])}])
+  [perform-action-button {:id "accept-licenses-button"
+                          :text (text :t.actions/accept-licenses)
+                          :class "btn-primary"
+                          :on-click #(rf/dispatch [::send-accept-licenses {:application-id application-id
+                                                                           :licenses licenses
+                                                                           :on-finished on-finished}])}])

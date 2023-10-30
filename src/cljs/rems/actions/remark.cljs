@@ -1,7 +1,6 @@
 (ns rems.actions.remark
   (:require [re-frame.core :as rf]
-            [rems.actions.components :refer [action-attachment action-button action-form-view comment-field command! comment-public-field]]
-            [rems.atoms :as atoms]
+            [rems.actions.components :refer [action-attachment action-button action-form-view comment-field command! comment-public-field perform-action-button]]
             [rems.text :refer [text]]))
 
 (def ^:private action-form-id "remark")
@@ -35,12 +34,11 @@
   [{:keys [application-id disabled on-send]}]
   [action-form-view action-form-id
    (text :t.actions/remark)
-   [[atoms/rate-limited-button {:id action-form-id
-                                :text (text :t.actions/remark)
-                                :class "btn-primary"
-                                :disabled (or disabled
-                                              @(rf/subscribe [:rems.spa/pending-request :application.command/remark]))
-                                :on-click on-send}]]
+   [[perform-action-button {:id action-form-id
+                            :text (text :t.actions/remark)
+                            :class "btn-primary"
+                            :disabled disabled
+                            :on-click on-send}]]
    [:div
     [comment-field {:field-key action-form-id
                     :label (text :t.form/add-remark)}]

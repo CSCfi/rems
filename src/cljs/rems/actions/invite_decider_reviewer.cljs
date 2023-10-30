@@ -1,7 +1,6 @@
 (ns rems.actions.invite-decider-reviewer
   (:require [re-frame.core :as rf]
-            [rems.actions.components :refer [action-attachment action-link action-form-view command! comment-field email-field name-field]]
-            [rems.atoms :as atoms]
+            [rems.actions.components :refer [action-attachment action-link action-form-view command! comment-field email-field name-field perform-action-button]]
             [rems.flash-message :as flash-message]
             [rems.text :refer [text]]))
 
@@ -70,12 +69,11 @@
   [action-form-view
    decider-form-id
    (text :t.actions/request-decision-via-email)
-   [[atoms/rate-limited-button {:id "invite-decider"
-                                :text (text :t.actions/request-decision)
-                                :class "btn-primary"
-                                :on-click on-send
-                                :disabled (or disabled
-                                              @(rf/subscribe [:rems.spa/pending-request :application.command/invite-decider]))}]]
+   [[perform-action-button {:id "invite-decider"
+                            :text (text :t.actions/request-decision)
+                            :class "btn-primary"
+                            :on-click on-send
+                            :disabled disabled}]]
    [:<>
     [name-field {:field-key decider-form-id}]
     [email-field {:field-key decider-form-id}]
@@ -89,12 +87,11 @@
   [action-form-view
    reviewer-form-id
    (text :t.actions/request-review-via-email)
-   [[atoms/rate-limited-button {:id "invite-reviewer"
-                                :text (text :t.actions/request-review)
-                                :class "btn-primary"
-                                :on-click on-send
-                                :disabled (or disabled
-                                              @(rf/subscribe [:rems.spa/pending-request :application.command/invite-reviewer]))}]]
+   [[perform-action-button {:id "invite-reviewer"
+                            :text (text :t.actions/request-review)
+                            :class "btn-primary"
+                            :on-click on-send
+                            :disabled disabled}]]
    [:<>
     [name-field {:field-key reviewer-form-id}]
     [email-field {:field-key reviewer-form-id}]
