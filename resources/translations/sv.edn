@@ -38,6 +38,7 @@
                      :entitlement-end-not-in-future "Utgångsdatumet för rättigheter måste vara i framtiden."}
             :generate-ega-api-key-in-profile "Hämta den på Profil-sidan."
             :handled-applications "Behandlade ansökningar"
+            :handled-applications-count "Det finns %:count% behandlade ansökningar."
             :invite-member "Bjud in deltagare"
             :licenses-selection "Lägg till licenser"
             :member "Deltagare"
@@ -70,11 +71,13 @@
             :review "Granska"
             :revoke "Återkalla rättigheter"
             :todo-applications "Aktiva ansökningar"
+            :todo-applications-count "Det finns %:count% aktiva ansökningar."
             :vote "Rösta"}
   :administration {:active "Aktiv"
                    :add "Lägg till"
                    :added-at "Tillagd"
                    :added-by "Tillagd av"
+                   :anonymize-handling "Anonymiserad hantering"
                    :application-state "Ansökningsstatus"
                    :archive "Arkivera"
                    :back "Tillbaka"
@@ -136,6 +139,7 @@
                    :name "Namn"
                    :no-categories "Inga kategorier"
                    :no-form "Ingen blankett"
+                   :no-forms "Inga blanketter"
                    :no-licenses "Inga licenser"
                    :no-voting "Inga omröstning"
                    :optional "(valfritt)"
@@ -163,7 +167,9 @@
                    :voting "Omröstning"
                    :workflow "Arbetsflöde"
                    :workflows "Arbetsflöden"
-                   :workflow-disabled-commands-explanation [:p "Detta arbetsflöde avaktiverar funktioner för användarna när villkoren uppfylls. Funktioner, ansökningar statusar och användarroller hittas på " [:a {:href "https://github.com/CSCfi/rems/blob/master/docs/application-permissions.md" :target :_blank} "REMS Github-sidan."]]}
+                   :workflow-anonymize-handling-explanation "Detta arbetsflöde döljer handläggarens personligt identifierbar information (t.ex. namn och e-postaddress) för sökande."
+                   :workflow-disabled-commands-explanation [:p "Detta arbetsflöde avaktiverar funktioner för användarna när villkoren uppfylls. Funktioner, ansökningar statusar och användarroller hittas på " [:a {:href "https://github.com/CSCfi/rems/blob/master/docs/application-permissions.md" :target :_blank} "REMS Github-sidan."]]
+                   :workflow-type "Arbetsflödets typ"}
   :applicant-info {:applicant "Sökande"
                    :applicants "Sökande"
                    :email "E-postadress"
@@ -189,6 +195,8 @@
                  :duos {:validation {:missing-duo-codes "DUO koder anges i resurser, men de saknas från ansökan:"}}
                  :empty "Inga ansökningar."
                  :entitlement-end "Upphörandedatum för rättigheterna: %1."
+                 :event {:not-shown-to-applicant "Dold för sökande"
+                         :shown-to-applicant "Synlig för sökande"}
                  :events {:applicant-changed "%1 bytte sökande till %2." ; TODO check
                           :approved "%1 godkände ansökan."
                           :attachments-redacted "%1 tog bort bilagor. %2"
@@ -230,13 +238,14 @@
                           :resources "Resurser"
                           :state "Tillstånd"}
                  :handlers "Handläggare"
-                 :highlight-related-events "Visa relaterade händelser."
                  :id "id"
                  :intro [:div.intro [:p "Fyll i ansökan och skicka den för behandling. Du kan bjuda in andra att delta i din ansökan. Alla deltagare måste godkänna användarvillkoren senast när ansökan godkänts."]]
                  :last-activity "Ändrat"
                  :latest-activity "Senaste aktivitet"
                  :my-applications "Mina ansökningar"
-                 :redacted-attachments-replaced "Nya bilagor byts ut gamla bilagor."
+                 :redacted-attachments "Borttagna bilagor"
+                 :redacted-attachments-replaced "Nya bilagor byts ut borttagna bilagor."
+                 :replacing-attachments "Nya bilagor"
                  :resource "Resurs"
                  :state "Status"
                  :states {:approved "Godkänd"
@@ -586,7 +595,8 @@
             :settings "Inställningar"
             :warning-about-missing-email [:<> "Du måste " [:a {:href "/profile"} "lägga till din e-postadress i dina inställningar"] ", för att kunna ta emot meddelanden om din ansökan."]
             :your-details "Dina användardetaljer"} ; TODO check
-  :roles {:applicant "Sökande"
+  :roles {:anonymous-handler :sv.t.roles/handler
+          :applicant "Sökande"
           :decider "Beslutare"
           :handler "Handläggare"
           :member "Deltagare"
@@ -600,10 +610,12 @@
            :search "Sök"}
   :table {:ascending-order "Stigande"
           :descending-order "Sjunkande"
+          :first-rows-only "Visar endast de första %1 raderna."
           :all-rows-selected "Alla rader är valda"
           :no-rows-selected "Inga rader är valda"
+          :show-all-rows "Visa alla raderna"
           :some-rows-selected "Några rader är valda"
-          :show-all-n-rows "Visa alla %1 rader"}
+          :paging {:page "Sidan"}}
   :unauthorized-page {:unauthorized "Ingen tillgång"
                       :you-are-unauthorized "Du har inte tillgång till denna sida."}
   :unknown "Okänd"

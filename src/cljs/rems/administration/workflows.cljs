@@ -97,23 +97,20 @@
         workflows)))
 
 (defn- workflows-list []
-  (let [workflows-table {:id ::workflows
-                         :columns [{:key :organization
-                                    :title (text :t.administration/organization)}
-                                   {:key :title
-                                    :title (text :t.administration/title)}
-                                   {:key :active
-                                    :title (text :t.administration/active)
-                                    :filterable? false}
-                                   {:key :commands
-                                    :sortable? false
-                                    :filterable? false
-                                    :aria-label (text :t.actions/commands)}]
-                         :rows [::workflows-table-rows]
-                         :default-sort-column :title}]
-    [:div.mt-3
-     [table/search workflows-table]
-     [table/table workflows-table]]))
+  [table/standard {:id ::workflows
+                   :columns [{:key :organization
+                              :title (text :t.administration/organization)}
+                             {:key :title
+                              :title (text :t.administration/title)}
+                             {:key :active
+                              :title (text :t.administration/active)
+                              :filterable? false}
+                             {:key :commands
+                              :sortable? false
+                              :filterable? false
+                              :aria-label (text :t.actions/commands)}]
+                   :rows [::workflows-table-rows]
+                   :default-sort-column :title}])
 
 ;; TODO Very similar components are used in here, licenses, forms, resources
 (defn workflows-page []

@@ -1,0 +1,3 @@
+{:ns rems.migrations.change-expiration-events
+ :up-fn migrate-up
+ :down-fn migrate-down}

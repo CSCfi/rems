@@ -24,7 +24,8 @@
   :start (when (:application-expiration env)
            (scheduler/start! "expired-application-poller"
                              process-applications!
-                             (.toStandardDuration (time/days 1))))
+                             (.toStandardDuration (time/hours 1))
+                             (select-keys env [:buzy-hours])))
   :stop (when expired-application-poller
           (scheduler/stop! expired-application-poller)))
 

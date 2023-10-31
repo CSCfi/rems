@@ -383,7 +383,6 @@
   (db/delete-application! {:application app-id})
   (dependencies/notify-watchers! {:application/id [app-id]}))
 
-
 (defn reload-projections! []
   (doseq [event (get-all-events-since 0)]
     (update-projections! event (get-simple-internal-application (:application/id event)))))

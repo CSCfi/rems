@@ -30,7 +30,8 @@
             [rems.db.user-settings :as user-settings]
             [rems.main]
             [rems.testing-util :refer [with-user with-fake-login-users]]
-            [rems.text :as text]))
+            [rems.text :refer [localize-time text with-language]]
+            [rems.service.todos :as todos]))
 
 (comment ; convenience for development testing
   (btu/init-driver! :chrome "http://localhost:3000/" :development))
@@ -88,6 +89,13 @@
   (btu/screenshot "applications-page")
   (btu/gather-axe-results "applications-page"))
 
+(defn go-to-actions []
+  (click-navigation-menu "Actions")
+  (btu/wait-visible {:tag :h1 :fn/text "Actions"})
+  (btu/wait-page-loaded)
+  (btu/screenshot "actions-page")
+  (btu/gather-axe-results "actions-page"))
+
 (defn go-to-application [application-id]
   (btu/go (str (btu/get-server-url) "application/" application-id))
   (btu/wait-visible {:tag :h1 :fn/has-text "Application"})
@@ -117,10 +125,10 @@
   (btu/scroll-and-click [{:css ".language-switcher"} {:fn/text (.toUpperCase (name language))}])
   ;; wait for the new language to take effect
   (btu/wait-predicate #(= (btu/value-of [{:css ".footer-text"}])
-                          (text/with-language language
-                            (fn [] (text/text :t/footer))))))
+                          (with-language language
+                            (text :t/footer)))))
 
-(defmacro with-language
+(defmacro with-change-language
   "Executes body between calls to `(change-language language)`
    and `(change-language :en)`."
   [language & body]
@@ -491,18 +499,25 @@
 
         (testing "upload three attachments, then remove one"
           (btu/upload-file attachment-field-upload-selector "test-data/test.txt")
-          (btu/wait-predicate #(= ["Download file\ntest.txt"]
+          (btu/wait-predicate #(= (->> ["test.txt"]
+                                       (mapv (fn [filename]
+                                               (str/join "\n" (list "Download file" filename "Remove")))))
                                   (get-application-attachments))
                               #(do {:attachments (get-application-attachments)}))
           (btu/upload-file attachment-field-upload-selector "test-data/test-fi.txt")
-          (btu/wait-predicate #(= ["Download file\ntest.txt" "Download file\ntest-fi.txt"]
+          (btu/wait-predicate #(= (->> ["test.txt" "test-fi.txt"]
+                                       (mapv (fn [filename]
+                                               (str/join "\n" (list "Download file" filename "Remove")))))
                                   (get-application-attachments))
                               #(do {:attachments (get-application-attachments)}))
           (btu/upload-file attachment-field-upload-selector "test-data/test-sv.txt")
-          (btu/wait-predicate #(= ["Download file\ntest.txt" "Download file\ntest-fi.txt" "Download file\ntest-sv.txt"]
+          (btu/wait-predicate #(= (->> ["test.txt" "test-fi.txt" "test-sv.txt"]
+                                       (mapv (fn [filename]
+                                               (str/join "\n" (list "Download file" filename "Remove")))))
                                   (get-application-attachments))
                               #(do {:attachments (get-application-attachments)}))
-          (btu/scroll-and-click-el (last (btu/query-all {:css (str "button.remove-attachment-" attachment-field-id)}))))
+          (btu/scroll-and-click-el (last (btu/query-all [{:css (str "#container-" attachment-field-id)}
+                                                         {:css ".attachments button.remove"}]))))
 
         (testing "uploading oversized attachment should display error"
           (btu/with-client-config {:attachment-max-size 900}
@@ -552,7 +567,7 @@
 
         (rems.service.application/get-full-internal-application (rems.common.util/parse-int (btu/context-get :application-id)))
 
-        (btu/with-client-config {:enable-autosave false} ; when testing locally
+        (btu/with-client-config {:enable-autosave false}
           (testing "save draft succesfully, but show validation warnings"
             (fill-form-field "Email field" "user")
             (btu/scroll-and-click :save)
@@ -589,10 +604,12 @@
         (btu/gather-axe-results "accepted-licenses")
 
         (testing "attachment download"
-          (btu/scroll-and-click [{:css ".attachment-link" :fn/text "test.txt"}])
-          (btu/wait-for-downloads "test.txt")
-          (is (= (slurp "test-data/test.txt")
-                 (slurp (first (btu/downloaded-files "test.txt"))))))
+          (let [download-button (->> (btu/query-all {:css ".attachment-link .download"})
+                                     (find-first (comp #{"Download file\ntest.txt"} btu/value-of-el)))]
+            (btu/scroll-and-click-el download-button)
+            (btu/wait-for-downloads "test.txt")
+            (is (= (slurp "test-data/test.txt")
+                   (slurp (first (btu/downloaded-files "test.txt")))))))
 
         (send-application)
         (btu/gather-axe-results "sent-application")
@@ -878,19 +895,25 @@
       (is (btu/eventually-visible? :comment-approve-reject))
       (btu/fill-human :comment-approve-reject "this is a comment")
       (btu/upload-file :upload-approve-reject-input "test-data/test.txt")
-      (is (btu/eventually-visible? [{:css "a.attachment-link"}]))
+      (is (btu/eventually-visible? [{:css ".attachment-link"}]))
       (btu/upload-file :upload-approve-reject-input "test-data/test-fi.txt")
-      (btu/wait-predicate #(= ["Download file\ntest.txt" "Download file\ntest-fi.txt"]
+      (btu/wait-predicate #(= (->> ["test.txt" "test-fi.txt"]
+                                   (mapv (fn [filename]
+                                           (str/join "\n" (list "Download file" filename "Remove")))))
                               (get-attachments :actions-approve-reject))
                           #(do {:attachments (get-attachments :actions-approve-reject)})))
     (testing "add and remove a third attachment"
       (btu/upload-file :upload-approve-reject-input "resources/public/img/rems_logo_en.png")
-      (btu/wait-predicate #(= ["Download file\ntest.txt" "Download file\ntest-fi.txt" "Download file\nrems_logo_en.png"]
+      (btu/wait-predicate #(= (->> ["test.txt" "test-fi.txt" "rems_logo_en.png"]
+                                   (mapv (fn [filename]
+                                           (str/join "\n" (list "Download file" filename "Remove")))))
                               (get-attachments :actions-approve-reject))
                           #(do {:attachments (get-attachments :actions-approve-reject)}))
-      (let [buttons (btu/query-all {:css "button.remove-attachment-approve-reject"})]
+      (let [buttons (btu/query-all [:actions-approve-reject {:css ".attachments button.remove"}])]
         (btu/click-el (last buttons)))
-      (btu/wait-predicate #(= ["Download file\ntest.txt" "Download file\ntest-fi.txt"]
+      (btu/wait-predicate #(= (->> ["test.txt" "test-fi.txt"]
+                                   (mapv (fn [filename]
+                                           (str/join "\n" (list "Download file" filename "Remove")))))
                               (get-attachments :actions-approve-reject))
                           #(do {:attachments (get-attachments :actions-approve-reject)})))
     (testing "approve"
@@ -899,7 +922,9 @@
     (testing "event visible in eventlog"
       (is (btu/visible? {:css "div.event-description b" :fn/text "Developer approved the application."})))
     (testing "attachments visible in eventlog"
-      (is (= ["Download file\ntest.txt" "Download file\ntest-fi.txt"]
+      (is (= (->> ["test.txt" "test-fi.txt"]
+                  (mapv (fn [filename]
+                          (str/join "\n" (list "Download file" filename)))))
              (get-application-event-attachments))))
 
     (testing "event via api"
@@ -911,7 +936,92 @@
              (-> (get-application-from-api (btu/context-getx :application-id) "developer")
                  :application/events
                  last
-                 (dissoc :event/id :event/time :event/attachments :event/actor-attributes)))))))
+                 (dissoc :event/id :event/time :event/attachments :event/actor-attributes :event/visibility)))))))
+
+(defn- create-processed-application! [start n]
+  (doseq [i (range start (+ start n))]
+    (let [app-id (test-helpers/create-draft! "alice" [(btu/context-getx :catalogue-id)] (str "test-processed-applications-" (inc i)))]
+      (test-helpers/command! {:type :application.command/submit
+                              :application-id app-id
+                              :actor "alice"})
+      (test-helpers/command! {:type :application.command/approve
+                              :application-id app-id
+                              :comment "looks good"
+                              :actor "developer"}))))
+
+(deftest test-processed-applications-and-paging
+  (btu/context-assoc! :form-id (test-helpers/create-form! {:actor "owner"
+                                                           :organization {:organization/id "nbn"}
+                                                           :form/internal-name "Paging test form"
+                                                           :form/external-title {:en "Paging test form EN"
+                                                                                 :fi "Paging test form FI"
+                                                                                 :sv "Paging test form SV"}
+                                                           :form/fields [{:field/type :description
+                                                                          :field/optional false
+                                                                          :field/title {:en "Application title field"
+                                                                                        :fi "Hakemuksen otsikko -kenttä"
+                                                                                        :sv "Ansökningens rubrikfält"}}]}))
+  (btu/context-assoc! :catalogue-id (test-helpers/create-catalogue-item! {:form-id (btu/context-getx :form-id)}))
+
+  (btu/with-postmortem
+    (login-as "developer")
+
+    (testing "with 100+ processed applications"
+      ;; NB: other tests may process applications too
+      ;; the created 100 applications will be the latest
+      (create-processed-application! 0 100)
+      (btu/context-assoc! :todos (todos/get-handled-todos "developer")) ; check against API
+      (btu/reload)
+      (btu/wait-visible {:fn/text (str "There are " (count (btu/context-getx :todos)) " processed applications.")})
+      (btu/screenshot "processed-applications-closed")
+      (btu/scroll-and-click [:handled-applications-collapse {:fn/text "Show more"}])
+      (btu/wait-for-animation)
+      (btu/wait-visible {:fn/text "Showing the first 50 rows only."})
+      (btu/screenshot "processed-applications-opened")
+      (btu/scroll-and-click [:handled-applications-collapse {:fn/text "Show all rows"}])
+      (btu/wait-invisible {:fn/text "Showing the first 50 rows only."})
+      (btu/screenshot "processed-applications-show-all-rows"))
+
+    (btu/with-client-config {:tables {:rems.actions/handled-applications {:page-size 10}}}
+      ;; revisit (reload without reloading config)
+      (click-navigation-menu "Catalogue")
+      (click-navigation-menu "Actions")
+      (btu/scroll-and-click [:handled-applications-collapse {:fn/text "Show more"}])
+      (btu/wait-for-animation)
+      (btu/screenshot "processed-applications-paged-opened-page-1")
+      (testing "first page has newest rows"
+        (is (= (for [i (range 100 90 -1)]
+                 (str "test-processed-applications-" i))
+               (mapv #(get % "description") (slurp-rows :handled-applications)))))
+
+      (testing "5th page"
+        (btu/scroll-and-click [:handled-applications-paging-pages {:fn/text "5"}])
+        (btu/wait-visible {:fn/text "test-processed-applications-60"}) ; wait for at least one to appear before checking all
+
+        (is (= (for [i (range 60 50 -1)]
+                 (str "test-processed-applications-" i))
+               (mapv #(get % "description") (slurp-rows :handled-applications))))
+        (btu/screenshot "processed-applications-paged-opened-page-5"))
+
+      (testing "visiting another page will reset current page to first"
+        (click-navigation-menu "Catalogue")
+        (click-navigation-menu "Actions")
+        (btu/scroll-and-click [:handled-applications-collapse {:fn/text "Show more"}])
+        (btu/wait-for-animation)
+        (btu/screenshot "processed-applications-paged-revisit")
+        (testing "first page still has newest rows"
+          (is (= (for [i (range 100 90 -1)]
+                   (str "test-processed-applications-" i))
+                 (mapv #(get % "description") (slurp-rows :handled-applications))))))
+
+      (testing "load all rows to visit 10th page"
+        (btu/scroll-and-click [:handled-applications-collapse {:fn/text "Show all rows"}])
+        (btu/wait-for-animation)
+        (btu/scroll-and-click [:handled-applications-paging-pages {:fn/text "10"}])
+        (is (= (for [i (range 10 0 -1)]
+                 (str "test-processed-applications-" i))
+               (mapv #(get % "description") (slurp-rows :handled-applications))))
+        (btu/screenshot "processed-applications-paged-opened-page-10-visited-admin")))))
 
 (deftest test-invite-decider
   (testing "create test data"
@@ -1031,8 +1141,8 @@
                 "Type" "Master workflow"
                 "Handlers" "Invited Person Name (invite-person-id@example.com)"
                 "Active" true
-                "Forms" ""
-                "Licenses" ""}
+                "Forms" "No forms"
+                "Licenses" "No licenses"}
                (slurp-fields :workflow)))))))
 
 (deftest test-invite-reviewer
@@ -1118,7 +1228,7 @@
              (-> (get-application-from-api (btu/context-getx :application-id) "developer")
                  :application/events
                  last
-                 (dissoc :event/id :event/time :event/attachments :event/actor-attributes)))))))
+                 (dissoc :event/id :event/time :event/attachments :event/actor-attributes :event/visibility)))))))
 
 (deftest test-guide-page
   (btu/with-postmortem
@@ -1284,7 +1394,6 @@
       (is (some #(= (btu/context-getx :resid) (get % "title"))
                 (slurp-rows :resources))))))
 
-
 (defn create-form []
   (testing "create form"
     (btu/with-postmortem
@@ -1337,8 +1446,8 @@
               "Title" (btu/context-getx :workflow-name)
               "Type" "Default workflow"
               "Handlers" "Hannah Handler (handler@example.com)"
-              "Forms" ""
-              "Licenses" ""
+              "Forms" "No forms"
+              "Licenses" "No licenses"
               "Active" true}
              (slurp-fields :workflow)))
       (go-to-admin "Workflows")
@@ -1447,8 +1556,11 @@
       (create-category)
       (create-catalogue-item))
     (testing "check that catalogue item is not visible before enabling"
-      (go-to-catalogue)
-      (is (not (btu/visible? [:catalogue {:fn/text (btu/context-getx :catalogue-item-name)}]))))
+      ;; technically we could check this from
+      ;; the catalogue page but we'd need to search
+      (let [public-catalogue-items-by-name (->> (catalogue/get-catalogue-table {:enabled true})
+                                                (group-by (comp :title :en :localizations)))]
+        (is (= nil (public-catalogue-items-by-name (btu/context-getx :catalogue-item-name))))))
     (testing "enable catalogue item"
       (enable-catalogue-item (btu/context-getx :catalogue-item-name)))
     (testing "check that catalogue item is visible for applicants"
@@ -2505,7 +2617,7 @@
                           [(:application/id application)
                            (q (:application/external-id application))
                            (q (get-in application [:application/applicant :name]))
-                           (q (text/localize-time (get-in application [:application/first-submitted])))
+                           (q (localize-time (get-in application [:application/first-submitted])))
                            (q "Applied")
                            (q "")
                            (q "Tämä on monimutkainen arvo skandein varusteltuna!")])]
@@ -2932,7 +3044,7 @@
     (login-as "owner")
     (testing "create licenses with different license types"
       (testing "external link"
-        (with-language :en
+        (with-change-language :en
           (go-to-admin "Licenses")
           (is (btu/eventually-visible? {:tag :h1 :fn/has-text "Licenses"}))
           (btu/scroll-and-click :create-license)
@@ -2962,7 +3074,7 @@
                  (slurp-fields :license)))))
       (testing "inline text"
         (go-to-admin "Licenses")
-        (with-language :fi
+        (with-change-language :fi
           (is (btu/eventually-visible? {:tag :h1 :fn/has-text "Lisenssit"}))
           (btu/scroll-and-click :create-license)
           (btu/screenshot "before-filling-inline-text-fi")
@@ -2988,7 +3100,7 @@
                  (slurp-fields :license)))))
       (testing "attachment"
         (go-to-admin "Licenses")
-        (with-language :sv
+        (with-change-language :sv
           (is (btu/eventually-visible? {:tag :h1 :fn/has-text "Licenser"}))
           (btu/scroll-and-click :create-license)
           (btu/screenshot "before-filling-attachments-sv")

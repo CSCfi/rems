@@ -89,7 +89,7 @@
                 [nav-link "/catalogue" (text :t.navigation/catalogue)])
               (when (roles/show-applications? roles)
                 [nav-link "/applications" (text :t.navigation/applications)])
-              (when (roles/show-reviews? roles)
+              (when (some roles/+handling-roles+ roles)
                 [nav-link "/actions" (text :t.navigation/actions)])
               (when (roles/show-admin-pages? roles)
                 [nav-link "/administration" (text :t.navigation/administration)])

@@ -9,7 +9,8 @@
             [rems.config :refer [env]]
             [rems.scheduler :as scheduler]
             [rems.text :as text]
-            [rems.util :refer [delete-directory-contents-recursively]])
+            [rems.util :refer [delete-directory-contents-recursively]]
+            [clj-time.core :as time-core])
   (:import [org.apache.lucene.analysis Analyzer]
            [org.apache.lucene.analysis.standard StandardAnalyzer]
            [org.apache.lucene.document Document StringField Field$Store TextField]
@@ -67,12 +68,13 @@
    :state (->> (:languages env)
                (map (fn [lang]
                       (text/with-language lang
-                        #(text/localize-state (:application/state app)))))
+                        (text/localize-state (:application/state app)))))
                (str/join " "))
+   :year (-> app :application/last-activity time-core/year str)
    :todo (->> (:languages env)
               (map (fn [lang]
                      (text/with-language lang
-                       #(text/localize-todo (:application/todo app)))))
+                       (text/localize-todo (:application/todo app)))))
               (cons (str (:application/todo app)))
               (str/join " "))
    :form (->> (select [:application/forms ALL :form/fields ALL :field/value] app) ;; TODO: filter out checkboxes, attachments etc?

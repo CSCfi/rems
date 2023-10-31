@@ -3,13 +3,11 @@
             [rems.api.schema :as schema]
             [rems.service.attachment :as attachment]
             [rems.service.licenses :as licenses]
-            [rems.api.util :refer [not-found-json-response]] ; required for route :roles
+            [rems.api.util :refer [extended-logging not-found-json-response]] ; required for route :roles
             [rems.common.roles :refer [+admin-read-roles+ +admin-write-roles+]]
             [rems.schema-base :as schema-base]
             [rems.util :refer [getx-user-id]]
-            [ring.middleware.multipart-params :as multipart]
             [ring.swagger.json-schema :as rjs]
-            [ring.swagger.upload :as upload]
             [ring.util.http-response :refer :all]
             [schema.core :as s]))
 
@@ -61,39 +59,44 @@
         (ok license)
         (not-found-json-response)))
 
-    (POST "/create" []
+    (POST "/create" request
       :summary "Create license"
       :roles +admin-write-roles+
       :body [command CreateLicenseCommand]
       :return CreateLicenseResponse
+      (extended-logging request)
       (ok (licenses/create-license! command)))
 
-    (PUT "/archived" []
+    (PUT "/archived" request
       :summary "Archive or unarchive license"
       :roles +admin-write-roles+
       :body [command schema/ArchivedCommand]
       :return schema/SuccessResponse
+      (extended-logging request)
       (ok (licenses/set-license-archived! command)))
 
-    (PUT "/enabled" []
+    (PUT "/enabled" request
       :summary "Enable or disable license"
       :roles +admin-write-roles+
       :body [command schema/EnabledCommand]
       :return schema/SuccessResponse
+      (extended-logging request)
       (ok (licenses/set-license-enabled! command)))
 
-    (POST "/add_attachment" []
+    (POST "/add_attachment" request
       :summary "Add an attachment file that will be used in a license"
       :roles +admin-write-roles+
       :multipart-params [file :- schema/FileUpload]
       :return AttachmentMetadata
+      (extended-logging request)
       (ok (licenses/create-license-attachment! file (getx-user-id))))
 
-    (POST "/remove_attachment" []
+    (POST "/remove_attachment" request
       :summary "Remove an attachment that could have been used in a license."
       :roles +admin-write-roles+
       :query-params [attachment-id :- (describe s/Int "attachment id")]
       :return schema/SuccessResponse
+      (extended-logging request)
       (ok {:success (some? (licenses/remove-license-attachment! attachment-id))}))
 
     (GET "/attachments/:attachment-id" []

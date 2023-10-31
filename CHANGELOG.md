@@ -8,9 +8,29 @@ have notable changes.
 
 Changes since v2.33
 
+**NB: This release contains migrations!**
+**NB: `:application/public` is renamed to `:event/public` (in `application_event` table `eventdata` column).**
+**NB: `:expires-on` is renamed to `:application/expires-on` (in `application_event` table `eventdata` column).**
+**NB: `:last-activity` is redundant and removed from the event (in `application_event` table `eventdata` column).**
+
+### Changes
+- "Show related events" has been removed from events. (#3156)
+- Handler can now redact other handlers attachments. (#3190)
+- The tables take advantage of a new paging feature. Especially, the handler Actions page and its handled applications table uses paging and only fetches handled applications when so requested. The first 50 rows are only fetched by default. Paging can be also configured per table, if the default is not good (page size 50 rows). (#3191)
+- If reminder email is configured for the, expirer bot, it will delete an old draft application if and only if the reminder email is sent and the specified amount of time has passed. Previously it would just delete if the application was very old (esp. when enabling expiry for the first time).
+- Allow leaving `:form` field away from catalogue item creation API calls. Previously the value was optional but now the key too.
+- Application action buttons now wait until request has completed. This should prevent duplicate concurrent requests caused by repeated clicking. (#3204)
+
 ### Additions
 - (Experimental) Workflow can be configured to enable voting for the approval. Currently all handlers can vote (including bots). Use `:enable-voting`. (#3174)
 - There is now a Danish language translation (#3176). We are considering supporting a limited set of languages officially, and improving support for community maintained translations (see #3179).
+- Added experimental support for named format parameters in translations. (#3183)
+- Added extended logging option (`:enable-extended-logging`), for additionally logging the content of mutating operations. (#3184)
+- Cache reloading can be configured using the new `:buzy-hours` config. REMS will then try to avoid reloading during the specified time spans. (#3194)
+- Application expiration respects `:buzy hours` config too.
+- The handling users can now see whether an event is shown to the applicant from a small eye icon in the event history. (#3156)
+- Event now shows which attachments were redacted when viewing as handling user. (#3190)
+- Workflow has new option to anonymize handling users. When enabled, applying users may only see "Handler" in events where handling user's name would appear. Event emails to applying users similarly show only anonymized name where handling user's name would appear. Application API also returns only anonymized name to applying users. Anonymized name is customizable with translation key `:t.roles/anonymous-handler`, which defaults to `:t.roles/handler`.
 
 ### Fixes
 - Email template parameters for `:application-expiration-notification` event are now documented. The parameters are different from standard event email parameters, which may have caused confusion.

@@ -84,8 +84,7 @@
 (s/defschema ExpirationNotificationsSentEvent
   (assoc schema-base/EventBase
          :event/type (s/enum :application.event/expiration-notifications-sent)
-         :last-activity DateTime
-         :expires-on DateTime))
+         :application/expires-on DateTime))
 (s/defschema LicensesAcceptedEvent
   (assoc schema-base/EventBase
          :event/type (s/enum :application.event/licenses-accepted)
@@ -121,7 +120,7 @@
   (assoc EventWithComment
          :event/type (s/enum :application.event/attachments-redacted)
          :event/redacted-attachments [EventAttachment]
-         :application/public s/Bool))
+         :event/public s/Bool))
 (s/defschema ApplicantChangedEvent
   (assoc EventWithComment
          :event/type (s/enum :application.event/applicant-changed)
@@ -156,7 +155,7 @@
 (s/defschema RemarkedEvent
   (assoc EventWithComment
          :event/type (s/enum :application.event/remarked)
-         :application/public s/Bool))
+         :event/public s/Bool))
 (s/defschema ResourcesChangedEvent
   (assoc EventWithComment
          :event/type (s/enum :application.event/resources-changed)

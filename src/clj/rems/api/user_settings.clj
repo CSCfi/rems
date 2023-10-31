@@ -1,6 +1,7 @@
 (ns rems.api.user-settings
   (:require [compojure.api.sweet :refer :all]
             [rems.api.schema :as schema]
+            [rems.api.util :refer [extended-logging]]
             [rems.config :refer [env]]
             [rems.service.ega :as ega]
             [rems.service.user :as user]
@@ -32,24 +33,27 @@
       :return GetUserSettings
       (ok (user/get-user-settings (get-user-id))))
 
-    (PUT "/edit" []
+    (PUT "/edit" request
       :summary "Update user settings"
       :roles #{:logged-in}
       :body [settings UpdateUserSettings]
       :return schema/SuccessResponse
+      (extended-logging request)
       (ok (user/update-user-settings! (getx-user-id) settings)))
 
-    (PUT "/" []
+    (PUT "/" request
       :summary "Update user settings, DEPRECATED, will disappear, use /edit instead"
       :roles #{:logged-in}
       :body [settings UpdateUserSettings]
       :return schema/SuccessResponse
+      (extended-logging request)
       (ok (user/update-user-settings! (getx-user-id) settings)))
 
     (POST "/generate-ega-api-key" [:as request] ; NB: binding syntax
       :summary "Generates a new EGA API-key for the user."
       :roles #{:handler}
       :return GenerateEGAApiKeyResponse
+      (extended-logging request)
       (if-not (:enable-ega env)
         (not-implemented "EGA not enabled")
         (let [access-token (get-in request [:session :access-token])]
@@ -61,6 +65,7 @@
       :summary "Deletes the EGA API-key of the user."
       :roles #{:handler}
       :return DeleteEGAApiKeyResponse
+      (extended-logging request)
       (if-not (:enable-ega env)
         (not-implemented "EGA not enabled")
         (let [access-token (get-in request [:session :access-token])]

@@ -144,6 +144,12 @@ for a list of all translation keys and their format parameters. Format
 parameters are pieces of text like `%3` that get replaced with certain
 information.
 
+### Localization format parameters
+
+Localizations may use format parameters for dynamic translations, e.g. emails. Format parameters are pieces of text that get replaced with certain information. Vector format parameters are default, which typically look like `"Application %1"`, where `"%1"` refers to specific position in the translation arguments.
+
+Experimental support exists for named format parameters, which can be used alternatively. Named format parameters are included in text like `"Application %:application/id%"`, and unlike vector format parameters, do not rely on specific ordering of translation arguments.
+
 ## Themes
 
 Custom themes can be used by creating a file, for example `my-custom-theme.edn`, and specifying its location in the `:theme-path` configuration parameter. The theme file can override some or all of the theme attributes (see `:theme` in [config-defaults.edn](https://github.com/CSCfi/rems/blob/master/resources/config-defaults.edn)). Static resources can be placed in a `public` directory next to the theme configuration file. See [example-theme/theme.edn](https://github.com/CSCfi/rems/blob/master/example-theme/theme.edn) for an example.
@@ -174,6 +180,22 @@ A full list of options is described in [clj-pdf documentation](https://github.co
 REMS uses [Logback](https://logback.qos.ch/) for logging. By default everything is printed to standard output. If you wish to customize logging, create your own Logback configuration file and specify its location using the `logback.configurationFile` system property:
 
     java -Dlogback.configurationFile=logback-prod.xml -jar rems.jar run
+
+### Extended Logging
+
+The config option `:enable-extended-logging` can be toggled to additionally log the content of entity mutations. These logs enable auditors to unequivocally determine the state of a given entity at a given time. Which may aid with various regulatory requirements.
+
+The extended logging is at `INFO` level and the log messages are prefixed with `> params:`. Use these together with the regular request logging to know the API URL, user etc.
+
+For example, the third line of this log is the extended logging (actual parameters sent by the user).
+```
+2023-10-16 19:54:40,626 [6b31f9b67c20 rqc:1 owner lGpEJ6Ke] INFO  rems.middleware - req > :post /api/resources/create
+2023-10-16 19:54:40,631 [6b31f9b67c20 rqc:1 owner lGpEJ6Ke] INFO  rems.middleware - > :post /api/resources/create lang: :en user: {:userid owner, :name Owner, :email owner@example.com}  roles: #{:logged-in :owner}
+2023-10-16 19:54:40,637 [6b31f9b67c20 rqc:1 owner lGpEJ6Ke] INFO  rems.api.resources - > params: {:licenses [], :organization #:organization{:id nbn}, :resid my-res-test}
+2023-10-16 19:54:40,640 [6b31f9b67c20 rqc:1 owner lGpEJ6Ke] INFO  rems.middleware - req < :post /api/resources/create 200 14ms
+```
+
+Extended logging occurs before the business logic is executed, i.e. mutation is persisted. As such, the logged information is only authoritative about the state of the respective entity if and only if the request was successful.
 
 ## Application expiration scheduler
 

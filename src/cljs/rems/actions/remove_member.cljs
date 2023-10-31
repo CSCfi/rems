@@ -1,6 +1,6 @@
 (ns rems.actions.remove-member
   (:require [re-frame.core :as rf]
-            [rems.actions.components :refer [action-button action-form-view comment-field button-wrapper collapse-action-form]]
+            [rems.actions.components :refer [action-button action-form-view comment-field collapse-action-form perform-action-button]]
             [rems.flash-message :as flash-message]
             [rems.text :refer [text]]
             [rems.util :refer [post!]]))
@@ -9,7 +9,6 @@
  ::reset-form
  (fn [_ [_ element-id]]
    {:dispatch [:rems.actions.components/set-comment (str element-id "-comment") ""]}))
-
 
 ;; The API allows us to add attachments to these commands
 ;; but this is left out from the UI for simplicity
@@ -48,10 +47,10 @@
   (let [element-id (qualify-parent-id parent-id)]
     [action-form-view element-id
      (text :t.actions/remove-member)
-     [[button-wrapper {:id (str element-id "-submit")
-                       :text (text :t.actions/remove-member)
-                       :class "btn-primary"
-                       :on-click on-send}]]
+     [[perform-action-button {:id (str element-id "-submit")
+                              :text (text :t.actions/remove-member)
+                              :class "btn-primary"
+                              :on-click on-send}]]
      [comment-field {:field-key (str element-id "-comment")
                      :label (text :t.form/add-comments-shown-to-applicant)}]
      {:collapse-id parent-id}]))

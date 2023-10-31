@@ -1,8 +1,8 @@
 (ns ^:integration rems.api.test-workflows
-  (:require [clojure.test :refer :all]
+  (:require [clojure.test :refer [deftest is testing use-fixtures]]
             [rems.service.licenses :as licenses]
             [rems.service.workflow :as workflows]
-            [rems.api.testing :refer :all]
+            [rems.api.testing :refer [api-call api-fixture api-response assert-response-is-ok assert-success authenticate coll-is-not-empty? read-body read-ok-body response-is-forbidden? response-is-not-found? response-is-unauthorized?]]
             [rems.common.util :refer [replace-key]]
             [rems.db.test-data-users :refer [+fake-user-data+]]
             [rems.db.test-data-helpers :as test-helpers]
@@ -10,7 +10,7 @@
             [rems.handler :refer [handler]]
             [rems.service.application :as application]
             [rems.testing-util :refer [with-user]]
-            [ring.mock.request :refer :all]))
+            [ring.mock.request :refer [json-body request]]))
 
 (use-fixtures :each
   api-fixture
@@ -44,13 +44,12 @@
 
 (deftest workflows-api-test
   (create-handlers!)
-  (let [create-workflow (fn [user-id organization type forms]
+  (let [create-workflow (fn [user-id organization workflow]
                           (api-call :post "/api/workflows/create"
-                                    {:organization {:organization/id organization}
-                                     :title "workflow title"
-                                     :type type
-                                     :forms forms
-                                     :handlers ["handler" "carl"]}
+                                    (merge {:organization {:organization/id organization}
+                                            :title "workflow title"
+                                            :handlers ["handler" "carl"]}
+                                           workflow)
                                     +test-api-key+ user-id))]
     (doseq [user-id ["owner" "organization-owner1"]]
       (testing user-id
@@ -72,7 +71,8 @@
                                                     :form/fields [{:field/type :text
                                                                    :field/title {:fi "fi" :sv "sv" :en "en"}
                                                                    :field/optional true}]})
-                body (create-workflow user-id "organization1" :workflow/default [{:form/id form-id}])
+                body (create-workflow user-id "organization1" {:type :workflow/default
+                                                               :forms [{:form/id form-id}]})
                 id (:id body)]
             (is (number? id))
             (testing "and fetch"
@@ -86,7 +86,8 @@
         (testing "create default workflow with invalid form"
           (is (= {:success false
                   :errors [{:type "invalid-form" :forms [{:form/id 999999}]}]}
-                 (create-workflow user-id "organization1" :workflow/default [{:form/id 999999}]))))
+                 (create-workflow user-id "organization1" {:type :workflow/default
+                                                           :forms [{:form/id 999999}]}))))
 
         (testing "create default workflow with invalid handlers"
           (is (= {:success false
@@ -99,12 +100,14 @@
                            +test-api-key+ user-id))))
 
         (testing "create decider workflow"
-          (let [body (create-workflow user-id "organization1" :workflow/decider [])
+          (let [body (create-workflow user-id "organization1" {:type :workflow/decider
+                                                               :anonymize-handling true})
                 id (:id body)]
             (is (< 0 id))
             (testing "and fetch"
               (is (= (-> expected
-                         (assoc-in [:workflow :type] "workflow/decider"))
+                         (update :workflow merge {:type "workflow/decider"
+                                                  :anonymize-handling true}))
                      (fetch +test-api-key+ user-id id))))))))
 
     (testing "create as organization-owner with incorrect organization"
@@ -271,7 +274,22 @@
     (testing "application is updated when handlers are changed"
       (let [app (application/get-full-internal-application app-id)]
         (is (= #{"owner" "alice"}
-               (application->handler-user-ids app)))))))
+               (application->handler-user-ids app)))))
+
+    (testing "change anonymize handling"
+      (let [get-anonymize-handling #(-> % :workflow (select-keys [:anonymize-handling]))
+            edit-wf #(api-call :put "/api/workflows/edit"
+                               (merge {:id wfid} %)
+                               +test-api-key+ user-id)]
+
+        (is (true? (:success (edit-wf {:anonymize-handling true}))))
+        (is (= {:anonymize-handling true} (get-anonymize-handling (fetch +test-api-key+ user-id wfid))))
+
+        (is (true? (:success (edit-wf {}))))
+        (is (= {:anonymize-handling true} (get-anonymize-handling (fetch +test-api-key+ user-id wfid))))
+
+        (is (true? (:success (edit-wf {:anonymize-handling false}))))
+        (is (= {:anonymize-handling false} (get-anonymize-handling (fetch +test-api-key+ user-id wfid))))))))
 
 (deftest workflows-api-filtering-test
   (let [enabled-wf (test-helpers/create-workflow! {})

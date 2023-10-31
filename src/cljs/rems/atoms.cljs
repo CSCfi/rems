@@ -1,8 +1,8 @@
 (ns rems.atoms
   (:require [clojure.string :as str]
             [komponentit.autosize :as autosize]
-            [medley.core :refer [remove-vals]]
-            [reagent.core :as reagent]
+            [medley.core :refer [remove-vals update-existing]]
+            [reagent.core :as r]
             [reagent.impl.util]
             [rems.common.util :refer [escape-element-id]]
             [rems.guide-util :refer [component-info example]]
@@ -155,8 +155,9 @@
   so they are not supported.
 
   Additional options:
-  `:inline?` - puts the label and value on the same row
-  `:box?`    - wrap the value into a field value box (default true)"
+  `:inline?`     - puts the label and value on the same row
+  `:box?`        - wrap the value into a field value box (default true)
+  `:multiline?`  - puts the value in multiple rows, if possible. see `rems.atoms/format-field-values`"
   [title value & [{:keys [inline? box? multiline?] :or {box? true} :as _opts}]]
   (let [formatted-value (format-field-values value multiline?)
         style (cond box? {:class "form-control"}
@@ -170,28 +171,45 @@
        [:label title]
        [:div style formatted-value]])))
 
-(defn download-button [{:keys [title url]}]
-  [:a.attachment-link {:class "btn btn-outline-secondary text-truncate"
-                       :href url
-                       :target "_blank"}
-   [file-download]
-   [:span.ml-1 title]])
+(defn download-button [{:keys [disabled? title url]}]
+  (if disabled?
+    [:a.download.btn.btn-outline-secondary.text-truncate.disabled
+     {:disabled true
+      :role :button
+      :tabIndex "-1"}
+     [:span title]]
+
+    [:a.download.btn.btn-outline-secondary.text-truncate
+     {:href url
+      :role :button
+      :target "_blank"}
+     [file-download]
+     [:span title]]))
 
 (defn license-attachment-link
   "Renders link to the attachment with `id` and name `title`."
   [id title]
-  [download-button {:title title
-                    :url (str "/api/licenses/attachments/" id)}])
+  [:div.attachment-link
+   [download-button {:title title
+                     :url (str "/api/licenses/attachments/" id)}]])
 
-(defn attachment-link
-  "Renders a link to attachment (should have keys :attachment/id and :attachment/filename).
-   If attachment is redacted, renders localized attachment instead."
-  [attachment]
-  (if (:attachment/redacted attachment)
-    [:div.attachment-link {:title (text :t.applications/attachment-filename-redacted)}
-     (localize-attachment attachment)]
-    [download-button {:title (localize-attachment attachment)
-                      :url (str "/applications/attachment/" (:attachment/id attachment))}]))
+(defn attachment-link [attachment]
+  (let [filename (:attachment/filename attachment)]
+    (cond
+      (= :filename/redacted filename)
+      [:div.attachment-link
+       (text :t.applications/attachment-filename-redacted)]
+
+      (:attachment/redacted attachment)
+      [:div.attachment-link
+       [download-button {:disabled? true
+                         :title filename}]
+       [:div.col-auto (text :t.applications/attachment-filename-redacted)]]
+
+      :else
+      [:div.attachment-link
+       [download-button {:title (localize-attachment attachment)
+                         :url (str "/applications/attachment/" (:attachment/id attachment))}]])))
 
 (defn enrich-user [user]
   (assoc user :display (str (or (:name user)
@@ -213,9 +231,9 @@
 
 (defn document-title [_title & [{:keys [heading?] :or {heading? true}}]]
   (let [on-update (fn [this]
-                    (let [[_ title] (reagent/argv this)]
+                    (let [[_ title] (r/argv this)]
                       (set-document-title! title)))]
-    (reagent/create-class
+    (r/create-class
      {:component-did-mount on-update
       :component-did-update on-update
       :display-name "document-title"
@@ -240,7 +258,7 @@
    * `expanded?` initial expanded state
    * `title` content which is always displayed together with animated chevron"
   [{:keys [expanded?] :or {expanded? false}}]
-  (let [expanded (reagent/atom expanded?)]
+  (let [expanded (r/atom expanded?)]
     (fn [{:keys [id content title]}]
       (let [id (escape-element-id id)]
         [:<>
@@ -258,6 +276,37 @@
                          :ref focus-when-collapse-opened
                          :tab-index "-1"}
           content]]))))
+
+(defn button
+  "Plain button with defaults. `props` are passed to button, except for following keys:
+
+   * `:text` text to display in button"
+  [props]
+  (let [button-defaults {:type :button
+                         :class ["btn-secondary"]}]
+    [:button.btn (merge button-defaults
+                        (dissoc props :text))
+     (:text props)]))
+
+(defn- wrap-rate-limit [callback ms]
+  (r/with-let [wait (r/atom nil)]
+    (fn rate-limited-callback [& args]
+      (when-not @wait
+        (reset! wait (js/setTimeout #(reset! wait nil) ms))
+        (apply callback args)))
+    (finally
+      (some-> @wait js/clearTimeout))))
+
+(defn rate-limited-button
+  "atoms/button variant that allows click handler to be called, at most,
+   once per interval `:wait`. Only the 1st call will go through if called
+   multiple times.
+
+   * `:wait` interval in milliseconds"
+  [{:keys [disabled wait] :or {wait 2000} :as props}]
+  [button (-> props
+              (dissoc :wait (when disabled :on-click))
+              (update-existing :on-click wrap-rate-limit wait))])
 
 (defn action-button
   "Takes an `action` description and creates a button that triggers it."
@@ -321,7 +370,7 @@
                  [action-link action]]))]])))
 
 (defn guide []
-  (let [state (reagent/atom false)
+  (let [state (r/atom false)
         on-change #(swap! state not)]
     (fn []
       [:div
@@ -384,7 +433,6 @@
                            :expanded? false
                            :content [:p "Expanded content"]}])
 
-
        (component-info action-link)
        (example "example command as link"
 
@@ -420,4 +468,10 @@
        (example "with more commands"
                 [commands-group-button {:label "Group"}
                  example-command
-                 another-command])])))
+                 another-command])
+
+       (component-info rate-limited-button)
+       (example "rate limited button"
+                (r/with-let [n (r/atom 0)]
+                  [rate-limited-button {:on-click #(r/rswap! n inc)
+                                        :text (str "Count: " @n)}]))])))

@@ -1,6 +1,6 @@
 (ns rems.actions.change-resources
   (:require [re-frame.core :as rf]
-            [rems.actions.components :refer [action-button action-form-view comment-field button-wrapper collapse-action-form]]
+            [rems.actions.components :refer [action-button action-form-view comment-field collapse-action-form perform-action-button]]
             [rems.dropdown :as dropdown]
             [rems.flash-message :as flash-message]
             [medley.core :refer [distinct-by]]
@@ -83,12 +83,12 @@
         config @(rf/subscribe [:rems.config/config])]
     [action-form-view action-form-id
      (text :t.actions/change-resources)
-     [[button-wrapper {:id "change-resources"
-                       :text (text :t.actions/change-resources)
-                       :class "btn-primary"
-                       :disabled (or (empty? selected-resources)
-                                     (= selected-resources initial-resources))
-                       :on-click on-send}]]
+     [[perform-action-button {:id "change-resources"
+                              :text (text :t.actions/change-resources)
+                              :class "btn-primary"
+                              :disabled (or (empty? selected-resources)
+                                            (= selected-resources initial-resources))
+                              :on-click on-send}]]
      (if (empty? catalogue)
        [spinner/big]
        ;; TODO: Nowadays the user cannot select resources that have an

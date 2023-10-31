@@ -6,17 +6,15 @@
                :cljs [cljs-time.format :as time-format])
             #?(:cljs [cljs-time.coerce :as time-coerce])
             [clojure.string :as str]
-            #?(:cljs [re-frame.core :as rf])
             [rems.common.application-util :as application-util]
             #?(:clj [rems.context :as context])
-            #?(:clj [rems.locales :as locales])
-            [taoensso.tempura :refer [tr]]))
+            [rems.tempura]))
 
-(defn with-language [lang f]
-  (assert (keyword? lang) {:lang lang})
-  #?(:clj (binding [context/*lang* lang
-                    context/*tempura* (partial tr (locales/tempura-config) [lang])]
-            (f))))
+#?(:clj
+   (defmacro with-language [lang & body]
+     `(binding [rems.context/*lang* ~lang]
+        (assert (keyword? ~lang) {:lang ~lang})
+        ~@body)))
 
 (defn- failsafe-fallback
   "Fallback for when loading the translations has failed."
@@ -26,53 +24,50 @@
                  (cons k args)))))
 
 (defn text-format
-  "Return the tempura translation for a given key & time arguments"
+  "Return the tempura translation for a given key and arguments.
+   Map can be used for named parameters as `(first args)`,
+   when the localization resource supports them. `(rest args)`
+   are then used as vector arguments if localization resource does not support
+   named parameters. See `rems.tempura/tr`
+
+   (text-format :key {:arg :value} varg-1 varg-2 ...)"
   [k & args]
-  #?(:clj (context/*tempura* [k :t/missing] (vec args))
-     :cljs (let [translations (rf/subscribe [:translations])
-                 language (rf/subscribe [:language])]
-             (tr {:dict @translations}
-                 [@language]
-                 [k :t/missing (failsafe-fallback k args)]
-                 (vec args)))))
+  #?(:clj (rems.tempura/tr [k :t/missing]
+                           args)
+     :cljs (rems.tempura/tr [k :t/missing (failsafe-fallback k args)]
+                            args)))
 
 (defn text-no-fallback
   "Return the tempura translation for a given key. Additional fallback
   keys can be given but there is no default fallback text."
   [& ks]
-  #?(:clj (context/*tempura* (vec ks))
-     :cljs (let [translations (rf/subscribe [:translations])
-                 language (rf/subscribe [:language])]
-             (try
-               (tr {:dict @translations}
-                   [@language]
-                   (vec ks))
-               (catch js/Object e
-                 ;; fail gracefully if the re-frame state is incomplete
-                 (.error js/console e)
-                 (str (vec ks)))))))
+  #?(:clj (rems.tempura/tr ks)
+     :cljs (try
+             (rems.tempura/tr ks)
+             (catch js/Object e
+               ;; fail gracefully if the re-frame state is incomplete
+               (.error js/console e)
+               (str (vec ks))))))
 
 (defn text
   "Return the tempura translation for a given key. Additional fallback
   keys can be given."
   [& ks]
-  #?(:clj (apply text-no-fallback (conj (vec ks) (text-format :t/missing (vec ks))))
+  #?(:clj (apply text-no-fallback
+                 (conj (vec ks)
+                       (text-format :t/missing (vec ks))))
      ;; NB: we can't call the text-no-fallback here as in CLJS
      ;; we can both call this as function or use as a React component
-     :cljs (let [translations (rf/subscribe [:translations])
-                 language (rf/subscribe [:language])]
-             (try
-               (tr {:dict @translations}
-                   [@language]
-                   (conj (vec ks) (text-format :t/missing (vec ks))))
-               (catch js/Object e
-                 ;; fail gracefully if the re-frame state is incomplete
-                 (.error js/console e)
-                 (str (vec ks)))))))
+     :cljs (try
+             (rems.tempura/tr (conj (vec ks)
+                                    (text-format :t/missing (vec ks))))
+             (catch js/Object e
+               ;; fail gracefully if the re-frame state is incomplete
+               (.error js/console e)
+               (str (vec ks))))))
 
 (defn localized [m]
-  (let [lang #?(:clj context/*lang*
-                :cljs @(rf/subscribe [:language]))]
+  (let [lang (rems.tempura/get-language)]
     (or (get m lang)
         (first (vals m)))))
 
@@ -152,7 +147,6 @@
             (is (= "2020-09-29" (localize-utc-date (time/to-time-zone (time/date-time 2020 9 29 1 1)
                                                                       (time/time-zone-for-offset -5))))))))
 
-
 (def ^:private event-types
   {:application.event/applicant-changed :t.applications.events/applicant-changed
    :application.event/approved :t.applications.events/approved
@@ -188,6 +182,13 @@
    :application.event/submitted :t.applications.events/submitted
    :application.event/voted :t.applications.events/voted})
 
+(defn localize-user
+  "Returns localization for special user if possible. Otherwise returns formatted user."
+  [user]
+  (case (:userid user)
+    "rems-handler" (text :t.roles/anonymous-handler)
+    (application-util/get-member-name user)))
+
 (defn localize-decision [event]
   (when-let [decision (:application/decision event)]
     (text-format
@@ -195,7 +196,7 @@
        :approved :t.applications.events/approved
        :rejected :t.applications.events/rejected
        :t.applications.events/unknown)
-     (application-util/get-member-name (:event/actor-attributes event)))))
+     (localize-user (:event/actor-attributes event)))))
 
 (defn localize-invitation [{:keys [name email]}]
   (str name " <" email ">"))
@@ -205,14 +206,14 @@
     (str
      (text-format
       (get event-types event-type :t.applications.events/unknown)
-      (application-util/get-member-name (:event/actor-attributes event))
+      (localize-user (:event/actor-attributes event))
       (case event-type
         :application.event/review-requested
-        (str/join ", " (mapv application-util/get-member-name
+        (str/join ", " (mapv localize-user
                              (:application/reviewers event)))
 
         :application.event/decision-requested
-        (str/join ", " (mapv application-util/get-member-name
+        (str/join ", " (mapv localize-user
                              (:application/deciders event)))
 
         :application.event/created
@@ -223,10 +224,10 @@
 
         (:application.event/member-added
          :application.event/member-removed)
-        (application-util/get-member-name (:application/member event))
+        (localize-user (:application/member event))
 
         :application.event/applicant-changed
-        (application-util/get-member-name (:application/applicant event))
+        (localize-user (:application/applicant event))
 
         (:application.event/member-invited
          :application.event/member-uninvited)
@@ -262,9 +263,15 @@
   "If attachment is redacted, return localized text for redacted attachment.
    Otherwise return value of :attachment/filename."
   [attachment]
-  (if (= :filename/redacted (:attachment/filename attachment))
-    (text :t.applications/attachment-filename-redacted)
-    (:attachment/filename attachment)))
+  (let [filename (:attachment/filename attachment)]
+    (cond
+      (= :filename/redacted filename)
+      (text :t.applications/attachment-filename-redacted)
+
+      (:attachment/redacted attachment)
+      (text-format :t.label/parens filename (text :t.applications/attachment-filename-redacted))
+
+      :else filename)))
 
 (def ^:private localized-roles
   {;; :api-key

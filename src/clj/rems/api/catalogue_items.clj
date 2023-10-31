@@ -3,7 +3,7 @@
             [compojure.api.sweet :refer :all]
             [rems.api.schema :as schema]
             [rems.service.catalogue :as catalogue]
-            [rems.api.util :refer [not-found-json-response check-user]] ; required for route :roles
+            [rems.api.util :refer [not-found-json-response check-user extended-logging]] ; required for route :roles
             [rems.common.roles :refer [+admin-write-roles+]]
             [rems.common.util :refer [apply-filters]]
             [rems.schema-base :as schema-base]
@@ -30,7 +30,7 @@
 ;; TODO resid is misleading: it's the internal id, not the string id
 ;; Should we take the string id instead?
 (s/defschema CreateCatalogueItemCommand
-  {:form (s/maybe s/Int)
+  {(s/optional-key :form) (s/maybe s/Int)
    :resid s/Int
    :wfid s/Int
    :organization schema-base/OrganizationId
@@ -80,13 +80,14 @@
                                                      :expand-names? (str/includes? (or expand "") "names")
                                                      :archived archived}))))
 
-    (POST "/:item-id/change-form" []
+    (POST "/:item-id/change-form" request
       :summary "Change catalogue item form. Creates a copy and ends the old."
       :roles +admin-write-roles+
       :path-params [item-id :- (describe s/Int "catalogue item")]
       :body [command ChangeFormCommand]
       :responses {200 {:schema ChangeFormResponse}
                   404 {:schema s/Any :description "Not found"}}
+      (extended-logging request)
       (if-let [it (catalogue/get-localized-catalogue-item item-id)]
         (ok (catalogue/change-form! it (:form command)))
         (not-found-json-response)))
@@ -102,32 +103,36 @@
         (ok it)
         (not-found-json-response)))
 
-    (POST "/create" []
+    (POST "/create" request
       :summary "Create a new catalogue item"
       :roles +admin-write-roles+
       :body [command CreateCatalogueItemCommand]
       :return CreateCatalogueItemResponse
+      (extended-logging request)
       (ok (catalogue/create-catalogue-item! command)))
 
-    (PUT "/edit" []
+    (PUT "/edit" request
       :summary "Edit a catalogue item"
       :roles +admin-write-roles+
       :body [command EditCatalogueItemCommand]
       :return schema/SuccessResponse
+      (extended-logging request)
       (if (nil? (catalogue/get-localized-catalogue-item (:id command)))
         (not-found-json-response)
         (ok (catalogue/edit-catalogue-item! command))))
 
-    (PUT "/archived" []
+    (PUT "/archived" request
       :summary "Archive or unarchive catalogue item"
       :roles +admin-write-roles+
       :body [command schema/ArchivedCommand]
       :return schema/SuccessResponse
+      (extended-logging request)
       (ok (catalogue/set-catalogue-item-archived! command)))
 
-    (PUT "/enabled" []
+    (PUT "/enabled" request
       :summary "Enable or disable catalogue item"
       :roles +admin-write-roles+
       :body [command schema/EnabledCommand]
       :return schema/SuccessResponse
+      (extended-logging request)
       (ok (catalogue/set-catalogue-item-enabled! command)))))

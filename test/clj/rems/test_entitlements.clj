@@ -8,7 +8,7 @@
             [rems.db.testing :refer [reset-caches-fixture test-db-fixture rollback-db-fixture]]
             [rems.entitlements :as entitlements]
             [rems.json :as json]
-            [rems.testing-util :refer [fixed-time-fixture suppress-logging]]
+            [rems.testing-util :refer [fixed-time-fixture suppress-logging-fixture]]
             [stub-http.core :as stub]))
 
 (def +test-time+ (time/date-time 2050 01 01)) ;; needs to be in the future so that catalogue items are active
@@ -17,7 +17,7 @@
 (use-fixtures
   :once
   (fixed-time-fixture +test-time+)
-  (suppress-logging "rems.db.entitlements")
+  (suppress-logging-fixture "rems.db.entitlements")
   test-db-fixture
   rollback-db-fixture
   reset-caches-fixture)

@@ -1,6 +1,6 @@
 (ns rems.actions.request-decision
   (:require [re-frame.core :as rf]
-            [rems.actions.components :refer [action-attachment action-link comment-field action-form-view button-wrapper command! user-selection]]
+            [rems.actions.components :refer [action-attachment action-link comment-field action-form-view command! user-selection perform-action-button]]
             [rems.text :refer [text]]))
 
 (def ^:private action-form-id "request-decision")
@@ -35,11 +35,11 @@
   [{:keys [application-id disabled on-send]}]
   [action-form-view action-form-id
    (text :t.actions/request-decision-from-user)
-   [[button-wrapper {:id "request-decision"
-                     :text (text :t.actions/request-decision)
-                     :class "btn-primary"
-                     :on-click on-send
-                     :disabled disabled}]]
+   [[perform-action-button {:id "request-decision"
+                            :text (text :t.actions/request-decision)
+                            :class "btn-primary"
+                            :on-click on-send
+                            :disabled disabled}]]
    [:div
     [user-selection {:field-key action-form-id
                      :subscription [:rems.actions.components/deciders]}]

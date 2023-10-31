@@ -92,6 +92,23 @@
                    (select-keys
                     (api-call :get (str "/api/catalogue-items/" (:id data)) nil
                               +test-api-key+ "owner")
+                    [:formid :form-name])))))
+
+        (let [data (api-call :post "/api/catalogue-items/create"
+                             {;; no :form necessary
+                              :resid res-id
+                              :wfid wf-id
+                              :organization {:organization/id "organization1"}
+                              :archived false
+                              :localizations {}}
+                             +test-api-key+ "owner")]
+          (is (:success data))
+          (testing "and fetch"
+            (is (= {:formid nil
+                    :form-name nil}
+                   (select-keys
+                    (api-call :get (str "/api/catalogue-items/" (:id data)) nil
+                              +test-api-key+ "owner")
                     [:formid :form-name])))))))))
 
 (deftest catalogue-items-edit-test

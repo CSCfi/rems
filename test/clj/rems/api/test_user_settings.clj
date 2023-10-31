@@ -108,27 +108,26 @@
     (testing "success"
       (with-fake-login-users {user-id {:sub user-id :name "Test User" :email "test.user@example.com"}}
         (with-fixed-time (time-core/date-time 2021)
-          (fn []
-            (run-with-ega-server
-             {"/p/api_key/generate" {:status 200 :content-type "application/json" :body (json/generate-string {:token "access-token-xyz"})}}
-             (fn [_server]
-               (let [cookie (login-with-cookies user-id)
-                     csrf (get-csrf-token cookie)]
-                 (testing "generate-ega-api-key with session"
-                   (is (= {:status 200
-                           :body {:success true
-                                  :api-key-expiration-date "2022-01-01T00:00:00.000Z"}} ; one year expiry
-                          (-> (request :post "/api/user-settings/generate-ega-api-key")
-                              (header "Cookie" cookie)
-                              (header "x-csrf-token" csrf)
-                              handler
-                              assert-response-is-ok
-                              read-body-and-status)))
-                   (is (= (time-core/date-time 2022)
-                          (get-in (user-settings/get-user-settings user-id) [:ega :api-key-expiration-date]))
-                       "one year expiry")
-                   (is (= {:ega {:api-key "access-token-xyz"}}
-                          (user-secrets/get-user-secrets user-id)))))))))))))
+          (run-with-ega-server
+           {"/p/api_key/generate" {:status 200 :content-type "application/json" :body (json/generate-string {:token "access-token-xyz"})}}
+           (fn [_server]
+             (let [cookie (login-with-cookies user-id)
+                   csrf (get-csrf-token cookie)]
+               (testing "generate-ega-api-key with session"
+                 (is (= {:status 200
+                         :body {:success true
+                                :api-key-expiration-date "2022-01-01T00:00:00.000Z"}} ; one year expiry
+                        (-> (request :post "/api/user-settings/generate-ega-api-key")
+                            (header "Cookie" cookie)
+                            (header "x-csrf-token" csrf)
+                            handler
+                            assert-response-is-ok
+                            read-body-and-status)))
+                 (is (= (time-core/date-time 2022)
+                        (get-in (user-settings/get-user-settings user-id) [:ega :api-key-expiration-date]))
+                     "one year expiry")
+                 (is (= {:ega {:api-key "access-token-xyz"}}
+                        (user-secrets/get-user-secrets user-id))))))))))))
 
 (deftest test-delete-api-key
   (test-data/create-test-api-key!)
@@ -141,22 +140,21 @@
     (testing "setup api-key to delete"
       (with-fake-login-users {handler-id {:sub handler-id :name "Handler" :email "handler@example.com"}}
         (with-fixed-time (time-core/date-time 2021)
-          (fn []
-            (run-with-ega-server
-             {"/p/api_key/generate" {:status 200 :content-type "application/json" :body (json/generate-string {:token "access-token-xyz"})}}
-             (fn [_server]
-               (let [cookie (login-with-cookies handler-id)
-                     csrf (get-csrf-token cookie)]
-                 (testing "generate-ega-api-key with session"
-                   (is (= {:status 200
-                           :body {:success true
-                                  :api-key-expiration-date "2022-01-01T00:00:00.000Z"}}
-                          (-> (request :post "/api/user-settings/generate-ega-api-key")
-                              (header "Cookie" cookie)
-                              (header "x-csrf-token" csrf)
-                              handler
-                              assert-response-is-ok
-                              read-body-and-status)))))))))))
+          (run-with-ega-server
+           {"/p/api_key/generate" {:status 200 :content-type "application/json" :body (json/generate-string {:token "access-token-xyz"})}}
+           (fn [_server]
+             (let [cookie (login-with-cookies handler-id)
+                   csrf (get-csrf-token cookie)]
+               (testing "generate-ega-api-key with session"
+                 (is (= {:status 200
+                         :body {:success true
+                                :api-key-expiration-date "2022-01-01T00:00:00.000Z"}}
+                        (-> (request :post "/api/user-settings/generate-ega-api-key")
+                            (header "Cookie" cookie)
+                            (header "x-csrf-token" csrf)
+                            handler
+                            assert-response-is-ok
+                            read-body-and-status))))))))))
 
     (testing "without authentication"
       (let [{:keys [body] :as response} (-> (request :post "/api/user-settings/delete-ega-api-key")
@@ -186,19 +184,18 @@
     (testing "success"
       (with-fake-login-users {handler-id {:sub handler-id :name "Handler" :email "handler@example.com"}}
         (with-fixed-time (time-core/date-time 2021)
-          (fn []
-            (run-with-ega-server
-             {{:path (str "/p/api_key/" handler-id) :method "DELETE"} {:status 200 :content-type "application/json" :body ""}}
-             (fn [server]
-               (let [cookie (login-with-cookies handler-id)
-                     csrf (get-csrf-token cookie)]
-                 (testing "delete-ega-api-key with session"
-                   (is (= {:status 200
-                           :body {:success true}}
-                          (-> (request :post "/api/user-settings/delete-ega-api-key")
-                              (header "Cookie" cookie)
-                              (header "x-csrf-token" csrf)
-                              handler
-                              assert-response-is-ok
-                              read-body-and-status)))))))))))))
+          (run-with-ega-server
+           {{:path (str "/p/api_key/" handler-id) :method "DELETE"} {:status 200 :content-type "application/json" :body ""}}
+           (fn [server]
+             (let [cookie (login-with-cookies handler-id)
+                   csrf (get-csrf-token cookie)]
+               (testing "delete-ega-api-key with session"
+                 (is (= {:status 200
+                         :body {:success true}}
+                        (-> (request :post "/api/user-settings/delete-ega-api-key")
+                            (header "Cookie" cookie)
+                            (header "x-csrf-token" csrf)
+                            handler
+                            assert-response-is-ok
+                            read-body-and-status))))))))))))
 

@@ -4,7 +4,7 @@
             [goog.string.format]
             [re-frame.core :as rf]
             [reagent.core :as rc]
-            [rems.actions.components :refer [action-attachment action-button comment-field action-form-view button-wrapper command!]]
+            [rems.actions.components :refer [action-attachment action-button comment-field action-form-view command! perform-action-button]]
             [rems.common.application-util :as application-util]
             [rems.common.util :refer [build-index]]
             [rems.dropdown :as dropdown]
@@ -58,11 +58,11 @@
   [{:keys [application-id previous-vote disabled vote on-vote on-send]}]
   [action-form-view action-form-id
    (text :t.actions/vote)
-   [[button-wrapper {:id "vote-button"
-                     :text (text :t.actions/vote)
-                     :class "btn-primary"
-                     :disabled disabled
-                     :on-click on-send}]]
+   [[perform-action-button {:id "vote-button"
+                            :text (text :t.actions/vote)
+                            :class "btn-primary"
+                            :disabled disabled
+                            :on-click on-send}]]
    [:<>
     (when previous-vote
       (text-format :t.applications.voting/previously-voted

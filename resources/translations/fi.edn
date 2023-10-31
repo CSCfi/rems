@@ -38,6 +38,7 @@
                      :entitlement-end-not-in-future "Pääsyoikeuksien vanhenemispäivän täytyy olla tulevaisuudessa."}
             :generate-ega-api-key-in-profile "Luo avain Profiili-sivulla."
             :handled-applications "Käsitellyt hakemukset"
+            :handled-applications-count "Käsiteltyjä hakemuksia on %:count% kpl."
             :invite-member "Kutsu jäsen"
             :licenses-selection "Lisää käyttöehtoja"
             :member "Jäsen"
@@ -70,11 +71,13 @@
             :review "Katselmoi"
             :revoke "Peru käyttöoikeus"
             :todo-applications "Avoimet hakemukset"
+            :todo-applications-count "Avoimia hakemuksia on %:count% kpl."
             :vote "Äänestä"}
   :administration {:active "Aktiivinen"
                    :add "Lisää"
                    :added-at "Lisätty"
                    :added-by "Lisääjä"
+                   :anonymize-handling "Anonymisoitu käsittely"
                    :application-state "Hakemuksen tila"
                    :archive "Arkistoi"
                    :back "Takaisin"
@@ -136,6 +139,7 @@
                    :name "Nimi"
                    :no-categories "Ei kategorioita"
                    :no-form "Ei lomaketta"
+                   :no-forms "Ei lomakkeita"
                    :no-licenses "Ei lisenssejä"
                    :no-voting "Ei äänestystä"
                    :optional "(valinnainen)"
@@ -163,7 +167,9 @@
                    :voting "Äänestys"
                    :workflow "Työvuo"
                    :workflows "Työvuot"
-                   :workflow-disabled-commands-explanation [:p "Tämä työvuo poistaa toimintoja käyttäjiltä ehtojen täyttyessä. Toiminnot, hakemusten tilat ja käyttäjien roolit löytyvät " [:a {:href "https://github.com/CSCfi/rems/blob/master/docs/application-permissions.md" :target :_blank} "REMSin Github-sivulta."]]}
+                   :workflow-anonymize-handling-explanation "Tämä työvuo piilottaa käsittelijöiden henkilökohtaiset tunnistetiedot (kuten nimen ja sähköpostiosoitteen) hakijoilta."
+                   :workflow-disabled-commands-explanation [:p "Tämä työvuo poistaa toimintoja käyttäjiltä ehtojen täyttyessä. Toiminnot, hakemusten tilat ja käyttäjien roolit löytyvät " [:a {:href "https://github.com/CSCfi/rems/blob/master/docs/application-permissions.md" :target :_blank} "REMSin Github-sivulta."]]
+                   :workflow-type "Työvuon tyyppi"}
   :applicant-info {:applicant "Hakija"
                    :applicants "Hakijat"
                    :email "Sähköposti"
@@ -189,6 +195,8 @@
                  :duos {:validation {:missing-duo-codes "DUO-koodit ovat määritetty resursseihin, mutta puuttuvat hakemuksesta:"}}
                  :empty "Ei hakemuksia."
                  :entitlement-end "Pääsyoikeudet loppuvat %1."
+                 :event {:not-shown-to-applicant "Ei näytetä hakijalle"
+                         :shown-to-applicant "Näytetään hakijalle"}
                  :events {:applicant-changed "%1 vaihtoi hakijan henkilöksi %2."
                           :approved "%1 hyväksyi hakemuksen."
                           :attachments-redacted "%1 poisti liitetiedostoja. %2"
@@ -230,13 +238,14 @@
                           :resources "Resurssit"
                           :state "Tila"}
                  :handlers "Käsittelijät"
-                 :highlight-related-events "Näytä liittyvät tapahtumat."
                  :id "Tunniste"
                  :intro [:div.intro [:p "Täytä hakemus ja lähetä se käsiteltäväksi. Hakemukseen voi kutsua jäseniksi useampia hakijoita, joista jokaisen on hyväksyttävä käyttöehdot viimeistään kun hakemus on hyväksytty."]]
                  :last-activity "Muokattu"
                  :latest-activity "Viimeisin toimenpide"
                  :my-applications "Omat hakemukset"
+                 :redacted-attachments "Poistetut liitetiedostot"
                  :redacted-attachments-replaced "Uudet liitetiedostot korvaavat poistetut liitetiedostot."
+                 :replacing-attachments "Uudet liitetiedostot"
                  :resource "Resurssi"
                  :state "Tila"
                  :states {:approved "Hyväksytty"
@@ -586,7 +595,8 @@
             :settings "Asetukset"
             :warning-about-missing-email [:<> "Sinun on " [:a {:href "/profile"} "lisättävä sähköpostiosoite asetuksiisi"] ", jotta voisit vastaanottaa ilmoituksia hakemuksistasi."]
             :your-details "Käyttäjätietosi"}
-  :roles {:applicant "Hakija"
+  :roles {:anonymous-handler :fi.t.roles/handler
+          :applicant "Hakija"
           :decider "Päättäjä"
           :handler "Käsittelijä"
           :member "Jäsen"
@@ -600,10 +610,12 @@
            :search "Etsi"} ; "Hae" would be more natural, but the catalogue page uses the same word for another meaning
   :table {:ascending-order "Nouseva järjestys"
           :descending-order "Laskeva järjestys"
+          :first-rows-only "Näytetään vain ensimmäiset %1 riviä."
           :all-rows-selected "Kaikki rivit valittuna"
           :no-rows-selected "Ei yhtään riviä valittuna"
+          :show-all-rows "Näytä kaikki rivit"
           :some-rows-selected "Joitain rivejä valittuna"
-          :show-all-n-rows "Näytä kaikki %1 riviä"}
+          :paging {:page "Sivu"}}
   :unauthorized-page {:unauthorized "Ei käyttöoikeutta"
                       :you-are-unauthorized "Sinulla ei ole tämän sivun käyttöoikeutta."}
   :unknown "Tuntematon"

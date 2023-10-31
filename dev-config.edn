@@ -92,6 +92,7 @@
  :enable-catalogue-tree true
  :enable-save-compaction true
  :enable-autosave true
+ :enable-extended-logging true
 
  ;; let's use plugins in dev
  :oidc-require-name false
@@ -115,4 +116,5 @@
  :extension-points {:extension-point/transform-user-data [:plugin/AARC-G069-group-split]
                     :extension-point/validate-user-data [:plugin/validate-attributes]}
 
- :enable-voting true}
+ :enable-voting true
+ :tables {:rems.catalogue/catalogue {:paging? false}}}

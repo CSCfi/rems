@@ -110,7 +110,6 @@
          (s/optional-key :duo-codes) [schema-base/DuoCode]))
 (s/defschema SendExpirationNotificationsCommand
   (assoc CommandBase
-         :last-activity DateTime
          :expires-on DateTime))
 (s/defschema SubmitCommand
   CommandBase)
@@ -445,7 +444,7 @@
         attachments (build-index {:keys [:attachment/id]} (:application/attachments application))
         forbidden-ids (->> redacted-ids
                            (keep #(get attachments %))
-                           (remove #(application-util/can-redact-attachment % roles (:actor cmd)))
+                           (remove #(application-util/can-redact-attachment? % roles (:actor cmd)))
                            (map :attachment/id))]
     (when (seq forbidden-ids)
       {:errors [{:type :forbidden-redact-attachments
@@ -459,7 +458,7 @@
       (add-comment-and-attachments cmd application injections
                                    {:event/type :application.event/attachments-redacted
                                     :event/redacted-attachments (vec (:redacted-attachments cmd))
-                                    :application/public (:public cmd)})))
+                                    :event/public (:public cmd)})))
 
 (defmethod command-handler :application.command/reject
   [cmd application injections]
@@ -535,7 +534,7 @@
   [cmd application injections]
   (add-comment-and-attachments cmd application injections
                                {:event/type :application.event/remarked
-                                :application/public (:public cmd)}))
+                                :event/public (:public cmd)}))
 
 (defmethod command-handler :application.command/add-licenses
   [cmd application injections]
@@ -721,8 +720,7 @@
   [cmd _application _injections]
   (or (invalid-expiration-error cmd)
       (ok {:event/type :application.event/expiration-notifications-sent
-           :last-activity (:last-activity cmd)
-           :expires-on (:expires-on cmd)})))
+           :application/expires-on (:expires-on cmd)})))
 
 (defn- add-common-event-fields-from-command [event cmd]
   (-> event

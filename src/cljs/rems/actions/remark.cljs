@@ -1,6 +1,6 @@
 (ns rems.actions.remark
   (:require [re-frame.core :as rf]
-            [rems.actions.components :refer [action-attachment action-button action-form-view comment-field button-wrapper command! comment-public-field]]
+            [rems.actions.components :refer [action-attachment action-button action-form-view comment-field command! comment-public-field perform-action-button]]
             [rems.text :refer [text]]))
 
 (def ^:private action-form-id "remark")
@@ -34,11 +34,11 @@
   [{:keys [application-id disabled on-send]}]
   [action-form-view action-form-id
    (text :t.actions/remark)
-   [[button-wrapper {:id action-form-id
-                     :text (text :t.actions/remark)
-                     :class "btn-primary"
-                     :disabled disabled
-                     :on-click on-send}]]
+   [[perform-action-button {:id action-form-id
+                            :text (text :t.actions/remark)
+                            :class "btn-primary"
+                            :disabled disabled
+                            :on-click on-send}]]
    [:div
     [comment-field {:field-key action-form-id
                     :label (text :t.form/add-remark)}]
@@ -52,7 +52,8 @@
         comment @(rf/subscribe [:rems.actions.components/comment action-form-id])
         public @(rf/subscribe [:rems.actions.components/comment-public action-form-id])]
     [remark-view {:application-id application-id
-                  :disabled (and (empty? comment) (empty? attachments))
+                  :disabled (and (empty? comment)
+                                 (empty? attachments))
                   :on-send #(rf/dispatch [::send-remark {:application-id application-id
                                                          :comment comment
                                                          :public public

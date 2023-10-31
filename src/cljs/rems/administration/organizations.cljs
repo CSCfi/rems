@@ -110,23 +110,20 @@
                                  [modify-organization-dropdown organization]]}})))
 
 (defn- organizations-list []
-  (let [organizations-table {:id ::organizations
-                             :columns [{:key :short-name
-                                        :title (text :t.administration/short-name)}
-                                       {:key :name
-                                        :title (text :t.administration/title)}
-                                       {:key :active
-                                        :title (text :t.administration/active)
-                                        :filterable? false}
-                                       {:key :commands
-                                        :sortable? false
-                                        :filterable? false
-                                        :aria-label (text :t.actions/commands)}]
-                             :rows [::organizations-table-rows]
-                             :default-sort-column :name}]
-    [:div.mt-3
-     [table/search organizations-table]
-     [table/table organizations-table]]))
+  [table/standard {:id ::organizations
+                   :columns [{:key :short-name
+                              :title (text :t.administration/short-name)}
+                             {:key :name
+                              :title (text :t.administration/title)}
+                             {:key :active
+                              :title (text :t.administration/active)
+                              :filterable? false}
+                             {:key :commands
+                              :sortable? false
+                              :filterable? false
+                              :aria-label (text :t.actions/commands)}]
+                   :rows [::organizations-table-rows]
+                   :default-sort-column :name}])
 
 (defn organizations-page []
   (into [:div

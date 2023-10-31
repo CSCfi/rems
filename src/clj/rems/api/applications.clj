@@ -1,10 +1,11 @@
 (ns rems.api.applications
   (:require [clj-time.core :as time]
+            [clj-time.coerce :as time-coerce]
             [clojure.string :as str]
             [compojure.api.sweet :refer :all]
             [medley.core :refer [update-existing]]
             [rems.api.schema :as schema]
-            [rems.api.util :as api-util] ; required for route :roles
+            [rems.api.util :as api-util :refer [extended-logging]] ; required for route :roles
             [rems.application.commands :as commands]
             [rems.application.search :as search]
             [rems.auth.auth :as auth]
@@ -71,7 +72,12 @@
                          :value schema-base/FieldValue}]
          (s/optional-key :duo-codes) [schema-base/DuoCode]))
 
+(s/defschema Count
+  s/Int)
+
 ;; Api implementation
+
+(def last-activity (comp time-coerce/to-long :application/last-activity))
 
 (defn- filter-with-search [query apps]
   (if (str/blank? query)
@@ -101,12 +107,13 @@
 
 (defmacro command-endpoint [command schema & [additional-doc]]
   (let [path (str "/" (name command))]
-    `(POST ~path []
+    `(POST ~path ~'request
        :summary ~(str "Submit a `" (name command) "` command for an application. " additional-doc)
        :roles #{:logged-in}
-       :body [request# ~schema]
+       :body [body# ~schema]
        :return schema/SuccessResponse
-       (ok (api-command ~command request#)))))
+       (extended-logging ~'request)
+       (ok (api-command ~command body#)))))
 
 (defn accept-invitation [invitation-token]
   (if-let [application-id (application/get-application-id-by-invitation-token invitation-token)]
@@ -162,27 +169,38 @@
                (filter-with-search query)
                (mapv project-application-overview))))
 
+    (GET "/handled/count" []
+      :summary "Get count of all applications that the current user no more needs to act on."
+      :roles #{:logged-in}
+      :return Count
+      (ok (todos/get-handled-todos-count (getx-user-id))))
+
     (GET "/handled" []
       :summary "Get all applications that the current user no more needs to act on."
       :roles #{:logged-in}
       :return [schema/ApplicationOverview]
-      :query-params [{query :- (describe s/Str "search query [documentation](https://github.com/CSCfi/rems/blob/master/docs/search.md)") nil}]
-      (ok (->> (todos/get-handled-todos (getx-user-id))
-               (filter-with-search query)
-               (mapv project-application-overview))))
+      :query-params [{query :- (describe s/Str "search query [documentation](https://github.com/CSCfi/rems/blob/master/docs/search.md)") nil}
+                     {limit :- (describe s/Int "how many results to return") nil}]
+      (ok (cond->> (todos/get-handled-todos (getx-user-id))
+            query (filter-with-search query)
+            true (sort-by last-activity >)
+            limit (take limit)
+            true (mapv project-application-overview))))
 
-    (POST "/create" []
+    (POST "/create" request
       :summary "Create a new application"
       :roles #{:logged-in}
-      :body [request CreateApplicationCommand]
+      :body [command CreateApplicationCommand]
       :return CreateApplicationResponse
-      (ok (api-command :application.command/create request)))
+      (extended-logging request)
+      (ok (api-command :application.command/create command)))
 
-    (POST "/copy-as-new" []
+    (POST "/copy-as-new" request
       :summary "Create a new application as a copy of an existing application."
       :roles #{:logged-in}
       :body [request commands/CopyAsNewCommand]
       :return CopyAsNewResponse
+      (extended-logging request)
       (ok (api-command :application.command/copy-as-new request)))
 
     (GET "/reviewers" []
@@ -221,26 +239,29 @@
         (attachment/download attachment)
         (api-util/not-found-json-response)))
 
-    (POST "/add-attachment" []
+    (POST "/add-attachment" request
       :summary "Add an attachment file related to an application"
       :roles #{:logged-in}
       :multipart-params [file :- schema/FileUpload]
       :query-params [application-id :- (describe s/Int "application id")]
       :return SaveAttachmentResponse
+      (extended-logging request)
       (ok (attachment/add-application-attachment (getx-user-id) application-id file)))
 
-    (POST "/accept-invitation" []
+    (POST "/accept-invitation" request
       :summary "Accept an invitation by token"
       :roles #{:logged-in}
       :query-params [invitation-token :- (describe s/Str "invitation token")]
       :return AcceptInvitationResult
+      (extended-logging request)
       (ok (accept-invitation invitation-token)))
 
-    (POST "/validate" []
+    (POST "/validate" request
       :summary "Validate the form, like in save, but nothing is saved. NB: At the moment, both errors and validations are identical, but this may not always be so."
       :roles #{:logged-in}
       :body [request ValidateRequest]
       :return schema/SuccessResponse
+      (extended-logging request) ; this is for completeness, nothing should be saved
       (ok (validate-application request)))
 
     (GET "/commands" []
@@ -277,8 +298,7 @@
     (command-endpoint :application.command/uninvite-member commands/UninviteMemberCommand)
     (command-endpoint :application.command/vote commands/VoteCommand)
 
-
-    ;; the path parameter matches also non-numeric paths, so this route must be after all overlapping routes
+;; the path parameter matches also non-numeric paths, so this route must be after all overlapping routes
     (GET "/:application-id" []
       :summary "Get application by `application-id`. Application is customized for the requesting user (e.g. event visibility, permissions, etc)."
       :roles #{:logged-in}
@@ -330,13 +350,13 @@
       :produces ["application/pdf"]
       (if-let [app (application/get-full-personalized-application-for-user (getx-user-id) application-id)]
         (with-language context/*lang*
-          #(-> app
-               (pdf/application-to-pdf-bytes)
-               (ByteArrayInputStream.)
-               (ok)
-               ;; could also set "attachment" here to force download:
-               (header "Content-Disposition" (str "filename=\"" application-id ".pdf\""))
-               (content-type "application/pdf")))
+          (-> app
+              (pdf/application-to-pdf-bytes)
+              (ByteArrayInputStream.)
+              (ok)
+              ;; could also set "attachment" here to force download:
+              (header "Content-Disposition" (str "filename=\"" application-id ".pdf\""))
+              (content-type "application/pdf")))
         (api-util/not-found-json-response)))
 
     (GET "/:application-id/license-attachment/:license-id/:language" []

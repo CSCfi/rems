@@ -14,6 +14,7 @@
             [rems.guide-util :refer [example]]
             [rems.language-switcher :as language-switcher]
             [rems.navbar :as nav]
+            [rems.paging :as paging]
             [rems.phase :as phase]
             [rems.profile :as profile]
             [rems.spinner :as spinner]
@@ -129,6 +130,7 @@
     [administration/guide]
 
     [:h2 "Misc components"]
+    [paging/guide]
     [table/guide]
     [tree/guide]
     [dropdown/guide]

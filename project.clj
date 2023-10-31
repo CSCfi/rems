@@ -24,7 +24,7 @@
                  [javax.xml.bind/jaxb-api "2.4.0-b180830.0359"]
                  [lambdaisland/deep-diff "0.0-47"]
                  [luminus-jetty "0.2.3"]
-                 [luminus-migrations "0.7.1"] ; 0.7.3 switches to next.jdbc, 0.7.5 fails: No such var: prepare/statement
+                 [luminus-migrations "0.7.2"] ; 0.7.3 switches to next.jdbc, 0.7.5 fails: No such var: prepare/statement
                  [luminus-nrepl "0.1.7"]
                  [luminus/ring-ttl-session "0.3.3"]
                  [macroz/hiccup-find "0.6.1"]
@@ -119,13 +119,14 @@
    :project/dev {:dependencies [[binaryage/devtools "1.0.6"]
                                 [com.clojure-goes-fast/clj-memory-meter "0.2.1"]
                                 [criterium "0.4.6"]
-                                [lambdaisland/kaocha "1.80.1274"]
+                                [lambdaisland/kaocha "1.86.1355"]
                                 [lambdaisland/kaocha-junit-xml "1.17.101"]
                                 [etaoin "1.0.39"]
                                 [ring/ring-mock "0.4.0" :exclusions [cheshire]]
                                 [se.haleby/stub-http "0.2.14"]
                                 [com.icegreen/greenmail "1.6.12"]
-                                [macroz/tangle "0.2.2"]]
+                                [macroz/tangle "0.2.2"]
+                                [peridot "0.5.4"]]
 
                  :plugins [[lein-ancient "0.6.15"]]
 

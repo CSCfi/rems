@@ -1,7 +1,7 @@
 (ns rems.api.invitations
   (:require [compojure.api.sweet :refer :all]
             [rems.service.invitation :as invitation]
-            [rems.api.util :refer [not-found-json-response]] ; required for route :roles
+            [rems.api.util :refer [extended-logging not-found-json-response]] ; required for route :roles
             [rems.common.roles :refer [+admin-read-roles+ +admin-write-roles+]]
             [rems.schema-base :as schema-base]
             [rems.util :refer [getx-user-id]]
@@ -49,16 +49,18 @@
                                              (when (some? sent) {:sent sent})
                                              (when (some? accepted) {:accepted accepted})))))
 
-    (POST "/create" []
+    (POST "/create" request
       :summary "Create an invitation. The invitation will be sent asynchronously to the recipient."
       :roles +admin-write-roles+
       :body [command CreateInvitationCommand]
       :return CreateInvitationResponse
+      (extended-logging request)
       (ok (invitation/create-invitation! (assoc command :userid (getx-user-id)))))
 
-    (POST "/accept-invitation" []
+    (POST "/accept-invitation" request
       :summary "Accept an invitation. The invitation token will be spent."
       :roles #{:logged-in}
       :query-params [{token :- (describe s/Str "secret token of the invitation") false}]
       :return AcceptInvitationResponse
+      (extended-logging request)
       (ok (invitation/accept-invitation! {:userid (getx-user-id) :token token})))))

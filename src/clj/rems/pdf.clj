@@ -1,11 +1,11 @@
 (ns rems.pdf
   "Rendering applications as pdf"
-  (:require [clj-pdf.core :refer :all]
+  (:require [clj-pdf.core :refer [pdf]]
             [clj-time.core :as time]
             [clojure.string :as str]
             [rems.common.application-util :as application-util]
             [rems.common.form :as form]
-            [rems.common.util :refer [build-index]]
+            [rems.common.util :refer [build-index index-by]]
             [rems.config :refer [env]]
             [rems.context :as context]
             [rems.text :refer [localized localize-decision localize-event localize-attachment localize-state localize-time text text-format with-language]]
@@ -185,6 +185,19 @@
              (doall (for [field fields]
                       (render-field filenames field))))))))
 
+(defn- render-redacted-attachments [attachments-by-id redacted-attachments attachments]
+  (str "\n" (text-format :t.label/default
+                         (text :t.applications/redacted-attachments)
+                         (str/join ", " (for [id redacted-attachments
+                                              :let [att (get attachments-by-id id)]]
+                                          (localize-attachment (dissoc att :attachment/redacted)))))
+       (when (seq attachments)
+         (str "\n" (text-format :t.label/default
+                                (text :t.applications/replacing-attachments)
+                                (str/join ", " (for [id attachments
+                                                     :let [att (get attachments-by-id id)]]
+                                                 (localize-attachment att))))))))
+
 (defn- render-events [application]
   (let [filenames (attachment-filenames application)
         events (getx application :application/events)]
@@ -197,7 +210,9 @@
          (doall
           (for [event events
                 :when (not (#{:application.event/draft-saved}
-                            (:event/type event)))]
+                            (:event/type event)))
+                :let [attachment-ids (map :attachment/id (:event/attachments event))
+                      redacted-ids (map :attachment/id (:event/redacted-attachments event))]]
             [:phrase
              (localize-time (:event/time event)) " " (localize-event event)
              (when-let [decision (localize-decision event)]
@@ -206,12 +221,19 @@
                (str "\n" (text-format :t.label/default
                                       (text :t.form/comment)
                                       comment)))
-             (when-some [attachments (seq (:event/attachments event))]
+             (cond
+               (seq redacted-ids)
+               (render-redacted-attachments (->> (:application/attachments application)
+                                                 (index-by [:attachment/id]))
+                                            redacted-ids
+                                            attachment-ids)
+
+               (seq attachment-ids)
                (str "\n" (text-format :t.label/default
                                       (text :t.form/attachments)
-                                      (->> attachments
-                                           (map (comp filenames :attachment/id))
-                                           (str/join ", ")))))]))])])))
+                                      (str/join ", " (map filenames attachment-ids))))
+
+               :else nil)]))])])))
 
 (defn- render-application [application]
   [(env :pdf-metadata)
@@ -234,6 +256,6 @@
 
 (comment
   (with-language :en
-    #(clojure.pprint/pprint (render-application application)))
+    (clojure.pprint/pprint (render-application application)))
   (with-language :en
-    #(application-to-pdf application "/tmp/application.pdf")))
+    (application-to-pdf application "/tmp/application.pdf")))

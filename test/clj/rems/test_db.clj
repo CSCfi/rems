@@ -8,11 +8,10 @@
             [rems.db.test-data-helpers :as test-helpers]
             [rems.db.testing :refer [test-db-fixture rollback-db-fixture]]
             [rems.service.application :as application]
-            [rems.service.test-data :as test-data]
-            [rems.testing-tempura :refer [fake-tempura-fixture]])
+            [rems.service.test-data :as test-data])
   (:import (rems.auth ForbiddenException)))
 
-(use-fixtures :once fake-tempura-fixture test-db-fixture)
+(use-fixtures :once test-db-fixture)
 (use-fixtures :each rollback-db-fixture)
 
 (deftest test-get-catalogue-items

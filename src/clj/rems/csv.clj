@@ -94,11 +94,11 @@
   (if (empty? applications)
     ""
     (text/with-language language
-      #(print-to-csv :column-names (concat (mapv (comp text/text :name) application-columns)
-                                           (form-field-names form-id (first applications)))
-                     :rows (mapv (partial application-to-row form-id) applications)
-                     :quote-strings? true
-                     :strip-line-returns? true))))
+      (print-to-csv :column-names (concat (mapv (comp text/text :name) application-columns)
+                                          (form-field-names form-id (first applications)))
+                    :rows (mapv (partial application-to-row form-id) applications)
+                    :quote-strings? true
+                    :strip-line-returns? true))))
 
 (defn applications-filename []
   (format "applications_%s.csv" (str/replace (text/localize-time (time/now)) " " "_")))

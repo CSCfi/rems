@@ -5,99 +5,198 @@
    See also: docs/bots.md"
   (:require [clojure.test :refer [deftest testing is]]
             [clj-time.core :as time]
+            [rems.common.application-util :as application-util]
+            [rems.common.util :refer [getx]]
             [rems.config :refer [env]])
   (:import [org.joda.time Period]))
 
-(defn- get-last-activity [application]
-  (let [last-event (last (:application/events application))]
-    (if (= (:event/type last-event)
-           :application.event/expiration-notifications-sent)
-      (:last-activity last-event) ; because events update :application/last-activity timestamp
-      (:application/last-activity application))))
+(defn- get-last-event [application]
+  (last (:application/events application)))
 
-(defn- expiration-time [application]
-  (when-some [delete-after (get-in env [:application-expiration
-                                        (:application/state application)
-                                        :delete-after])]
-    (-> (get-last-activity application)
-        (time/plus (Period/parse delete-after)))))
+(defn- get-last-event-when-notification [application]
+  (let [last-event (get-last-event application)]
+    (when (= (:event/type last-event)
+             :application.event/expiration-notifications-sent)
+      last-event)))
 
-(defn- expire-application [application]
-  (when (some-> (expiration-time application)
-                (time/before? (time/now)))
-    {:type :application.command/delete
-     :time (time/now)
-     :actor "expirer-bot"
-     :application-id (:application/id application)}))
+(defn- calculate-expiration-time [expiration application]
+  (when-let [delete-after (:delete-after expiration)]
+    (some-> application
+            application-util/get-last-applying-user-event ; NB: often :application/last-activity is good too
+            (getx :event/time)
+            (time/plus (Period/parse delete-after)))))
 
-(deftest test-expire-application
-  (with-redefs [env {:application-expiration {:application.state/draft {:delete-after "P90D"}
-                                              :application.state/closed {:delete-after "P7D"}}}]
-    (testing "should identify expired application by state"
-      (let [over-90d-ago (time/minus (time/now) (time/days 90) (time/seconds 1))
-            over-7d-ago (time/minus (time/now) (time/days 7) (time/seconds 1))
-            over-1d-ago (time/minus (time/now) (time/days 1) (time/seconds 1))]
-        (is (some? (expire-application {:application/state :application.state/draft
-                                        :application/last-activity over-90d-ago})))
-        (is (not (expire-application {:application/state :application.state/draft
-                                      :application/last-activity over-7d-ago})))
-        (is (some? (expire-application {:application/state :application.state/closed
-                                        :application/last-activity over-7d-ago})))
-        (is (not (expire-application {:application/state :application.state/closed
-                                      :application/last-activity over-1d-ago})))
-        (is (not (expire-application {:application/state :application.state/rejected
-                                      :application/last-activity over-90d-ago})))))))
+(defn- get-expiration-time [application]
+  (some-> application
+          get-last-event-when-notification
+          :application/expires-on))
 
-(defn- reminder-time [application]
-  (let [expiration (get-in env [:application-expiration
-                                (:application/state application)])
-        delete-after (:delete-after expiration)
+(defn- is-reminder-configured? [expiration]
+  (:reminder-before expiration))
+
+(defn- expiration-notification-sent?
+  "Has the expiration notification been sent and nothing else has happened since."
+  [expiration application]
+  (some? (get-last-event-when-notification application)))
+
+(defn- calculate-reminder-time [expiration application]
+  (let [delete-after (:delete-after expiration)
         reminder-before (:reminder-before expiration)]
     (when (and delete-after reminder-before)
-      (-> (:application/last-activity application)
+      (-> (:event/time (application-util/get-last-applying-user-event application))
           (time/plus (Period/parse delete-after))
           (time/minus (Period/parse reminder-before))))))
 
-(deftest test-reminder-time
-  (with-redefs [env {:application-expiration {:application.state/draft {:delete-after "P90D"
-                                                                        :reminder-before "P7D"}
-                                              :application.state/closed {:delete-after "P7D"}
-                                              :application.state/rejected {:reminder-before "P7D"}}}]
-    (let [now (time/now)]
-      (testing "should return reminder time when config is valid"
-        (is (time/equal? (time/plus now (time/days 83))
-                         (reminder-time {:application/state :application.state/draft
-                                         :application/last-activity now})))
-        (is (time/equal? now
-                         (reminder-time {:application/state :application.state/draft
-                                         :application/last-activity (time/minus now (time/days 83))})))
-        (is (time/equal? (time/minus now (time/days 1))
-                         (reminder-time {:application/state :application.state/draft
-                                         :application/last-activity (time/minus now (time/days 84))})))
-        (doseq [state [:application.state/closed
-                       :application.state/rejected
-                       :application.state/submitted]]
-          (is (nil? (reminder-time {:application/state state
-                                    :application/last-activity now}))
-              (str state " returns nil because configuration is missing")))))))
+(defn- enough-time-has-passed-since-notification?
+  "Has the user had enough time to react to the reminder?"
+  [expiration application now]
+  (when-let [notification-time (:event/time (get-last-event-when-notification application))]
+    (when-let [reminder-before (:reminder-before expiration)]
+      (time/before? (time/plus notification-time (Period/parse reminder-before))
+                    now))))
 
-(defn- should-send-email [application]
-  (let [last-event-type (-> application :application/events last :event/type)]
-    (and (not= last-event-type
-               :application.event/expiration-notifications-sent)
-         (some-> (reminder-time application)
-                 (time/before? (time/now))))))
+(defn- need-to-wait-for-notification? [expiration application now]
+  (and (is-reminder-configured? expiration)
+       (or (not (expiration-notification-sent? expiration application))
+           (not (enough-time-has-passed-since-notification? expiration application now)))))
 
-(defn- send-expiration-notifications [application]
-  (when (should-send-email application)
+(defn- expire-application [expiration application now]
+  (when-not (need-to-wait-for-notification? expiration application now)
+    (when-let [expiration-time (or (get-expiration-time application)
+                                   (calculate-expiration-time expiration application))]
+      (when (time/before? expiration-time now)
+        {:type :application.command/delete
+         :time now
+         :actor "expirer-bot"
+         :application-id (:application/id application)}))))
+
+(deftest test-expire-application
+  (let [now (time/now)
+        over-90d-ago (time/minus now (time/days 90) (time/seconds 2))
+        over-7d-ago (time/minus now (time/days 7) (time/seconds 2))
+        over-1d-ago (time/minus now (time/days 1) (time/seconds 2))]
+    (testing "without reminders"
+      (is (some? (expire-application {:delete-after "P90D"}
+                                     {:application/applicant {:userid "alice"}
+                                      :application/state :application.state/draft
+                                      :application/last-activity over-90d-ago
+                                      :application/events [{:event/type :application.event/created
+                                                            :event/time over-90d-ago
+                                                            :event/actor "alice"}
+                                                           ;; skip because not applying user
+                                                           {:event/type :application.event/remarked
+                                                            :event/time over-1d-ago
+                                                            :event/actor "hannah"}]}
+                                     now)))
+      (is (nil? (expire-application {:delete-after "P90D"}
+                                    {:application/state :application.state/draft
+                                     :application/last-activity over-7d-ago}
+                                    now))))
+
+    (testing "with reminder set"
+      (is (nil? (expire-application {:delete-after "P90D"
+                                     :reminder-before "P7D"}
+                                    {:application/state :application.state/draft
+                                     :application/last-activity over-90d-ago}
+                                    now))
+          "reminder not yet sent")
+
+      (is (nil? (expire-application {:delete-after "P90D"
+                                     :reminder-before "P7D"}
+                                    {:application/state :application.state/draft
+                                     :application/last-activity over-90d-ago
+                                     :application/events [{:event/type :application.event/expiration-notifications-sent
+                                                           :event/time over-1d-ago
+                                                           :application/expires-on now}]}
+                                    (time/plus now (time/seconds 1))))
+          "reminder sent but time not passed")
+
+      (is (some? (expire-application {:delete-after "P90D"
+                                      :reminder-before "P7D"}
+                                     {:application/state :application.state/draft
+                                      :application/last-activity over-90d-ago
+                                      :application/events [{:event/type :application.event/expiration-notifications-sent
+                                                            :event/time over-7d-ago
+                                                            :application/expires-on now}]}
+                                     (time/plus now (time/seconds 1))))
+          "reminder sent and enough time passed"))
+
+    (testing "if not configured"
+      (is (nil? (expire-application nil
+                                    {:application/state :application.state/draft
+                                     :application/last-activity over-90d-ago}
+                                    now))))))
+
+(deftest test-calculate-reminder-time
+  (let [now (time/now)]
+    (testing "should return reminder time when config is valid"
+      (is (time/equal? (time/plus now (time/days 83))
+                       (calculate-reminder-time {:delete-after "P90D"
+                                                 :reminder-before "P7D"}
+                                                {:application/applicant {:userid "alice"}
+                                                 :application/state :application.state/draft
+                                                 :application/last-activity now
+                                                 :application/events [{:event/type :application.event/created
+                                                                       :event/time now
+                                                                       :event/actor "alice"}]})))
+      (is (time/equal? now
+                       (calculate-reminder-time {:delete-after "P90D"
+                                                 :reminder-before "P7D"}
+                                                {:application/applicant {:userid "alice"}
+                                                 :application/state :application.state/draft
+                                                 :application/last-activity (time/minus now (time/days 83))
+                                                 :application/events [{:event/type :application.event/created
+                                                                       :event/time (time/minus now (time/days 83))
+                                                                       :event/actor "alice"}]})))
+      (is (time/equal? (time/minus now (time/days 1))
+                       (calculate-reminder-time {:delete-after "P90D"
+                                                 :reminder-before "P7D"}
+                                                {:application/applicant {:userid "alice"}
+                                                 :application/state :application.state/draft
+                                                 :application/last-activity (time/minus now (time/days 84))
+                                                 :application/events [{:event/type :application.event/created
+                                                                       :event/time (time/minus now (time/days 84))
+                                                                       :event/actor "alice"}]})))
+      (is (nil? (calculate-reminder-time nil
+                                         {:application/applicant {:userid "alice"}
+                                          :application/state :application.state/draft
+                                          :application/last-activity now
+                                          :application/events [{:event/type :application.event/created
+                                                                :event/time now}]}))
+          "returns nil because configuration is missing")
+
+      (is (nil? (calculate-reminder-time {:delete-after "P90D"}
+                                         {:application/applicant {:userid "alice"}
+                                          :application/state :application.state/draft
+                                          :application/last-activity now
+                                          :application/events [{:event/type :application.event/created
+                                                                :event/time now}]}))
+          "returns nil because configuration is missing")
+
+      (is (nil? (calculate-reminder-time {:delete-after "P90D"
+                                          :reminder-before nil}
+                                         {:application/applicant {:userid "alice"}
+                                          :application/state :application.state/draft
+                                          :application/last-activity now
+                                          :application/events [{:event/type :application.event/created
+                                                                :event/time now}]}))
+          "returns nil because configuration is missing"))))
+
+(defn- should-send-notification-email? [expiration application now]
+  (when-let [reminder-time (calculate-reminder-time expiration application)]
+    (and (not (expiration-notification-sent? expiration application))
+         (time/before? reminder-time now))))
+
+(defn- send-expiration-notifications [expiration application now]
+  (when (should-send-notification-email? expiration application now)
     {:type :application.command/send-expiration-notifications
-     :time (time/now)
+     :time now
      :actor "expirer-bot"
      :application-id (:application/id application)
-     :last-activity (:application/last-activity application)
-     :expires-on (expiration-time application)}))
+     :expires-on (calculate-expiration-time expiration application)}))
 
 (defn run-expirer-bot [application]
-  (or (expire-application application)
-      (send-expiration-notifications application)))
-
+  (let [expiration (get-in env [:application-expiration (:application/state application)])
+        now (time/now)]
+    (or (expire-application expiration application now)
+        (send-expiration-notifications expiration application now))))

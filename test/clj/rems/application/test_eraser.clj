@@ -139,88 +139,85 @@
 (deftest test-send-reminder-email
   (binding [command/*fail-on-process-manager-errors* true]
     (with-fixed-time (time/date-time 2022)
-      (fn []
-        (test-helpers/create-user! {:userid "alice"})
-        (test-helpers/create-user! {:userid "member"})
-        (test-helpers/create-user! {:userid "expirer-bot"})
-        (roles/add-role! "expirer-bot" :expirer)
-        (let [now (time/now)
-              draft-expires-in-6d (create-application! {:draft? true
-                                                        :date-time (time/minus now (time/days 84))
-                                                        :actor "alice"
-                                                        :members [{:userid "member"
-                                                                   :name "Member"
-                                                                   :email "member@example.com"}]})
-              draft-expires-in-8d (create-application! {:draft? true
-                                                        :date-time (time/minus now (time/days 82))
-                                                        :actor "alice"})
-              submitted (create-application! {:date-time (time/minus now (time/days 84))
-                                              :actor "alice"})
-              outbox-emails (atom [])]
-          (with-redefs [outbox/put! (fn [email] (swap! outbox-emails conj email))]
+      (test-helpers/create-user! {:userid "alice"})
+      (test-helpers/create-user! {:userid "member"})
+      (test-helpers/create-user! {:userid "expirer-bot"})
+      (roles/add-role! "expirer-bot" :expirer)
+      (let [now (time/now)
+            draft-expires-in-6d (create-application! {:draft? true
+                                                      :date-time (time/minus now (time/days 84))
+                                                      :actor "alice"
+                                                      :members [{:userid "member"
+                                                                 :name "Member"
+                                                                 :email "member@example.com"}]})
+            draft-expires-in-8d (create-application! {:draft? true
+                                                      :date-time (time/minus now (time/days 82))
+                                                      :actor "alice"})
+            submitted (create-application! {:date-time (time/minus now (time/days 84))
+                                            :actor "alice"})
+            outbox-emails (atom [])]
+        (with-redefs [outbox/put! (fn [email] (swap! outbox-emails conj email))]
 
-            (testing "should not send reminder because config is missing or partially correct"
-              (doseq [mock-env [{:application-expiration {:application.state/draft {:delete-after "P90D"}}}
-                                {:application-expiration {:application.state/draft {:reminder-before "P7D"}}}
-                                {:application-expiration nil}]]
-                (with-redefs [env mock-env]
-                  (eraser/process-applications!))
-                (is (= #{draft-expires-in-6d draft-expires-in-8d submitted}
-                       (set (get-all-application-ids "alice"))))
-                (is (empty? @outbox-emails))
-                (is (empty? (expiration-notification-events draft-expires-in-6d)))
-                (is (empty? (expiration-notification-events draft-expires-in-8d)))
-                (is (empty? (expiration-notification-events submitted)))))
+          (testing "should not send reminder because config is missing or partially correct"
+            (doseq [mock-env [{:application-expiration {:application.state/draft {:delete-after "P90D"}}}
+                              {:application-expiration {:application.state/draft {:reminder-before "P7D"}}}
+                              {:application-expiration nil}]]
+              (with-redefs [env mock-env]
+                (eraser/process-applications!))
+              (is (= #{draft-expires-in-6d draft-expires-in-8d submitted}
+                     (set (get-all-application-ids "alice"))))
+              (is (empty? @outbox-emails))
+              (is (empty? (expiration-notification-events draft-expires-in-6d)))
+              (is (empty? (expiration-notification-events draft-expires-in-8d)))
+              (is (empty? (expiration-notification-events submitted)))))
 
-            (testing "send expiration notifications"
-              (with-redefs [env {:application-expiration {:application.state/draft {:delete-after "P90D"
-                                                                                    :reminder-before "P7D"}}
-                                 :application-id-column :id
-                                 :public-url "localhost/"}
-                            user-settings/get-user-settings (constantly {:language :en})]
+          (testing "send expiration notifications"
+            (with-redefs [env {:application-expiration {:application.state/draft {:delete-after "P90D"
+                                                                                  :reminder-before "P7D"}}
+                               :application-id-column :id
+                               :public-url "localhost/"}
+                          user-settings/get-user-settings (constantly {:language :en})]
+              (eraser/process-applications!)
+              (is (= #{draft-expires-in-6d draft-expires-in-8d submitted}
+                     (set (get-all-application-ids "alice")))
+                  "no applications have been deleted")
+              (is (empty? (expiration-notification-events draft-expires-in-8d)))
+              (is (empty? (expiration-notification-events submitted)))
+
+              (testing "expiration notifications sent event was created for draft expiring in 6 days"
+                (let [events (expiration-notification-events draft-expires-in-6d)]
+                  (is (= 1 (count events)))
+                  (is (time/equal? (time/plus now (time/days 6)) (:application/expires-on (first events))))
+
+                  (is (time/equal? now (:event-time (first events))))))
+              (is (= [{:outbox/deadline (time/date-time 2022)
+                       :outbox/email {:subject (str "Your unsubmitted application " draft-expires-in-6d " will be deleted soon")
+                                      :body (str "Dear alice,\n\n"
+                                                 "Your unsubmitted application has been inactive since 2021-10-09 and it will be deleted after 2022-01-07, if it is not edited.\n\n"
+                                                 "You can view and edit the application at localhost/application/" draft-expires-in-6d)
+                                      :to-user "alice"}
+                       :outbox/type :email}
+                      {:outbox/deadline (time/date-time 2022)
+                       :outbox/email {:subject (str "Your unsubmitted application " draft-expires-in-6d " will be deleted soon")
+                                      :body (str "Dear member,\n\n"
+                                                 "Your unsubmitted application has been inactive since 2021-10-09 and it will be deleted after 2022-01-07, if it is not edited.\n\n"
+                                                 "You can view and edit the application at localhost/application/" draft-expires-in-6d)
+                                      :to-user "member"}
+                       :outbox/type :email}]
+                     @outbox-emails))
+
+              (testing "processing applications again should not send new notifications"
+                (reset! outbox-emails [])
                 (eraser/process-applications!)
                 (is (= #{draft-expires-in-6d draft-expires-in-8d submitted}
                        (set (get-all-application-ids "alice")))
                     "no applications have been deleted")
                 (is (empty? (expiration-notification-events draft-expires-in-8d)))
                 (is (empty? (expiration-notification-events submitted)))
+                (is (empty? @outbox-emails))
 
-                (testing "expiration notifications sent event was created for draft expiring in 6 days"
+                (testing "expiration notifications events have not changed for draft expiring in 6 days"
                   (let [events (expiration-notification-events draft-expires-in-6d)]
                     (is (= 1 (count events)))
-                    (is (time/equal? (time/plus now (time/days 6)) (:expires-on (first events))))
-                    (is (time/equal? (time/minus now (time/days 84)) (:last-activity (first events))))
-                    (is (time/equal? now (:event-time (first events))))))
-                (is (= [{:outbox/deadline (time/date-time 2022)
-                         :outbox/email {:subject (str "Your unsubmitted application " draft-expires-in-6d " will be deleted soon")
-                                        :body (str "Dear alice,\n\n"
-                                                   "Your unsubmitted application has been inactive since 2021-10-09 and it will be deleted after 2022-01-07, if it is not edited.\n\n"
-                                                   "You can view and edit the application at localhost/application/" draft-expires-in-6d)
-                                        :to-user "alice"}
-                         :outbox/type :email}
-                        {:outbox/deadline (time/date-time 2022)
-                         :outbox/email {:subject (str "Your unsubmitted application " draft-expires-in-6d " will be deleted soon")
-                                        :body (str "Dear member,\n\n"
-                                                   "Your unsubmitted application has been inactive since 2021-10-09 and it will be deleted after 2022-01-07, if it is not edited.\n\n"
-                                                   "You can view and edit the application at localhost/application/" draft-expires-in-6d)
-                                        :to-user "member"}
-                         :outbox/type :email}]
-                       @outbox-emails))
-
-                (testing "processing applications again should not send new notifications"
-                  (reset! outbox-emails [])
-                  (eraser/process-applications!)
-                  (is (= #{draft-expires-in-6d draft-expires-in-8d submitted}
-                         (set (get-all-application-ids "alice")))
-                      "no applications have been deleted")
-                  (is (empty? (expiration-notification-events draft-expires-in-8d)))
-                  (is (empty? (expiration-notification-events submitted)))
-                  (is (empty? @outbox-emails))
-
-                  (testing "expiration notifications events have not changed for draft expiring in 6 days"
-                    (let [events (expiration-notification-events draft-expires-in-6d)]
-                      (is (= 1 (count events)))
-                      (is (time/equal? (time/plus now (time/days 6)) (:expires-on (first events))))
-                      (is (time/equal? (time/minus now (time/days 84)) (:last-activity (first events))))
-                      (is (time/equal? now (:event-time (first events)))))))))))))))
-
+                    (is (time/equal? (time/plus now (time/days 6)) (:application/expires-on (first events))))
+                    (is (time/equal? now (:event-time (first events))))))))))))))

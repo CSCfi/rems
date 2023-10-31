@@ -429,6 +429,11 @@
  :enable-cart true ; show shopping cart and allow bundling multiple resources into one application
  :enable-save-compaction false ; whether to merge consecutive saves into one event (EXPERIMENTAL)
  :enable-autosave false ; whether to automatically save the application as the applicant types (EXPERIMENTAL)
+
+ ;; Extended logging for routes that should additionally log content of entity mutation.
+ ;; logging is at INFO level and the log message is prefixed with "extended-logging (:uri request)"
+ :enable-extended-logging false
+
  ;; which columns in applications list(s) should be hidden in UI
  ;; allowed values: [:description :resource :applicant :handlers :state :todo :created :submitted :last-activity :view]
  :application-list-hidden-columns []
@@ -466,4 +471,48 @@
  ;; See docs/plugins.md for more information.
  :plugins nil ; by default no plugins
  :extension-points nil ; by default no plugins
- :enable-voting false} ; voting (experimental)
+ :enable-voting false ; voting (experimental)
+
+ ;; REMS tables can have some parameters tuned.
+ ;; Not every attribute may work in every table yet.
+ ;;
+ ;; key   - identity of the table (e.g. `:rems.catalogue/catalogue`)
+ ;; value - a map
+ ;;    `:paging?`   - whether to use paging (defaults to true)
+ ;;    `:page-size` - defaults to 50
+ ;;    `:max-rows`  - how many rows to show ever
+ ;;
+ ;; Currently (2023-10-18) the relevant tables are:
+ ;;   :rems.administration.blacklist/blacklist
+ ;;   :rems.administration.catalogue-items/catalogue
+ ;;   :rems.administration.categories/categories
+ ;;   :rems.administration.change-catalogue-item-form/catalogue
+ ;;   :rems.administration.forms/forms
+ ;;   :rems.administration.licenses/licenses
+ ;;   :rems.administration.organizations/organizations
+ ;;   :rems.administration.resources/resources
+ ;;   :rems.administration.workflows/workflows
+ ;;   :rems.catalogue/catalogue
+ ;;   :rems.catalogue/draft-applications
+ ;;   :rems.actions/todo-applications
+ ;;   :rems.actions/handled-applications
+ ;;   :rems.application/previous-applications-except-current
+ ;;   :rems.applications/my-applications
+ ;;   :rems.applications/all-applications
+ 
+ :tables {}
+
+ ;; REMS can be configured to avoid heavy work
+ ;; (cache reloading) during pre-defined buzy hours.
+ ;;
+ ;; For example config:
+ ;;
+ ;; :buzy-hours [["07:00" "11:00"]
+ ;;              ["12:00" "17:00"]]
+ ;;
+ ;; would define the buzy hours to be (server time) from seven (07:00) in
+ ;; the morning to eleven (11:00). Then after a break another buzy hour period
+ ;; from noon (12:00) until five (17:00) in the evening.
+ ;;
+ ;; As few or as many periods can be defined.
+ :buzy-hours nil}

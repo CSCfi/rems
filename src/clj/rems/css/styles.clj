@@ -346,6 +346,7 @@
     [:&:hover {:color (theme-getx :link-hover-color :color4)}]]
    [:.pointer {:cursor :pointer}
     [:label.form-check-label {:cursor :pointer}]]
+   [:.disabled (make-important {:opacity 1})] ; XXX: bootstrap default has too low contrast for accessibility
    [:html {:position :relative
            :min-width (u/px 320)
            :height (u/percent 100)}]
@@ -608,7 +609,6 @@
     [:&:hover {:filter "brightness(80%)"}]]
 
    (rems-table-styles)
-   [:.btn.disabled {:opacity 0.25}]
    [:.catalogue-item-link {:color "#fff"
                            :text-decoration "underline"}]
    [:.language-switcher {:padding ".5em 0"}]
@@ -684,6 +684,9 @@
    [:.event-comment {:white-space :pre-wrap
                      :word-break :break-all}]
 
+   [:.current-page {:font-size (u/percent 120)
+                    :text-underline-offset (u/rem 0.25)}]
+
    ;; form inputs
    ["input[type=date].form-control" {:width (u/em 12)}]
    [:.form-group {:text-align "initial"}
@@ -705,6 +708,19 @@
 
    [:.dashed-group (dashed-form-group)]
    [:.solid-group (solid-form-group)]
+
+   [:.paging-numbers {}]
+   [:.paging-numbers-grid {:display :grid
+                           :grid-template-columns "repeat(auto-fit, minmax(2rem, 1fr))"
+                           :align-content :start
+                           :align-items :baseline
+                           :justify-items :center
+                           :gap "0 0.5rem"
+                           :max-width "100%"}]
+   [:.paging-numbers-flex {:display :flex
+                           :justify-content :center
+                           :align-items :baseline
+                           :flex-wrap :wrap}]
 
    ;; form editor
    [:#main-content.page-create-form {:max-width :unset}]
@@ -854,10 +870,19 @@
    (actions-float-menu)
    [(s/descendant :.document :h3) {:margin-top (u/rem 4)}]
 
+   [:.break-newline {:white-space :pre-wrap}]
+
    [:.attachments {:display :flex
-                   :flex-flow "row wrap"
-                   :align-items :center
+                   :flex-direction :column
+                   :flex-wrap :nowrap
                    :gap (u/rem 0.5)}]
+   [:.attachment-link {:width (u/percent 100)
+                       :display :inline-flex
+                       :flex-wrap :nowrap
+                       :align-items :center}]
+
+   [:.download.disabled {:border-style :dashed}]
+   [(s/> :.download ":not(:first-child)") {:margin-left (u/rem 0.5)}]
 
    ;; print styling
    (stylesheet/at-media

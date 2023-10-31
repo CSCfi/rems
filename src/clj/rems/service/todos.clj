@@ -26,7 +26,7 @@
     :application.command/request-decision
     :application.command/decide})
 
-(defn- todo? [application]
+(defn todo? [application]
   (and (= :application.state/submitted (:application/state application))
        (some todo-commands (:application/permissions application))))
 
@@ -75,3 +75,6 @@
 (defn get-handled-todos [userid]
   (->> (get-potential-todos userid)
        (remove todo?)))
+
+(defn get-handled-todos-count [userid]
+  (count (get-handled-todos userid)))

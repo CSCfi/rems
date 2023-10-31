@@ -6,7 +6,7 @@
             [rems.service.blacklist :as blacklist]
             [rems.service.resource :as resource]
             [rems.service.user :as user]
-            [rems.api.util :refer [unprocessable-entity-json-response]] ; required for route :roles
+            [rems.api.util :refer [extended-logging unprocessable-entity-json-response]] ; required for route :roles
             [rems.application.rejecter-bot :as rejecter-bot]
             [rems.common.roles :refer [+admin-read-roles+]]
             [rems.schema-base :as schema-base]
@@ -55,11 +55,12 @@
 
     ;; TODO write access to blacklist for organization-owner
 
-    (POST "/add" []
+    (POST "/add" request
       :summary "Add a blacklist entry"
       :roles #{:owner :handler}
       :body [command BlacklistCommand]
       :return schema/SuccessResponse
+      (extended-logging request)
       (let [userid (user/find-userid (getx-in command [:blacklist/user :userid]))
             command (assoc-in command [:blacklist/user :userid] userid)]
         (or (user-not-found-error command)
@@ -72,11 +73,12 @@
                                  {:cmd cmd :result result}))))
                 (ok {:success true})))))
 
-    (POST "/remove" []
+    (POST "/remove" request
       :summary "Remove a blacklist entry"
       :roles #{:owner :handler}
       :body [command BlacklistCommand]
       :return schema/SuccessResponse
+      (extended-logging request)
       (let [userid (user/find-userid (getx-in command [:blacklist/user :userid]))
             command (assoc-in command [:blacklist/user :userid] userid)]
         (or (user-not-found-error command)

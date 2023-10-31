@@ -48,13 +48,15 @@
   (ensure-empty-directory! (:accessibility-report-dir @test-context))
   (ensure-empty-directory! (:download-dir @test-context)))
 
-(defn downloaded-files [name-or-regex]
-  (if (string? name-or-regex)
-    (let [f (io/file (:download-dir @test-context) name-or-regex)]
-      (when (.exists f) [f]))
-    (for [file (.listFiles (:download-dir @test-context))
-          :when (re-matches name-or-regex (.getName file))]
-      file)))
+(defn downloaded-files
+  ([] (for [file (.listFiles (:download-dir @test-context))]
+        file))
+  ([name-or-regex] (if (string? name-or-regex)
+                     (let [f (io/file (:download-dir @test-context) name-or-regex)]
+                       (when (.exists f) [f]))
+                     (for [file (.listFiles (:download-dir @test-context))
+                           :when (re-matches name-or-regex (.getName file))]
+                       file))))
 
 (defn delete-downloaded-files! [name-or-regex]
   (let [files (if (string? name-or-regex)
@@ -486,7 +488,9 @@
   (scroll-and-click [{:css (str "input[value='" value "']")}]))
 
 (defn wait-for-downloads [string-or-regex]
-  (wait-predicate #(seq (downloaded-files string-or-regex))))
+  (wait-predicate #(seq (downloaded-files string-or-regex))
+                  #(do {:string-or-regex string-or-regex
+                        :downloaded-files (downloaded-files)})))
 
 (defn value-of-el
   "Return the \"value\" an element `el`.
@@ -657,3 +661,10 @@
        (rems.browser-test-util/postmortem-handler e#)
        (throw e#))))
 
+
+(defn wait-for-animation
+  "Waits for a short while for animations to finish.
+  Ideally there would be a more accurate mechanism. Often
+  it helps if there is something to wait to appear."
+  []
+  (Thread/sleep 120))

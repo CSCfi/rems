@@ -2,7 +2,7 @@
   (:require [compojure.api.sweet :refer :all]
             [rems.service.form :as form]
             [rems.api.schema :as schema]
-            [rems.api.util :refer [not-found-json-response]] ; required for route :roles
+            [rems.api.util :refer [not-found-json-response extended-logging]] ; required for route :roles
             [rems.common.roles :refer [+admin-read-roles+ +admin-write-roles+]]
             [ring.swagger.json-schema :as rjs]
             [rems.schema-base :as schema-base]
@@ -45,11 +45,12 @@
       (ok (get-form-templates (merge (when-not disabled {:enabled true})
                                      (when-not archived {:archived false})))))
 
-    (POST "/create" []
+    (POST "/create" request
       :summary "Create form"
       :roles +admin-write-roles+
       :body [command CreateFormCommand]
       :return CreateFormResponse
+      (extended-logging request)
       (ok (form/create-form! command)))
 
     (GET "/:form-id" []
@@ -69,23 +70,26 @@
       :return schema/SuccessResponse
       (ok (form/form-editable form-id)))
 
-    (PUT "/edit" []
+    (PUT "/edit" request
       :summary "Edit form"
       :roles +admin-write-roles+
       :body [command EditFormCommand]
       :return schema/SuccessResponse
+      (extended-logging request)
       (ok (form/edit-form! command)))
 
-    (PUT "/archived" []
+    (PUT "/archived" request
       :summary "Archive or unarchive form"
       :roles +admin-write-roles+
       :body [command schema/ArchivedCommand]
       :return schema/SuccessResponse
+      (extended-logging request)
       (ok (form/set-form-archived! command)))
 
-    (PUT "/enabled" []
+    (PUT "/enabled" request
       :summary "Enable or disable form"
       :roles +admin-write-roles+
       :body [command schema/EnabledCommand]
       :return schema/SuccessResponse
+      (extended-logging request)
       (ok (form/set-form-enabled! command)))))

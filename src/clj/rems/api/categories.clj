@@ -3,7 +3,7 @@
             [rems.api.schema :as schema]
             [rems.schema-base :as schema-base]
             [rems.service.category :as category]
-            [rems.api.util :refer [not-found-json-response]]
+            [rems.api.util :refer [not-found-json-response extended-logging]]
             [rems.common.roles :refer [+admin-read-roles+ +admin-write-roles+]]
             [ring.util.http-response :refer :all]
             [schema.core :as s]))
@@ -33,43 +33,48 @@
         (ok category)
         (not-found-json-response)))
 
-    (POST "/create" []
+    (POST "/create" request
       :summary "Create category"
       :roles +admin-write-roles+
       :body [command schema/CreateCategoryCommand]
       :return CreateCategoryResponse
+      (extended-logging request)
       (ok (category/create-category! command)))
 
-    (PUT "/edit" []
+    (PUT "/edit" request
       :summary "Update category"
       :roles +admin-write-roles+
       :body [command schema/UpdateCategoryCommand]
       :return schema/SuccessResponse
+      (extended-logging request)
       (if (category/get-category (:category/id command))
         (ok (category/update-category! command))
         (not-found-json-response)))
 
-    (POST "/" []
+    (POST "/" request
       :summary "Create category. DEPRECATED, will disappear, use /create instead"
       :roles +admin-write-roles+
       :body [command schema/CreateCategoryCommand]
       :return CreateCategoryResponse
+      (extended-logging request)
       (ok (category/create-category! command)))
 
-    (PUT "/" []
+    (PUT "/" request
       :summary "Update category, DEPRECATED, will disappear, use /edit instead"
       :roles +admin-write-roles+
       :body [command schema/UpdateCategoryCommand]
       :return schema/SuccessResponse
+      (extended-logging request)
       (if (category/get-category (:category/id command))
         (ok (category/update-category! command))
         (not-found-json-response)))
 
-    (POST "/delete" []
+    (POST "/delete" request
       :summary "Delete category"
       :roles +admin-write-roles+
       :body [command schema/DeleteCategoryCommand]
       :return schema/SuccessResponse
+      (extended-logging request)
       (if (category/get-category (:category/id command))
         (ok (category/delete-category! command))
         (not-found-json-response)))))

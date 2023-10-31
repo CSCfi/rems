@@ -40,6 +40,7 @@
                      :entitlement-end-not-in-future "The expiration date for access rights must be in the future."}
             :generate-ega-api-key-in-profile "Generate one at the Profile page."
             :handled-applications "Processed applications"
+            :handled-applications-count "There are %:count% processed applications."
             :invite-member "Invite member"
             :licenses-selection "Add terms of use"
             :member "Member"
@@ -72,11 +73,13 @@
             :review "Review"
             :revoke "Revoke entitlement"
             :todo-applications "Open applications"
+            :todo-applications-count "There are %:count% open applications."
             :vote "Vote"}
   :administration {:active "Active"
                    :add "Add"
                    :added-at "Added at"
                    :added-by "Added by"
+                   :anonymize-handling "Anonymized handling"
                    :application-state "Application state"
                    :archive "Archive"
                    :back "Back"
@@ -139,6 +142,7 @@
                    :name "Name"
                    :no-categories "No categories"
                    :no-form "No form"
+                   :no-forms "No forms"
                    :no-licenses "No licenses"
                    :no-voting "No voting"
                    :optional "(optional)"
@@ -167,7 +171,9 @@
                    :voting "Voting"
                    :workflow "Workflow"
                    :workflows "Workflows"
-                   :workflow-disabled-commands-explanation [:p "This workflow disables actions for users when conditions apply. Actions, application states and user roles can be found on " [:a {:href "https://github.com/CSCfi/rems/blob/master/docs/application-permissions.md" :target :_blank} "REMS Github page."]]}
+                   :workflow-anonymize-handling-explanation "This workflow hides handling users personally identifiable information (e.g. name and email) from applying users."
+                   :workflow-disabled-commands-explanation [:p "This workflow disables actions for users when conditions apply. Actions, application states and user roles can be found on " [:a {:href "https://github.com/CSCfi/rems/blob/master/docs/application-permissions.md" :target :_blank} "REMS Github page."]]
+                   :workflow-type "Workflow type"}
   :applicant-info {:applicant "Applicant"
                    :applicants "Applicants"
                    :email "Email"
@@ -196,6 +202,8 @@
                  :empty "No applications."
                  ;; %1 - date
                  :entitlement-end "Access rights end %1."
+                 :event {:not-shown-to-applicant "Not shown to applicant"
+                         :shown-to-applicant "Shown to applicant"}
                  ;; Format parameters for all events:
                  ;; %1 - name of event actor
                  :events {:applicant-changed "%1 changed the applicant to %2."
@@ -246,13 +254,14 @@
                           :resources "Resources"
                           :state "State"}
                  :handlers "Handlers"
-                 :highlight-related-events "Show related events."
                  :id "Id"
                  :intro [:div.intro [:p "Fill out and submit the application. Several applicants can be invited as members of the application, and each applicant has to accept the terms of use to gain access."]]
                  :last-activity "Last activity"
                  :latest-activity "Latest activity"
                  :my-applications "My Applications"
+                 :redacted-attachments "Redacted attachments"
                  :redacted-attachments-replaced "New attachments replace the redacted attachments."
+                 :replacing-attachments "New attachments"
                  :resource "Resource"
                  :state "State"
                  :states {:approved "Approved"
@@ -635,7 +644,8 @@
             :settings "Settings"
             :warning-about-missing-email [:<> "You will need to " [:a {:href "/profile"} "add an email address to your settings"] ", so that you can receive notifications about your applications."]
             :your-details "Your user details"}
-  :roles {:applicant "Applicant"
+  :roles {:anonymous-handler :en.t.roles/handler ; use handler as default translation for workflow anonymized handlers
+          :applicant "Applicant"
           :decider "Decider"
           :handler "Handler"
           :member "Member"
@@ -649,11 +659,12 @@
            :search "Search"}
   :table {:ascending-order "Ascending order"
           :descending-order "Descending order"
+          :first-rows-only "Showing the first %1 rows only."
           :all-rows-selected "All rows selected"
           :no-rows-selected "No rows selected"
+          :show-all-rows "Show all rows"
           :some-rows-selected "Some rows selected"
-          ;; %1 - number
-          :show-all-n-rows "Show all %1 rows"}
+          :paging {:page "Page"}}
   :unauthorized-page {:unauthorized "Unauthorized"
                       :you-are-unauthorized "You're unauthorized to access this page."}
   :unknown "Unknown"

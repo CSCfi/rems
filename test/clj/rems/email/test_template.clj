@@ -1,13 +1,13 @@
 (ns rems.email.test-template
-  (:require [clojure.test :refer :all]
+  (:require [clojure.test :refer [deftest is testing use-fixtures]]
             [clj-time.core :as time]
             [mount.core :as mount]
             [rems.application.model :as model]
+            [rems.common.application-util :as application-util]
             [rems.config]
             [rems.db.user-settings :as user-settings]
             [rems.email.template :as template]
-            [rems.locales]
-            [rems.testing-util :refer [with-fixed-time]]))
+            [rems.locales]))
 
 (defn empty-footer [f]
   (with-redefs [rems.locales/translations (assoc-in rems.locales/translations [:en :t :email :footer] "")]
@@ -49,7 +49,14 @@
                              :email "handler@example.com"}
                             {:userid "assistant"
                              :name "Amber Assistant"
-                             :email "assistant@example.com"}]}}})
+                             :email "assistant@example.com"}]}}
+   6 {:workflow {:handlers [{:userid "handler"
+                             :name "Hannah Handler"
+                             :email "handler@example.com"}
+                            {:userid "assistant"
+                             :name "Amber Assistant"
+                             :email "assistant@example.com"}]
+                 :anonymize-handling true}}})
 
 (def ^:private get-form-template
   (constantly {:form/id 40
@@ -121,20 +128,21 @@
   ([base-events event]
    (emails :en base-events event)))
 
-(def created-events [{:application/id 7
-                      :application/external-id "2001/3"
-                      :event/type :application.event/created
-                      :event/actor "applicant"
-                      :application/resources [{:catalogue-item/id 10
-                                               :resource/ext-id "urn:11"}
-                                              {:catalogue-item/id 20
-                                               :resource/ext-id "urn:21"}]
-                      :application/forms [{:form/id 40}]
-                      :workflow/id 5
-                      :workflow/type :workflow/default}
-                     {:application/id 7
-                      :event/type :application.event/draft-saved
-                      :application/field-values [{:form 40 :field "1" :value "Application title"}]}])
+(def create-event {:application/id 7
+                   :application/external-id "2001/3"
+                   :event/type :application.event/created
+                   :event/actor "applicant"
+                   :application/resources [{:catalogue-item/id 10
+                                            :resource/ext-id "urn:11"}
+                                           {:catalogue-item/id 20
+                                            :resource/ext-id "urn:21"}]
+                   :application/forms [{:form/id 40}]
+                   :workflow/id 5
+                   :workflow/type :workflow/default})
+(def save-draft-event {:application/id 7
+                       :event/type :application.event/draft-saved
+                       :application/field-values [{:form 40 :field "1" :value "Application title"}]})
+(def created-events [create-event save-draft-event])
 
 (def submit-event {:application/id 7
                    :event/type :application.event/submitted
@@ -142,6 +150,9 @@
                    :event/time 13})
 
 (def base-events (conj created-events submit-event))
+(def anonymous-wf-events [(assoc create-event :workflow/id 6)
+                          save-draft-event
+                          submit-event])
 
 (deftest test-submitted
   (let [mails (emails created-events submit-event)]
@@ -205,13 +216,28 @@
   (let [mails (emails base-events {:application/id 7
                                    :event/type :application.event/remarked
                                    :event/actor "remarker"
-                                   :application/public true
+                                   :event/public true
                                    :application/comment "remark!"})]
     (is (= #{"assistant" "handler" "applicant"} (email-recipients mails)))
     (is (= {:to-user "applicant"
             :subject "(2001/3, \"Application title\") Application has been commented"
             :body "Dear Alice Applicant,\n\nRandom Remarker has commented your application 2001/3, \"Application title\", submitted by Alice Applicant.\n\nYou can view the application and the comment at http://example.com/application/7"}
-           (email-to "applicant" mails)))))
+           (email-to "applicant" mails))))
+  (testing "remarked anonymize handling workflow"
+    (let [mails (emails anonymous-wf-events {:application/id 7
+                                             :event/type :application.event/remarked
+                                             :event/actor "handler"
+                                             :event/public true
+                                             :application/comment "remark!"})]
+      (is (= #{"assistant" "applicant"} (email-recipients mails)))
+      (is (= {:to-user "applicant"
+              :subject "(2001/3, \"Application title\") Application has been commented"
+              :body "Dear Alice Applicant,\n\nHandler has commented your application 2001/3, \"Application title\", submitted by Alice Applicant.\n\nYou can view the application and the comment at http://example.com/application/7"}
+             (email-to "applicant" mails)))
+      (is (= {:to-user "assistant"
+              :subject "(2001/3, \"Application title\") Application has been commented"
+              :body "Dear Amber Assistant,\n\nHannah Handler has commented your application 2001/3, \"Application title\", submitted by Alice Applicant.\n\nYou can view the application and the comment at http://example.com/application/7"}
+             (email-to "assistant" mails))))))
 
 (deftest test-members-licenses-approved-closed
   (let [add-member {:application/id 7
@@ -236,6 +262,17 @@
         (is (= {:to-user "applicant"
                 :subject "Your application's 2001/3, \"Application title\" terms of use have changed"
                 :body "Dear Alice Applicant,\n\nHannah Handler has requested your approval for changed terms of use to application 2001/3, \"Application title\".\n\nYou can view the application and approve the changed terms of use at http://example.com/application/7"}
+               (email-to "applicant" mails)))))
+    (testing "licenses-added anonymize handling workflow"
+      (let [mails (emails (conj anonymous-wf-events add-member join)
+                          {:application/id 7
+                           :event/type :application.event/licenses-added
+                           :event/actor "handler"
+                           :application/licenses [{:license/id 1234}]})]
+        (is (= #{"applicant" "member" "somebody"} (email-recipients mails)))
+        (is (= {:to-user "applicant"
+                :subject "Your application's 2001/3, \"Application title\" terms of use have changed"
+                :body "Dear Alice Applicant,\n\nHandler has requested your approval for changed terms of use to application 2001/3, \"Application title\".\n\nYou can view the application and approve the changed terms of use at http://example.com/application/7"}
                (email-to "applicant" mails)))))
     (testing "approved"
       (let [mails (emails member-events {:application/id 7
@@ -417,7 +454,22 @@
     (is (= {:to-user "handler"
             :subject "(2001/3, \"Application title\") Applicant changed"
             :body "Dear Hannah Handler,\n\nThe applicant for application 2001/3, \"Application title\" has been changed to Bob Boss by Amber Assistant.\n\nYou can view the application at http://example.com/application/7."}
-           (email-to "handler" mails)))))
+           (email-to "handler" mails)))
+    (testing "change-applicant anonymize handling workflow"
+      (let [mails (emails anonymous-wf-events change)]
+        (is (= #{"applicant" "handler" "bob"} (email-recipients mails)))
+        (is (= {:to-user "applicant"
+                :subject "Applicant for application 2001/3, \"Application title\" changed"
+                :body "Dear Alice Applicant,\n\nThe applicant for application 2001/3, \"Application title\" has been changed to Bob Boss by Handler.\n\nYou can view the application at http://example.com/application/7."}
+               (email-to "applicant" mails)))
+        (is (= {:to-user "bob"
+                :subject "Applicant for application 2001/3, \"Application title\" changed"
+                :body "Dear Bob Boss,\n\nThe applicant for application 2001/3, \"Application title\" has been changed to Bob Boss by Handler.\n\nYou can view the application at http://example.com/application/7."}
+               (email-to "bob" mails)))
+        (is (= {:to-user "handler"
+                :subject "(2001/3, \"Application title\") Applicant changed"
+                :body "Dear Hannah Handler,\n\nThe applicant for application 2001/3, \"Application title\" has been changed to Bob Boss by Amber Assistant.\n\nYou can view the application at http://example.com/application/7."}
+               (email-to "handler" mails)))))))
 
 (deftest test-finnish-emails
   ;; only one test case so far, more of a smoke test
@@ -528,32 +580,32 @@
              (email-to "applicant" mails))))))
 
 (deftest test-expiration-notifications-sent-email
-  (with-redefs [rems.config/env (assoc rems.config/env :application-expiration {:application.state/draft {:delete-after "P90D"
-                                                                                                          :reminder-before "P7D"}})]
-    (let [add-member {:application/id 7
-                      :event/type :application.event/member-added
-                      :event/actor "handler"
-                      :application/member {:userid "member"}}
-          member-events (conj created-events add-member)
-          notifications-sent (with-fixed-time (time/date-time 2023 6 19)
-                               #(do {:application/id 7
-                                     :event/type :application.event/expiration-notifications-sent
-                                     :expires-on (time/plus (time/now) (time/days 7))
-                                     :last-activity (time/minus (time/now) (time/days 83))}))]
-      (is (= [{:to-user "applicant"
-               :subject "Your unsubmitted application 2001/3, \"Application title\" will be deleted soon"
-               :body "Dear Alice Applicant,\n\nYour unsubmitted application has been inactive since 2023-03-28 and it will be deleted after 2023-06-26, if it is not edited.\n\nYou can view and edit the application at http://example.com/application/7"}
-              {:to-user "member"
-               :subject "Your unsubmitted application 2001/3, \"Application title\" will be deleted soon"
-               :body "Dear member,\n\nYour unsubmitted application has been inactive since 2023-03-28 and it will be deleted after 2023-06-26, if it is not edited.\n\nYou can view and edit the application at http://example.com/application/7"}]
-             (emails member-events notifications-sent)))
-      (with-redefs [rems.locales/translations (assoc-in rems.locales/translations
-                                                        [:fi :t :email :application-expiration-notification :message-to-member]
-                                                        "Lähettämätön hakemuksesi %5 poistetaan automaattisesti %4 jälkeen, jos sitä ei muokata.")]
+  (let [now (time/date-time 2023 6 19)]
+    (with-redefs [rems.config/env (assoc rems.config/env :application-expiration {:application.state/draft {:delete-after "P90D"
+                                                                                                            :reminder-before "P7D"}})
+                  application-util/get-last-applying-user-event (constantly {:event/time (time/minus now (time/days 83))})]
+      (let [add-member {:application/id 7
+                        :event/type :application.event/member-added
+                        :event/actor "handler"
+                        :application/member {:userid "member"}}
+            member-events (conj created-events add-member)
+            notifications-sent {:application/id 7
+                                :event/type :application.event/expiration-notifications-sent
+                                :application/expires-on (time/plus now (time/days 7))}]
         (is (= [{:to-user "applicant"
-                 :subject "Lähettämätön hakemuksesi 2001/3, \"Application title\" poistetaan pian"
-                 :body "Lähettämätön hakemuksesi http://example.com/application/7 poistetaan automaattisesti 2023-06-26 jälkeen, jos sitä ei muokata.\n\nYstävällisin terveisin,\n\nREMS\n\n\nTämä on automaattinen viesti. Älä vastaa."}
+                 :subject "Your unsubmitted application 2001/3, \"Application title\" will be deleted soon"
+                 :body "Dear Alice Applicant,\n\nYour unsubmitted application has been inactive since 2023-03-28 and it will be deleted after 2023-06-26, if it is not edited.\n\nYou can view and edit the application at http://example.com/application/7"}
                 {:to-user "member"
-                 :subject "Lähettämätön hakemuksesi 2001/3, \"Application title\" poistetaan pian"
-                 :body "Lähettämätön hakemuksesi http://example.com/application/7 poistetaan automaattisesti 2023-06-26 jälkeen, jos sitä ei muokata.\n\nYstävällisin terveisin,\n\nREMS\n\n\nTämä on automaattinen viesti. Älä vastaa."}]
-               (emails :fi member-events notifications-sent)))))))
+                 :subject "Your unsubmitted application 2001/3, \"Application title\" will be deleted soon"
+                 :body "Dear member,\n\nYour unsubmitted application has been inactive since 2023-03-28 and it will be deleted after 2023-06-26, if it is not edited.\n\nYou can view and edit the application at http://example.com/application/7"}]
+               (emails member-events notifications-sent)))
+        (with-redefs [rems.locales/translations (assoc-in rems.locales/translations
+                                                          [:fi :t :email :application-expiration-notification :message-to-member]
+                                                          "Lähettämätön hakemuksesi %5 poistetaan automaattisesti %4 jälkeen, jos sitä ei muokata.")]
+          (is (= [{:to-user "applicant"
+                   :subject "Lähettämätön hakemuksesi 2001/3, \"Application title\" poistetaan pian"
+                   :body "Lähettämätön hakemuksesi http://example.com/application/7 poistetaan automaattisesti 2023-06-26 jälkeen, jos sitä ei muokata.\n\nYstävällisin terveisin,\n\nREMS\n\n\nTämä on automaattinen viesti. Älä vastaa."}
+                  {:to-user "member"
+                   :subject "Lähettämätön hakemuksesi 2001/3, \"Application title\" poistetaan pian"
+                   :body "Lähettämätön hakemuksesi http://example.com/application/7 poistetaan automaattisesti 2023-06-26 jälkeen, jos sitä ei muokata.\n\nYstävällisin terveisin,\n\nREMS\n\n\nTämä on automaattinen viesti. Älä vastaa."}]
+                 (emails :fi member-events notifications-sent))))))))

@@ -191,7 +191,6 @@
                        #'rems.db.core/*db*
                        #'rems.locales/translations)
           (log/info "Creating performance test data")
-          (test-data/create-test-data!)
           (test-data/create-performance-test-data!)
           (log/info "Performance test data created"))
 

@@ -15,7 +15,8 @@
    (s/optional-key :forms) [{:form/id s/Num}]
    (s/optional-key :licenses) [s/Int]
    (s/optional-key :disable-commands) [schema-base/DisableCommandRule]
-   (s/optional-key :voting) (s/maybe schema-base/WorkflowVoting)})
+   (s/optional-key :voting) (s/maybe schema-base/WorkflowVoting)
+   (s/optional-key :anonymize-handling) s/Bool})
 
 (def ^:private coerce-workflow-body
   (coerce/coercer! WorkflowBody coerce/string-coercion-matcher))
@@ -23,13 +24,14 @@
 (def ^:private validate-workflow-body
   (s/validator WorkflowBody))
 
-(defn create-workflow! [{:keys [organization type title handlers forms licenses disable-commands voting]}]
+(defn create-workflow! [{:keys [organization type title handlers forms licenses disable-commands voting anonymize-handling]}]
   (let [body (cond-> {:type type
                       :handlers handlers
                       :forms forms
                       :licenses licenses}
                (seq disable-commands) (assoc :disable-commands disable-commands)
-               voting (assoc :voting voting))]
+               voting (assoc :voting voting)
+               anonymize-handling (assoc :anonymize-handling anonymize-handling))]
     (:id (db/create-workflow! {:organization (:organization/id organization)
                                :title title
                                :workflow (json/generate-string
@@ -62,13 +64,14 @@
       (update-existing-in [:workflow :handlers] #(map :userid %))
       (update-existing-in [:workflow :licenses] #(map :license/id %))))
 
-(defn edit-workflow! [{:keys [id organization title handlers disable-commands voting]}]
+(defn edit-workflow! [{:keys [id organization title handlers disable-commands voting anonymize-handling]}]
   (let [workflow (unrich-workflow (get-workflow id))
         workflow-id (or id (:id workflow))
         workflow-body (cond-> (:workflow workflow)
                         handlers (assoc :handlers handlers)
                         disable-commands (assoc :disable-commands disable-commands)
-                        voting (assoc :voting voting))]
+                        voting (assoc :voting voting)
+                        (some? anonymize-handling) (assoc :anonymize-handling anonymize-handling))]
     (db/edit-workflow! {:id (or id (:id workflow))
                         :title (or title (:title workflow))
                         :organization (or (:organization/id organization)
