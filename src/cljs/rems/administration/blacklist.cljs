@@ -10,7 +10,7 @@
             [rems.common.roles :as roles]
             [rems.spinner :as spinner]
             [rems.table :as table]
-            [rems.text :refer [text text-format localize-time]]
+            [rems.text :refer [text localize-time]]
             [rems.util :refer [fetch post!]]))
 
 (def +blacklist-add-roles+ #{:owner :handler}) ;; same roles as in rems.api.blacklist
@@ -142,17 +142,7 @@
         comment-field-id "blacklist-comment"
         selected-user @(rf/subscribe [::selected-user])
         comment @(rf/subscribe [::comment])]
-    [:form
-     {:on-submit (fn [event]
-                   (.preventDefault event)
-                   (if-some [errors (cond-> nil
-                                      (nil? selected-user) (assoc :user [#(text-format :t.form.validation/required
-                                                                                       (text :t.administration/user))]))]
-                     (do
-                       (rf/dispatch [::set-validation-errors errors])
-                       (.focus (js/document.getElementById user-field-id)))
-                     (rf/dispatch [::add-to-blacklist resource selected-user comment])))}
-
+    [:div
      [:div.form-group.row
       [:label.col-sm-1.col-form-label
        {:for user-field-id}
@@ -179,9 +169,9 @@
        [perform-action-button
         {:id :blacklist-add
          :class "btn-primary"
-         :type :submit
+         :on-click #(rf/dispatch [::add-to-blacklist resource selected-user comment])
          :text (text :t.administration/add)
-         :disabled @(rf/subscribe [:rems.spa/any-pending-request?])}]]]]))
+         :disabled (nil? selected-user)}]]]]))
 
 (defn add-user-form [resource]
   [roles/show-when +blacklist-add-roles+ [add-user-form-impl resource]])
