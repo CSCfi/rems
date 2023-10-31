@@ -1,6 +1,6 @@
 (ns rems.actions.revoke
   (:require [re-frame.core :as rf]
-            [rems.actions.components :refer [action-attachment action-button comment-field action-form-view button-wrapper command!]]
+            [rems.actions.components :refer [action-attachment action-button comment-field action-form-view command! perform-action-button]]
             [rems.text :refer [text]]))
 
 (def ^:private action-form-id "revoke")
@@ -32,10 +32,10 @@
   [{:keys [application-id on-send]}]
   [action-form-view action-form-id
    (text :t.actions/revoke)
-   [[button-wrapper {:id "revoke"
-                     :text (text :t.actions/revoke)
-                     :class "btn-danger"
-                     :on-click on-send}]]
+   [[perform-action-button {:id "revoke"
+                            :text (text :t.actions/revoke)
+                            :class "btn-danger"
+                            :on-click on-send}]]
    [:<>
     [comment-field {:field-key action-form-id
                     :label (text :t.form/add-comments-shown-to-applicant)}]

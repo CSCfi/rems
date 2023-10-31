@@ -1,6 +1,6 @@
 (ns rems.actions.request-review
   (:require [re-frame.core :as rf]
-            [rems.actions.components :refer [action-attachment action-button action-link comment-field action-form-view button-wrapper command! user-selection]]
+            [rems.actions.components :refer [action-attachment action-link comment-field action-form-view command! user-selection perform-action-button]]
             [rems.text :refer [text]]))
 
 (def ^:private action-form-id "request-review")
@@ -36,11 +36,11 @@
   [{:keys [application-id disabled on-send]}]
   [action-form-view action-form-id
    (text :t.actions/request-review-from-user)
-   [[button-wrapper {:id "request-review-button"
-                     :text (text :t.actions/request-review)
-                     :class "btn-primary"
-                     :on-click on-send
-                     :disabled disabled}]]
+   [[perform-action-button {:id "request-review-button"
+                            :text (text :t.actions/request-review)
+                            :class "btn-primary"
+                            :on-click on-send
+                            :disabled disabled}]]
    [:div
     [user-selection {:field-key action-form-id
                      :subscription [:rems.actions.components/reviewers]}]

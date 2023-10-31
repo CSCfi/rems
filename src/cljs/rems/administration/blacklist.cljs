@@ -2,6 +2,7 @@
   "Implements both a blacklist component and the blacklist-page"
   (:require [re-frame.core :as rf]
             [rems.administration.administration :as administration]
+            [rems.administration.components :refer [perform-action-button]]
             [rems.common.application-util]
             [rems.atoms :as atoms]
             [rems.dropdown :as dropdown]
@@ -9,7 +10,7 @@
             [rems.common.roles :as roles]
             [rems.spinner :as spinner]
             [rems.table :as table]
-            [rems.text :refer [text text-format localize-time]]
+            [rems.text :refer [text localize-time]]
             [rems.util :refer [fetch post!]]))
 
 (def +blacklist-add-roles+ #{:owner :handler}) ;; same roles as in rems.api.blacklist
@@ -141,17 +142,7 @@
         comment-field-id "blacklist-comment"
         selected-user @(rf/subscribe [::selected-user])
         comment @(rf/subscribe [::comment])]
-    [:form
-     {:on-submit (fn [event]
-                   (.preventDefault event)
-                   (if-some [errors (cond-> nil
-                                      (nil? selected-user) (assoc :user [#(text-format :t.form.validation/required
-                                                                                       (text :t.administration/user))]))]
-                     (do
-                       (rf/dispatch [::set-validation-errors errors])
-                       (.focus (js/document.getElementById user-field-id)))
-                     (rf/dispatch [::add-to-blacklist resource selected-user comment])))}
-
+    [:div
      [:div.form-group.row
       [:label.col-sm-1.col-form-label
        {:for user-field-id}
@@ -175,20 +166,23 @@
      [:div.form-group.row
       [:div.col-sm-1]
       [:div.col-sm-6
-       [:button#blacklist-add.btn.btn-primary
-        {:type :submit}
-        (text :t.administration/add)]]]]))
+       [perform-action-button
+        {:id :blacklist-add
+         :class "btn-primary"
+         :on-click #(rf/dispatch [::add-to-blacklist resource selected-user comment])
+         :text (text :t.administration/add)
+         :disabled (nil? selected-user)}]]]]))
 
 (defn add-user-form [resource]
   [roles/show-when +blacklist-add-roles+ [add-user-form-impl resource]])
 
 (defn- remove-button [resource user]
-  [:button.btn.btn-secondary.button-min-width
-   {:type :button
+  [perform-action-button
+   {:class "btn-secondary button-min-width"
     :on-click (fn [_event]
                 ;; TODO add form & field for comment
-                (rf/dispatch [::remove-from-blacklist resource user ""]))}
-   (text :t.administration/remove)])
+                (rf/dispatch [::remove-from-blacklist resource user ""]))
+    :text (text :t.administration/remove)}])
 
 (defn- format-rows [rows]
   (doall

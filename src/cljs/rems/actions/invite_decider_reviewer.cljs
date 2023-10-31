@@ -1,10 +1,8 @@
 (ns rems.actions.invite-decider-reviewer
   (:require [re-frame.core :as rf]
-            [rems.actions.components :refer [action-attachment action-link action-form-view button-wrapper command!
-                                             comment-field email-field name-field]]
+            [rems.actions.components :refer [action-attachment action-link action-form-view command! comment-field email-field name-field perform-action-button]]
             [rems.flash-message :as flash-message]
             [rems.text :refer [text]]))
-
 
 (rf/reg-event-fx
  ::open-form
@@ -71,11 +69,11 @@
   [action-form-view
    decider-form-id
    (text :t.actions/request-decision-via-email)
-   [[button-wrapper {:id "invite-decider"
-                     :text (text :t.actions/request-decision)
-                     :class "btn-primary"
-                     :on-click on-send
-                     :disabled disabled}]]
+   [[perform-action-button {:id "invite-decider"
+                            :text (text :t.actions/request-decision)
+                            :class "btn-primary"
+                            :on-click on-send
+                            :disabled disabled}]]
    [:<>
     [name-field {:field-key decider-form-id}]
     [email-field {:field-key decider-form-id}]
@@ -89,11 +87,11 @@
   [action-form-view
    reviewer-form-id
    (text :t.actions/request-review-via-email)
-   [[button-wrapper {:id "invite-reviewer"
-                     :text (text :t.actions/request-review)
-                     :class "btn-primary"
-                     :on-click on-send
-                     :disabled disabled}]]
+   [[perform-action-button {:id "invite-reviewer"
+                            :text (text :t.actions/request-review)
+                            :class "btn-primary"
+                            :on-click on-send
+                            :disabled disabled}]]
    [:<>
     [name-field {:field-key reviewer-form-id}]
     [email-field {:field-key reviewer-form-id}]

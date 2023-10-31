@@ -15,7 +15,7 @@
     :label  - String, shown to the user as-is."
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
-            [rems.atoms :refer [info-field textarea]]
+            [rems.atoms :as atoms :refer [info-field textarea]]
             [rems.collapsible :as collapsible]
             [rems.dropdown :as dropdown]
             [rems.fields :as fields]
@@ -345,3 +345,9 @@
                                                        new-value])
                                          (on-change new-value))}]
      [field-validation-message (get-in form-errors keys) label]]))
+
+(defn perform-action-button [{:keys [loading?] :as props}]
+  [atoms/rate-limited-button
+   (-> props
+       (dissoc (when (or loading? @(rf/subscribe [:rems.spa/any-pending-request?]))
+                 :on-click)))])

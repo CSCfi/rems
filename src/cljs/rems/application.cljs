@@ -2,11 +2,11 @@
   (:require [clojure.string :as str]
             [clojure.set :refer [union]]
             [goog.string]
+            [reagent.core :as r]
             [re-frame.core :as rf]
             [medley.core :refer [find-first update-existing]]
             [cljs-time.core :as time-core]
             [rems.actions.accept-licenses :refer [accept-licenses-action-button]]
-            [rems.actions.components :refer [button-wrapper]]
             [rems.actions.add-licenses :refer [add-licenses-action-button add-licenses-form]]
             [rems.actions.add-member :refer [add-member-action-button add-member-form]]
             [rems.actions.approve-reject :refer [approve-reject-action-button approve-reject-form]]
@@ -14,6 +14,7 @@
             [rems.actions.change-applicant :refer [change-applicant-action-button change-applicant-form]]
             [rems.actions.change-resources :refer [change-resources-action-button change-resources-form]]
             [rems.actions.close :refer [close-action-button close-form]]
+            [rems.actions.components :refer [perform-action-button]]
             [rems.actions.decide :refer [decide-action-button decide-form]]
             [rems.actions.delete :refer [delete-action-button delete-form]]
             [rems.actions.invite-decider-reviewer :refer [invite-decider-action-link invite-reviewer-action-link invite-decider-form invite-reviewer-form]]
@@ -504,20 +505,23 @@
      [fields/unsupported-field license])])
 
 (defn- save-button []
-  [button-wrapper {:id "save"
-                   :text (text :t.form/save)
-                   :on-click #(rf/dispatch [::save-application [text :t.form/save]])}])
+  [perform-action-button {:id "save"
+                          :text (text :t.form/save)
+                          :loading? @(rf/subscribe [::autosaving])
+                          :on-click #(rf/dispatch [::save-application [text :t.form/save]])}])
 
 (defn- submit-button []
-  [button-wrapper {:id "submit"
-                   :text (text :t.form/submit)
-                   :class :btn-primary
-                   :on-click #(rf/dispatch [::submit-application [text :t.form/submit]])}])
+  [perform-action-button {:id "submit"
+                          :text (text :t.form/submit)
+                          :class :btn-primary
+                          :loading? @(rf/subscribe [::autosaving])
+                          :on-click #(rf/dispatch [::submit-application [text :t.form/submit]])}])
 
 (defn- copy-as-new-button []
-  [button-wrapper {:id "copy-as-new"
-                   :text (text :t.form/copy-as-new)
-                   :on-click #(rf/dispatch [::copy-as-new-application])}])
+  [perform-action-button {:id "copy-as-new"
+                          :text (text :t.form/copy-as-new)
+                          :loading? @(rf/subscribe [::autosaving])
+                          :on-click #(rf/dispatch [::copy-as-new-application])}])
 
 (rf/reg-sub
  ::get-field-value
@@ -1015,7 +1019,7 @@
   (let [app-id (:application/id application)
         show-comment-field? (is-handling-user? application)
         actions (action-buttons application config)
-        reload (partial reload! app-id)
+        reload (r/partial reload! app-id)
         go-to-catalogue #(do (flash-message/show-default-success! :top [text :t.actions/delete])
                              (navigate! "/catalogue"))]
     (when (seq actions)
