@@ -6,7 +6,9 @@ have notable changes.
 
 ## Unreleased
 
-Changes since v2.33
+Changes since v2.34
+
+## v2.34 "Santakatu" 2023-10-31
 
 **NB: This release contains migrations!**
 **NB: `:application/public` is renamed to `:event/public` (in `application_event` table `eventdata` column).**
