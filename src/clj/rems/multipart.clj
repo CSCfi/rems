@@ -54,14 +54,14 @@
     (testing "nothing was detected"
       (is (not (:detected scan))))
     (testing "nothing should be logged"
-      (is (nil? (:log scan))))))
+      (is (nil? (seq (:log scan)))))))
 
 (deftest test-failing-scan-without-output
   (let [scan (scan-for-malware "test-data/malware-scanner-executables/fail-without-output.sh" "")]
     (testing "something was detected"
       (is (:detected scan)))
     (testing "nothing should be logged"
-      (is (nil? (:log scan))))))
+      (is (nil? (seq (:log scan)))))))
 
 (deftest test-passing-scan-with-output
   (let [scan (scan-for-malware "test-data/malware-scanner-executables/pass-with-output.sh" "")]
