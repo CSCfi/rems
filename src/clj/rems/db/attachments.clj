@@ -31,12 +31,12 @@
      :attachment/type type}))
 
 (defn check-for-malware-if-enabled [byte-array]
-  (when-let [malware-scanner-path (str (:malware-scanner-path env))]
+  (when-let [malware-scanner-path (:malware-scanner-path env)]
     (let [scan (scan-for-malware malware-scanner-path byte-array)]
       (when (and (:enable-malware-scanner-logging env) (seq (:log scan)))
         (log/info (:log scan)))
       (when (:detected scan)
-        (throw (InvalidRequestException. (str "Malware detected")))))))
+        (throw (InvalidRequestException. "Malware detected"))))))
 
 (defn get-attachments
   "Gets attachments without the data."
@@ -69,16 +69,16 @@
 (defn save-attachment!
   [{:keys [tempfile filename content-type]} user-id application-id]
   (check-allowed-attachment filename)
-  (let [byte-array (file-to-bytes tempfile)]
-    (check-for-malware-if-enabled byte-array)
-    (let [filename (fix-filename filename (mapv :attachment/filename (get-attachments-for-application application-id)))
-          id (:id (db/save-attachment! {:application application-id
-                                        :user user-id
-                                        :filename filename
-                                        :type content-type
-                                        :data byte-array}))]
-      {:id id
-       :success true})))
+  (let [byte-array (file-to-bytes tempfile)
+        _ (check-for-malware-if-enabled byte-array)
+        filename (fix-filename filename (mapv :attachment/filename (get-attachments-for-application application-id)))
+        id (:id (db/save-attachment! {:application application-id
+                                      :user user-id
+                                      :filename filename
+                                      :type content-type
+                                      :data byte-array}))]
+    {:id id
+     :success true}))
 
 (defn update-attachment!
   "Updates the attachment, but does not modify the file data! Also does not \"fix the filename\"."
