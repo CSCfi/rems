@@ -41,6 +41,46 @@
     (testing "too large, byte at a time"
       (is (= [:too-large [0 1 2]] (copy {:buffer-size 1 :max-size 3}))))))
 
+(defn scan-for-malware
+  "Feeds byte-array to STDIN and runs executable at malware-scanner-path returns true if malware executable returns a non-zero status-code, false otherwise, logs STERR of executable"
+  [malware-scanner-path byte-array]
+  (let [scan-output (sh "sh" "-c" malware-scanner-path :in byte-array)]
+    {:detected (not= (:exit scan-output) 0)
+     :log      (:err scan-output)}))
+
+(deftest test-passing-scan-without-output
+  (let [scan (scan-for-malware "test-data/malware-scanner-executables/pass-without-output.sh" "")]
+    (testing "nothing was detected"
+      (is (not (:detected scan))))
+    (testing "nothing should be logged"
+      (is (nil? (:log scan))))))
+
+(deftest test-failing-scan-without-output
+  (let [scan (scan-for-malware "test-data/malware-scanner-executables/fail-without-output.sh" "")]
+    (testing "something was detected"
+      (is (:detected scan)))
+    (testing "nothing should be logged"
+      (is (nil? (:log scan))))))
+
+(deftest test-passing-scan-with-output
+  (let [scan (scan-for-malware "test-data/malware-scanner-executables/pass-with-output.sh" "")]
+    (testing "nothing was detected"
+      (is (not (:detected scan))))
+    (testing "'passed' should be logged"
+      (is (= (:log scan) "passed")))))
+
+(deftest test-failing-scan-with-output
+  (let [scan (scan-for-malware "test-data/malware-scanner-executables/fail-with-output.sh" "")]
+    (testing "something was detected"
+      (is (:detected scan)))
+    (testing "'failed' should be logged"
+      (is (= (:log scan) "failed")))))
+
+(deftest test-scanner-receives-input
+  (let [input "miauw"
+        scan  (scan-for-malware "test-data/malware-scanner-executables/cat-to-stderr.sh" input)]
+    (is (and (not (:detected scan)) (= (:log scan) input)))))
+
 (defn size-limiting-temp-file-store
   "Drop-in replacement for `ring.middleware.multipart-params.temp-file/temp-file-store` that
   respects a maximum size limit for a file. We want to stop as soon as we have read
