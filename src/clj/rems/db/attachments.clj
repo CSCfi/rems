@@ -1,6 +1,5 @@
 (ns rems.db.attachments
-  (:require [clojure.java.shell :refer [sh]]
-            [clojure.test :refer [deftest is]]
+  (:require [clojure.test :refer [deftest is]]
             [clojure.tools.logging :as log]
             [rems.common.attachment-util :as attachment-util]
             [rems.common.util :refer [fix-filename]]

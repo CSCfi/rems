@@ -1,6 +1,7 @@
 (ns rems.multipart
   "Namespace for handling multipart requests."
-  (:require [clojure.java.io :as io]
+  (:require [clojure.java.shell :refer [sh]]
+            [clojure.java.io :as io]
             [clojure.tools.logging :as log]
             [clojure.test :refer [deftest is testing]]
             [medley.core :refer [assoc-some]]
