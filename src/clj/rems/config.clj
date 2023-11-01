@@ -62,6 +62,25 @@
 (defn system-properties-keys []
   (set (keys (source/from-system-props))))
 
+(defn validate-malware-scanner [malware-scanning]
+  (when-let [path (:scanner-path malware-scanning)]
+    (let [scanner (io/as-file path)]
+      (assert (.exists scanner) (str "Malware scanner path was set, but no file was found at: " path))
+      (assert (.canExecute scanner) "Malware scanner cannot be executed by REMS"))))
+
+(deftest test-malware-scanner-validation
+  (testing "validation passes if malware scanner path is nil"
+    (validate-malware-scanner {:scanner-path nil}))
+
+  (testing "validation fails if path is pointing to a non-existing file"
+    (is (thrown? java.lang.AssertionError (validate-malware-scanner {:scanner-path "/this/does/not/exist"}))))
+
+  (testing "validation fails if path is pointing to a non-executable file"
+    (is (thrown? java.lang.AssertionError (validate-malware-scanner {:scanner-path "/etc/passwd"}))))
+
+  (testing "validation passes if path is pointing to an executable file"
+    (validate-malware-scanner {:scanner-path "/bin/sh"})))
+
 ;; if we start doing more thorough validation, could use a schema instead
 (defn- validate-config [config]
   (when-let [url (:public-url config)]
@@ -75,6 +94,7 @@
   (when-let [invalid-commands (seq (remove (set commands/command-names) (:disable-commands config)))]
     (log/warn "Unrecognized values in :disable-commands :" (pr-str invalid-commands))
     (log/warn "Supported-values:" (pr-str commands/command-names)))
+  (validate-malware-scanner (:malware-scanning config))
   (doseq [target (:event-notification-targets config)]
     (when-let [invalid-events (seq (remove (set events/event-types) (:event-types target)))]
       (log/warn "Unrecognized event types in event notification target"
