@@ -215,12 +215,17 @@ REMS has a shopping cart feature which allows bundling multiple resources into s
 
 REMS can be configured to automatically scan user uploaded files for malware. 
 
-To enable this feature the configuration option `:malware-scanner-path` must be defined, and must point to an executable. The executable must implement the following behaviour:
+```clojure
+ :malware-scanning {:scanner-path "/path/to/malware/scanner" ; Path to scanner executable
+                    :logging true} ; Whether REMS should log STDERR of malware scanner 
+```
+
+The executable must implement the following behaviour:
 
 > Given a binary stream on `STDIN`, exit with a status-code of zero if and only if the file constituting the binary stream is scanned to be malware free.
 
 In its current implementation, users will be notified with a generic error message if the file they attach does not pass the malware scanner.
 
-Enabling the configuration option `:enable-malware-scanner-logging` will output any message that the malware scanner executable writes to `STDERR` to the application log at `INFO` level.
+When logging is enabled REMS will output any message that the malware scanner executable writes to `STDERR` to the application log at `INFO` level.
 
 Output written to `STDOUT` is discarded for now, a future implementation might use this data stream to communicate scan progress to the user.
