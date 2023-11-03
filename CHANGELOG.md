@@ -6,7 +6,14 @@ have notable changes.
 
 ## Unreleased
 
-Changes since v2.34
+Changes since v2.34.1
+
+## v2.34.1 "Santakatu +1" 2023-11-03
+
+**NB: This release contains migrations!**
+
+### Fixes
+- A bug in event selection prevented migration (introduced in v2.34) from applying properly. This release contains a fixed version of that migration.
 
 ## v2.34 "Santakatu" 2023-10-31
 
