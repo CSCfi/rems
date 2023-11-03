@@ -2564,6 +2564,7 @@
             cat1 (test-helpers/create-catalogue-item! {:workflow-id wfid :resource-id res1})
             cat2 (test-helpers/create-catalogue-item! {:workflow-id wfid :resource-id res2})
             app-id (test-helpers/create-application! {:actor applicant-id :catalogue-item-ids [cat1 cat2]})]
+
         (testing "save partially valid duo codes"
           (is (= {:success true}
                  (send-command applicant-id
@@ -2620,6 +2621,7 @@
                                                   :validity "duo/not-compatible"}}]}
                  (-> (get-application-for-user app-id applicant-id)
                      :application/duo))))
+
         (testing "save fully valid duo codes"
           (is (= {:success true}
                  (send-command applicant-id
@@ -2676,7 +2678,13 @@
                                  :duo/shorthand "DS"
                                  :duo/validation {:errors [] :validity "duo/compatible"}}]}
                  (-> (get-application-for-user app-id applicant-id)
-                     :application/duo))))))))
+                     :application/duo))))
+
+        (testing "duo codes are not enriched when config :enable-duo is false"
+          (with-redefs [rems.config/env (assoc rems.config/env :enable-duo false)]
+            (let [application (get-application-for-user app-id applicant-id)]
+              (is (nil? (:application/duo application)))
+              (is (empty? (keep :resource/duo (:application/resources application)))))))))))
 
 (deftest test-application-raw
   (let [api-key "42"
@@ -2816,8 +2824,7 @@
                                     :event/actor-attributes {:userid "alice" :name "Alice Applicant" :nickname "In Wonderland" :email "alice@example.com" :organizations [{:organization/id "default"}] :researcher-status-by "so"}
                                     :application/field-values [{:form form-id :field "field-1" :value "raw test"}
                                                                {:form form-id :field "att" :value (str att-id)}]
-                                    :event/visibility "visibility/public"}]
-              :application/duo {:duo/matches []}}
+                                    :event/visibility "visibility/public"}]}
              (-> (api-call :get (str "/api/applications/" app-id "/raw") nil
                            api-key reporter)
                  ;; event ids are unpredictable

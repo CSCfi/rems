@@ -2,7 +2,7 @@
   (:require [clojure.set :as set]
             [clojure.test :refer [deftest is testing]]
             [com.rpl.specter :refer [ALL transform select]]
-            [medley.core :refer [dissoc-in distinct-by filter-vals find-first map-vals update-existing update-existing-in]]
+            [medley.core :refer [assoc-some dissoc-in distinct-by filter-vals find-first map-vals update-existing update-existing-in]]
             [rems.application.events :as events]
             [rems.application.master-workflow :as master-workflow]
             [rems.common.application-util :refer [applicant-and-members can-redact-attachment? is-applying-user?]]
@@ -511,20 +511,29 @@
                                               :duo/restrictions (:restrictions dataset-code)}]
                nil)}))
 
-(defn- enrich-application-duo-matches [application get-config]
-  (if-not (:enable-duo (get-config))
+(defn- get-duo-matches [application]
+  (for [resource (:application/resources application)
+        dataset-code (get-in resource [:resource/duo :duo/codes])
+        :let [duo-id (:id dataset-code)
+              query-code (->> (get-in application [:application/duo :duo/codes])
+                              (find-first (comp #{duo-id} :id)))]]
+    {:duo/id duo-id
+     :duo/shorthand (:shorthand dataset-code)
+     :duo/label (:label dataset-code)
+     :resource/id (:resource/id resource)
+     :duo/validation (validate-duo-match dataset-code query-code resource)}))
+
+(defn- hide-duos-if-not-enabled [application get-config]
+  (if (:enable-duo (get-config))
     application
-    (let [duos (->> application :application/duo :duo/codes)
-          matches (for [resource (:application/resources application)
-                        res-duo (-> resource :resource/duo :duo/codes)
-                        :let [app-duo (find-first #(= (:id res-duo) (:id %)) duos)]]
-                    {:duo/id (:id res-duo)
-                     :duo/shorthand (:shorthand res-duo)
-                     :duo/label (:label res-duo)
-                     :resource/id (:resource/id resource)
-                     :duo/validation (validate-duo-match res-duo app-duo resource)})]
-      (-> application
-          (assoc-in [:application/duo :duo/matches] matches)))))
+    (-> application
+        (dissoc :application/duo)
+        (update :application/resources (partial mapv #(dissoc % :resource/duo))))))
+
+(defn- enrich-duos [application]
+  (-> application
+      (update-existing-in [:application/duo :duo/codes] duo/enrich-duo-codes)
+      (update-existing :application/duo assoc-some :duo/matches (seq (get-duo-matches application)))))
 
 (defn- enrich-workflow-licenses [application get-workflow]
   (let [wf (get-workflow (get-in application [:application/workflow :workflow/id]))]
@@ -813,8 +822,8 @@
       enrich-field-visible ; uses enriched answers
       set-application-description ; uses enriched answers
       (update :application/resources enrich-resources get-catalogue-item)
-      (enrich-application-duo-matches get-config) ; uses enriched resources
-      (update-existing-in [:application/duo :duo/codes] duo/enrich-duo-codes)
+      (hide-duos-if-not-enabled get-config)
+      enrich-duos ; uses enriched resources
       (enrich-workflow-licenses get-workflow)
       (update :application/licenses enrich-licenses get-license)
       (update :application/events (partial mapv #(enrich-event % get-user get-catalogue-item)))
