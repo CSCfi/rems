@@ -6,7 +6,12 @@ have notable changes.
 
 ## Unreleased
 
-Changes since v2.34.1
+Changes since v2.34.2
+
+## v2.34.2 "Santakatu +2" 2023-11-03
+
+### Fixes
+- DUO codes in draft saved event no longer cause schema validation error when `:enable-duo` config is false.
 
 ## v2.34.1 "Santakatu +1" 2023-11-03
 
