@@ -218,6 +218,15 @@
 (s/defschema Permissions
   #{(apply s/enum (conj commands/command-names :see-everything))})
 
+(s/defschema DuoCodeMatch
+  {:duo/id s/Str
+   :duo/shorthand s/Str
+   :duo/label {s/Keyword s/Any}
+   :resource/id s/Int
+   :duo/validation {:validity s/Keyword
+                    (s/optional-key :errors) [{:type s/Keyword
+                                               s/Keyword s/Any}]}})
+
 (s/defschema Application
   {:application/id s/Int
    :application/external-id (rjs/field
@@ -267,13 +276,7 @@
    (s/optional-key :entitlement/end) (s/maybe DateTime)
    (s/optional-key :application/votes) {schema-base/UserId s/Str}
    (s/optional-key :application/duo) {(s/optional-key :duo/codes) [schema-base/DuoCodeFull]
-                                      :duo/matches [{:duo/id s/Str
-                                                     :duo/shorthand s/Str
-                                                     :duo/label {s/Keyword s/Any}
-                                                     :resource/id s/Int
-                                                     :duo/validation {:validity s/Keyword
-                                                                      (s/optional-key :errors) [{:type s/Keyword
-                                                                                                 s/Keyword s/Any}]}}]}})
+                                      (s/optional-key :duo/matches) [DuoCodeMatch]}})
 
 (s/defschema ApplicationRaw
   (-> Application
