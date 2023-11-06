@@ -4,7 +4,7 @@
             [rems.service.command :as command]
             [rems.api.testing :refer :all]
             [rems.db.attachments :as attachments]
-            [rems.db.applications :as applications]
+            [rems.service.application :as application]
             [rems.service.test-data :as test-data]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.handler :refer [handler]]
@@ -65,7 +65,7 @@
               unrelated-attachment-id (upload-request unrelated-app-id "alice" "attachment1.txt")]
 
           (is (= [{:attachment/id unrelated-attachment-id :attachment/filename "attachment1.txt" :attachment/type "text/plain" :attachment/user "alice"}]
-                 (-> (applications/get-application-internal unrelated-app-id)
+                 (-> (application/get-full-internal-application unrelated-app-id)
                      (get-attachments))
                  (attachments/get-attachments-for-application unrelated-app-id))
               "unrelated attachment was saved")
@@ -87,7 +87,7 @@
                              read-ok-body)))
 
                   (is (= [{:attachment/id attachment-id1 :attachment/filename "attachment1.txt" :attachment/type "text/plain" :attachment/user "alice"}]
-                         (-> (applications/get-application-internal app-id)
+                         (-> (application/get-full-internal-application app-id)
                              (get-attachments))
                          (attachments/get-attachments-for-application app-id))
                       "attachment1 was saved"))
@@ -107,7 +107,7 @@
 
                       (is (= [{:attachment/id attachment-id1 :attachment/filename "attachment1.txt" :attachment/type "text/plain" :attachment/user "alice"}
                               {:attachment/id attachment-id2 :attachment/filename "attachment2.txt" :attachment/type "text/plain" :attachment/user "alice"}]
-                             (-> (applications/get-application-internal app-id)
+                             (-> (application/get-full-internal-application app-id)
                                  (get-attachments))
                              (attachments/get-attachments-for-application app-id))
                           "attachment1 and attachment2 are saved"))
@@ -129,7 +129,7 @@
 
                           (is (= [{:attachment/id attachment-id1 :attachment/filename "attachment1.txt" :attachment/type "text/plain" :attachment/user "alice"}
                                   {:attachment/id attachment-id2 :attachment/filename "attachment2.txt" :attachment/type "text/plain" :attachment/user "alice"}]
-                                 (-> (applications/get-application-internal app-id)
+                                 (-> (application/get-full-internal-application app-id)
                                      (get-attachments))
                                  (attachments/get-attachments-for-application app-id))
                               "attachment1 and attachment2 are saved, but not attachment3"))))
@@ -148,7 +148,7 @@
                         (is (= [{:attachment/id attachment-id1 :attachment/filename "attachment1.txt" :attachment/type "text/plain" :attachment/user "alice"}
                                 {:attachment/id attachment-id2 :attachment/filename "attachment2.txt" :attachment/type "text/plain" :attachment/user "alice"}
                                 {:attachment/id handler-attachment-id :attachment/filename "handler.txt" :attachment/type "text/plain" :attachment/user "handler"}]
-                               (-> (applications/get-application-internal app-id)
+                               (-> (application/get-full-internal-application app-id)
                                    (get-attachments))
                                (attachments/get-attachments-for-application app-id))
                             "attachment1, attachment2 and handler attachment are saved")
@@ -169,7 +169,7 @@
                                     {:attachment/id attachment-id2 :attachment/filename "attachment2.txt" :attachment/type "text/plain" :attachment/user "alice"}
                                     {:attachment/id handler-attachment-id :attachment/filename "handler.txt" :attachment/type "text/plain" :attachment/user "handler"}
                                     {:attachment/id attachment-id4 :attachment/filename "attachment4.txt" :attachment/type "text/plain" :attachment/user "alice"}]
-                                   (-> (applications/get-application-internal app-id)
+                                   (-> (application/get-full-internal-application app-id)
                                        (get-attachments))
                                    (attachments/get-attachments-for-application app-id))
                                 "attachment1, attachment2, attachment4 and handler attachment are saved")
@@ -193,13 +193,13 @@
                                           {:attachment/id attachment-id2 :attachment/filename "attachment2.txt" :attachment/type "text/plain" :attachment/user "alice"}
                                           {:attachment/id handler-attachment-id :attachment/filename "handler.txt" :attachment/type "text/plain" :attachment/user "handler"}
                                           {:attachment/id attachment-id4 :attachment/filename "attachment4.txt" :attachment/type "text/plain" :attachment/user "alice"}]
-                                         (-> (applications/get-application-internal app-id)
+                                         (-> (application/get-full-internal-application app-id)
                                              (get-attachments))
                                          (attachments/get-attachments-for-application app-id))
                                       "attachment1, attachment2, attachment4 and handler attachment are saved")
 
                                   (is (= [{:attachment/id unrelated-attachment-id :attachment/filename "attachment1.txt" :attachment/type "text/plain" :attachment/user "alice"}]
-                                         (-> (applications/get-application-internal unrelated-app-id)
+                                         (-> (application/get-full-internal-application unrelated-app-id)
                                              (get-attachments))
                                          (attachments/get-attachments-for-application unrelated-app-id))
                                       "unrelated attachment is still there"))))))))))))))))))

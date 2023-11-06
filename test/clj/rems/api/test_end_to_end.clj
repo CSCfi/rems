@@ -2,16 +2,13 @@
   "Go from zero to an approved application via the API. Check that all side-effects happen."
   (:require [clojure.test :refer :all]
             [rems.api.testing :refer :all]
-            [rems.application.approver-bot :as approver-bot]
-            [rems.application.bona-fide-bot :as bona-fide-bot]
-            [rems.application.rejecter-bot :as rejecter-bot]
             [rems.db.api-key :as api-key]
-            [rems.db.applications :as applications]
-            [rems.db.entitlements :as entitlements]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.email.core :as email]
+            [rems.entitlements :as entitlements]
             [rems.event-notification :as event-notification]
             [rems.json :as json]
+            [rems.service.application :as application]
             [stub-http.core :as stub]))
 
 (use-fixtures :each api-fixture)
@@ -27,10 +24,11 @@
     (email/try-send-emails!)
     (entitlements/process-outbox!)
     (event-notification/process-outbox!))
+
   (with-open [entitlements-server (stub/start! {"/add" {:status 200}
                                                 "/remove" {:status 200}})
               event-server (stub/start! {"/event" {:status 200}})]
-    ;; TODO should test emails with a mock smtp server
+    ;; TODO could test emails with a mock smtp server (see email/test_core.clj)
     (let [email-atom (atom [])]
       (with-redefs [rems.config/env (assoc rems.config/env
                                            :smtp-host "localhost"
@@ -386,10 +384,10 @@
         applicant-attributes {:userid applicant-id
                               :name "E2E Applicant"
                               :email "applicant@example.com"}
-        approver-attributes {:userid approver-bot/bot-userid
+        approver-attributes {:userid "approver-bot"
                              :email nil
                              :name "approver"}
-        rejecter-attributes {:userid rejecter-bot/bot-userid
+        rejecter-attributes {:userid "rejecter-bot"
                              :email nil
                              :name "rejecter"}]
 
@@ -432,8 +430,8 @@
                                                       :title "e2e workflow"
                                                       :type :workflow/default
                                                       :handlers [handler-id
-                                                                 approver-bot/bot-userid
-                                                                 rejecter-bot/bot-userid]}
+                                                                 "approver-bot"
+                                                                 "rejecter-bot"]}
                        api-key owner-id)))
           catalogue-item-id
           (testing "create catalogue item"
@@ -512,7 +510,7 @@
         applicant-attributes {:userid applicant-id
                               :name "E2E Applicant"
                               :email "applicant@example.com"}
-        rejecter-attributes {:userid rejecter-bot/bot-userid
+        rejecter-attributes {:userid "rejecter-bot"
                              :email nil
                              :name "rejecter"}]
 
@@ -554,7 +552,7 @@
                                                       :title "e2e workflow"
                                                       :type :workflow/default
                                                       :handlers [handler-id
-                                                                 rejecter-bot/bot-userid]}
+                                                                 "rejecter-bot"]}
                        api-key owner-id)))
           catalogue-item-id
           (testing "create catalogue item"
@@ -654,7 +652,7 @@
                             :name "Bona Fide Referer"
                             :email "referer@example.com"
                             :researcher-status-by "so"}
-        bot-attributes {:userid bona-fide-bot/bot-userid
+        bot-attributes {:userid "bona-fide-bot"
                         :email nil
                         :name "bona fide bot"}]
 
@@ -689,7 +687,7 @@
                        (api-call :post "/api/workflows/create" {:organization {:organization/id "default"}
                                                                 :title "bona fide workflow"
                                                                 :type :workflow/default
-                                                                :handlers [bona-fide-bot/bot-userid]}
+                                                                :handlers ["bona-fide-bot"]}
                                  api-key owner-id))
 
           catalogue-item-id (extract-id
@@ -714,7 +712,7 @@
         (assert-success
          (api-call :post "/api/applications/submit" {:application-id app-id}
                    api-key applicant-id)))
-      (let [event (-> (applications/get-application-internal app-id)
+      (let [event (-> (application/get-full-internal-application app-id)
                       :application/events
                       last)
             token (:invitation/token event)]
@@ -723,7 +721,7 @@
                   :application/id app-id
                   :application/decider {:name "Referer"
                                         :email "referer@example.com"}
-                  :event/actor bona-fide-bot/bot-userid}
+                  :event/actor "bona-fide-bot"}
                  (select-keys event [:event/type :application/id :application/decider :event/actor])))
           (is (string? token)))
         (testing "post decision as referer"

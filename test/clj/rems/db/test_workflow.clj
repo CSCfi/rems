@@ -29,8 +29,8 @@
               :organization {:organization/id "abc"}
               :title "test-crud-workflow-title"
               :workflow {:type :workflow/default
-                         :handlers [{:userid "bob" :name nil :email nil}
-                                    {:userid "handler" :name nil :email nil}]
+                         :handlers [{:userid "bob"}
+                                    {:userid "handler"}]
                          :forms []
                          :licenses []}
               :id id
@@ -44,9 +44,9 @@
                 :organization {:organization/id "abc"}
                 :title "test-crud-workflow-title"
                 :workflow {:type :workflow/default
-                           :handlers [{:userid "bob" :name nil :email nil}
-                                      {:userid "handler" :name nil :email nil}
-                                      {:userid "alice" :name nil :email nil}]
+                           :handlers [{:userid "bob"}
+                                      {:userid "handler"}
+                                      {:userid "alice"}]
                            :forms []
                            :licenses []}
                 :id id

@@ -1,15 +1,14 @@
 (ns ^:integration rems.test-event-notification
   (:require [clj-time.core :as time]
             [clojure.test :refer :all]
-            [medley.core :refer [dissoc-in]]
             [rems.config]
             [rems.service.command :as command]
             [rems.api.testing :refer [api-fixture api-call]]
-            [rems.db.events]
-            [rems.service.test-data :as test-data]
+            [rems.db.applications :as applications]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.event-notification :as event-notification]
             [rems.json :as json]
+            [rems.service.test-data :as test-data]
             [stub-http.core :as stub]))
 
 (use-fixtures
@@ -88,7 +87,7 @@
                                                        :actor applicant
                                                        :time (time/date-time 2001)
                                                        :catalogue-item-ids [cat-id]}))
-            event-id (:event/id (first (rems.db.events/get-application-events app-id)))]
+            event-id (:event/id (first (applications/get-application-events app-id)))]
         (testing "no notifications before outbox is processed"
           (is (empty? (stub/recorded-requests server))))
 

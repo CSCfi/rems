@@ -3,12 +3,12 @@
             [clojure.test :refer :all]
             [clj-time.core :as time-core]
             [rems.api.testing :refer :all]
-            [rems.service.test-data :as test-data]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.db.user-secrets :as user-secrets]
             [rems.db.user-settings :as user-settings]
             [rems.handler :refer [handler]]
             [rems.json :as json]
+            [rems.service.test-data :as test-data]
             [rems.testing-util :refer [with-fixed-time with-fake-login-users]]
             [ring.mock.request :refer :all]
             [stub-http.core :as stub])

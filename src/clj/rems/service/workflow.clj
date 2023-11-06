@@ -1,14 +1,12 @@
 (ns rems.service.workflow
-  (:require [rems.service.dependencies :as dependencies]
-            [rems.service.util :as util]
-            [rems.application.commands :as commands]
-            [rems.db.applications :as applications]
-            [rems.db.core :as db]
+  (:require [rems.application.commands :as commands]
             [rems.db.form :as form]
             [rems.db.licenses :as licenses]
             [rems.db.organizations :as organizations]
-            [rems.db.users :as users]
-            [rems.db.workflow :as workflow]))
+            [rems.db.workflow :as workflow]
+            [rems.service.cache :as cache]
+            [rems.service.dependencies :as dependencies]
+            [rems.service.util :as util]))
 
 (defn invalid-forms-error [forms]
   (when-some [invalid (seq (remove (comp form/get-form-template :form/id) forms))]
@@ -17,7 +15,7 @@
                :forms invalid}]}))
 
 (defn invalid-users-error [userids]
-  (when-some [invalid (seq (remove users/user-exists? userids))]
+  (when-some [invalid (seq (remove cache/user-exists? userids))]
     {:success false
      :errors [{:type :invalid-user
                :users invalid}]}))
@@ -54,20 +52,20 @@
         (invalid-disable-commands-error disable-commands)
         (do
           (workflow/edit-workflow! (update cmd :licenses #(map :license/id %)))
-          (applications/reload-cache!)
+          (dependencies/evict! :workflow id)
           {:success true}))))
 
 (defn set-workflow-enabled! [{:keys [id enabled]}]
   (util/check-allowed-organization! (:organization (workflow/get-workflow id)))
-  (db/set-workflow-enabled! {:id id :enabled enabled})
+  (workflow/set-workflow-enabled! {:id id :enabled enabled})
   {:success true})
 
 (defn set-workflow-archived! [{:keys [id archived]}]
   (util/check-allowed-organization! (:organization (workflow/get-workflow id)))
   (or (dependencies/change-archive-status-error archived {:workflow/id id})
       (do
-        (db/set-workflow-archived! {:id id
-                                    :archived archived})
+        (workflow/set-workflow-archived! {:id id
+                                          :archived archived})
         {:success true})))
 
 ;; TODO more systematic joining for these needed. Now we just add the title for the UI
@@ -85,8 +83,9 @@
   (when workflow
     (-> workflow
         organizations/join-organization
-        (update-in [:workflow :forms] (partial map enrich-workflow-form))
-        (update-in [:workflow :licenses] (partial map enrich-workflow-license)))))
+        (update-in [:workflow :handlers] (partial mapv (comp cache/get-user :userid)))
+        (update-in [:workflow :forms] (partial mapv enrich-workflow-form))
+        (update-in [:workflow :licenses] (partial mapv enrich-workflow-license)))))
 
 (defn get-workflow [id]
   (->> (workflow/get-workflow id)
@@ -96,7 +95,7 @@
   (->> (workflow/get-workflows filters)
        (mapv join-dependencies)))
 
-(defn get-available-actors [] (users/get-users))
+(defn get-available-actors [] (cache/get-users))
 
 (defn get-handlers []
   (let [workflows (workflow/get-workflows {:enabled true

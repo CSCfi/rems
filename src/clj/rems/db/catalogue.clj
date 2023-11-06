@@ -1,6 +1,5 @@
 (ns rems.db.catalogue
   (:require [clj-time.core :as time]
-            [clojure.core.memoize :as memo]
             [rems.common.util :refer [index-by]]
             [rems.db.core :as db]
             [rems.json :as json]
@@ -17,26 +16,18 @@
 (def ^:private coerce-CatalogueItemData
   (coerce/coercer! CatalogueItemData coerce/string-coercion-matcher))
 
-(def ^:private +localizations-cache-time-ms+ (* 5 60 1000))
-
-(defn- load-catalogue-item-localizations!
+(defn- get-catalogue-item-localizations
   "Load catalogue item localizations from the database."
-  []
-  (->> (db/get-catalogue-item-localizations)
+  [id]
+  (->> (db/get-catalogue-item-localizations {:id id})
        (map #(update-in % [:langcode] keyword))
-       (index-by [:id :langcode])))
-
-(defn- get-cache [cache-key]
-  (case cache-key
-    :localizations (load-catalogue-item-localizations!)))
-
-(def ^:private cached (memo/ttl get-cache :ttl/threshold +localizations-cache-time-ms+))
+       (index-by [:langcode])))
 
 (defn- localize-catalogue-item
   "Associates localisations into a catalogue item from
   the preloaded state."
   [item]
-  (assoc item :localizations (get (cached :localizations) (:id item) {})))
+  (assoc item :localizations (get-catalogue-item-localizations (:id item))))
 
 (defn- join-catalogue-item-data [item]
   (let [catalogueitemdata (json/parse-string (:catalogueitemdata item))]
@@ -84,5 +75,28 @@
                                                  :archived true}
                                                 query-params)))))
 
-(defn reset-cache! []
-  (memo/memo-clear! cached))
+(defn get-expanded-catalogue-item [id]
+  (get-localized-catalogue-item id {:expand-names? true :expand-resource-data? true}))
+
+(defn create-catalogue-item! [command]
+  (db/create-catalogue-item! command))
+
+(defn set-catalogue-item-data! [command]
+  (db/set-catalogue-item-data! (select-keys command [:id :catalogueitemdata])))
+
+(defn set-catalogue-item-organization! [command]
+  (db/set-catalogue-item-organization! (select-keys command [:id :organization])))
+
+(defn upsert-catalogue-item-localization! [command]
+  (db/upsert-catalogue-item-localization! (select-keys command [:id :langcode :title :infourl])))
+
+(defn set-catalogue-item-enabled! [{:keys [id enabled]}]
+    ;; Clear endt in case it has been set in the db. Otherwise we might
+  ;; end up with an enabled item that's not active and can't be made
+  ;; active via the UI.
+  (db/set-catalogue-item-endt! {:id id :end nil})
+  (db/set-catalogue-item-enabled! {:id id :enabled enabled}))
+
+(defn set-catalogue-item-archived! [{:keys [id archived]}]
+  (db/set-catalogue-item-archived! {:id id
+                                    :archived archived}))

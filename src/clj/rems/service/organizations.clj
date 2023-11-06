@@ -3,17 +3,23 @@
             [medley.core :refer [assoc-some find-first]]
             [rems.auth.util]
             [rems.common.util :refer [apply-filters]]
-            [rems.db.applications :as applications]
             [rems.db.organizations :as organizations]
             [rems.db.roles :as roles]
             [rems.db.users :as users]
+            [rems.json :as json]
+            [rems.schema-base :as schema-base]
+            [rems.service.cache :as cache]
             [rems.service.dependencies :as dependencies]
-            [rems.service.util]))
+            [rems.service.util]
+            [schema.coerce :as coerce]))
+
+(def ^:private coerce-organization-full
+  (coerce/coercer! schema-base/OrganizationFull json/coercion-matcher))
 
 (defn- apply-user-permissions [userid organizations]
   (let [user-roles (set/union (roles/get-roles userid)
                               (organizations/get-all-organization-roles userid)
-                              (applications/get-all-application-roles userid))
+                              (cache/get-all-application-roles userid))
         can-see-all? (some? (some #{:owner :organization-owner :handler :reporter} user-roles))]
     (for [org organizations]
       (if (or (nil? userid) can-see-all?)
@@ -36,15 +42,17 @@
        (doall)))
 
 (defn get-organizations [& [{:keys [userid owner enabled archived]}]]
-  (->> (organizations/get-organizations)
+  (->> (organizations/get-organizations-raw)
+       (mapv #(update % :organization/owners (partial mapv (comp users/get-user :userid))))
+       (mapv coerce-organization-full)
        (apply-filters (assoc-some {}
                                   :enabled enabled
                                   :archived archived))
        (organization-filters userid owner)))
 
-(defn get-organization [userid org]
+(defn get-organization [userid organization]
   (->> (get-organizations {:userid userid})
-       (find-first (comp #{(:organization/id org)} :organization/id))))
+       (find-first (comp #{(:organization/id organization)} :organization/id))))
 
 (defn add-organization! [cmd]
   (if-let [id (organizations/add-organization! cmd)]

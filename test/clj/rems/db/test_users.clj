@@ -77,8 +77,8 @@
 
   (testing "get-users-with-role"
     (roles/add-role! "user1" :owner)
-    (is (= ["user1"] (users/get-users-with-role :owner)))
-    (is (= [] (users/get-users-with-role :reporter))))
+    (is (= #{"user1"} (users/get-users-with-role :owner)))
+    (is (= #{} (users/get-users-with-role :reporter))))
 
   (testing "get-deciders"
     (is (= #{{:userid "whatever", :name "What Ever", :email nil}

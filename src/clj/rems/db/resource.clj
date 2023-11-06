@@ -75,3 +75,9 @@
                             :enabled (:enabled amended)
                             :archived (:archived amended)
                             :resourcedata (json/generate-string data)}))))
+
+(defn set-resource-enabled! [params]
+  (db/set-resource-enabled! params))
+
+(defn set-resource-archived! [params]
+  (db/set-resource-archived! params))

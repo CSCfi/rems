@@ -2,7 +2,7 @@
   (:require [compojure.api.sweet :refer :all]
             [rems.api.schema :as schema]
             [rems.api.util :refer [extended-logging]] ; required for route :roles
-            [rems.db.users :as users]
+            [rems.service.user :as user]
             [rems.middleware :as middleware]
             [rems.schema-base :as schema-base]
             [ring.util.http-response :refer :all]
@@ -30,7 +30,7 @@
       :body [command CreateUserCommand]
       :return schema/SuccessResponse
       (extended-logging request)
-      (users/add-user! command)
+      (user/add-user! command)
       (ok {:success true}))
 
     (PUT "/edit" request
@@ -39,7 +39,7 @@
       :body [command EditUserCommand]
       :return schema/SuccessResponse
       (extended-logging request)
-      (users/edit-user! command)
+      (user/edit-user! command)
       (ok {:success true}))
 
     (GET "/active" []

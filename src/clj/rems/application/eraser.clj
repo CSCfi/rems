@@ -2,23 +2,22 @@
   (:require [clojure.tools.logging :as log]
             [clj-time.core :as time]
             [mount.core :as mount]
-            [rems.service.command :as command]
             [rems.application.expirer-bot :as expirer-bot]
             [rems.config :refer [env]]
-            [rems.db.applications :as applications]
             [rems.db.users :as users]
+            [rems.service.command :as command]
+            [rems.service.application :as application]
             [rems.scheduler :as scheduler]))
 
 (defn process-applications! []
   (log/info :start #'process-applications!)
-  ; check that bot user exists, else log missing
-  (if (users/user-exists? expirer-bot/bot-userid)
-    (doseq [application (applications/get-all-unrestricted-applications)]
+  ;; check that bot user exists, else log missing
+  (if (users/user-exists? "expirer-bot")
+    (doseq [application (application/get-full-internal-applications)]
       (when-some [cmd (expirer-bot/run-expirer-bot application)]
         (command/command! cmd)))
     (log/warnf "Cannot process applications, because user %s does not exist"
-               expirer-bot/bot-userid))
-  (applications/reload-cache!)
+               "expirer-bot"))
   (log/info :finish #'process-applications!))
 
 (mount/defstate expired-application-poller

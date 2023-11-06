@@ -2,7 +2,7 @@
   (:require [rems.application.events :as events]
             [rems.common.util :refer [apply-filters]]
             [rems.db.core :as db]
-            [rems.db.users :as users]
+            [rems.dependencies :as dependencies]
             [rems.json :as json]
             [rems.schema-base :as schema-base]
             [schema.coerce :as coerce]
@@ -42,7 +42,7 @@
       (update :workflow #(coerce-workflow-body (json/parse-string %)))
       (update :organization (fn [id] {:organization/id id}))
       (update-in [:workflow :licenses] #(mapv (fn [id] {:license/id id}) %))
-      (update-in [:workflow :handlers] #(mapv users/get-user %))))
+      (update-in [:workflow :handlers] #(mapv (fn [userid] {:userid userid}) %))))
 
 (defn get-workflow [id]
   (when-let [wf (db/get-workflow {:wfid id})]
@@ -66,6 +66,7 @@
 
 (defn edit-workflow! [{:keys [id organization title handlers disable-commands voting anonymize-handling]}]
   (let [workflow (unrich-workflow (get-workflow id))
+        workflow-id (or id (:id workflow))
         workflow-body (cond-> (:workflow workflow)
                         handlers (assoc :handlers handlers)
                         disable-commands (assoc :disable-commands disable-commands)
@@ -75,5 +76,14 @@
                         :title (or title (:title workflow))
                         :organization (or (:organization/id organization)
                                           (get-in workflow [:organization :organization/id]))
-                        :workflow (json/generate-string workflow-body)}))
-  {:success true})
+                        :workflow (json/generate-string workflow-body)})
+    (dependencies/notify-watchers! {:workflow/id [workflow-id]})
+    {:success true}))
+
+(defn set-workflow-enabled! [{:keys [id enabled]}]
+  (db/set-workflow-enabled! {:id id :enabled enabled})
+  (dependencies/notify-watchers! {:workflow/id [id]}))
+
+(defn set-workflow-archived! [{:keys [id archived]}]
+  (db/set-workflow-archived! {:id id :archived archived})
+  (dependencies/notify-watchers! {:workflow/id [id]}))

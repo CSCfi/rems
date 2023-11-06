@@ -1,15 +1,17 @@
 (ns ^:integration rems.api.test-blacklist
-  (:require [clojure.test :refer :all]
+  (:require [clj-time.core :as time]
+            [clojure.test :refer :all]
             [rems.api.testing :refer :all]
             [rems.db.api-key :as api-key]
-            [rems.db.applications :as applications]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.handler :refer [handler]]
+            [rems.service.application :as application]
+            [rems.service.blacklist :as blacklist]
             [ring.mock.request :refer :all])
   (:import [org.joda.time DateTimeUtils]))
 
 (use-fixtures
-  :once
+  :each
   api-fixture
   (fn [f]
     ;; TODO this needs to be in the future so that we can use the
@@ -66,7 +68,7 @@
         cat-id (test-helpers/create-catalogue-item! {:resource-id res-id-2})
         app-id (test-helpers/create-application! {:catalogue-item-ids [cat-id]
                                                   :actor "user2"})
-        get-app #(applications/get-application app-id)]
+        get-app #(application/get-full-internal-application app-id)]
     (testing "initially no blacklist"
       (is (= [] (fetch {})))
       (is (= []
@@ -161,3 +163,28 @@
                                               :blacklist/resource {:resource/ext-id "definitely-not-found"}
                                               :comment "not found"})
         (is (= blacklist (simplify (fetch {}))))))))
+
+(deftest test-parameter-validation
+  (let [user-id "test-user"
+        resource-ext-id "test-resource"
+        command {:event/type :blacklist.event/add
+                 :event/actor "handler"
+                 :event/comment ""
+                 :event/time (time/now)
+                 :resource/ext-id resource-ext-id
+                 :userid user-id}]
+    (test-helpers/create-user! {:userid user-id})
+    (test-helpers/create-resource! {:resource-ext-id resource-ext-id})
+
+    (testing "user and resource both exist"
+      (is (not (blacklist/blacklisted? user-id resource-ext-id)))
+      (blacklist/add-event! command)
+      (is (blacklist/blacklisted? user-id resource-ext-id)))
+
+    (testing "user doesn't exist"
+      (is (thrown? IllegalArgumentException
+                   (blacklist/add-event! (assoc command :userid "non-existing-user")))))
+
+    (testing "resource doesn't exist"
+      (is (thrown? IllegalArgumentException
+                   (blacklist/add-event! (assoc command :resource/ext-id "non-existing-resource")))))))

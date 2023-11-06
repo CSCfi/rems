@@ -15,6 +15,7 @@
             [com.rpl.specter :refer [select ALL]]
             [etaoin.keys]
             [medley.core :refer [find-first]]
+            [rems.service.application :as application]
             [rems.service.catalogue :as catalogue]
             [rems.service.form :as forms]
             [rems.service.invitation :as invitations]
@@ -24,7 +25,6 @@
             [rems.browser-test-util :as btu]
             [rems.common.util :refer [getx]]
             [rems.context :as context]
-            [rems.db.applications :as applications]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.db.users :as users]
             [rems.db.user-settings :as user-settings]
@@ -563,7 +563,9 @@
         (fill-form-field "Phone number" "+358450000100")
         (fill-form-field "IP address" "142.250.74.110")
 
-        (fill-form-field "Simple text field" "Private field answer before autosave")
+        (fill-form-field "Private text field" "Private field answer before autosave")
+
+        (rems.service.application/get-full-internal-application (rems.common.util/parse-int (btu/context-get :application-id)))
 
         (btu/with-client-config {:enable-autosave false}
           (testing "save draft succesfully, but show validation warnings"
@@ -578,8 +580,8 @@
 
         ;; let's also try autosave
         (btu/with-client-config {:enable-autosave true}
-          (clear-form-field "Simple text field")
-          (fill-form-field "Simple text field" "Private field answer")
+          (clear-form-field "Private text field")
+          (fill-form-field "Private text field" "Private field answer")
           (btu/wait-visible {:css ".alert-success" :fn/text "Application is saved."})
           (is (btu/eventually-visible? :status-warning))
           (is (= ["Invalid email address."] ; only invalid values are warned about
@@ -731,7 +733,7 @@
               "Email" "john.smith@generic.name"}
              (slurp-fields :invite0-info)))
       (is (string? (-> (btu/context-getx :application-id)
-                       applications/get-application-internal
+                       application/get-full-internal-application
                        :application/invitation-tokens
                        keys
                        first)))
@@ -739,7 +741,7 @@
               :application/member {:name "John Smith"
                                    :email "john.smith@generic.name"}}
              (-> (btu/context-getx :application-id)
-                 applications/get-application-internal
+                 application/get-full-internal-application
                  :application/invitation-tokens
                  vals
                  first)))
@@ -756,7 +758,7 @@
       (btu/wait-invisible :invite0-info)
 
       (is (empty? (-> (btu/context-getx :application-id)
-                      applications/get-application-internal
+                      application/get-full-internal-application
                       :application/invitation-tokens)))
       (is (btu/visible? {:css "div.event-description" :fn/text "Alice Applicant removed John Smith from the application."}))
       (is (btu/visible? {:css "div.event-comment" :fn/text "sorry but no"})))))
@@ -812,7 +814,7 @@
       (is (= #{{:userid "ionna" :name "Ionna Insprucker" :email "ionna@ins.mail"}
                {:userid "kayla" :name "Kayla Kale" :email "kale@is.good"}}
              (-> (btu/context-getx :application-id)
-                 applications/get-application-internal
+                 application/get-full-internal-application
                  :application/members)))
       (is (btu/visible? {:css "div.event-description" :fn/text "Alice Applicant removed Jade Jenner from the application."}))
       (is (btu/visible? {:css "div.event-comment" :fn/text "not in research group anymore"})))))
@@ -1052,7 +1054,7 @@
       (logout))
     (testing "get invite token"
       (let [[token invitation] (-> (btu/context-getx :application-id)
-                                   applications/get-application-internal
+                                   application/get-full-internal-application
                                    :application/invitation-tokens
                                    first)]
         (is (string? token))
@@ -1076,7 +1078,7 @@
       (is (= {:event/type :application.event/decider-joined
               :event/actor "new-decider"}
              (-> (btu/context-getx :application-id)
-                 applications/get-application-internal
+                 application/get-full-internal-application
                  :application/events
                  last
                  (select-keys [:event/actor :event/type])))))
@@ -1096,7 +1098,7 @@
               :event/actor "new-decider"
               :event/type :application.event/decided}
              (-> (btu/context-getx :application-id)
-                 applications/get-application-internal
+                 application/get-full-internal-application
                  :application/events
                  last
                  (select-keys [:application/decision :event/actor :event/type])))))))
@@ -2470,7 +2472,7 @@
       (is (btu/eventually-visible? {:css ".alert" :fn/text "The handler does not have the authority to approve or reject, but only a separate decider has."}))
       (select-option "Handlers" "handler")
       (select-option "Handlers" "carl")
-      (select-option "Forms" "Simple form")
+      (select-option "Forms" "Private form")
       (select-option "Licenses" "General Terms of Use")
       (btu/screenshot "test-workflow-create-edit-1")
       (btu/scroll-and-click :save))
@@ -2483,7 +2485,7 @@
               "Title" (btu/context-getx :workflow-title)
               "Type" "Decider workflow"
               "Handlers" "Carl Reviewer (carl@example.com), Hannah Handler (handler@example.com)"
-              "Forms" "Simple form"
+              "Forms" "Private form"
               "Licenses" "General Terms of Use"
               "Active" true}
              (slurp-fields :workflow))))
@@ -2497,7 +2499,7 @@
       (is (btu/disabled? :type-default)) ;; can't change type
       ;; removing an item is hard to script reliably, so let's just add one
       (select-option "Handlers" "reporter")
-      (is (= "Simple form" (btu/get-element-text {:tag :div :id :workflow-forms}))) ; readonly field
+      (is (= "Private form" (btu/get-element-text {:tag :div :id :workflow-forms}))) ; readonly field
       (is (= "General Terms of Use" (btu/get-element-text {:tag :div :id :workflow-licenses}))) ; readonly field
       (btu/screenshot "test-workflow-create-edit-4")
       (btu/scroll-and-click :save))
@@ -2510,11 +2512,11 @@
               "Title" (str (btu/context-getx :workflow-title) " v2")
               "Type" "Decider workflow"
               "Handlers" "Carl Reviewer (carl@example.com), Hannah Handler (handler@example.com), Reporter (reporter@example.com)"
-              "Forms" "Simple form"
+              "Forms" "Private form"
               "Licenses" "General Terms of Use"
               "Active" true}
              (slurp-fields :workflow)))
-      (is (btu/visible? {:tag :a :fn/text "Simple form"})))))
+      (is (btu/visible? {:tag :a :fn/text "Private form"})))))
 
 (deftest test-blacklist
   (btu/with-postmortem

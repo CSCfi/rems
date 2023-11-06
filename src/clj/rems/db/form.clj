@@ -147,3 +147,9 @@
                                   :formdata (serialize-formdata {:form/internal-name (:form/internal-name form)
                                                                  :form/external-title (:form/external-title form)})
                                   :fields (serialize-fields form)})))
+
+(defn set-form-enabled! [params]
+  (db/set-form-template-enabled! params))
+
+(defn set-form-archived! [params]
+  (db/set-form-template-archived! params))

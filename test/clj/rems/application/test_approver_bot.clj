@@ -30,7 +30,7 @@
 (defn apply-events [events injections]
   (-> events
       events/validate-events
-      (model/build-application-view injections)))
+      (model/build-application-view-with-injections injections)))
 
 (deftest test-approver-bot
   (let [generate-commands #'approver-bot/generate-commands

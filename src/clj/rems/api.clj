@@ -7,7 +7,7 @@
             [compojure.api.sweet :refer :all]
             [conman.core :as conman]
             [rems.api.applications :refer [applications-api my-applications-api]]
-            [rems.api.audit-log :refer [audit-log-api]]
+            [rems.api.audit-log :as audit-log :refer [audit-log-api]]
             [rems.api.blacklist :refer [blacklist-api]]
             [rems.api.catalogue :refer [catalogue-api]]
             [rems.api.catalogue-items :refer [catalogue-items-api]]
@@ -27,7 +27,6 @@
             [rems.api.users :refer [users-api]]
             [rems.api.workflows :refer [workflows-api]]
             [rems.auth.auth :as auth]
-            [rems.db.core :as db]
             [rems.json :as json]
             [rems.util :refer [get-user-id]]
             [ring.middleware.cors :refer [wrap-cors]]
@@ -157,12 +156,12 @@
           path (:uri request)]
       (try
         (when (should-audit-log? path)
-          (db/add-to-audit-log! {:time (time/now)
-                                 :path path
-                                 :method (name (:request-method request))
-                                 :apikey (auth/get-api-key request)
-                                 :userid (get-user-id)
-                                 :status (str (:status response))}))
+          (audit-log/add-to-audit-log! {:time (time/now)
+                                        :path path
+                                        :method (name (:request-method request))
+                                        :apikey (auth/get-api-key request)
+                                        :userid (get-user-id)
+                                        :status (str (:status response))}))
         (catch Throwable t
           (log/error "Adding to audit log failed:" t)))
       response)))

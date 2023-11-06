@@ -1,13 +1,13 @@
 (ns rems.application.search
-  (:require [clojure.java.io :as io]
+  (:require [clj-time.core :as time]
+            [clojure.java.io :as io]
             [clojure.string :as str]
             [clojure.tools.logging :as log]
             [com.rpl.specter :refer [ALL select]]
             [mount.core :as mount]
             [rems.common.application-util :as application-util]
             [rems.config :refer [env]]
-            [rems.db.applications :as applications]
-            [rems.db.events :as events]
+            [rems.scheduler :as scheduler]
             [rems.text :as text]
             [rems.util :refer [delete-directory-contents-recursively]]
             [clj-time.core :as time-core])
@@ -38,8 +38,7 @@
                ;; create a new empty index by creating and closing an IndexWriter, otehrwise SearcherManager will fail
                (.close (IndexWriter. directory (IndexWriterConfig. analyzer)))
                (atom {::directory directory
-                      ::searcher-manager (SearcherManager. directory (SearcherFactory.))
-                      ::last-processed-event-id 0}))))
+                      ::searcher-manager (SearcherManager. directory (SearcherFactory.))}))))
   :stop (do
           (.close ^SearcherManager (::searcher-manager @search-index))
           (.close ^Directory (::directory @search-index))))
@@ -93,24 +92,61 @@
         (doseq [[k v] terms]
           (.add doc (TextField. (name k) v Field$Store/NO)))
         (.add doc (TextField. "all" (str/join " " (vals (into (sorted-map) terms))) Field$Store/NO))
-        (.updateDocument writer (Term. app-id-field app-id) doc))
+        (.updateDocument writer (Term. app-id-field app-id) doc)
+        (log/info "Indexed application" app-id))
       (catch Throwable t
         (throw (Error. (str "Error indexing application " app-id) t))))))
 
-(defn refresh! []
+(defn index-events! [events get-full-internal-application]
   (locking index-lock
-    (let [{::keys [directory ^SearcherManager searcher-manager last-processed-event-id]} @search-index
-          events (events/get-all-events-since last-processed-event-id)]
+    (let [{::keys [directory ^SearcherManager searcher-manager]} @search-index]
       (when-not (empty? events)
         (with-open [writer (IndexWriter. directory (-> (IndexWriterConfig. analyzer)
                                                        (.setOpenMode IndexWriterConfig$OpenMode/APPEND)))]
           (let [app-ids (distinct (map :application/id events))]
-            (log/info "Start indexing" (count app-ids) "applications...")
-            (doseq [app-id app-ids]
-              (index-application! writer (applications/get-application app-id)))
-            (log/info "Finished indexing" (count app-ids) "applications")))
-        (.maybeRefresh searcher-manager)
-        (swap! search-index assoc ::last-processed-event-id (:event/id (last events)))))))
+            #_(log/info "Start indexing" (count app-ids) "applications...")
+            (doseq [app-id app-ids
+                    :let [application (get-full-internal-application app-id)]
+                    :when application]
+              (index-application! writer application))
+            #_(log/info "Finished indexing" (count app-ids) "applications")))
+        (.maybeRefresh searcher-manager)))))
+
+(def indexing-requests (atom nil))
+
+(defn process-index-events! []
+  (locking index-lock
+    (when-some [requests (seq @indexing-requests)]
+      (let [events (mapcat first requests)
+            get-full-internal-application (second (first requests))] ; NB: doesn't matter which get-full-internal-application is actually used
+        (index-events! events
+                       get-full-internal-application))  ; TODO avoid by moving to system ns
+      (reset! indexing-requests nil))))
+
+(defn request-index-events! [events get-full-internal-application]
+  (locking index-lock
+    (swap! indexing-requests conj [events get-full-internal-application])
+    nil)) ; process manager expects sequence of new events)
+
+(mount/defstate indexer-poller
+  :start (do (reset! indexing-requests nil)
+             (scheduler/start! "search-indexer-poller"
+                               process-index-events!
+                               (.toStandardDuration (time/seconds 1))))
+  :stop (scheduler/stop! indexer-poller))
+
+(defn index-applications! [applications]
+  (locking index-lock
+    (let [{::keys [directory ^SearcherManager searcher-manager]} @search-index]
+      (when-not (empty? applications)
+        (with-open [writer (IndexWriter. directory (-> (IndexWriterConfig. analyzer)
+                                                       (.setOpenMode IndexWriterConfig$OpenMode/APPEND)))]
+          (log/info "Start indexing" (count applications) "applications...")
+          (doseq [application applications]
+            (index-application! writer application))
+          (log/info "Finished indexing" (count applications) "applications"))
+        (.maybeRefresh searcher-manager)))
+    nil))
 
 (defn- with-searcher [f]
   (let [searcher-manager ^SearcherManager (::searcher-manager @search-index)
@@ -136,7 +172,6 @@
 
 (defn find-applications [^String query]
   (when-let [query (parse-query query)]
-    (refresh!) ; TODO: call from a background thread asynchronously?
     (with-searcher
       (fn [^IndexSearcher searcher]
         (->> (.search searcher query Integer/MAX_VALUE)

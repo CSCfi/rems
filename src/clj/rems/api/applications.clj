@@ -5,10 +5,6 @@
             [compojure.api.sweet :refer :all]
             [medley.core :refer [update-existing]]
             [rems.api.schema :as schema]
-            [rems.service.attachment :as attachment]
-            [rems.service.command :as command]
-            [rems.service.licenses :as licenses]
-            [rems.service.todos :as todos]
             [rems.api.util :as api-util :refer [extended-logging]] ; required for route :roles
             [rems.application.commands :as commands]
             [rems.application.search :as search]
@@ -16,12 +12,15 @@
             [rems.common.roles :refer [+admin-read-roles+]]
             [rems.config :as config]
             [rems.context :as context]
-            [rems.db.applications :as applications]
-            [rems.db.csv :as csv]
-            [rems.db.user-settings :as user-settings]
-            [rems.db.users :as users]
+            [rems.csv :as csv]
             [rems.experimental.pdf :as experimental-pdf]
             [rems.pdf :as pdf]
+            [rems.service.application :as application]
+            [rems.service.attachment :as attachment]
+            [rems.service.command :as command]
+            [rems.service.licenses :as licenses]
+            [rems.service.todos :as todos]
+            [rems.service.user :as user]
             [rems.schema-base :as schema-base]
             [rems.text :refer [with-language]]
             [rems.util :refer [getx-user-id]]
@@ -84,9 +83,7 @@
   (if (str/blank? query)
     apps
     (let [app-ids (search/find-applications query)]
-      (filter (fn [app]
-                (contains? app-ids (:application/id app)))
-              apps))))
+      (filter (comp app-ids :application/id) apps))))
 
 (defn- coerce-command-from-api [cmd]
   ;; TODO: schema could do these coercions for us
@@ -119,7 +116,7 @@
        (ok (api-command ~command body#)))))
 
 (defn accept-invitation [invitation-token]
-  (if-let [application-id (applications/get-application-by-invitation-token invitation-token)]
+  (if-let [application-id (application/get-application-id-by-invitation-token invitation-token)]
     (api-command :application.command/accept-invitation
                  {:application-id application-id
                   :token invitation-token})
@@ -127,9 +124,15 @@
      :errors [{:type :t.actions.errors/invalid-token :token invitation-token}]}))
 
 (defn validate-application [request]
-  (let [application (applications/get-application-for-user (getx-user-id) (:application-id request))]
+  (let [application (application/get-full-personalized-application-for-user (getx-user-id) (:application-id request))]
     (merge {:success true}
            (commands/validate-application application (:field-values request)))))
+
+(defn- project-application-overview [application]
+  (dissoc application
+          :application/events
+          :application/forms
+          :application/licenses))
 
 (def my-applications-api
   (context "/my-applications" []
@@ -140,7 +143,8 @@
       :roles #{:logged-in}
       :return [schema/ApplicationOverview]
       :query-params [{query :- (describe s/Str "search query [documentation](https://github.com/CSCfi/rems/blob/master/docs/search.md)") nil}]
-      (ok (->> (applications/get-my-applications (getx-user-id))
+      (ok (->> (application/get-full-personalized-applications-by-user (getx-user-id))
+               (mapv project-application-overview)
                (filter-with-search query))))))
 
 (def applications-api
@@ -152,8 +156,9 @@
       :roles #{:logged-in}
       :return [schema/ApplicationOverview]
       :query-params [{query :- (describe s/Str "search query [documentation](https://github.com/CSCfi/rems/blob/master/docs/search.md)") nil}]
-      (ok (->> (applications/get-all-applications (getx-user-id))
-               (filter-with-search query))))
+      (ok (->> (application/get-full-personalized-applications-with-user (getx-user-id))
+               (filter-with-search query)
+               (mapv project-application-overview))))
 
     (GET "/todo" []
       :summary "Get all applications that the current user needs to act on."
@@ -161,7 +166,8 @@
       :return [schema/ApplicationOverview]
       :query-params [{query :- (describe s/Str "search query [documentation](https://github.com/CSCfi/rems/blob/master/docs/search.md)") nil}]
       (ok (->> (todos/get-todos (getx-user-id))
-               (filter-with-search query))))
+               (filter-with-search query)
+               (mapv project-application-overview))))
 
     (GET "/handled/count" []
       :summary "Get count of all applications that the current user no more needs to act on."
@@ -178,7 +184,8 @@
       (ok (cond->> (todos/get-handled-todos (getx-user-id))
             query (filter-with-search query)
             true (sort-by last-activity >)
-            limit (take limit))))
+            limit (take limit)
+            true (mapv project-application-overview))))
 
     (POST "/create" request
       :summary "Create a new application"
@@ -200,15 +207,15 @@
       :summary "Available reviewers"
       :roles #{:handler}
       :return Reviewers
-      (ok (users/get-reviewers)))
+      (ok (user/get-reviewers)))
 
     (GET "/export" []
       :summary "Export all submitted applications of a given form as CSV"
       :roles #{:owner :reporter}
       :query-params [form-id :- (describe s/Int "form id")]
-      (-> (ok (applications/export-applications-for-form-as-csv (getx-user-id)
-                                                                form-id
-                                                                (:language (user-settings/get-user-settings (getx-user-id)))))
+      (-> (ok (application/export-applications-for-form-as-csv (getx-user-id)
+                                                               form-id
+                                                               (:language (user/get-user-settings (getx-user-id)))))
           (header "Content-Disposition" (str "filename=\"" (csv/applications-filename) "\""))
           (content-type "text/csv")))
 
@@ -216,13 +223,13 @@
       :summary "Existing REMS users available for application membership"
       :roles #{:handler}
       :return [Applicant]
-      (ok (users/get-applicants)))
+      (ok (user/get-applicants)))
 
     (GET "/deciders" []
       :summary "Available deciders"
       :roles #{:handler}
       :return Deciders
-      (ok (users/get-deciders)))
+      (ok (user/get-deciders)))
 
     (GET "/attachment/:attachment-id" []
       :summary "Get an attachment"
@@ -291,15 +298,14 @@
     (command-endpoint :application.command/uninvite-member commands/UninviteMemberCommand)
     (command-endpoint :application.command/vote commands/VoteCommand)
 
-
-    ;; the path parameter matches also non-numeric paths, so this route must be after all overlapping routes
+;; the path parameter matches also non-numeric paths, so this route must be after all overlapping routes
     (GET "/:application-id" []
       :summary "Get application by `application-id`. Application is customized for the requesting user (e.g. event visibility, permissions, etc)."
       :roles #{:logged-in}
       :path-params [application-id :- (describe s/Int "application id")]
       :responses {200 {:schema schema/Application}
                   404 {:schema s/Str :description "Not found"}}
-      (if-let [app (applications/get-application-for-user (getx-user-id) application-id)]
+      (if-let [app (application/get-full-personalized-application-for-user (getx-user-id) application-id)]
         (ok app)
         (api-util/not-found-json-response)))
 
@@ -309,7 +315,7 @@
       :path-params [application-id :- (describe s/Int "application id")]
       :responses {200 {:schema schema/ApplicationRaw}
                   404 {:schema s/Str :description "Not found"}}
-      (if-let [app (applications/get-application application-id)]
+      (if-let [app (application/get-full-public-application application-id)]
         (ok app)
         (api-util/not-found-json-response)))
 
@@ -320,7 +326,7 @@
       :query-params [{all :- (describe s/Bool "Defaults to true. If set to false, the zip will only contain latest application attachments: no previous versions of attachments, and no event attachments.") true}]
       :responses {200 {}
                   404 {:schema s/Str :description "Not found"}}
-      (if-let [app (applications/get-application-for-user (getx-user-id) application-id)]
+      (if-let [app (application/get-full-personalized-application-for-user (getx-user-id) application-id)]
         (attachment/zip-attachments app all)
         (api-util/not-found-json-response)))
 
@@ -342,7 +348,7 @@
       :roles #{:logged-in}
       :path-params [application-id :- (describe s/Int "application id")]
       :produces ["application/pdf"]
-      (if-let [app (applications/get-application-for-user (getx-user-id) application-id)]
+      (if-let [app (application/get-full-personalized-application-for-user (getx-user-id) application-id)]
         (with-language context/*lang*
           (-> app
               (pdf/application-to-pdf-bytes)

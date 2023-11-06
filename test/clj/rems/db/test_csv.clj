@@ -1,9 +1,9 @@
 (ns ^:integration rems.db.test-csv
   (:require [clojure.test :refer :all]
-            [rems.db.applications :as applications]
+            [rems.csv :as csv]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.db.testing :refer [rollback-db-fixture test-db-fixture]]
-            [rems.db.csv :as csv]
+            [rems.service.application :as application]
             [rems.text :as text])
   (:import [org.joda.time DateTime]))
 
@@ -109,8 +109,8 @@
                                                            :workflow-id wf-id})
         app-id (test-helpers/create-application! {:catalogue-item-ids [cat-id other-cat-id]
                                                   :actor applicant})
-        external-id (:application/external-id (applications/get-application app-id))
-        get-application #(applications/get-application app-id)]
+        external-id (:application/external-id (application/get-full-internal-application app-id))
+        get-application #(application/get-full-internal-application app-id)]
 
     (test-helpers/fill-form! {:application-id app-id
                               :actor applicant

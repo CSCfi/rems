@@ -3,16 +3,20 @@
             [clojure.java.io :as io]
             [clojure.string :as str]
             [clojure.test :refer [deftest is testing use-fixtures]]
-            [rems.service.attachment :as attachment]
-            [rems.service.catalogue :as catalogue]
             [rems.api.testing :refer [api-call api-fixture api-response assert-response-is-ok authenticate get-csrf-token login-with-cookies read-body read-ok-body response-is-forbidden? response-is-not-found? response-is-ok? response-is-payload-too-large? response-is-unauthorized? response-is-unsupported-media-type? transit-body]]
+            [rems.application.search :as search]
             [rems.config]
             [rems.db.applications]
             [rems.db.blacklist :as blacklist]
             [rems.db.core :as db]
-            [rems.service.test-data :as test-data :refer [+test-api-key+]]
             [rems.db.test-data-helpers :as test-helpers]
+            [rems.dependencies :as dependencies]
             [rems.handler :refer [handler]]
+            [rems.json]
+            [rems.service.attachment :as attachment]
+            [rems.service.cache :as cache]
+            [rems.service.catalogue :as catalogue]
+            [rems.service.test-data :as test-data :refer [+test-api-key+]]
             [rems.testing-util :refer [with-fixed-time with-user]]
             [ring.mock.request :refer [header json-body request]])
   (:import java.io.ByteArrayOutputStream
@@ -172,7 +176,7 @@
                      read-body)]
         (is (:success body))))))
 
-(deftest pdf-smoke-test
+(deftest test-pdf-smoke
   (testing "not found"
     (let [response (-> (request :get "/api/applications/9999999/pdf")
                        (authenticate "42" "developer")
@@ -299,6 +303,8 @@
     (testing "disabling a command"
       (with-redefs [rems.config/env (assoc rems.config/env :disable-commands [:application.command/remark])]
         (testing "handler doesn't see hidden command"
+          ;; configuration change doesn't automatically invalidate the application cache so we do it here
+          (dependencies/notify-watchers! {:application/id [application-id]})
           (let [application (get-application-for-user application-id handler-id)]
             (is (= "workflow/master" (get-in application [:application/workflow :workflow/type])))
             (is (= #{"application.command/redact-attachments"
@@ -737,6 +743,7 @@
       (with-user "owner"
         (catalogue/set-catalogue-item-enabled! {:id cat-id
                                                 :enabled false}))
+      (cache/reload-cache!)
       (rems.db.applications/reload-cache!)
       (is (= {:success false
               :errors [{:type "disabled-catalogue-item" :catalogue-item-id cat-id}]}
@@ -882,7 +889,7 @@
                                       :application-id app-id
                                       :member {:name "Member 1" :email "member1@example.com"}}))))
     (testing "accept member invitation for draft"
-      (let [token (-> (rems.db.applications/get-application-internal app-id)
+      (let [token (-> (cache/get-full-internal-application app-id)
                       :application/events
                       last
                       :invitation/token)
@@ -908,7 +915,7 @@
                                     :application-id app-id
                                     :reviewer {:name "Member 2" :email "member2@example.com"}}))))
     (testing "accept handler invitation"
-      (let [token (-> (rems.db.applications/get-application-internal app-id)
+      (let [token (-> (cache/get-full-internal-application app-id)
                       :application/events
                       last
                       :invitation/token)
@@ -930,7 +937,7 @@
                                     :application-id app-id
                                     :decider {:name "Member 3" :email "member3@example.com"}}))))
     (testing "accept handler invitation"
-      (let [token (-> (rems.db.applications/get-application-internal app-id)
+      (let [token (-> (cache/get-full-internal-application app-id)
                       :application/events
                       last
                       :invitation/token)
@@ -2451,6 +2458,8 @@
 (deftest test-application-listing
   (let [app-id (test-helpers/create-application! {:actor "alice"})]
 
+    (search/process-index-events!)
+
     (testing "list user applications"
       (is (contains? (get-ids (get-my-applications "alice"))
                      app-id)))
@@ -2491,6 +2500,7 @@
                           app-id))))
 
     (testing "search todos"
+      (search/process-index-events!)
       (is (contains? (get-ids (get-todos handler {:query (str "applicant:" applicant)}))
                      app-id))
       (is (empty? (get-ids (get-todos handler {:query "applicant:no-such-user"})))))
@@ -2529,6 +2539,7 @@
                      app-id)))
 
     (testing "search handled todos"
+      (search/process-index-events!)
       (is (contains? (get-ids (get-handled-todos handler {:query (str "applicant:" applicant)}))
                      app-id))
       (is (empty? (get-ids (get-handled-todos handler {:query "applicant:no-such-user"})))))
@@ -2728,6 +2739,7 @@
     (testing "applicant can't get raw application"
       (is (response-is-forbidden? (api-response :get (str "/api/applications/" app-id "/raw") nil
                                                 api-key applicant))))
+
     (testing "reporter can get raw application"
       (is (= {:application/description ""
               :application/invited-members []
