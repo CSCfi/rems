@@ -47,40 +47,50 @@
   [malware-scanner-path byte-array]
   (let [scan-output (sh "sh" "-c" malware-scanner-path :in byte-array)]
     {:detected (not= (:exit scan-output) 0)
-     :log      (:err scan-output)}))
+     :out      (:out scan-output)
+     :err      (:err scan-output)}))
 
 (deftest test-passing-scan-without-output
   (let [scan (scan-for-malware "test-data/malware-scanner-executables/pass-without-output.sh" "")]
     (testing "nothing was detected"
       (is (not (:detected scan))))
     (testing "nothing should be logged"
-      (is (nil? (seq (:log scan)))))))
+      (is (nil? (seq (:out scan)))))))
 
 (deftest test-failing-scan-without-output
   (let [scan (scan-for-malware "test-data/malware-scanner-executables/fail-without-output.sh" "")]
     (testing "something was detected"
       (is (:detected scan)))
     (testing "nothing should be logged"
-      (is (nil? (seq (:log scan)))))))
+      (is (nil? (seq (:out scan)))))))
 
 (deftest test-passing-scan-with-output
   (let [scan (scan-for-malware "test-data/malware-scanner-executables/pass-with-output.sh" "")]
     (testing "nothing was detected"
       (is (not (:detected scan))))
     (testing "'passed' should be logged"
-      (is (= (:log scan) "passed")))))
+      (is (= "passed" (:out scan))))))
 
 (deftest test-failing-scan-with-output
   (let [scan (scan-for-malware "test-data/malware-scanner-executables/fail-with-output.sh" "")]
     (testing "something was detected"
       (is (:detected scan)))
     (testing "'failed' should be logged"
-      (is (= (:log scan) "failed")))))
+      (is (= "failed" (:out scan))))))
+
+(deftest test-intertwined-outputs
+  (let [scan (scan-for-malware "test-data/malware-scanner-executables/test-outputs.sh" "")]
+    (testing "nothing was detected"
+      (is (not (:detected scan))))
+    (testing "'out' should be logged to STDOUT"
+      (is (= "out\n" (:out scan))))
+    (testing "'err' should be logged to STDERR"
+      (is (= "err\n" (:err scan))))))
 
 (deftest test-scanner-receives-input
   (let [input "miauw"
-        scan  (scan-for-malware "test-data/malware-scanner-executables/cat-to-stderr.sh" input)]
-    (is (and (not (:detected scan)) (= (:log scan) input)))))
+        scan  (scan-for-malware "cat" input)]
+    (is (and (not (:detected scan)) (= input (:out scan))))))
 
 (defn size-limiting-temp-file-store
   "Drop-in replacement for `ring.middleware.multipart-params.temp-file/temp-file-store` that

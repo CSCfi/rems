@@ -226,6 +226,5 @@ The executable must implement the following behaviour:
 
 In its current implementation, users will be notified with a generic error message if the file they attach does not pass the malware scanner.
 
-When logging is enabled REMS will output any message that the malware scanner executable writes to `STDERR` to the application log at `INFO` level.
-
-Output written to `STDOUT` is discarded for now, a future implementation might use this data stream to communicate scan progress to the user.
+When logging is enabled REMS will output any message that the malware scanner executable writes to `STDOUT` at `INFO` level, 
+and anything written to `STDERR` at `ERROR` level.

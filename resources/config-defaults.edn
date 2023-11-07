@@ -477,7 +477,7 @@
  ;; can take a binary file from `STDIN` and return a status code of zero if and only if the file passes the scan.
  ;;
  ;; When `:scanner-path` is defined, enabling `:logging` will make REMS log whatever the malware scanner executable
- ;; printed to `STDERR` before exiting.
+ ;; printed to `STDOUT` and `STDERR` before exiting.
  :malware-scanning {:scanner-path nil
                     :logging false}
 

@@ -32,8 +32,10 @@
 (defn check-for-malware-if-enabled [byte-array]
   (when-let [malware-scanner-path (:scanner-path (:malware-scanning env))]
     (let [scan (scan-for-malware malware-scanner-path byte-array)]
-      (when (and (:scanner-path (:malware-scanning env)) (seq (:log scan)))
-        (log/info (:log scan)))
+      (when (and (:logging (:malware-scanning env)) (seq (:out scan)))
+        (log/info (:out scan)))
+      (when (seq (:err scan))
+        (log/error (:out scan)))
       (when (:detected scan)
         (throw (InvalidRequestException. "Malware detected"))))))
 
