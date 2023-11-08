@@ -39,9 +39,9 @@
         [:div.d-flex.gap-1.align-items-center.justify-content-center.flex-wrap
         [:div (text :t.table.paging/page)]
         [:div.my-3.paging-numbers
-          {:class (if @show-all-page-numbers
-                    "paging-numbers-grid"
-                    "paging-numbers-flex")
+         {:class (if @show-all-page-numbers
+                   "paging-numbers-grid"
+                   "paging-numbers-flex")
           :id (str id "-pages")}
 
           (if (or @show-all-page-numbers
@@ -53,14 +53,14 @@
             (let [first-pages (take 3 (range pages))
                   last-pages (take-last 3 (drop 3 (range pages)))]
               [:<>
-              [page-numbers opts first-pages]
+               [page-numbers opts first-pages]
 
-              ^{:key (str id "-page-...")}
-              [atoms/link {:label "..."
+               ^{:key (str id "-page-...")}
+               [atoms/link {:label "..."
                             :class "btn btn-link"
                             :on-click #(reset! show-all-page-numbers true)}]
 
-              [page-numbers opts last-pages]]))]]))))
+               [page-numbers opts last-pages]]))]]))))
 
 
 (defn guide []
