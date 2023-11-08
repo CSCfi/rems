@@ -33,34 +33,34 @@
     `:show-all-page-numbers` - state of whether to show all page numbers or `...`
   `:pages`                   - how many pages exist"
   [{:keys [id on-change paging pages]}]
-  (r/with-let [show-all-page-numbers (r/atom (:show-all-page-numbers paging))
-               opts {:id id :paging paging :on-change on-change}]
-    (when (> pages 1)
-      [:div.d-flex.gap-1.align-items-center.justify-content-center.flex-wrap
-       [:div (text :t.table.paging/page)]
-       [:div.my-3.paging-numbers
-        {:class (if @show-all-page-numbers
-                  "paging-numbers-grid"
-                  "paging-numbers-flex")
-         :id (str id "-pages")}
+  (r/with-let [show-all-page-numbers (r/atom (:show-all-page-numbers paging))]
+    (let [opts {:id id :paging paging :on-change on-change}]
+      (when (> pages 1)
+        [:div.d-flex.gap-1.align-items-center.justify-content-center.flex-wrap
+        [:div (text :t.table.paging/page)]
+        [:div.my-3.paging-numbers
+          {:class (if @show-all-page-numbers
+                    "paging-numbers-grid"
+                    "paging-numbers-flex")
+          :id (str id "-pages")}
 
-        (if (or @show-all-page-numbers
-                (< pages 10))
-          ;; few pages, just show them all
-          [page-numbers opts (range pages)]
+          (if (or @show-all-page-numbers
+                  (< pages 10))
+            ;; few pages, just show them all
+            [page-numbers opts (range pages)]
 
-          ;; show 1 2 3 ... 7 8 9
-          (let [first-pages (take 3 (range pages))
-                last-pages (take-last 3 (drop 3 (range pages)))]
-            [:<>
-             [page-numbers opts first-pages]
+            ;; show 1 2 3 ... 7 8 9
+            (let [first-pages (take 3 (range pages))
+                  last-pages (take-last 3 (drop 3 (range pages)))]
+              [:<>
+              [page-numbers opts first-pages]
 
-             ^{:key (str id "-page-...")}
-             [atoms/link {:label "..."
-                          :class "btn btn-link"
-                          :on-click #(reset! show-all-page-numbers true)}]
+              ^{:key (str id "-page-...")}
+              [atoms/link {:label "..."
+                            :class "btn btn-link"
+                            :on-click #(reset! show-all-page-numbers true)}]
 
-             [page-numbers opts last-pages]]))]])))
+              [page-numbers opts last-pages]]))]]))))
 
 
 (defn guide []
