@@ -60,7 +60,6 @@
                 :show-footer true}]
  :extra-pages-path "./test-data/extra-pages"
  :attachment-max-size 10000
- :enable-pdf-api true
  :enable-permissions-api true
  ;; example keys from https://tools.ietf.org/html/rfc7517#appendix-A
  :ga4gh-visa-private-key "test-data/example-private-key.jwk"

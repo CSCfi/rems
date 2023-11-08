@@ -20,7 +20,6 @@
             [rems.db.csv :as csv]
             [rems.db.user-settings :as user-settings]
             [rems.db.users :as users]
-            [rems.experimental.pdf :as experimental-pdf]
             [rems.pdf :as pdf]
             [rems.schema-base :as schema-base]
             [rems.text :refer [with-language]]
@@ -291,7 +290,6 @@
     (command-endpoint :application.command/uninvite-member commands/UninviteMemberCommand)
     (command-endpoint :application.command/vote commands/VoteCommand)
 
-
     ;; the path parameter matches also non-numeric paths, so this route must be after all overlapping routes
     (GET "/:application-id" []
       :summary "Get application by `application-id`. Application is customized for the requesting user (e.g. event visibility, permissions, etc)."
@@ -323,19 +321,6 @@
       (if-let [app (applications/get-application-for-user (getx-user-id) application-id)]
         (attachment/zip-attachments app all)
         (api-util/not-found-json-response)))
-
-    (GET "/:application-id/experimental/pdf" request
-      :summary "PDF export of application (EXPERIMENTAL). DEPRECATED, will disappear, use /:application-id/pdf instead"
-      :roles #{:logged-in :api-key}
-      :path-params [application-id :- (describe s/Int "application id")]
-      :responses {200 {}
-                  501 {:schema s/Str}
-                  401 {:schema s/Str}}
-      (if (not (:enable-pdf-api config/env))
-        (not-implemented "pdf api not enabled")
-        (let [bytes (experimental-pdf/application-to-pdf (getx-user-id) (auth/get-api-key request) application-id)]
-          (-> (ok (ByteArrayInputStream. bytes))
-              (content-type "application/pdf")))))
 
     (GET "/:application-id/pdf" []
       :summary "Get a pdf version of an application"

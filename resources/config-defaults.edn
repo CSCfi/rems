@@ -395,10 +395,6 @@
  ;; https://en.wikipedia.org/wiki/ISO_8601#Durations for duration formatting reference.
  :application-expiration nil
 
- ;; enable /api/applications/:id/experimental/pdf
- ;; PDF API (experimental). DEPRECATED, will disappear
- :enable-pdf-api false
-
  ;; enable /api/permissions/:user
  ;; see also docs/ga4gh-visas.md
  :enable-permissions-api false
