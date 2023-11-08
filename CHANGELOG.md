@@ -8,6 +8,9 @@ have notable changes.
 
 Changes since v2.34.2
 
+### Fixes
+- Current page updates correctly. (#3218)
+
 ## v2.34.2 "Santakatu +2" 2023-11-03
 
 ### Fixes
