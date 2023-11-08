@@ -324,7 +324,7 @@
          :label (:label action)
          :href (:url action)
          :on-click (:on-click action)
-         :class (str "dropdown-item btn btn-link py-2 " (:class action))}])
+         :class (str/trim (str "btn btn-link " (:class action)))}])
 
 (defn edit-action
   "Standard edit action helper."
@@ -365,7 +365,7 @@
         label]
        (into [:div.dropdown-menu.dropdown-menu-right]
              (for [action actions]
-               [action-link action]))])))
+               [action-link (update action :class #(str "dropdown-item py-2 " %))]))])))
 
 (defn guide []
   (let [state (r/atom false)
