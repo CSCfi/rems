@@ -8,6 +8,8 @@ have notable changes.
 
 Changes since v2.34.2
 
+**NB: This release removes the experimental application PDF export API. (#3098)**
+
 ### Fixes
 - Catalogue item unarchive should no longer fail when form does not exist. (#3217)
 
