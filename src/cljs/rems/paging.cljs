@@ -37,12 +37,12 @@
     (let [opts {:id id :paging paging :on-change on-change}]
       (when (> pages 1)
         [:div.d-flex.gap-1.align-items-center.justify-content-center.flex-wrap
-        [:div (text :t.table.paging/page)]
-        [:div.my-3.paging-numbers
-         {:class (if @show-all-page-numbers
-                   "paging-numbers-grid"
-                   "paging-numbers-flex")
-          :id (str id "-pages")}
+         [:div (text :t.table.paging/page)]
+         [:div.my-3.paging-numbers
+          {:class (if @show-all-page-numbers
+                    "paging-numbers-grid"
+                    "paging-numbers-flex")
+           :id (str id "-pages")}
 
           (if (or @show-all-page-numbers
                   (< pages 10))
@@ -61,7 +61,6 @@
                             :on-click #(reset! show-all-page-numbers true)}]
 
                [page-numbers opts last-pages]]))]]))))
-
 
 (defn guide []
   [:div
