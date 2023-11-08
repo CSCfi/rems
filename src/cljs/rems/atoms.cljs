@@ -324,7 +324,7 @@
          :label (:label action)
          :href (:url action)
          :on-click (:on-click action)
-         :class (str "btn btn-link " (:class action))}])
+         :class (str "dropdown-item btn btn-link py-2 " (:class action))}])
 
 (defn edit-action
   "Standard edit action helper."
@@ -363,11 +363,9 @@
        [:button.modify-dropdown.btn.btn-secondary.dropdown-toggle
         {:data-toggle :dropdown}
         label]
-       [:div.dropdown-menu.dropdown-menu-right
-        (into [:div.d-flex.flex-column]
-              (for [action actions]
-                [:div.dropdown-item
-                 [action-link action]]))]])))
+       (into [:div.dropdown-menu.dropdown-menu-right]
+             (for [action actions]
+               [action-link action]))])))
 
 (defn guide []
   (let [state (r/atom false)
