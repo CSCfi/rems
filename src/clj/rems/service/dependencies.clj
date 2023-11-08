@@ -37,16 +37,17 @@
               [(:organization res)])]
      {:from {:resource/id (:id res)} :to dep})
 
-   (flatten
-    (for [cat (catalogue/get-localized-catalogue-items {:archived true :expand-catalogue-data? true})
-          dep [{:form/id (:formid cat)}
-               {:resource/id (:resource-id cat)}
-               {:workflow/id (:wfid cat)}
-               {:organization/id (:organization cat)}]]
-      (into [{:from {:catalogue-item/id (:id cat)} :to dep}]
-            (mapv (fn [category]
-                    {:from {:catalogue-item/id (:id cat)}
-                     :to (select-keys category [:category/id])}) (:categories cat)))))
+   (mapcat identity
+           (for [cat (catalogue/get-localized-catalogue-items {:archived true :expand-catalogue-data? true})
+                 :let [deps (filter some? [(when (:formid cat) ; form is not required
+                                             {:from {:catalogue-item/id (:id cat)} :to {:form/id (:formid cat)}})
+                                           {:from {:catalogue-item/id (:id cat)} :to {:resource/id (:resource-id cat)}}
+                                           {:from {:catalogue-item/id (:id cat)} :to {:workflow/id (:wfid cat)}}
+                                           {:from {:catalogue-item/id (:id cat)} :to {:organization/id (:organization cat)}}])]]
+             (into deps
+                   (map (fn [category]
+                          {:from {:catalogue-item/id (:id cat)}
+                           :to (select-keys category [:category/id])}) (:categories cat)))))
 
    (for [workflow (workflow/get-workflows {})
          dep (concat
