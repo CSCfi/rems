@@ -37,16 +37,15 @@
               [(:organization res)])]
      {:from {:resource/id (:id res)} :to dep})
 
-   (flatten
-    (for [cat (catalogue/get-localized-catalogue-items {:archived true :expand-catalogue-data? true})
-          dep [{:form/id (:formid cat)}
-               {:resource/id (:resource-id cat)}
-               {:workflow/id (:wfid cat)}
-               {:organization/id (:organization cat)}]]
-      (into [{:from {:catalogue-item/id (:id cat)} :to dep}]
-            (mapv (fn [category]
-                    {:from {:catalogue-item/id (:id cat)}
-                     :to (select-keys category [:category/id])}) (:categories cat)))))
+   (for [cat (catalogue/get-localized-catalogue-items {:archived true :expand-catalogue-data? true})
+         dep (concat [{:form/id (:formid cat)}
+                      {:resource/id (:resource-id cat)}
+                      {:workflow/id (:wfid cat)}
+                      {:organization/id (:organization cat)}]
+                     (for [category (:categories cat)]
+                       {:category/id (:category/id category)}))
+         :when (some? (val (first dep)))] ; remove nil dependencies, e.g. optional formid
+     {:from {:catalogue-item/id (:id cat)} :to dep})
 
    (for [workflow (workflow/get-workflows {})
          dep (concat

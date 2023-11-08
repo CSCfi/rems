@@ -10,6 +10,7 @@ Changes since v2.34.2
 
 ### Fixes
 - Administration dropdown buttons should now respond to clicks more widely, and not only by directly clicking text. (#3167)
+- Catalogue item unarchive should no longer fail when form does not exist. (#3217)
 
 ## v2.34.2 "Santakatu +2" 2023-11-03
 
