@@ -476,10 +476,9 @@
  ;; If `:scanner-path` is defined, it is assumed to be an executable that:
  ;; can take a binary file from `STDIN` and return a status code of zero if and only if the file passes the scan.
  ;;
- ;; When `:scanner-path` is defined, enabling `:logging` will make REMS log whatever the malware scanner executable
- ;; printed to `STDOUT` and `STDERR` before exiting.
+ ;; Disabling `:logging` will make REMS discard output of the malware scanner executable.
  :malware-scanning {:scanner-path nil
-                    :logging false}
+                    :logging true}
 
  ;; REMS tables can have some parameters tuned.
  ;; Not every attribute may work in every table yet.

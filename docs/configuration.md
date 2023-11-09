@@ -217,7 +217,7 @@ REMS can be configured to automatically scan user uploaded files for malware.
 
 ```clojure
  :malware-scanning {:scanner-path "/path/to/malware/scanner" ; Path to scanner executable
-                    :logging true} ; Whether REMS should log STDERR of malware scanner 
+                    :logging true} ; Whether REMS should log output of malware scanner 
 ```
 
 The executable must implement the following behaviour:
@@ -226,5 +226,16 @@ The executable must implement the following behaviour:
 
 In its current implementation, users will be notified with a generic error message if the file they attach does not pass the malware scanner.
 
-When logging is enabled REMS will output any message that the malware scanner executable writes to `STDOUT` at `INFO` level, 
-and anything written to `STDERR` at `ERROR` level.
+Disabling logging will make REMS discard malware scanner output. If left enabled, scanner output written to `STDOUT` is logged at `INFO` level, 
+and output on `STDERR` at `ERROR` level.
+
+### Example setup using ClamScan
+
+Using [ClamScan](https://docs.clamav.net/) from the [ClamAV Toolkit](https://docs.clamav.net/), it is possible to set up malware scanning by setting `:scanner-path` such that it points to an executable shellscript with the following content:
+
+```shell
+#!/bin/sh
+
+/usr/bin/clamscan -
+
+```
