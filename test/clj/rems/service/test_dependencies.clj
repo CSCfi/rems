@@ -44,7 +44,10 @@
                                                     :categories [{:category/id category-1}]})
         cat-2 (test-helpers/create-catalogue-item! {:resource-id res-1
                                                     :form-id shared-form
-                                                    :workflow-id wf-2})]
+                                                    :workflow-id wf-2})
+        cat-without-form (test-helpers/create-catalogue-item! {:resource-id res-1
+                                                               :form-id nil
+                                                               :workflow-id wf-2})]
 
     (testing "dependencies"
       (is (= {:dependencies
@@ -78,6 +81,9 @@
                                             {:form/id shared-form}
                                             {:workflow/id wf-2}
                                             {:organization/id "default"}}
+               {:catalogue-item/id cat-without-form} #{{:resource/id res-1}
+                                                       {:workflow/id wf-2}
+                                                       {:organization/id "default"}}
                {:category/id category-2} #{{:category/id category-1}}}
               :reverse-dependencies
               {{:license/id shared-license} #{{:resource/id res-1}
@@ -87,16 +93,19 @@
                                                        {:resource/id res-2}}
                {:license/id resource-license} #{{:resource/id res-2}}
                {:resource/id res-1} #{{:catalogue-item/id cat-1}
-                                      {:catalogue-item/id cat-2}}
+                                      {:catalogue-item/id cat-2}
+                                      {:catalogue-item/id cat-without-form}}
                {:form/id shared-form} #{{:workflow/id wf-1}
                                         {:workflow/id wf-2}
                                         {:catalogue-item/id cat-2}}
                {:form/id cat-form} #{{:catalogue-item/id cat-1}}
                {:form/id wf-form} #{{:workflow/id wf-2}}
                {:workflow/id wf-1} #{{:catalogue-item/id cat-1}}
-               {:workflow/id wf-2} #{{:catalogue-item/id cat-2}}
+               {:workflow/id wf-2} #{{:catalogue-item/id cat-2}
+                                     {:catalogue-item/id cat-without-form}}
                {:organization/id "default"} #{{:catalogue-item/id cat-1}
                                               {:catalogue-item/id cat-2}
+                                              {:catalogue-item/id cat-without-form}
                                               {:form/id shared-form}
                                               {:form/id wf-form}
                                               {:form/id cat-form}
