@@ -47,8 +47,8 @@
   [malware-scanner-path byte-array]
   (let [scan-output (sh "sh" "-c" malware-scanner-path :in byte-array)]
     {:detected (not= (:exit scan-output) 0)
-     :out      (:out scan-output)
-     :err      (:err scan-output)}))
+     :out (:out scan-output)
+     :err (:err scan-output)}))
 
 (deftest test-passing-scan-without-output
   (let [scan (scan-for-malware "test-data/malware-scanner-executables/pass-without-output.sh" "")]
