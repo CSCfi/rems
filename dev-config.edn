@@ -79,7 +79,6 @@
  :enable-assign-external-id-ui true
  :attachment-max-size 10000000 ;; 10MB
  :application-expiration nil
- :enable-pdf-api true
  :enable-permissions-api true
  ;; example keys from https://tools.ietf.org/html/rfc7517#appendix-A
  :ga4gh-visa-private-key "test-data/example-private-key.jwk"

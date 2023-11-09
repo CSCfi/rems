@@ -8,6 +8,8 @@ have notable changes.
 
 Changes since v2.34.2
 
+**NB: This release removes the experimental application PDF export API. The non-experimental PDF export API is preferred instead. (#3098)**
+
 ### Fixes
 - Administration dropdown buttons should now respond to clicks more widely, and not only by directly clicking text. (#3167)
 - Catalogue item unarchive should no longer fail when form does not exist. (#3217)
