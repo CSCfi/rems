@@ -39,8 +39,8 @@
                      :validation-warnings "Undersøg følgende før indsendelse:"
                      :entitlement-end-not-in-future "Udløbsdato for adgangsrettigheder skal være i fremtiden."}
             :generate-ega-api-key-in-profile "Dan en på profilsiden."
-            :handled-applications "Processerede ansøgninger"
-            :handled-applications-count nil
+            :handled-applications "Behandlede ansøgninger"
+            :handled-applications-count "Der er %:count% behandlede ansøgninger."
             :invite-member "Inviter medlem"
             :licenses-selection "Tilføj brugsvilkår"
             :member "Medlem"
@@ -73,14 +73,13 @@
             :review "Gennemse"
             :revoke "Tilbagekald rettigheder"
             :todo-applications "Aktive ansøgninger"
-            :todo-applications-count nil
+            :todo-applications-count "Der er %:count% aktive ansøgninger."
             :vote "Stem"}
-
   :administration {:active "Aktiv"
                    :add "Tilføj"
                    :added-at "Tilføjet"
                    :added-by "Tilføjet af"
-                   :anonymize-handling nil
+                   :anonymize-handling "Anonymiseret behandling"
                    :application-state "Ansøgningsstatus"
                    :archive "Arkiver"
                    :back "Tilbage"
@@ -143,7 +142,7 @@
                    :name "Navn"
                    :no-categories "Ingen kategorier"
                    :no-form "Ingen blanket"
-                   :no-forms nil
+                   :no-forms "Ingen blanketter"
                    :no-licenses "Ingen brugsvilkår"
                    :no-voting "Ingen afstemning"
                    :optional "(valgfrit)"
@@ -172,9 +171,9 @@
                    :voting "Afstemning"
                    :workflow "Arbejdsgang"
                    :workflows "Arbejdsgange"
-                   :workflow-anonymize-handling-explanation nil
+                   :workflow-anonymize-handling-explanation "Denne arbejdsgang skjuler brugers personhenførbare information (f.eks. navn og e-mail) for ansøgere."
                    :workflow-disabled-commands-explanation [:p "Denne arbejdsgang deaktiverer funktioner for brugere når vilkår er opfyldt. Funktioner, ansøgningsstatus og brugerroller kan findes på " [:a {:href "https://github.com/CSCfi/rems/blob/master/docs/application-permissions.md" :target :_blank} "REMS Github-side."]]
-                   :workflow-type nil}
+                   :workflow-type "Arbejdsgangstype"}
   :applicant-info {:applicant "Ansøger"
                    :applicants "Ansøgere"
                    :email "E-mail"
@@ -260,7 +259,9 @@
                  :last-activity "Ændret"
                  :latest-activity "Seneste aktivitet"
                  :my-applications "Mine ansøgninger"
+                 :redacted-attachments "Erstattede bilag"
                  :redacted-attachments-replaced "Nye bilag erstattede de gamle bilag."
+                 :replacing-attachments "Nye bilag"
                  :resource "Ressource"
                  :state "Status"
                  :states {:approved "Godkendt"
@@ -658,12 +659,12 @@
            :search "Søg"}
   :table {:ascending-order "Stigende rækkefølge"
           :descending-order "Faldende rækkefølge"
-          :first-rows-only nil
+          :first-rows-only "Viser kun de første %1 rækker."
           :all-rows-selected "Alle rækker er valgte"
           :no-rows-selected "Ingen rækker er valgte"
-          :show-all-rows nil
+          :show-all-rows "Vis alle rækker"
           :some-rows-selected "Nogle rækker er valgte"
-          :paging {:page nil}}
+          :paging {:page "Side"}}
   :unauthorized-page {:unauthorized "Ingen adgang"
                       :you-are-unauthorized "Du er ikke autoriseret til at tilgå denne side."}
   :unknown "Ukendt"
