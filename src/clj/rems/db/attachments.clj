@@ -1,9 +1,13 @@
 (ns rems.db.attachments
-  (:require [rems.common.attachment-util :as attachment-util]
+  (:require [clojure.test :refer [deftest is]]
+            [clojure.tools.logging :as log]
+            [rems.common.attachment-util :as attachment-util]
             [rems.common.util :refer [fix-filename]]
+            [rems.config :refer [env]]
             [rems.db.core :as db]
+            [rems.multipart :refer [scan-for-malware]]
             [rems.util :refer [file-to-bytes]])
-  (:import [rems PayloadTooLargeException UnsupportedMediaTypeException]))
+  (:import [rems PayloadTooLargeException UnsupportedMediaTypeException InvalidRequestException]))
 
 (defn check-size
   [file]
@@ -24,6 +28,15 @@
      :attachment/filename filename
      :attachment/data data
      :attachment/type type}))
+
+(defn check-for-malware-if-enabled [byte-array]
+  (when-let [malware-scanner-path (:scanner-path (:malware-scanning env))]
+    (let [scan (scan-for-malware malware-scanner-path byte-array)]
+      (when (:logging (:malware-scanning env))
+        (when (seq (:out scan)) (log/info (:out scan)))
+        (when (seq (:err scan)) (log/error (:err scan))))
+      (when (:detected scan)
+        (throw (InvalidRequestException. "Malware detected"))))))
 
 (defn get-attachments
   "Gets attachments without the data."
@@ -57,6 +70,7 @@
   [{:keys [tempfile filename content-type]} user-id application-id]
   (check-allowed-attachment filename)
   (let [byte-array (file-to-bytes tempfile)
+        _ (check-for-malware-if-enabled byte-array)
         filename (fix-filename filename (mapv :attachment/filename (get-attachments-for-application application-id)))
         id (:id (db/save-attachment! {:application application-id
                                       :user user-id

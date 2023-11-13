@@ -8,6 +8,7 @@
             [rems.db.core :as db]
             [rems.db.licenses :as licenses]
             [rems.db.organizations :as organizations]
+            [rems.util :refer [file-to-bytes]]
             [clojure.java.io])
   (:import [java.io FileInputStream ByteArrayOutputStream]))
 
@@ -30,10 +31,8 @@
 (defn create-license-attachment! [{:keys [tempfile filename content-type] :as file} user-id]
   (attachments/check-size file)
   (attachments/check-allowed-attachment filename)
-  (let [byte-array (with-open [input (FileInputStream. tempfile)
-                               buffer (ByteArrayOutputStream.)]
-                     (clojure.java.io/copy input buffer)
-                     (.toByteArray buffer))]
+  (let [byte-array (file-to-bytes tempfile)]
+    (attachments/check-for-malware-if-enabled byte-array)
     (select-keys
      (db/create-license-attachment! {:user user-id
                                      :filename filename
