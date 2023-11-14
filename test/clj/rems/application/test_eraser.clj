@@ -1,31 +1,33 @@
 (ns ^:integration rems.application.test-eraser
   (:require [clj-time.core :as time]
-            [clojure.test :refer :all]
-            [clojure.tools.logging :as log]
+            [clojure.test :refer [deftest is testing use-fixtures]]
+            [clojure.tools.logging.test :as log-test]
             [rems.application.commands :as commands]
             [rems.application.eraser :as eraser]
             [rems.application.expirer-bot :as expirer-bot]
-            [rems.service.command :as command]
             [rems.config :refer [env]]
-            [rems.locales]
+            [rems.locales :refer [translations]]
             [rems.db.applications :as applications]
             [rems.db.outbox :as outbox]
             [rems.db.roles :as roles]
             [rems.db.testing :refer [test-db-fixture rollback-db-fixture]]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.db.user-settings :as user-settings]
-            [rems.testing-util :refer [with-fixed-time]]))
+            [rems.testing-util :refer [with-fixed-time]]
+            [clojure.string :as str]))
 
-(defn- empty-footer [f]
-  (with-redefs [rems.locales/translations (assoc-in rems.locales/translations [:en :t :email :footer] "")]
-    (f)))
-
-(defn- empty-signature [f]
-  (with-redefs [rems.locales/translations (assoc-in rems.locales/translations [:en :t :email :regards] "")]
+(defn- email-footer-and-signature [f]
+  (with-redefs [translations (update-in translations [:en :t :email]
+                                        assoc :footer "" :regards "")]
     (f)))
 
 (use-fixtures :once test-db-fixture)
-(use-fixtures :each empty-footer empty-signature rollback-db-fixture)
+(use-fixtures
+  :each
+  email-footer-and-signature
+  rollback-db-fixture)
+
+(def test-time (time/date-time 2023))
 
 (defn- create-application!
   [{:keys [date-time actor draft? members]}]
@@ -57,165 +59,219 @@
                                         :time date-time}))
     app-id))
 
-(defn- expiration-notification-events [app-id]
-  (->> (applications/get-application-internal app-id)
-       :application/events
-       (filter (comp #{:application.event/expiration-notifications-sent}
-                     :event/type))))
+(defn- get-application-events [app-id]
+  (:application/events (applications/get-application-internal app-id)))
+
+(defn expiration-notifications-sent [event]
+  (= :application.event/expiration-notifications-sent (:event/type event)))
 
 (defn- get-all-application-ids [user-id]
   (->> (applications/get-all-applications user-id)
        (map :application/id)))
 
-(defn- log*-mock [coll-atom]
-  (fn [logger level throwable message]
-    (swap! coll-atom conj {:logger logger :level level :throwable throwable :message message})))
-
 (deftest test-expire-application
-  (binding [command/*fail-on-process-manager-errors* true]
-    (test-helpers/create-user! {:userid "alice"})
-    (let [now (time/now)
-          draft (create-application! {:draft? true
-                                      :date-time now
-                                      :actor "alice"})
-          old-submitted (create-application! {:date-time (time/minus now (time/days 120))
-                                              :actor "alice"})
-          expired-draft (create-application! {:draft? true
-                                              :date-time (time/minus now (time/days 90) (time/seconds 1))
-                                              :actor "alice"})
-          outbox-emails (atom [])
-          log-messages (atom [])]
-      (with-redefs [log/log* (log*-mock log-messages)
-                    outbox/put! (fn [email] (swap! outbox-emails conj email))]
+  (test-helpers/create-user! {:userid "alice"})
+  (let [draft (create-application! {:draft? true
+                                    :date-time test-time
+                                    :actor "alice"})
+        old-submitted (create-application! {:date-time (time/minus test-time (time/days 120))
+                                            :actor "alice"})
+        expired-draft (create-application! {:draft? true
+                                            :date-time (time/minus test-time (time/days 90) (time/seconds 1))
+                                            :actor "alice"})
+        outbox-emails (atom [])
+        config {:application-expiration {:application.state/draft {:delete-after "P90D"}}}]
+    (with-redefs [outbox/put! (fn [email] (swap! outbox-emails conj email))
+                  env config]
 
-        (testing "does not process applications when expirer-bot user does not exist"
+      (testing "does not process applications when expirer-bot user does not exist"
+        (log-test/with-log
           (is (= #{draft old-submitted expired-draft} (set (get-all-application-ids "alice"))))
-          (with-redefs [env {:application-expiration {:application.state/draft {:delete-after "P90D"}}}]
-            (eraser/process-applications!))
-          (is (= #{draft old-submitted expired-draft} (set (get-all-application-ids "alice"))))
+          (eraser/process-applications!)
+
+          (is (log-test/logged? "rems.application.eraser" :warn "Cannot process applications, because user expirer-bot does not exist"))
+          (is (empty? (log-test/matches "rems.application.eraser" :info #"application.command/send-expiration-notifications")))
           (is (empty? @outbox-emails))
-          (is (= [(str "Cannot process applications, because user " expirer-bot/bot-userid " does not exist")]
-                 (->> @log-messages
-                      (filter (comp #{:warn} :level))
-                      (map :message)))))
+          (is (empty? (log-test/matches "rems.application.eraser" :info #"application.command/delete")))
+          (is (not (log-test/logged? "rems.db.applications" :info #"Finished deleting application")))
 
-        (test-helpers/create-user! {:userid expirer-bot/bot-userid})
-        (roles/add-role! expirer-bot/bot-userid :expirer)
+          (is (= #{draft old-submitted expired-draft} (set (get-all-application-ids "alice")))
+              "Applications should not have been deleted")))
 
-        (testing "does not delete applications when configuration is not valid"
-          (reset! log-messages [])
-          (is (= #{draft old-submitted expired-draft} (set (get-all-application-ids "alice"))))
+      (testing "does not delete applications when configuration is not valid"
+        (log-test/with-log
           (with-redefs [env {}]
-            (eraser/process-applications!))
-          (is (= #{draft old-submitted expired-draft} (set (get-all-application-ids "alice"))))
-          (is (empty? @outbox-emails))
-          (is (empty? (->> @log-messages
-                           (filter (comp #{:warn} :level))))))
+            (test-helpers/create-user! {:userid expirer-bot/bot-userid})
+            (roles/add-role! expirer-bot/bot-userid :expirer)
 
-        (testing "removes expired applications"
-          ;; expirer-bot user has been created previously
-          (reset! log-messages [])
-          (is (= #{draft old-submitted expired-draft} (set (get-all-application-ids "alice"))))
-          (with-redefs [env {:application-expiration {:application.state/draft {:delete-after "P90D"}}}]
-            (eraser/process-applications!))
-          (is (= #{draft old-submitted} (set (get-all-application-ids "alice"))))
-          (is (empty? @outbox-emails))
-          (is (empty? (->> @log-messages
-                           (filter (comp #{:warn} :level))))))
+            (is (= #{draft old-submitted expired-draft} (set (get-all-application-ids "alice"))))
+            (eraser/process-applications!)
 
-        (testing "cannot remove other than draft applications"
-          ;; expirer-bot user has been created previously
-          (is (= #{draft old-submitted} (set (get-all-application-ids "alice"))))
+            (is (not (log-test/logged? "rems.application.eraser" :warn "Cannot process applications, because user expirer-bot does not exist")))
+            (is (empty? (log-test/matches "rems.application.eraser" :info #"application.command/send-expiration-notifications")))
+            (is (empty? @outbox-emails))
+            (is (empty? (log-test/matches "rems.application.eraser" :info #"application.command/delete")))
+            (is (not (log-test/logged? "rems.db.applications" :info #"Finished deleting application")))
+
+            (is (= #{draft old-submitted expired-draft} (set (get-all-application-ids "alice")))
+                "applications should not have been deleted"))))
+
+      (testing "cannot remove other than draft applications"
+        (log-test/with-log
           (with-redefs [env {:application-expiration {:application.state/submitted {:delete-after "P90D"}}}]
-            (is (thrown-with-msg? java.lang.AssertionError
-                                  (re-pattern (str "Tried to delete application "
-                                                   old-submitted
-                                                   " which is not a draft"))
-                                  (eraser/process-applications!))))
-          (is (= #{draft old-submitted} (set (get-all-application-ids "alice")))))))))
+            (is (= #{draft old-submitted expired-draft} (set (get-all-application-ids "alice"))))
+            (eraser/process-applications!)
+            (is (empty? (log-test/matches "rems.application.eraser" :info #"application.command/send-expiration-notifications")))
+            (is (empty? @outbox-emails))
+            (is (not (log-test/logged? "rems.db.applications" :info #"Finished deleting application")))
+
+            (testing "delete command start is logged"
+              (let [cmds (log-test/matches "rems.application.eraser" :info #"application.command/delete")
+                    msg (:message (first cmds))]
+                (is (= 1 (count cmds)))
+                (is (str/includes? msg (str ":application-id " old-submitted)))))
+
+            (testing "delete command validation failure is logged"
+              (let [warnings (log-test/matches "rems.application.eraser" :warn #"Command validation failed")
+                    msg (:message (first warnings))]
+                (is (= 1 (count warnings)))
+                (is (str/includes? msg ":application.command/delete"))
+                (is (str/includes? msg (str ":application-id " old-submitted)))))
+
+            (is (= #{draft old-submitted expired-draft} (set (get-all-application-ids "alice")))
+                "applications should not have been deleted"))))
+
+      (testing "removes expired applications"
+        (log-test/with-log
+          (is (= #{draft old-submitted expired-draft} (set (get-all-application-ids "alice"))))
+          (with-fixed-time test-time
+            (eraser/process-applications!))
+
+          (is (empty? (log-test/matches "rems.application.eraser" :info #"application.command/send-expiration-notifications")))
+          (is (empty? @outbox-emails))
+
+          (testing "delete command start is logged"
+            (let [cmds (log-test/matches "rems.application.eraser" :info #"application.command/delete")
+                  msg (:message (first cmds))]
+              (is (= 1 (count cmds)))
+              (is (str/includes? msg (str ":application-id " expired-draft)))))
+
+          (is (not (log-test/logged? "rems.application.eraser" :warn #"Command validation failed")))
+
+          (testing "delete success is logged"
+            (let [deletes (log-test/matches "rems.db.applications" :info #"Finished deleting application")
+                  msg (:message (first deletes))]
+              (is (= 1 (count deletes)))
+              (is (= (str "Finished deleting application " expired-draft) msg))))
+
+          (is (= #{draft old-submitted} (set (get-all-application-ids "alice")))
+              "expired draft application is deleted"))))))
 
 (deftest test-send-reminder-email
-  (binding [command/*fail-on-process-manager-errors* true]
-    (with-fixed-time (time/date-time 2022)
-      (test-helpers/create-user! {:userid "alice"})
-      (test-helpers/create-user! {:userid "member"})
-      (test-helpers/create-user! {:userid expirer-bot/bot-userid})
-      (roles/add-role! expirer-bot/bot-userid :expirer)
-      (let [now (time/now)
-            draft-expires-in-6d (create-application! {:draft? true
-                                                      :date-time (time/minus now (time/days 84))
-                                                      :actor "alice"
-                                                      :members [{:userid "member"
-                                                                 :name "Member"
-                                                                 :email "member@example.com"}]})
-            draft-expires-in-8d (create-application! {:draft? true
-                                                      :date-time (time/minus now (time/days 82))
-                                                      :actor "alice"})
-            submitted (create-application! {:date-time (time/minus now (time/days 84))
-                                            :actor "alice"})
-            outbox-emails (atom [])]
-        (with-redefs [outbox/put! (fn [email] (swap! outbox-emails conj email))]
+  (test-helpers/create-user! {:userid "alice"})
+  (test-helpers/create-user! {:userid "member"})
+  (test-helpers/create-user! {:userid expirer-bot/bot-userid})
+  (roles/add-role! expirer-bot/bot-userid :expirer)
+  (let [draft-expires-in-6d (create-application! {:draft? true
+                                                  :date-time (time/minus test-time (time/days 84))
+                                                  :actor "alice"
+                                                  :members [{:userid "member"
+                                                             :name "Member"
+                                                             :email "member@example.com"}]})
+        draft-expires-in-8d (create-application! {:draft? true
+                                                  :date-time (time/minus test-time (time/days 82))
+                                                  :actor "alice"})
+        submitted (create-application! {:date-time (time/minus test-time (time/days 84))
+                                        :actor "alice"})
+        outbox-emails (atom [])
+        config {:application-id-column :id
+                :public-url "localhost/"
+                :application-expiration {:application.state/draft {:delete-after "P90D"
+                                                                   :reminder-before "P7D"}}}]
+    (with-redefs [outbox/put! (fn [email] (swap! outbox-emails conj email))
+                  user-settings/get-user-settings (constantly {:language :en})
+                  env config]
 
-          (testing "should not send reminder because config is missing or partially correct"
-            (doseq [mock-env [{:application-expiration {:application.state/draft {:delete-after "P90D"}}}
-                              {:application-expiration {:application.state/draft {:reminder-before "P7D"}}}
-                              {:application-expiration nil}]]
-              (with-redefs [env mock-env]
-                (eraser/process-applications!))
-              (is (= #{draft-expires-in-6d draft-expires-in-8d submitted}
-                     (set (get-all-application-ids "alice"))))
-              (is (empty? @outbox-emails))
-              (is (empty? (expiration-notification-events draft-expires-in-6d)))
-              (is (empty? (expiration-notification-events draft-expires-in-8d)))
-              (is (empty? (expiration-notification-events submitted)))))
-
-          (testing "send expiration notifications"
-            (with-redefs [env {:application-expiration {:application.state/draft {:delete-after "P90D"
-                                                                                  :reminder-before "P7D"}}
-                               :application-id-column :id
-                               :public-url "localhost/"}
-                          user-settings/get-user-settings (constantly {:language :en})]
+      (testing "should not send reminder because config is missing or partially correct"
+        (with-fixed-time test-time
+          (doseq [expiration [{:application.state/draft {:delete-after "P90D"}}
+                              {:application.state/draft {:reminder-before "P7D"}}
+                              nil]]
+            (with-redefs [env (assoc config :application-expiration expiration)]
               (eraser/process-applications!)
-              (is (= #{draft-expires-in-6d draft-expires-in-8d submitted}
-                     (set (get-all-application-ids "alice")))
-                  "no applications have been deleted")
-              (is (empty? (expiration-notification-events draft-expires-in-8d)))
-              (is (empty? (expiration-notification-events submitted)))
+              (is (= #{draft-expires-in-6d draft-expires-in-8d submitted} (set (get-all-application-ids "alice"))))
+              (is (empty? @outbox-emails))
+              (is (empty? (filter expiration-notifications-sent (get-application-events draft-expires-in-6d))))
+              (is (empty? (filter expiration-notifications-sent (get-application-events draft-expires-in-8d))))
+              (is (empty? (filter expiration-notifications-sent (get-application-events submitted))))))))
 
-              (testing "expiration notifications sent event was created for draft expiring in 6 days"
-                (let [events (expiration-notification-events draft-expires-in-6d)]
-                  (is (= 1 (count events)))
-                  (is (time/equal? (time/plus now (time/days 6)) (:application/expires-on (first events))))
+      (testing "send expiration notifications"
+        (with-fixed-time test-time
+          (eraser/process-applications!)
+          (is (= #{draft-expires-in-6d draft-expires-in-8d submitted} (set (get-all-application-ids "alice")))
+              "no applications have been deleted")
+          (is (empty? (filter expiration-notifications-sent (get-application-events draft-expires-in-8d))))
+          (is (empty? (filter expiration-notifications-sent (get-application-events submitted))))
 
-                  (is (time/equal? now (:event-time (first events))))))
-              (is (= [{:outbox/deadline (time/date-time 2022)
-                       :outbox/email {:subject (str "Your unsubmitted application " draft-expires-in-6d " will be deleted soon")
-                                      :body (str "Dear alice,\n\n"
-                                                 "Your unsubmitted application has been inactive since 2021-10-09 and it will be deleted after 2022-01-07, if it is not edited.\n\n"
-                                                 "You can view and edit the application at localhost/application/" draft-expires-in-6d)
-                                      :to-user "alice"}
-                       :outbox/type :email}
-                      {:outbox/deadline (time/date-time 2022)
-                       :outbox/email {:subject (str "Your unsubmitted application " draft-expires-in-6d " will be deleted soon")
-                                      :body (str "Dear member,\n\n"
-                                                 "Your unsubmitted application has been inactive since 2021-10-09 and it will be deleted after 2022-01-07, if it is not edited.\n\n"
-                                                 "You can view and edit the application at localhost/application/" draft-expires-in-6d)
-                                      :to-user "member"}
-                       :outbox/type :email}]
-                     @outbox-emails))
+          (testing "expiration notifications sent event was created for draft expiring in 6 days"
+            (let [events (filter expiration-notifications-sent (get-application-events draft-expires-in-6d))]
+              (is (= 1 (count events)))
+              (is (time/equal? (time/plus test-time (time/days 6)) (:application/expires-on (first events))))
+              (is (time/equal? test-time (:event-time (first events))))))
 
-              (testing "processing applications again should not send new notifications"
-                (reset! outbox-emails [])
-                (eraser/process-applications!)
-                (is (= #{draft-expires-in-6d draft-expires-in-8d submitted}
-                       (set (get-all-application-ids "alice")))
-                    "no applications have been deleted")
-                (is (empty? (expiration-notification-events draft-expires-in-8d)))
-                (is (empty? (expiration-notification-events submitted)))
-                (is (empty? @outbox-emails))
+          (is (= [{:outbox/deadline test-time
+                   :outbox/email {:subject (str "Your unsubmitted application " draft-expires-in-6d " will be deleted soon")
+                                  :body (str "Dear alice,\n\n"
+                                             "Your unsubmitted application has been inactive since 2022-10-09 and it will be deleted after 2023-01-07, if it is not edited.\n\n"
+                                             "You can view and edit the application at localhost/application/" draft-expires-in-6d)
+                                  :to-user "alice"}
+                   :outbox/type :email}
+                  {:outbox/deadline test-time
+                   :outbox/email {:subject (str "Your unsubmitted application " draft-expires-in-6d " will be deleted soon")
+                                  :body (str "Dear member,\n\n"
+                                             "Your unsubmitted application has been inactive since 2022-10-09 and it will be deleted after 2023-01-07, if it is not edited.\n\n"
+                                             "You can view and edit the application at localhost/application/" draft-expires-in-6d)
+                                  :to-user "member"}
+                   :outbox/type :email}]
+                 @outbox-emails))
 
-                (testing "expiration notifications events have not changed for draft expiring in 6 days"
-                  (let [events (expiration-notification-events draft-expires-in-6d)]
-                    (is (= 1 (count events)))
-                    (is (time/equal? (time/plus now (time/days 6)) (:application/expires-on (first events))))
-                    (is (time/equal? now (:event-time (first events))))))))))))))
+          (testing "processing applications again should not send new notifications"
+            (reset! outbox-emails [])
+            (eraser/process-applications!)
+
+            (is (= #{draft-expires-in-6d draft-expires-in-8d submitted} (set (get-all-application-ids "alice")))
+                "no applications have been deleted")
+            (is (empty? (filter expiration-notifications-sent (get-application-events draft-expires-in-8d))))
+            (is (empty? (filter expiration-notifications-sent (get-application-events submitted))))
+            (is (empty? @outbox-emails))
+
+            (testing "expiration notifications events have not changed for draft expiring in 6 days"
+              (let [events (filter expiration-notifications-sent (get-application-events draft-expires-in-6d))]
+                (is (= 1 (count events)))
+                (is (time/equal? (time/plus test-time (time/days 6)) (:application/expires-on (first events))))
+                (is (time/equal? test-time (:event-time (first events)))))))))
+
+      (testing "draft is expired after extended reminder period"
+        (with-fixed-time (-> test-time
+                             (time/plus (time/days 7))
+                             (time/plus (time/seconds 1)))
+          (log-test/with-log
+            (is (= #{draft-expires-in-6d draft-expires-in-8d submitted} (set (get-all-application-ids "alice"))))
+            (eraser/process-applications!)
+
+            (testing "delete command start is logged"
+              (let [cmds (log-test/matches "rems.application.eraser" :info #"application.command/delete")
+                    msg (:message (first cmds))]
+                (is (= 1 (count cmds)))
+                (is (str/includes? msg (str ":application-id " draft-expires-in-6d)))))
+
+            (is (not (log-test/logged? "rems.application.eraser" :warn #"Command validation failed")))
+
+            (testing "delete success is logged"
+              (let [deletes (log-test/matches "rems.db.applications" :info #"Finished deleting application")
+                    msg (:message (first deletes))]
+                (is (= 1 (count deletes)))
+                (is (= (str "Finished deleting application " draft-expires-in-6d) msg))))
+
+            (is (= #{draft-expires-in-8d submitted} (set (get-all-application-ids "alice")))
+                "draft application is deleted")))))))
