@@ -11,11 +11,12 @@
 
 (defn process-applications! []
   (log/info :start #'process-applications!)
-  ; check that bot user exists, else log missing
+  ;; check that bot user exists, else log missing
   (if (users/user-exists? expirer-bot/bot-userid)
-    (doseq [application (applications/get-all-unrestricted-applications)]
-      (when-some [cmd (expirer-bot/run-expirer-bot application)]
-        (command/command! cmd)))
+    (doseq [cmd (->> (applications/get-all-unrestricted-applications)
+                     (keep expirer-bot/run-expirer-bot))]
+      (log/info (:type cmd) (select-keys cmd [:application-id :expires-on]))
+      (command/command! cmd))
     (log/warnf "Cannot process applications, because user %s does not exist"
                expirer-bot/bot-userid))
   (applications/reload-cache!)

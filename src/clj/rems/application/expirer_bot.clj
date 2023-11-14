@@ -37,8 +37,8 @@
   (:reminder-before expiration))
 
 (defn- expiration-notification-sent?
-  "Has the expiration notification been sent and nothing else has happened since."
-  [expiration application]
+  "Has the expiration notification been sent and nothing else has happened since?"
+  [application]
   (some? (get-last-event-when-notification application)))
 
 (defn- calculate-reminder-time [expiration application]
@@ -59,7 +59,7 @@
 
 (defn- need-to-wait-for-notification? [expiration application now]
   (and (is-reminder-configured? expiration)
-       (or (not (expiration-notification-sent? expiration application))
+       (or (not (expiration-notification-sent? application))
            (not (enough-time-has-passed-since-notification? expiration application now)))))
 
 (defn- expire-application [expiration application now]
@@ -70,7 +70,8 @@
         {:type :application.command/delete
          :time now
          :actor bot-userid
-         :application-id (:application/id application)}))))
+         :application-id (:application/id application)
+         :expires-on expiration-time}))))
 
 (deftest test-expire-application
   (let [now (time/now)
@@ -186,7 +187,7 @@
 
 (defn- should-send-notification-email? [expiration application now]
   (when-let [reminder-time (calculate-reminder-time expiration application)]
-    (and (not (expiration-notification-sent? expiration application))
+    (and (not (expiration-notification-sent? application))
          (time/before? reminder-time now))))
 
 (defn- send-expiration-notifications [expiration application now]

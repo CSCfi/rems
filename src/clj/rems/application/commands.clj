@@ -114,7 +114,8 @@
 (s/defschema SubmitCommand
   CommandBase)
 (s/defschema DeleteCommand
-  CommandBase)
+  (assoc CommandBase
+         (s/optional-key :expires-on) DateTime))
 (s/defschema UninviteMemberCommand
   (assoc CommandWithComment
          :member {:name s/Str
@@ -698,8 +699,6 @@
   (add-comment-and-attachments cmd application injections
                                {:event/type :application.event/voted
                                 :vote/value (:vote cmd)}))
-
-
 
 (defn- forbidden-error [application cmd]
   (let [permissions (if application
