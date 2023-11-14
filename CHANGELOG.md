@@ -11,13 +11,13 @@ Changes since v2.34.2
 **NB: This release removes the experimental application PDF export API. The non-experimental PDF export API is preferred instead. (#3098)**
 
 ### Changes
-- Application expiration now logs before each delete and send expiration notifications command. Additionally application delete is logged afterwards.
+- Application expiration now logs before each delete and send expiration notifications command. Additionally application delete is logged afterwards. (#3225)
 
 ### Fixes
 - Administration dropdown buttons should now respond to clicks more widely, and not only by directly clicking text. (#3167)
 - Catalogue item unarchive should no longer fail when form does not exist. (#3217)
 - Current page updates correctly. (#3218)
-- Fixed faulty check in application expiration that prevents sending expiration notifications for applications, and expiring those applications.
+- Fixed faulty check in application expiration that prevents sending expiration notifications for applications, and expiring those applications. (#3225)
 
 ## v2.34.2 "Santakatu +2" 2023-11-03
 
