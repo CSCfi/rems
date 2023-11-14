@@ -43,6 +43,10 @@
                                (.toStandardDuration (time/seconds 10)))
       :stop (scheduler/stop! expired-application-poller-test)))
 
+  (with-redefs [env (assoc env :application-expiration {:application.state/draft {:delete-after "P90D"
+                                                                                  :reminder-before "P7D"}})]
+    (process-applications!))
+
   (mount/start #{#'expired-application-poller-test})
   (mount/stop #{#'expired-application-poller-test}))
 

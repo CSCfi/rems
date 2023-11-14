@@ -391,6 +391,10 @@
 
     (test-helpers/create-draft! applicant [catid] "draft application")
 
+    (doseq [n (range 80 100 2)
+            :let [created-at (time/minus (time/now) (time/days n))]]
+      (test-helpers/create-draft! applicant [catid] "forgotten draft" created-at))
+
     (let [app-id (test-helpers/create-draft! applicant [catid] "applied")]
       (test-helpers/command! {:type :application.command/submit
                               :application-id app-id
