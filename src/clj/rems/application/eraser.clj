@@ -16,7 +16,9 @@
     (doseq [cmd (->> (applications/get-all-unrestricted-applications)
                      (keep expirer-bot/run-expirer-bot))]
       (log/info (:type cmd) (select-keys cmd [:application-id :expires-on]))
-      (command/command! cmd))
+      (let [result (command/command! cmd)]
+        (when (not-empty (:errors result))
+          (log/warn "Command validation failed:" (:type cmd) (select-keys cmd [:application-id]) (select-keys result [:errors])))))
     (log/warnf "Cannot process applications, because user %s does not exist"
                expirer-bot/bot-userid))
   (applications/reload-cache!)
