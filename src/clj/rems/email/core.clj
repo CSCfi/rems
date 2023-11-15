@@ -15,7 +15,8 @@
             [rems.db.user-settings :as user-settings]
             [rems.db.users :as users]
             [rems.email.template :as template]
-            [rems.scheduler :as scheduler])
+            [rems.scheduler :as scheduler]
+            [clojure.string :as str])
   (:import [javax.mail.internet InternetAddress]
            [org.joda.time Duration Period]))
 
@@ -109,7 +110,9 @@
                      "Auto-Submitted" "auto-generated")
         to-error (validate-address (:to email))]
     (when (and (:body email) (:to email))
-      (log/info "sending email:" (pr-str email))
+      (when (or (not (:dev env))
+                (not (str/includes? (:to email "") "perftester")))
+        (log/info "sending email:" (pr-str email)))
       (cond
         to-error
         (do
@@ -118,7 +121,9 @@
 
         (not (and (:host smtp) (:port smtp)))
         (do
-          (log/info "no smtp server configured, only pretending to send email")
+          (when (or (not (:dev env))
+                    (not (str/includes? (:to email "") "perftester")))
+            (log/info "no smtp server configured, only pretending to send email"))
           nil)
 
         :else
