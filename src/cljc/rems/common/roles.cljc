@@ -34,6 +34,10 @@
    (defn show-when [roles & body]
      (clojure.core/when (apply has-roles? roles)
        (into [:<>] body))))
+#?(:cljs
+   (defn show-when-not [roles & body]
+     (clojure.core/when-not (apply has-roles? roles)
+       (into [:<>] body))))
 
 #?(:cljs
    (defn can-modify-organization-item? [item]

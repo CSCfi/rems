@@ -81,20 +81,31 @@
  ::licenses-table-rows
  (fn [_ _]
    [(rf/subscribe [::licenses])
-    (rf/subscribe [:language])])
- (fn [[licenses language] _]
-   (map (fn [license]
-          {:key (:id license)
-           :title {:value (get-localized-title license language)}
-           :type {:value (:licensetype license)}
-           :organization {:value (get-in license [:organization :organization/short-name language])}
-           :active (let [checked? (status-flags/active? license)]
-                     {:display-value [readonly-checkbox {:value checked?}]
-                      :sort-value (if checked? 1 2)})
-           :commands {:display-value [:div.commands
-                                      [to-view-license (:id license)]
-                                      [modify-license-dropdown license]]}})
-        licenses)))
+    (rf/subscribe [:language])
+    (rf/subscribe [:rems.administration.administration/display-own-organization-only])
+    (rf/subscribe [:owned-organizations])
+    (rf/subscribe [:handled-organizations])])
+ (fn [[licenses language display-own-organization-only? owned-organizations handled-organizations] _]
+   (let [org-owner? (fn [id] (some (comp #{id} :organization/id) owned-organizations))
+         handler-in-org? (fn [id] (some (comp #{id} :organization/id) handled-organizations))]
+     (->> licenses
+          (filter (fn [license]
+                    (let [org-id (get-in license [:organization :organization/id])]
+                      (or (not display-own-organization-only?)
+                          (roles/has-roles? :owner :reporter)
+                          (org-owner? org-id)
+                          (handler-in-org? org-id)))))
+          (mapv (fn [license]
+                  {:key (:id license)
+                   :title {:value (get-localized-title license language)}
+                   :type {:value (:licensetype license)}
+                   :organization {:value (get-in license [:organization :organization/short-name language])}
+                   :active (let [checked? (status-flags/active? license)]
+                             {:display-value [readonly-checkbox {:value checked?}]
+                              :sort-value (if checked? 1 2)})
+                   :commands {:display-value [:div.commands
+                                              [to-view-license (:id license)]
+                                              [modify-license-dropdown license]]}}))))))
 
 (defn- licenses-list []
   [table/standard {:id ::licenses
@@ -124,4 +135,5 @@
           [[roles/show-when roles/+admin-write-roles+
             [atoms/commands [to-create-license]]
             [status-flags/status-flags-intro #(rf/dispatch [::fetch-licenses])]]
+           [administration/own-organization-selection]
            [licenses-list]])))

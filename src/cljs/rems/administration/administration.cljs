@@ -32,6 +32,30 @@
    [roles/show-when #{:owner :reporter}
     [navbar/nav-link "/administration/reports" (text :t.administration/reports)]]])
 
+(rf/reg-event-fx
+ ::set-display-own-organization-only
+ (fn [{:keys [db]} [_ display-own-organization-only?]]
+   {:db (assoc db ::display-own-organization-only display-own-organization-only?)}))
+
+(rf/reg-sub ::display-own-organization-only (fn [db _] (::display-own-organization-only db true)))
+
+(defn display-own-organization-only []
+  (let [display-own-organization-only? @(rf/subscribe [::display-own-organization-only])
+        on-change (fn [] (rf/dispatch [::set-display-own-organization-only (not display-own-organization-only?)]))]
+    [:div.form-check.form-check-inline.pointer
+     [atoms/checkbox {:id :display-archived
+                      :class :form-check-input
+                      :value display-own-organization-only?
+                      :on-change on-change}]
+     [:label.form-check-label {:for :display-archived :on-click on-change}
+      (text :t.administration/display-own-organization-only)]]))
+
+(defn own-organization-selection []
+  [roles/show-when-not #{:owner :reporter}
+   [:div.mt-1.d-flex.flex-row.align-items-start.justify-content-between {:style {:gap "2rem"}}
+    [:p (text :t.administration/display-own-organization-only-explanation)]
+    [display-own-organization-only]]])
+
 (defn guide []
   [:div
    (component-info navigator)
