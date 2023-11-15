@@ -82,7 +82,7 @@
 
 (defn- datestring->datetime [s]
   (if (string? s)
-    (time-format/parse s)
+    (time-format/parse (clj-time.format/formatters :date-time) s)
     s))
 
 (def datestring-coercion-matcher
