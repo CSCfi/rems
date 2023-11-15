@@ -93,3 +93,11 @@
       (replace-event! (merge event
                              (select-keys last-event [:event/id])))
       (add-event! event))))
+
+(defn delete-application-events! [app-id]
+  (let [events (get-application-events app-id)]
+    (db/delete-application-events! {:application app-id})
+    (swap! event-cache (fn [cached]
+                         (reduce (fn [cached id]
+                                   (dissoc cached id))
+                                 cached (map :event/id events))))))

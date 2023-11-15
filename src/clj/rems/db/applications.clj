@@ -295,7 +295,7 @@
     (assert (= :application.state/draft (:application/state application))
             (str "Tried to delete application " app-id " which is not a draft!")))
   (db/delete-application-attachments! {:application app-id})
-  (db/delete-application-events! {:application app-id})
+  (events/delete-application-events! app-id)
   (db/delete-application! {:application app-id}))
 
 (defn delete-application-and-reload-cache! [app-id]
