@@ -35,7 +35,7 @@
     (empty? cmds)
     (log/info "No applications to process")
 
-    :let [process-limit (:application-expiration-process-limit env 50)]
+    :let [process-limit (or (:application-expiration-process-limit env) 50)]
     :do (log/infof "Total of %s applications due for processing (%s expired, %s to send expiration notifications for). Processing is limited to %s applications at a time."
                    (count cmds)
                    (count (->> cmds (filter #(= :application.command/delete (:type %)))))
