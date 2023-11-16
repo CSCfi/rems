@@ -97,7 +97,7 @@
     (if-some [cached-event (get @low-level-event-cache id)]
       cached-event
 
-      (let [_ (log/info "Uncached event: " id)
+      (let [_ (log/info "Loading uncached event:" id)
             fixed-event (specter-fix-event-from-db event)]
         (swap! low-level-event-cache assoc id fixed-event)
         fixed-event))))
