@@ -11,10 +11,10 @@
             [rems.db.catalogue :as catalogue]
             [rems.db.category :as category]
             [rems.db.core :as db]
+            [rems.db.events :as events]
             [rems.service.test-data :as test-data]
             [rems.db.user-mappings :as user-mappings]
-            [rems.locales])
-  (:import [org.joda.time Duration ReadableInstant]))
+            [rems.locales]))
 
 (defn reset-db-fixture [f]
   (try
@@ -48,7 +48,8 @@
       (catalogue/reset-cache!)
       (category/reset-cache!)
       (dependencies/reset-cache!)
-      (user-mappings/reset-cache!))))
+      (user-mappings/reset-cache!)
+      (events/reset-event-cache!))))
 
 (def +test-api-key+ test-data/+test-api-key+) ;; re-exported for convenience
 
@@ -59,4 +60,5 @@
 (defn rollback-db-fixture [f]
   (conman/with-transaction [db/*db* {:isolation :serializable}]
     (jdbc/db-set-rollback-only! db/*db*)
+    (events/reset-event-cache!) ; NB can't rollback this cache so reset
     (f)))

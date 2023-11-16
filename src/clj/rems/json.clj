@@ -80,7 +80,7 @@
 
 ;;; Utils for schema-based coercion
 
-(defn- datestring->datetime [s]
+(defn datestring->datetime [s]
   (if (string? s)
     (time-format/parse (clj-time.format/formatters :date-time) s)
     s))

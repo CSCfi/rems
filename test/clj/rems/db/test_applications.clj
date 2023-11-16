@@ -27,16 +27,22 @@
           ;; space when generating DraftSavedEvent
           max-size 30]
       (doseq [event (take 100 (generators/sample-seq (sg/generator events/Event generators) max-size))]
-        (is (= event (-> event db-events/event->json db-events/json->event))))))
+        (is (= event (-> event db-events/event->json db-events/specter-json->event))))))
 
   (testing "event->json validates events"
     (is (not
          (:rems.event/validate-event
           (try-catch-ex (db-events/event->json {}))))))
 
-  (testing "json->event validates events"
+  (testing "json->event variants validate events"
     (is (thrown-with-msg? ExceptionInfo #"Value cannot be coerced to match schema"
-                          (db-events/json->event "{}"))))
+                          (db-events/schema-json->event "{}")))
+    (is (thrown-with-msg? AssertionError #"\QAssert failed: (:event/type event)\E"
+                          (db-events/manual-json->event "{}")))
+    (is (thrown-with-msg? AssertionError #"\QAssert failed: (:event/time event)\E"
+                          (db-events/specter-json->event "{\"event/type\": \"nonexistent\"}")))
+    (is (thrown-with-msg? IllegalArgumentException #"Invalid format"
+                          (db-events/specter-json->event "{\"event/type\": \"nonexistent\",\"event/time\": \"1-2-3\"}"))))
 
   (testing "json data format"
     (let [event {:event/type :application.event/submitted
