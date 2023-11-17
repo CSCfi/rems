@@ -3,8 +3,7 @@
    application is about to expire.
 
    See also: docs/bots.md"
-  (:require [better-cond.core :as b]
-            [clojure.test :refer [deftest testing is]]
+  (:require [clojure.test :refer [deftest testing is]]
             [clj-time.core :as time]
             [rems.common.application-util :as application-util]
             [rems.common.util :refer [getx]]
