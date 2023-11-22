@@ -111,7 +111,7 @@
         to-error (validate-address (:to email))]
     (when (and (:body email) (:to email))
       (when (or (not (:dev env))
-                (not (str/includes? (:to email "") "perftester")))
+                (not (str/includes? (:body email "") "Performance test application")))
         (log/info "sending email:" (pr-str email)))
       (cond
         to-error
@@ -122,7 +122,7 @@
         (not (and (:host smtp) (:port smtp)))
         (do
           (when (or (not (:dev env))
-                    (not (str/includes? (:to email "") "perftester")))
+                    (not (str/includes? (:body email "") "Performance test application")))
             (log/info "no smtp server configured, only pretending to send email"))
           nil)
 
