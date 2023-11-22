@@ -7,8 +7,6 @@
             [rems.handler :refer :all]
             [ring.mock.request :refer :all]))
 
-;; we shouldn't need the db here, but there is no handler-without-db
-;; fixture at the moment
 (use-fixtures :once api-fixture)
 
 (deftest test-caching
