@@ -83,50 +83,63 @@
   (assoc (specter-json->event (:eventdata event))
          :event/id (:id event)))
 
-(def low-level-event-cache (atom nil))
+(def low-level-event-cache (atom ::uninitialized))
 
 (defn reset-event-cache! []
-  (reset! low-level-event-cache nil))
+  (reset! low-level-event-cache ::uninitialized))
 
-(comment
-  (count @low-level-event-cache)
-  (.pid (java.lang.ProcessHandle/current)))
+(defn ensure-cache-is-initialized! []
+  (when (= ::uninitialized @low-level-event-cache)
+    (let [events (db/get-application-events-since {:id 0})]
+      (log/info "Initializing low level event cache with" (count events) "events")
+      (reset! low-level-event-cache (sorted-map))
+      (doseq [event events]
+        (let [fixed-event (specter-fix-event-from-db event)
+              id (:event/id fixed-event)]
+          (log/debug "Loading uncached event:" id)
+          (swap! low-level-event-cache assoc id fixed-event))))))
 
 (defn fix-event-from-db [event]
-  (let [id (:id event)]
-    (if-some [cached-event (get @low-level-event-cache id)]
-      cached-event
+  (locking low-level-event-cache
+    (ensure-cache-is-initialized!)
+    (let [id (:id event)]
+      (if-some [cached-event (get @low-level-event-cache id)]
+        cached-event
 
-      (let [_ (log/info "Loading uncached event:" id)
-            fixed-event (specter-fix-event-from-db event)]
-        (swap! low-level-event-cache assoc id fixed-event)
-        fixed-event))))
+        (let [_ (log/debug "Loading uncached event:" id)
+              fixed-event (specter-fix-event-from-db event)]
+          (swap! low-level-event-cache assoc id fixed-event)
+          fixed-event)))))
 
 (defn- get-all-events-internal []
-  (if-some [cached-events (seq (vals @low-level-event-cache))]
-    cached-events
-    (mapv fix-event-from-db (db/get-application-events-since {:id 0}))))
+  (locking low-level-event-cache
+    (ensure-cache-is-initialized!)
+    @low-level-event-cache))
 
 (defn get-application-events [application-id]
   (->> (get-all-events-internal)
-       (filter (comp #{application-id} :application/id))
-       (sort-by :event/id)
-       vec))
+       vals
+       (filterv (comp #{application-id} :application/id))))
 
 (defn get-all-events-since [event-id]
-  (->> (get-all-events-internal)
-       (sort-by :event/id)
-       (drop-while #(<= (:event/id %) event-id))))
+  (-> (get-all-events-internal)
+      (subseq > event-id)
+      vals))
 
 (defn get-latest-event []
-  (fix-event-from-db (db/get-latest-application-event {})))
+  (some-> (get-all-events-internal)
+          last
+          val))
 
 (defn add-event!
   "Add `event` to database. Returns the event as it went into the db."
   [event]
   (let [new-event (fix-event-from-db (db/add-application-event! {:application (:application/id event)
                                                                  :eventdata (event->json event)}))]
-    (swap! low-level-event-cache assoc (:event/id new-event) new-event)
+    (locking low-level-event-cache
+      (ensure-cache-is-initialized!)
+      (swap! low-level-event-cache assoc (:event/id new-event) new-event))
+
     new-event))
 
 (defn update-event!
@@ -134,12 +147,15 @@
   [event]
   (let [old-event (fix-event-from-db (first (db/get-application-event {:id (:event/id event)})))
         _ (assert old-event)
-        event (merge old-event event)]
+        new-event (merge old-event event)]
     (db/update-application-event! {:id (:event/id old-event)
-                                   :application (:application/id event)
-                                   :eventdata (event->json (dissoc event :event/id))})
-    (swap! low-level-event-cache assoc (:event/id old-event) event)
-    event))
+                                   :application (:application/id new-event)
+                                   :eventdata (event->json (dissoc new-event :event/id))})
+    (locking low-level-event-cache
+      (ensure-cache-is-initialized!)
+      (swap! low-level-event-cache assoc (:event/id old-event) new-event))
+
+    new-event))
 
 (defn replace-event!
   "Replaces an event on top of an old one.
@@ -155,8 +171,11 @@
         new-event (fix-event-from-db (db/replace-application-event! {:id (:event/id old-event)
                                                                      :application (:application/id event)
                                                                      :eventdata (event->json (dissoc event :event/id))}))]
-    (swap! low-level-event-cache assoc (:event/id new-event) new-event)
-    (swap! low-level-event-cache dissoc (:event/id old-event))
+    (locking low-level-event-cache
+      (ensure-cache-is-initialized!)
+      (swap! low-level-event-cache assoc (:event/id new-event) new-event)
+      (swap! low-level-event-cache dissoc (:event/id old-event)))
+
     new-event))
 
 (defn add-event-with-compaction!
@@ -183,9 +202,11 @@
 (defn delete-application-events! [app-id]
   (let [application-events (get-application-events app-id)]
     (db/delete-application-events! {:application app-id})
-    (swap! low-level-event-cache
-           (fn [cached-events]
-             (reduce (fn [cached-events application-event]
-                       (dissoc cached-events (:event/id application-event)))
-                     cached-events
-                     application-events)))))
+    (locking low-level-event-cache
+      (ensure-cache-is-initialized!)
+      (swap! low-level-event-cache
+             (fn [cached-events]
+               (reduce (fn [cached-events application-event]
+                         (dissoc cached-events (:event/id application-event)))
+                       cached-events
+                       application-events))))))
