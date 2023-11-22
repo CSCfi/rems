@@ -235,7 +235,7 @@
            old-updated-apps-by-user (group-apps-by-user (vals old-updated-enriched-apps))
            old-apps-by-user (::apps-by-user state)
            old-roles-by-user (::roles-by-user state)
-           old-users-by-role(::users-by-role state)
+           old-users-by-role (::users-by-role state)
 
            new-raw-apps (reduce all-applications-view old-raw-apps events)
            new-updated-raw-apps (select-keys new-raw-apps updated-app-ids)
