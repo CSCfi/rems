@@ -29,7 +29,12 @@
                          #'rems.locales/translations
                          #'rems.db.core/*db*)
   (db/assert-test-database!)
+
+  ;; these are db level caches and tests use db rollback
+  ;; it's best for us to start from scratch here
   (applications/empty-injections-cache!)
+  (events/reset-event-cache!)
+
   (migrations/migrate ["migrate"] {:database-url (:test-database-url env)})
   (f)
   (mount/stop))
