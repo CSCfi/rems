@@ -3,7 +3,7 @@
             [com.rpl.specter :refer [ALL multi-transform multi-path terminal must]]
             [medley.core :refer [update-existing]]
             [rems.application.events :as events]
-            [rems.common.util :refer [build-index conj-sorted-set disj-sorted-set to-sorted-set]]
+            [rems.common.util :refer [build-index conj-sorted-set disj-sorted-set getx to-sorted-set]]
             [rems.config :refer [env]]
             [rems.db.core :as db]
             [rems.json :as json]
@@ -84,7 +84,11 @@
   (assoc (specter-json->event (:eventdata event))
          :event/id (:id event)))
 
+(defn parse-db-event [event]
+  (specter-fix-event-from-db event))
+
 (def low-level-event-cache (atom ::uninitialized))
+
 (def events-by-application-cache (atom ::uninitialized))
 
 (defn reset-event-cache! []
@@ -107,18 +111,22 @@
                                                         :collect-fn to-sorted-set}
                                                        (vals @low-level-event-cache))))))
 
-(defn fix-event-from-db [event]
+(defn getx-event-cache [event-id]
   (locking low-level-event-cache
     (ensure-cache-is-initialized!)
-    (let [id (:id event)]
-      (if-some [cached-event (get @low-level-event-cache id)]
-        cached-event
+    (getx @low-level-event-cache event-id)))
 
-        (let [_ (log/debug "Loading uncached event:" id)
-              fixed-event (specter-fix-event-from-db event)]
-          (swap! low-level-event-cache assoc id fixed-event)
-          (swap! events-by-application-cache update (:application/id fixed-event) conj-sorted-set id)
-          fixed-event)))))
+(defn put-event-cache! [event]
+  (locking low-level-event-cache
+    (ensure-cache-is-initialized!)
+    (swap! low-level-event-cache assoc (:event/id event) event)
+    (swap! events-by-application-cache update (:application/id event) conj-sorted-set (:event/id event))))
+
+(defn delete-event-cache! [event]
+  (locking low-level-event-cache
+    (ensure-cache-is-initialized!)
+    (swap! low-level-event-cache dissoc (:event/id event))
+    (swap! events-by-application-cache update (:application/id event) disj-sorted-set (:event/id event))))
 
 (defn- get-all-events-internal []
   (locking low-level-event-cache
@@ -145,28 +153,27 @@
 (defn add-event!
   "Add `event` to database. Returns the event as it went into the db."
   [event]
-  (let [new-event (fix-event-from-db (db/add-application-event! {:application (:application/id event)
-                                                                 :eventdata (event->json event)}))]
-    (locking low-level-event-cache
-      (ensure-cache-is-initialized!)
-      (swap! low-level-event-cache assoc (:event/id new-event) new-event)
-      (swap! events-by-application-cache update (:application/id new-event) conj-sorted-set (:event/id new-event)))
+  (let [new-event (->> {:application (:application/id event)
+                        :eventdata (event->json event)}
+                       db/add-application-event!
+                       parse-db-event)]
+    (put-event-cache! new-event)
 
     new-event))
 
 (defn update-event!
-  "Updates an event on top of an old one. Returns the event as it went into the db."
+  "Updates an event on top of an old one. Returns the event as it went into the db.
+
+  Must be the same event (id) and application (id). Otherwise consider `replace-event!`."
   [event]
-  (let [old-event (fix-event-from-db (first (db/get-application-event {:id (:event/id event)})))
-        _ (assert old-event)
+  (let [old-event (getx-event-cache (:event/id event))
+        _ (assert (= (:event/id old-event) (:event/id event)) "must be the same event")
+        _ (assert (= (:application/id old-event) (:application/id event)) "must be the same application")
         new-event (merge old-event event)]
     (db/update-application-event! {:id (:event/id old-event)
                                    :application (:application/id new-event)
                                    :eventdata (event->json (dissoc new-event :event/id))})
-    (locking low-level-event-cache
-      (ensure-cache-is-initialized!)
-      (swap! low-level-event-cache assoc (:event/id old-event) new-event)
-      (swap! events-by-application-cache update (:application/id new-event) conj-sorted-set (:event/id old-event)))
+    (put-event-cache! new-event)
 
     new-event))
 
@@ -178,18 +185,13 @@
 
   Returns the event as it went into the db."
   [event]
-  (let [old-event (fix-event-from-db (first (db/get-application-event {:id (:event/id event)}))) ; TODO: not necessary to get
-        _ (assert old-event)
+  (let [old-event (getx-event-cache (:event/id event))
         event (merge old-event event)
-        new-event (fix-event-from-db (db/replace-application-event! {:id (:event/id old-event)
-                                                                     :application (:application/id event)
-                                                                     :eventdata (event->json (dissoc event :event/id))}))]
-    (locking low-level-event-cache
-      (ensure-cache-is-initialized!)
-      (swap! low-level-event-cache assoc (:event/id new-event) new-event)
-      (swap! low-level-event-cache dissoc (:event/id old-event))
-      (swap! events-by-application-cache update (:application/id old-event) disj-sorted-set (:event/id old-event))
-      (swap! events-by-application-cache update (:application/id new-event) conj-sorted-set (:event/id new-event)))
+        new-event (parse-db-event (db/replace-application-event! {:id (:event/id old-event)
+                                                                  :application (:application/id event)
+                                                                  :eventdata (event->json (dissoc event :event/id))}))]
+    (delete-event-cache! old-event)
+    (put-event-cache! new-event)
 
     new-event))
 
@@ -217,12 +219,6 @@
 (defn delete-application-events! [app-id]
   (let [application-events (get-application-events app-id)]
     (db/delete-application-events! {:application app-id})
-    (locking low-level-event-cache
-      (ensure-cache-is-initialized!)
-      (swap! low-level-event-cache
-             (fn [cached-events]
-               (reduce (fn [cached-events application-event]
-                         (dissoc cached-events (:event/id application-event)))
-                       cached-events
-                       application-events)))
-      (swap! events-by-application-cache dissoc app-id))))
+
+    (doseq [event application-events]
+      (delete-event-cache! event))))
