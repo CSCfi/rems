@@ -3,6 +3,7 @@
             [com.rpl.specter :refer [ALL multi-transform multi-path terminal must]]
             [medley.core :refer [update-existing]]
             [rems.application.events :as events]
+            [rems.common.util :refer [build-index conj-sorted-set disj-sorted-set to-sorted-set]]
             [rems.config :refer [env]]
             [rems.db.core :as db]
             [rems.json :as json]
@@ -84,20 +85,27 @@
          :event/id (:id event)))
 
 (def low-level-event-cache (atom ::uninitialized))
+(def events-by-application-cache (atom ::uninitialized))
 
 (defn reset-event-cache! []
-  (reset! low-level-event-cache ::uninitialized))
+  (reset! low-level-event-cache ::uninitialized)
+  (reset! events-by-application-cache ::uninitialized))
 
 (defn ensure-cache-is-initialized! []
   (when (= ::uninitialized @low-level-event-cache)
+    (log/info "Initializing low level event cache")
     (let [events (db/get-application-events-since {:id 0})]
-      (log/info "Initializing low level event cache with" (count events) "events")
+      (log/info "Found" (count events) "events")
       (reset! low-level-event-cache (sorted-map))
       (doseq [event events]
         (let [fixed-event (specter-fix-event-from-db event)
               id (:event/id fixed-event)]
           (log/debug "Loading uncached event:" id)
-          (swap! low-level-event-cache assoc id fixed-event))))))
+          (swap! low-level-event-cache assoc id fixed-event)))
+      (reset! events-by-application-cache (build-index {:keys [:application/id]
+                                                        :value-fn :event/id
+                                                        :collect-fn to-sorted-set}
+                                                       (vals @low-level-event-cache))))))
 
 (defn fix-event-from-db [event]
   (locking low-level-event-cache
@@ -109,6 +117,7 @@
         (let [_ (log/debug "Loading uncached event:" id)
               fixed-event (specter-fix-event-from-db event)]
           (swap! low-level-event-cache assoc id fixed-event)
+          (swap! events-by-application-cache update (:application/id fixed-event) conj-sorted-set id)
           fixed-event)))))
 
 (defn- get-all-events-internal []
@@ -117,9 +126,11 @@
     @low-level-event-cache))
 
 (defn get-application-events [application-id]
-  (->> (get-all-events-internal)
-       vals
-       (filterv (comp #{application-id} :application/id))))
+  (locking low-level-event-cache
+    (ensure-cache-is-initialized!)
+    (->> application-id
+         (@events-by-application-cache)
+         (mapv @low-level-event-cache))))
 
 (defn get-all-events-since [event-id]
   (-> (get-all-events-internal)
@@ -138,7 +149,8 @@
                                                                  :eventdata (event->json event)}))]
     (locking low-level-event-cache
       (ensure-cache-is-initialized!)
-      (swap! low-level-event-cache assoc (:event/id new-event) new-event))
+      (swap! low-level-event-cache assoc (:event/id new-event) new-event)
+      (swap! events-by-application-cache update (:application/id new-event) conj-sorted-set (:event/id new-event)))
 
     new-event))
 
@@ -153,7 +165,8 @@
                                    :eventdata (event->json (dissoc new-event :event/id))})
     (locking low-level-event-cache
       (ensure-cache-is-initialized!)
-      (swap! low-level-event-cache assoc (:event/id old-event) new-event))
+      (swap! low-level-event-cache assoc (:event/id old-event) new-event)
+      (swap! events-by-application-cache update (:application/id new-event) conj-sorted-set (:event/id old-event)))
 
     new-event))
 
@@ -165,7 +178,7 @@
 
   Returns the event as it went into the db."
   [event]
-  (let [old-event (fix-event-from-db (first (db/get-application-event {:id (:event/id event)})))
+  (let [old-event (fix-event-from-db (first (db/get-application-event {:id (:event/id event)}))) ; TODO: not necessary to get
         _ (assert old-event)
         event (merge old-event event)
         new-event (fix-event-from-db (db/replace-application-event! {:id (:event/id old-event)
@@ -174,7 +187,9 @@
     (locking low-level-event-cache
       (ensure-cache-is-initialized!)
       (swap! low-level-event-cache assoc (:event/id new-event) new-event)
-      (swap! low-level-event-cache dissoc (:event/id old-event)))
+      (swap! low-level-event-cache dissoc (:event/id old-event))
+      (swap! events-by-application-cache update (:application/id old-event) disj-sorted-set (:event/id old-event))
+      (swap! events-by-application-cache update (:application/id new-event) conj-sorted-set (:event/id new-event)))
 
     new-event))
 
@@ -209,4 +224,5 @@
                (reduce (fn [cached-events application-event]
                          (dissoc cached-events (:event/id application-event)))
                        cached-events
-                       application-events))))))
+                       application-events)))
+      (swap! events-by-application-cache dissoc app-id))))
