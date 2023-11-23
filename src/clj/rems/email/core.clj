@@ -21,9 +21,14 @@
            [org.joda.time Duration Period]))
 
 (defn- event-to-emails [event]
-  (when-let [app-id (:application/id event)]
-    (template/event-to-emails (rems.application.model/enrich-event event users/get-user (constantly nil))
-                              (applications/get-application app-id))))
+  ;; performance optimization:
+  ;; avoid get application if no email should be sent for this event
+  (when-not (contains? #{:application.event/created
+                         :application.event/draft-saved}
+                       (:event/type event))
+    (when-let [app-id (:application/id event)]
+      (template/event-to-emails (rems.application.model/enrich-event event users/get-user (constantly nil))
+                                (applications/get-application app-id)))))
 
 (defn- enqueue-email! [email]
   (outbox/put! {:outbox/type :email
