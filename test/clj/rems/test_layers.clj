@@ -187,12 +187,13 @@
         edges (->> trace
                    (mapv (juxt :from :to))
                    (remove #(or (nil? (first %)) (nil? (second %))))
+                   (remove #(= (first %) (second %))) ; refers to itself
                    vec)
         edge-freqs (frequencies edges)
         calls-by-ids (group-by (juxt :from :to)
                                (for [call trace] call))
         hide-cutoff-ms 0
-        cutoff-ms 0 ;;0.5
+        cutoff-ms 0.1 ;;0.5
         edges (doall (for [[from to] (distinct edges)
                            :let [calls (calls-by-ids [from to])]
                            :when (seq calls)
@@ -206,7 +207,7 @@
                                  min-time (if (seq times) (/ (apply min times) 1000.0) 0)
                                  max-time (if (seq times) (/ (apply max times) 1000.0) 0)
                                  lazy (count (filter :lazy? calls))]
-                           :when (> max-time hide-cutoff-ms)]
+                           :when (> sum-time hide-cutoff-ms)]
                        [(sym->id from) (sym->id to) {;;:color (if (and avg (< avg cutoff-ms)) "#gray" "black")
                                                      :weight (or (and min-time (number? min-time)) 0.01)
                                                      :penwidth (max (or (and min-time (number? min-time) (Math/sqrt min-time)) 0.1)
@@ -214,7 +215,7 @@
                                                      :label (if (and max-time (< max-time cutoff-ms))
                                                               ""
                                                               [:table {:border 0}
-                                                               [:tr [:td "count"] [:td c]]
+                                                               (when (> c 1) [:tr [:td "count"] [:td c]])
                                                                (when (> c 1) [:tr [:td "sum"] [:td (format "%.2f ms" sum-time)]])
                                                                (when (> c 1) [:tr [:td "min"] [:td (format "%.2f ms" min-time)]])
                                                                [:tr [:td (if (> c 1) "avg" "")] [:td (format "%.2f ms" avg)]]
@@ -292,16 +293,22 @@
     (rems.trace/unbind-rems)
     (rems.trace/bind-rems)
     (rems.service.application/get-full-public-application 3018)
-    (rems.db.applications/get-application-internal 3019)
+    (rems.db.applications/get-application-internal 3018)
     (test-helpers/create-draft! "elsa" [1] "trace test")
-    (repeatedly 100 (fn []
-                      (rems.service.command/command! {:type :application.command/create
-                                                      :actor "elsa"
-                                                      :time (clj-time.core/date-time 2001)
-                                                      :catalogue-item-ids [1]})
-                      (rems.service.command/command! {:type :application.command/save-draft
-                                                      :actor "elsa"
-                                                      :time (clj-time.core/date-time 2001)
-                                                      :application-id 3019
-                                                      :field-values []})))
+    (rems.service.command/command! {:type :application.command/save-draft
+                                                          :actor "elsa"
+                                                          :time (clj-time.core/date-time 2001)
+                                                          :application-id 3018
+                                                          :field-values []})
+    (time (last (pmap (fn [i]
+                        (let [application-id (:application-id (rems.service.command/command! {:type :application.command/create
+                                                                                              :actor "elsa"
+                                                                                              :time (clj-time.core/date-time 2001)
+                                                                                              :catalogue-item-ids [1]}))]
+                          (rems.service.command/command! {:type :application.command/save-draft
+                                                          :actor "elsa"
+                                                          :time (clj-time.core/date-time 2001)
+                                                          :application-id application-id
+                                                          :field-values []})))
+                      (range 5000))))
     (call-graph @rems.trace/trace-a)))
