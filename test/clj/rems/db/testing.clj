@@ -33,9 +33,9 @@
   ;; these are db level caches and tests use db rollback
   ;; it's best for us to start from scratch here
   (applications/empty-injections-cache!)
-  (events/reset-event-cache!)
 
   (migrations/migrate ["migrate"] {:database-url (:test-database-url env)})
+  (mount/start #'rems.db.events/low-level-events-cache) ; needs DB to start
   (f)
   (mount/stop))
 
@@ -54,8 +54,7 @@
       (category/reset-cache!)
       (dependencies/reset-cache!)
       (user-mappings/reset-cache!)
-      (events/reset-event-cache!))))
-
+      (events/empty-event-cache!))))
 (def +test-api-key+ test-data/+test-api-key+) ;; re-exported for convenience
 
 (defn owners-fixture [f]
@@ -65,5 +64,5 @@
 (defn rollback-db-fixture [f]
   (conman/with-transaction [db/*db* {:isolation :serializable}]
     (jdbc/db-set-rollback-only! db/*db*)
-    (events/reset-event-cache!) ; NB can't rollback this cache so reset
+    (events/empty-event-cache!) ; NB can't rollback this cache so reset
     (f)))

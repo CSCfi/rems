@@ -1,7 +1,9 @@
 (ns rems.db.events
-  (:require [clojure.tools.logging :as log]
+  (:require [clojure.java.jdbc :as jdbc]
+            [clojure.tools.logging :as log]
             [com.rpl.specter :refer [ALL multi-transform multi-path terminal must]]
             [medley.core :refer [update-existing]]
+            [mount.core :as mount]
             [rems.application.events :as events]
             [rems.common.util :refer [build-index conj-sorted-set disj-sorted-set getx to-sorted-set]]
             [rems.config :refer [env]]
@@ -10,7 +12,8 @@
             [rems.schema-base :as schema-base]
             [schema-tools.core :as st]
             [schema.coerce :as coerce]
-            [schema.utils]))
+            [schema.utils])
+  (:import rems.TryAgainException))
 
 (def ^:private coerce-event-commons
   (coerce/coercer! (st/open-schema schema-base/EventBase) json/coercion-matcher))
@@ -87,66 +90,90 @@
 (defn parse-db-event [event]
   (specter-fix-event-from-db event))
 
-(def low-level-event-cache (atom ::uninitialized))
+(def event-by-id-cache (ref ::uninitialized))
+(def events-by-application-cache (ref ::uninitialized))
 
-(def events-by-application-cache (atom ::uninitialized))
+(defn empty-event-cache! []
+  (log/info "Emptying low level event cache")
+  (dosync
+   (ref-set event-by-id-cache (sorted-map))
+   (ref-set events-by-application-cache {})))
 
 (defn reset-event-cache! []
-  (reset! low-level-event-cache ::uninitialized)
-  (reset! events-by-application-cache ::uninitialized))
+  (log/info "Resetting low level event cache")
+  (dosync
+   (ref-set event-by-id-cache ::uninitialized)
+   (ref-set events-by-application-cache ::uninitialized)))
+
+(defn reload-event-cache! []
+  ;; this is like an application command, processed one at a time
+  ;; protect against seeing old data in application_event table
+  ;; see #'rems.service.command/command!
+  (try
+    (jdbc/execute! db/*db* ["LOCK TABLE application_event IN SHARE ROW EXCLUSIVE MODE"])
+    (catch org.postgresql.util.PSQLException e
+      (if (.contains (.getMessage e) "lock timeout")
+        (throw (TryAgainException. e))
+        (throw e))))
+
+  (log/info "Reloading low level event cache")
+  (let [events (db/get-application-events-since {:id 0})
+        new-event-by-id-cache (atom (sorted-map))
+        new-events-by-application-cache (atom (sorted-map))]
+    (doseq [event events]
+      (let [fixed-event (specter-fix-event-from-db event)
+            id (:event/id fixed-event)]
+        (log/debug "Loading uncached event:" id)
+        (swap! new-event-by-id-cache assoc id fixed-event)))
+    (reset! new-events-by-application-cache (build-index {:keys [:application/id]
+                                                          :value-fn :event/id
+                                                          :collect-fn to-sorted-set}
+                                                         (vals @new-event-by-id-cache)))
+    ;; we want to swap the cache in the last moment in one operation
+    (dosync
+     (ref-set event-by-id-cache @new-event-by-id-cache)
+     (ref-set events-by-application-cache @new-events-by-application-cache))
+    (log/info "Reloaded low level event cache with" (count events) "events")))
+
+(mount/defstate low-level-events-cache
+  :start (reload-event-cache!)
+  :stop (reset-event-cache!))
 
 (defn ensure-cache-is-initialized! []
-  (when (= ::uninitialized @low-level-event-cache)
-    (log/info "Initializing low level event cache")
-    (let [events (db/get-application-events-since {:id 0})]
-      (log/info "Found" (count events) "events")
-      (reset! low-level-event-cache (sorted-map))
-      (doseq [event events]
-        (let [fixed-event (specter-fix-event-from-db event)
-              id (:event/id fixed-event)]
-          (log/debug "Loading uncached event:" id)
-          (swap! low-level-event-cache assoc id fixed-event)))
-      (reset! events-by-application-cache (build-index {:keys [:application/id]
-                                                        :value-fn :event/id
-                                                        :collect-fn to-sorted-set}
-                                                       (vals @low-level-event-cache))))))
+  (assert (not= ::uninitialized @event-by-id-cache))
+  (assert (not= ::uninitialized @events-by-application-cache)))
 
 (defn getx-event-cache [event-id]
-  (locking low-level-event-cache
-    (ensure-cache-is-initialized!)
-    (getx @low-level-event-cache event-id)))
+  (ensure-cache-is-initialized!)
+  (getx @event-by-id-cache event-id))
 
 (defn put-event-cache! [event]
-  (locking low-level-event-cache
-    (ensure-cache-is-initialized!)
-    (swap! low-level-event-cache assoc (:event/id event) event)
-    (swap! events-by-application-cache update (:application/id event) conj-sorted-set (:event/id event))))
+  (ensure-cache-is-initialized!)
+  (dosync
+   (commute event-by-id-cache assoc (:event/id event) event)
+   (commute events-by-application-cache update (:application/id event) conj-sorted-set (:event/id event))))
 
 (defn delete-event-cache! [event]
-  (locking low-level-event-cache
-    (ensure-cache-is-initialized!)
-    (swap! low-level-event-cache dissoc (:event/id event))
-    (swap! events-by-application-cache update (:application/id event) disj-sorted-set (:event/id event))))
-
-(defn- get-all-events-internal []
-  (locking low-level-event-cache
-    (ensure-cache-is-initialized!)
-    @low-level-event-cache))
+  (ensure-cache-is-initialized!)
+  (dosync
+   (commute event-by-id-cache dissoc (:event/id event))
+   (commute events-by-application-cache update (:application/id event) disj-sorted-set (:event/id event))))
 
 (defn get-application-events [application-id]
-  (locking low-level-event-cache
-    (ensure-cache-is-initialized!)
-    (->> application-id
-         (@events-by-application-cache)
-         (mapv @low-level-event-cache))))
+  (ensure-cache-is-initialized!)
+  (->> application-id
+       (@events-by-application-cache)
+       (mapv getx-event-cache)))
 
 (defn get-all-events-since [event-id]
-  (-> (get-all-events-internal)
+  (ensure-cache-is-initialized!)
+  (-> @event-by-id-cache
       (subseq > event-id)
       vals))
 
 (defn get-latest-event []
-  (some-> (get-all-events-internal)
+  (ensure-cache-is-initialized!)
+  (some-> @event-by-id-cache
           last
           val))
 
@@ -158,7 +185,6 @@
                        db/add-application-event!
                        parse-db-event)]
     (put-event-cache! new-event)
-
     new-event))
 
 (defn update-event!
@@ -192,7 +218,6 @@
                                                                   :eventdata (event->json (dissoc event :event/id))}))]
     (delete-event-cache! old-event)
     (put-event-cache! new-event)
-
     new-event))
 
 (defn add-event-with-compaction!

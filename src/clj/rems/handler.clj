@@ -14,6 +14,7 @@
             [rems.config :refer [env]]
             [rems.css.styles :as styles]
             [rems.db.catalogue :as catalogue]
+            [rems.db.events] ;; to start events cache
             [rems.email.core] ;; to enable email polling
             [rems.application.eraser] ;; to enable expired application clean-up job
             [rems.layout :as layout]
