@@ -296,10 +296,10 @@
     (rems.db.applications/get-application-internal 3018)
     (test-helpers/create-draft! "elsa" [1] "trace test")
     (rems.service.command/command! {:type :application.command/save-draft
-                                                          :actor "elsa"
-                                                          :time (clj-time.core/date-time 2001)
-                                                          :application-id 3018
-                                                          :field-values []})
+                                    :actor "elsa"
+                                    :time (clj-time.core/date-time 2001)
+                                    :application-id 3018
+                                    :field-values []})
     (time (last (pmap (fn [i]
                         (let [application-id (:application-id (rems.service.command/command! {:type :application.command/create
                                                                                               :actor "elsa"
