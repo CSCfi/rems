@@ -179,7 +179,8 @@
         (do
           (mount/start #'rems.config/env
                        #'rems.db.core/*db*
-                       #'rems.locales/translations)
+                       #'rems.locales/translations
+                       #'rems.db.events/low-level-events-cache)
           (log/info "Creating test data")
           (test-data/create-test-data!)
           (log/info "Test data created"))
@@ -188,7 +189,8 @@
         (do
           (mount/start #'rems.config/env
                        #'rems.db.core/*db*
-                       #'rems.locales/translations)
+                       #'rems.locales/translations
+                       #'rems.db.events/low-level-events-cache)
           (log/info "Creating performance test data")
           (test-data/create-performance-test-data!)
           (log/info "Performance test data created"))
@@ -197,7 +199,8 @@
         (do
           (mount/start #'rems.config/env
                        #'rems.db.core/*db*
-                       #'rems.locales/translations)
+                       #'rems.locales/translations
+                       #'rems.db.events/low-level-events-cache)
           (test-data/create-demo-data!))
 
         "api-key"
@@ -270,7 +273,7 @@
             (do (println "\n\n*** Renaming a user's identity can't easily be undone. ***\nType 'YES' to proceed or anything else to run a simulation only.")
                 (let [simulate? (not= "YES" (read-line))]
                   (println (if simulate? "Simulating only..." "Renaming..."))
-                  (mount/start #'rems.config/env #'rems.db.core/*db*)
+                  (mount/start #'rems.config/env #'rems.db.core/*db* #'rems.db.events/low-level-events-cache)
                   (rems.service.fix-userid/fix-all old-userid new-userid simulate?)
                   (println "Finished.\n\nConsider rebooting the server process next to refresh all the caches, most importantly the application cache.")))))
 
