@@ -2,7 +2,7 @@
   (:require [clojure.java.jdbc :as jdbc]
             [clojure.tools.logging :as log]
             [com.rpl.specter :refer [ALL multi-transform multi-path terminal must]]
-            [medley.core :refer [update-existing]]
+            [medley.core :refer [dissoc-in update-existing]]
             [mount.core :as mount]
             [rems.application.events :as events]
             [rems.common.util :refer [build-index conj-sorted-set disj-sorted-set getx to-sorted-set]]
@@ -90,20 +90,16 @@
 (defn parse-db-event [event]
   (specter-fix-event-from-db event))
 
-(def event-by-id-cache (ref ::uninitialized))
-(def events-by-application-cache (ref ::uninitialized))
+(def event-cache (atom ::uninitialized))
 
 (defn empty-event-cache! []
   (log/info "Emptying low level event cache")
-  (dosync
-   (ref-set event-by-id-cache (sorted-map))
-   (ref-set events-by-application-cache {})))
+  (reset! event-cache {:event-by-id-cache (sorted-map)
+                       :events-by-application-cache (sorted-map)}))
 
 (defn reset-event-cache! []
   (log/info "Resetting low level event cache")
-  (dosync
-   (ref-set event-by-id-cache ::uninitialized)
-   (ref-set events-by-application-cache ::uninitialized)))
+  (reset! event-cache ::uninitialized))
 
 (defn reload-event-cache! []
   ;; this is like an application command, processed one at a time
@@ -130,9 +126,8 @@
                                                           :collect-fn to-sorted-set}
                                                          (vals @new-event-by-id-cache)))
     ;; we want to swap the cache in the last moment in one operation
-    (dosync
-     (ref-set event-by-id-cache @new-event-by-id-cache)
-     (ref-set events-by-application-cache @new-events-by-application-cache))
+    (reset! event-cache {:event-by-id-cache @new-event-by-id-cache
+                         :events-by-application-cache @new-events-by-application-cache})
     (log/info "Reloaded low level event cache with" (count events) "events")))
 
 (mount/defstate low-level-events-cache
@@ -140,40 +135,46 @@
   :stop (reset-event-cache!))
 
 (defn ensure-cache-is-initialized! []
-  (assert (not= ::uninitialized @event-by-id-cache))
-  (assert (not= ::uninitialized @events-by-application-cache)))
+  (assert (not= ::uninitialized @event-cache)))
 
 (defn getx-event-cache [event-id]
   (ensure-cache-is-initialized!)
-  (getx @event-by-id-cache event-id))
+  (getx (:event-by-id-cache @event-cache) event-id))
 
 (defn put-event-cache! [event]
   (ensure-cache-is-initialized!)
-  (dosync
-   (commute event-by-id-cache assoc (:event/id event) event)
-   (commute events-by-application-cache update (:application/id event) conj-sorted-set (:event/id event))))
+  (swap! event-cache
+         (fn [event-cache]
+           (-> event-cache
+               (assoc-in [:event-by-id-cache (:event/id event)] event)
+               (update-in [:events-by-application-cache (:application/id event)] conj-sorted-set (:event/id event))))))
 
 (defn delete-event-cache! [event]
   (ensure-cache-is-initialized!)
-  (dosync
-   (commute event-by-id-cache dissoc (:event/id event))
-   (commute events-by-application-cache update (:application/id event) disj-sorted-set (:event/id event))))
+  (swap! event-cache
+         (fn [event-cache]
+           (-> event-cache
+               (update :event-by-id-cache dissoc (:event/id event)) ; NB maintain sorted-map, dissoc-in could delete it
+               (update-in [:events-by-application-cache (:application/id event)] disj-sorted-set (:event/id event))))))
 
 (defn get-application-events [application-id]
   (ensure-cache-is-initialized!)
-  (->> application-id
-       (@events-by-application-cache)
-       (mapv getx-event-cache)))
+  ;; deref here once so that both
+  ;; accesses come from same time
+  (let [{:keys [event-by-id-cache events-by-application-cache]} @event-cache]
+    (->> application-id
+         events-by-application-cache
+         (mapv event-by-id-cache))))
 
 (defn get-all-events-since [event-id]
   (ensure-cache-is-initialized!)
-  (-> @event-by-id-cache
+  (-> (getx @event-cache :event-by-id-cache)
       (subseq > event-id)
       vals))
 
 (defn get-latest-event []
   (ensure-cache-is-initialized!)
-  (some-> @event-by-id-cache
+  (some-> (getx @event-cache :event-by-id-cache)
           last
           val))
 
