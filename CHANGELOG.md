@@ -10,6 +10,9 @@ Changes since v2.34.2
 
 **NB: This release removes the experimental application PDF export API. The non-experimental PDF export API is preferred instead. (#3098)**
 
+### Additions
+- The command-line use of REMS has been sped up. There are new commands `dev-setup` and `perf-setup` that `dev_db.sh` uses to start faster (a combination of migrate and data).
+
 ### Fixes
 - Big improvements in performance from small improvements in how applications and events are processed and cached. REMS should be able to handle a 100k event DB without breaking a sweat. (#2783)
 - Administration dropdown buttons should now respond to clicks more widely, and not only by directly clicking text. (#3167)
