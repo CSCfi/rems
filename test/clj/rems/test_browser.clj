@@ -1016,6 +1016,7 @@
         (btu/scroll-and-click [:handled-applications-collapse {:fn/text "Show all rows"}])
         (btu/wait-for-animation)
         (btu/scroll-and-click [:handled-applications-paging-pages {:fn/text "10"}])
+        (btu/wait-visible {:fn/text "test-processed-applications-10"}) ; wait for at least one to appear before checking all
         (is (= (for [i (range 10 0 -1)]
                  (str "test-processed-applications-" i))
                (mapv #(get % "description") (slurp-rows :handled-applications))))
@@ -2816,6 +2817,7 @@
             (is (not (btu/visible? {:css ".edit-organization"})))
 
             (go-to-admin "Organizations")
+            (btu/scroll-and-click {:fn/text "Own organization only"}) ; not part of it anymore
             (is (= "View"
                    (->> (slurp-table :organizations)
                         (some #(when (= "SNEN" (get % "short-name"))
