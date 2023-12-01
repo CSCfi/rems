@@ -97,25 +97,20 @@
  (fn [_ _]
    [(rf/subscribe [::organizations])
     (rf/subscribe [:language])
-    (rf/subscribe [:rems.administration.administration/display-own-organization-only])
-    (rf/subscribe [:owned-organizations])])
- (fn [[organizations language display-own-organization-only? owned-organizations] _]
-   (let [org-owner? (fn [id] (some (comp #{id} :organization/id) owned-organizations))]
-     (->> organizations
-          (filter (fn [organization]
-                    (or (not display-own-organization-only?)
-                        (roles/has-roles? :owner :reporter)
-                        (org-owner? (:organization/id organization)))))
-          (mapv (fn [organization]
-                  {:key (:organization/id organization)
-                   :short-name {:value (get-in organization [:organization/short-name language])}
-                   :name {:value (get-in organization [:organization/name language])}
-                   :active (let [checked? (status-flags/active? organization)]
-                             {:display-value [readonly-checkbox {:value checked?}]
-                              :sort-value (if checked? 1 2)})
-                   :commands {:display-value [:div.commands
-                                              [to-view-organization (:organization/id organization)]
-                                              [modify-organization-dropdown organization]]}}))))))
+    (rf/subscribe [:rems.administration.administration/displayed-organization-ids])])
+ (fn [[organizations language displayed-organization-ids] _]
+   (->> organizations
+        (administration/filter-by-displayed-organization displayed-organization-ids #(get-in % [:organization/id]))
+        (mapv (fn [organization]
+                {:key (:organization/id organization)
+                 :short-name {:value (get-in organization [:organization/short-name language])}
+                 :name {:value (get-in organization [:organization/name language])}
+                 :active (let [checked? (status-flags/active? organization)]
+                           {:display-value [readonly-checkbox {:value checked?}]
+                            :sort-value (if checked? 1 2)})
+                 :commands {:display-value [:div.commands
+                                            [to-view-organization (:organization/id organization)]
+                                            [modify-organization-dropdown organization]]}})))))
 
 (defn- organizations-list []
   [table/standard {:id ::organizations

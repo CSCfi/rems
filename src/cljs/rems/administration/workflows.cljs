@@ -82,19 +82,21 @@
  ::workflows-table-rows
  (fn [_ _]
    [(rf/subscribe [::workflows])
-    (rf/subscribe [:language])])
- (fn [[workflows language] _]
-   (map (fn [workflow]
-          {:key (:id workflow)
-           :organization {:value (get-in workflow [:organization :organization/short-name language])}
-           :title {:value (:title workflow)}
-           :active (let [checked? (status-flags/active? workflow)]
-                     {:display-value [readonly-checkbox {:value checked?}]
-                      :sort-value (if checked? 1 2)})
-           :commands {:display-value [:div.commands
-                                      [to-view-workflow (:id workflow)]
-                                      [modify-workflow-dropdown workflow]]}})
-        workflows)))
+    (rf/subscribe [:language])
+    (rf/subscribe [:rems.administration.administration/displayed-organization-ids])])
+ (fn [[workflows language displayed-organization-ids] _]
+   (->> workflows
+        (administration/filter-by-displayed-organization displayed-organization-ids #(get-in % [:organization :organization/id]))
+        (mapv (fn [workflow]
+                {:key (:id workflow)
+                 :organization {:value (get-in workflow [:organization :organization/short-name language])}
+                 :title {:value (:title workflow)}
+                 :active (let [checked? (status-flags/active? workflow)]
+                           {:display-value [readonly-checkbox {:value checked?}]
+                            :sort-value (if checked? 1 2)})
+                 :commands {:display-value [:div.commands
+                                            [to-view-workflow (:id workflow)]
+                                            [modify-workflow-dropdown workflow]]}})))))
 
 (defn- workflows-list []
   [table/standard {:id ::workflows
@@ -123,4 +125,5 @@
           [[roles/show-when roles/+admin-write-roles+
             [atoms/commands [to-create-workflow]]
             [status-flags/status-flags-intro #(rf/dispatch [::fetch-workflows])]]
+           [administration/own-organization-selection]
            [workflows-list]])))

@@ -82,30 +82,21 @@
  (fn [_ _]
    [(rf/subscribe [::licenses])
     (rf/subscribe [:language])
-    (rf/subscribe [:rems.administration.administration/display-own-organization-only])
-    (rf/subscribe [:owned-organizations])
-    (rf/subscribe [:handled-organizations])])
- (fn [[licenses language display-own-organization-only? owned-organizations handled-organizations] _]
-   (let [org-owner? (fn [id] (some (comp #{id} :organization/id) owned-organizations))
-         handler-in-org? (fn [id] (some (comp #{id} :organization/id) handled-organizations))]
-     (->> licenses
-          (filter (fn [license]
-                    (let [org-id (get-in license [:organization :organization/id])]
-                      (or (not display-own-organization-only?)
-                          (roles/has-roles? :owner :reporter)
-                          (org-owner? org-id)
-                          (handler-in-org? org-id)))))
-          (mapv (fn [license]
-                  {:key (:id license)
-                   :title {:value (get-localized-title license language)}
-                   :type {:value (:licensetype license)}
-                   :organization {:value (get-in license [:organization :organization/short-name language])}
-                   :active (let [checked? (status-flags/active? license)]
-                             {:display-value [readonly-checkbox {:value checked?}]
-                              :sort-value (if checked? 1 2)})
-                   :commands {:display-value [:div.commands
-                                              [to-view-license (:id license)]
-                                              [modify-license-dropdown license]]}}))))))
+    (rf/subscribe [:rems.administration.administration/displayed-organization-ids])])
+ (fn [[licenses language displayed-organization-ids] _]
+   (->> licenses
+        (administration/filter-by-displayed-organization displayed-organization-ids #(get-in % [:organization :organization/id]))
+        (mapv (fn [license]
+                {:key (:id license)
+                 :title {:value (get-localized-title license language)}
+                 :type {:value (:licensetype license)}
+                 :organization {:value (get-in license [:organization :organization/short-name language])}
+                 :active (let [checked? (status-flags/active? license)]
+                           {:display-value [readonly-checkbox {:value checked?}]
+                            :sort-value (if checked? 1 2)})
+                 :commands {:display-value [:div.commands
+                                            [to-view-license (:id license)]
+                                            [modify-license-dropdown license]]}})))))
 
 (defn- licenses-list []
   [table/standard {:id ::licenses
