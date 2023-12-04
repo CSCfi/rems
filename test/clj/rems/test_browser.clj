@@ -2816,13 +2816,23 @@
                    (slurp-fields :organization)))
             (is (not (btu/visible? {:css ".edit-organization"})))
 
-            (go-to-admin "Organizations")
-            (btu/scroll-and-click {:fn/text "Own organization only"}) ; not part of it anymore
-            (is (= "View"
-                   (->> (slurp-table :organizations)
-                        (some #(when (= "SNEN" (get % "short-name"))
-                                 (get % "commands")))))
-                "organization actions should not be visible for non organization owner")))))))
+            (testing "organization list and own organizations"
+              (go-to-admin "Organizations")
+
+              (is (= nil
+                     (->> (slurp-table :organizations)
+                          (some #(when (= "SNEN" (get % "short-name"))
+                                   (get % "commands")))))
+                  "by default you can see only own organization and this is not anymore")
+
+              ;; toggle other organizations to view
+              (btu/scroll-and-click {:fn/text "Own organization only"})
+
+              (is (= "View"
+                     (->> (slurp-table :organizations)
+                          (some #(when (= "SNEN" (get % "short-name"))
+                                   (get % "commands")))))
+                  "organization actions should not be visible for non organization owner"))))))))
 
 (deftest test-small-navbar
   (testing "create a test application with the API to have another page to navigate to"
