@@ -67,11 +67,11 @@
   (let [display-own-organization-only? @(rf/subscribe [::display-own-organization-only])
         on-change (fn [] (rf/dispatch [::set-display-own-organization-only (not display-own-organization-only?)]))]
     [:div.form-check.form-check-inline.pointer
-     [atoms/checkbox {:id :display-archived
+     [atoms/checkbox {:id :display-own-organization-only
                       :class :form-check-input
                       :value display-own-organization-only?
                       :on-change on-change}]
-     [:label.form-check-label {:for :display-archived :on-click on-change}
+     [:label.form-check-label {:for :display-own-organization-only :on-click on-change}
       (text :t.administration/display-own-organization-only)]]))
 
 (defn own-organization-selection []
