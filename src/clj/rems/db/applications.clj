@@ -216,69 +216,91 @@
             :bar #{"user-1"}}
            (group-users-by-role apps)))))
 
+(defn- update-cache [{:keys [state updated-app-ids deleted-app-ids events]}]
+  ;; terminology:
+  ;; - old          - all from previous round
+  ;; - new          - new results from this round
+  ;; - raw          - not enriched (no injections)
+  ;; - personalized - app for user (no :application/user-roles)
+  ;; - updated      - only those that changed this round
+  (let [cached-injections (map-vals memoize fetcher-injections)
+
+        old-raw-apps (::raw-apps state)
+        old-enriched-apps (::enriched-apps state)
+        old-updated-enriched-apps (select-keys old-enriched-apps updated-app-ids)
+        old-updated-apps-by-user (group-apps-by-user (vals old-updated-enriched-apps))
+        old-apps-by-user (::apps-by-user state)
+        old-roles-by-user (::roles-by-user state)
+        old-users-by-role (::users-by-role state)
+
+        new-raw-apps (as-> old-raw-apps apps
+                       (reduce all-applications-view apps events)
+                       (apply dissoc apps deleted-app-ids)
+                       (doall apps))
+        new-updated-raw-apps (select-keys new-raw-apps updated-app-ids)
+        new-updated-enriched-apps (doall (map-vals #(model/enrich-with-injections % cached-injections) new-updated-raw-apps))
+        new-enriched-apps (as-> new-updated-enriched-apps apps
+                            (merge old-enriched-apps apps)
+                            (apply dissoc apps deleted-app-ids)
+                            (doall apps))
+        new-updated-apps-by-user (group-apps-by-user (vals new-updated-enriched-apps))
+
+        ;; we need to update the users related to the old and new applications in this round
+        updated-users (set/union (set (keys old-updated-apps-by-user))
+                                 (set (keys new-updated-apps-by-user)))
+
+        new-personalized-apps-by-user (doall (reduce (fn [old-apps-by-user userid]
+                                                       (update old-apps-by-user userid
+                                                               (fn [old-apps]
+                                                                 (let [personalized-apps (->> userid
+                                                                                              new-updated-apps-by-user
+                                                                                              (mapv #(model/apply-user-permissions % userid)))]
+                                                                   (->> old-apps
+                                                                        (remove (comp updated-app-ids :application/id))
+                                                                        (concat personalized-apps))))))
+                                                     old-apps-by-user
+                                                     updated-users))
+
+        ;; update all the users that are in this round
+        updated-roles-by-user (->> updated-users
+                                   (mapcat new-updated-apps-by-user)
+                                   (distinct-by :application/id)
+                                   group-roles-by-user)
+        new-roles-by-user (doall (merge (apply dissoc old-roles-by-user updated-users)
+                                        updated-roles-by-user))
+
+        ;; update all the users that are in this round
+        new-users-by-role (->> old-users-by-role
+                               ;; remove users updated in this round
+                               (map-vals (fn [users] (apply disj users updated-users)))
+                               ;; add users back to correct groups
+                               (merge-with set/union (group-users-by-role (vals new-updated-raw-apps)))
+                               doall)]
+    {::raw-apps new-raw-apps
+     ::enriched-apps new-enriched-apps
+     ::apps-by-user new-personalized-apps-by-user
+     ::roles-by-user new-roles-by-user
+     ::users-by-role new-users-by-role}))
+
 (defn refresh-all-applications-cache! []
   (events-cache/refresh!
    all-applications-cache
    (fn [state events]
-     ;; terminology:
-     ;; - old          - all from previous round
-     ;; - new          - new results from this round
-     ;; - raw          - not enriched (no injections)
-     ;; - personalized - app for user (no :application/user-roles)
-     ;; - updated      - only those that changed this round
-     (let [updated-app-ids (set (map :application/id events))
-           cached-injections (map-vals memoize fetcher-injections)
+     (update-cache {:state state
+                    :updated-app-ids (set (map :application/id events))
+                    :deleted-app-ids (->> events
+                                          (filter (comp #{:application.event/deleted :event/type}))
+                                          (map :application/id)
+                                          set)
+                    :events events}))))
 
-           old-raw-apps (::raw-apps state)
-           old-enriched-apps (::enriched-apps state)
-           old-updated-enriched-apps (select-keys old-enriched-apps updated-app-ids)
-           old-updated-apps-by-user (group-apps-by-user (vals old-updated-enriched-apps))
-           old-apps-by-user (::apps-by-user state)
-           old-roles-by-user (::roles-by-user state)
-           old-users-by-role (::users-by-role state)
-
-           new-raw-apps (reduce all-applications-view old-raw-apps events)
-           new-updated-raw-apps (select-keys new-raw-apps updated-app-ids)
-           new-updated-enriched-apps (doall (map-vals #(model/enrich-with-injections % cached-injections) new-updated-raw-apps))
-           new-enriched-apps (doall (merge old-enriched-apps new-updated-enriched-apps))
-           new-updated-apps-by-user (group-apps-by-user (vals new-updated-enriched-apps))
-
-           ;; we need to update the users related to the old and new applications in this round
-           updated-users (set/union (set (keys old-updated-apps-by-user))
-                                    (set (keys new-updated-apps-by-user)))
-
-           new-personalized-apps-by-user (doall (reduce (fn [old-apps-by-user userid]
-                                                          (update old-apps-by-user userid
-                                                                  (fn [old-apps]
-                                                                    (let [personalized-apps (->> userid
-                                                                                                 new-updated-apps-by-user
-                                                                                                 (mapv #(model/apply-user-permissions % userid)))]
-                                                                      (->> old-apps
-                                                                           (remove (comp updated-app-ids :application/id))
-                                                                           (concat personalized-apps))))))
-                                                        old-apps-by-user
-                                                        updated-users))
-
-           ;; update all the users that are in this round
-           updated-roles-by-user (->> updated-users
-                                      (mapcat new-updated-apps-by-user)
-                                      (distinct-by :application/id)
-                                      group-roles-by-user)
-           new-roles-by-user (doall (merge (apply dissoc old-roles-by-user updated-users)
-                                           updated-roles-by-user))
-
-           ;; update all the users that are in this round
-           new-users-by-role (->> old-users-by-role
-                                  ;; remove users updated in this round
-                                  (map-vals (fn [users] (apply disj users updated-users)))
-                                  ;; add users back to correct groups
-                                  (merge-with set/union (group-users-by-role (vals new-updated-raw-apps)))
-                                  doall)]
-       {::raw-apps new-raw-apps
-        ::enriched-apps new-enriched-apps
-        ::apps-by-user new-personalized-apps-by-user
-        ::roles-by-user new-roles-by-user
-        ::users-by-role new-users-by-role}))))
+(defn- delete-from-all-applications-cache! [app-id]
+  (events-cache/update-cache! all-applications-cache
+                              (fn [state]
+                                (update-cache {:state state
+                                               :updated-app-ids (set [app-id])
+                                               :deleted-app-ids (set [app-id])
+                                               :events nil}))))
 
 (defn get-all-unrestricted-applications []
   (-> (refresh-all-applications-cache!)
@@ -336,15 +358,11 @@
   [app-id]
   (let [application (get-application app-id)]
     (assert (= :application.state/draft (:application/state application))
-            (str "Tried to delete application " app-id " which is not a draft!")))
+            (str "Tried to delete application " app-id " which is not a draft!"))
+    (delete-from-all-applications-cache! app-id))
   (db/delete-application-attachments! {:application app-id})
   (events/delete-application-events! app-id)
   (db/delete-application! {:application app-id}))
 
-(defn delete-application-and-reload-cache! [app-id]
-  (delete-application! app-id)
-  (reload-cache!))
-
 (defn reset-cache! []
   (events-cache/empty! all-applications-cache))
-

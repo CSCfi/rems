@@ -18,7 +18,6 @@
         (command/command! cmd)))
     (log/warnf "Cannot process applications, because user %s does not exist"
                expirer-bot/bot-userid))
-  (applications/reload-cache!)
   (log/info :finish #'process-applications!))
 
 (mount/defstate expired-application-poller
