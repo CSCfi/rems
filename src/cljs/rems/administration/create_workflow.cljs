@@ -407,7 +407,11 @@
         {:id id
          :items (->> all-forms (filter :enabled) (remove :archived))
          :item-key :form/id
-         :item-label :form/internal-name
+         :item-label (fn [form]
+                       (let [title (:form/internal-name form)
+                             organization (localized (get-in form [:organization
+                                                                   :organization/short-name]))]
+                         (str title " (org: " organization ")")))
          :item-selected? #(contains? selected-form-ids (:form/id %))
          ;; TODO support ordering multiple forms
          :multi? true
