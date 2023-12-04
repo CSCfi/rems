@@ -2828,6 +2828,8 @@
               ;; toggle other organizations to view
               (btu/scroll-and-click {:fn/text "Own organization only"})
 
+              (btu/wait-visible [:organizations {:fn/text "SNEN"}])
+
               (is (= "View"
                      (->> (slurp-table :organizations)
                           (some #(when (= "SNEN" (get % "short-name"))
