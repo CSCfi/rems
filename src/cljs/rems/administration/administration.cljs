@@ -76,11 +76,9 @@
 
 (defn own-organization-selection []
   [roles/show-when-not #{:owner :reporter}
-   (let [organizations @(rf/subscribe [::personal-organizations])]
-     (when (> (count organizations) 1) ; don't bother showing if there is only 1
-       [:div.mt-1.d-flex.flex-row.align-items-start.justify-content-between {:style {:gap "2rem"}}
-        [:p (text :t.administration/display-own-organization-only-explanation)]
-        [display-own-organization-only]]))])
+   [:div.mt-1.d-flex.flex-row.align-items-start.justify-content-between {:style {:gap "2rem"}}
+    [:p (text :t.administration/display-own-organization-only-explanation)]
+    [display-own-organization-only]]])
 
 (defn guide []
   [:div
