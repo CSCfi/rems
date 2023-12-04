@@ -73,10 +73,11 @@
      :always [:div
               [inline-info-field (text :t.administration/organization) (get-in form [:organization :organization/name language])]
               [inline-info-field (text :t.administration/internal-name) (get-in form [:form/internal-name])]
-              (for [[langcode title] (:form/external-title form)]
-                [inline-info-field (str (text :t.administration/external-title)
-                                        " (" (str/upper-case (name langcode)) ")")
-                 title])
+              (doall (for [[langcode title] (:form/external-title form)]
+                       ^{:key langcode}
+                       [inline-info-field (str (text :t.administration/external-title)
+                                               " (" (str/upper-case (name langcode)) ")")
+                        title]))
               [inline-info-field (text :t.administration/active) [readonly-checkbox {:value (status-flags/active? form)}]]]}]
    (let [id (:form/id form)]
      [:div.col.commands
