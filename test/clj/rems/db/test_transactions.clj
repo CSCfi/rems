@@ -1,5 +1,6 @@
 (ns ^:integration rems.db.test-transactions
   (:require [clojure.test :refer :all]
+            [clojure.tools.logging :as log]
             [conman.core :as conman]
             [rems.config]
             [rems.db.core :as db]
@@ -69,11 +70,12 @@
            (.submit thread-pool ^Callable task))))
 
 (deftest test-event-publishing-consistency
-  (let [test-duration-millis 2000
-        applications-count 5
+  (let [applications-count 5 ; same number of app readers as apps
         writers-per-application 5
         concurrent-readers 5
         writes-per-application 5
+        cache-invalidaters 1
+        target-writes (* applications-count writers-per-application writes-per-application)
         user-id (create-dummy-user)
         form-id (test-helpers/create-form! {:form/fields [{:field/id "fld1"
                                                            :field/title {:en "F" :fi "F" :sv "F"}
@@ -91,70 +93,98 @@
                                          :enable-save-compaction true
                                          :database-lock-timeout "4s"
                                          :database-idle-in-transaction-session-timeout "8s")]
-      (let [write-event (fn [app-id x]
+      (let [_ (events/get-all-events-since 0) ; ensure cache is up to date when the runs start
+            write-event (fn [_writer-id app-id x]
                           (try
-                            (conman/with-transaction [db/*db* {:isolation :serializable}]
-                              (test-helpers/command!
-                               {:type :application.command/save-draft
-                                :application-id app-id
-                                :actor user-id
-                                :field-values [{:form form-id :field "fld1" :value (str x)}]}))
+                            ;; same as transaction middleware
+                            (conman/with-transaction [db/*db* {:isolation :serializable
+                                                               :read-only? false}]
+                              (let [result (test-helpers/command!
+                                            {:type :application.command/save-draft
+                                             :application-id app-id
+                                             :actor user-id
+                                             :field-values [{:form form-id :field "fld1" :value (str x)}]})]
+                                result))
                             (catch Exception e
                               (if (transaction-conflict? e)
                                 ::transaction-conflict
                                 (throw e)))))
             read-app-events (fn [app-id]
+                              ;; same as transaction middleware
                               (conman/with-transaction [db/*db* {:isolation :serializable
                                                                  :read-only? true}]
-                                {::app-id app-id
-                                 ::events (events/get-application-events app-id)}))
-            read-all-events (fn []
+                                (let [events (events/get-application-events app-id)]
+                                  (assert (every? (comp number? :event/id) events))
+                                  {::app-id app-id
+                                   ::events events})))
+            read-all-events (fn [_reader-id]
+                              ;; same as transaction middleware
                               (conman/with-transaction [db/*db* {:isolation :serializable
                                                                  :read-only? true}]
                                 {::events (events/get-all-events-since 0)}))
+            cache-invalidater (fn []
+                                ;; same as transaction middleware
+                                (conman/with-transaction [db/*db* {:isolation :serializable
+                                                                   :read-only? false}]
+                                  (events/reload-event-cache!)))
             thread-pool (Executors/newCachedThreadPool)
             app-events-readers (submit-all thread-pool (for [app-id app-ids]
                                                          (fn [] (sample-until-interrupted
                                                                  (fn [] (read-app-events app-id))))))
-            all-events-readers (submit-all thread-pool (for [_ (range concurrent-readers)]
+            all-events-readers (submit-all thread-pool (for [reader-id (range concurrent-readers)]
                                                          (fn [] (sample-until-interrupted
-                                                                 (fn [] (read-all-events))))))
-            writer-count (atom 0)
+                                                                 (fn [] (read-all-events reader-id))))))
+            cache-invalidaters (submit-all thread-pool (for [_ (range cache-invalidaters)]
+                                                         (fn [] (sample-until-interrupted
+                                                                 (fn []
+                                                                   (cache-invalidater)
+                                                                   ;; give some mercy
+                                                                   (Thread/sleep (rand-int 50)))))))
+            writes-count (atom 0)
+            progress-count (atom -1) ; start below writes-count for the first round
             writers (submit-all thread-pool (for [app-id app-ids
-                                                  _ (range writers-per-application)]
+                                                  writer-id (range writers-per-application)]
                                               (fn [] (sample-until-finished
                                                       (fn [x]
-                                                        (let [result (write-event app-id x)]
-                                                          (swap! writer-count inc)
+                                                        (let [result (write-event writer-id app-id x)]
+                                                          (swap! writes-count inc)
                                                           result))
                                                       (range 1 (inc writes-per-application))))))]
         ;; wait until all the writers have finished
-        (while (< @writer-count (* applications-count writers-per-application writes-per-application))
+        (while (and (< @writes-count target-writes)
+                    (> @writes-count @progress-count))
+          (log/info "Progress" @progress-count "->" @writes-count "of" target-writes "writes")
+          ;; if there is no progress within 100ms
+          ;; something is wrong, like deadlock
+          (reset! progress-count @writes-count)
           (Thread/sleep 100))
 
-        (Thread/sleep test-duration-millis)
+        (log/info "Finished with " @writes-count "of" target-writes "writes")
+
+        (log/info "Terminating threadpool")
         (doto thread-pool
           (.shutdownNow)
           (.awaitTermination 30 TimeUnit/SECONDS))
+        (log/info "Terminated threadpool")
 
         (let [writer-attempts (flatten (map #(.get ^Future %) writers))
               writer-results (remove #{::transaction-conflict} writer-attempts)
               app-events-reader-results (flatten (map #(.get ^Future %) app-events-readers))
               all-events-reader-results (flatten (map #(.get ^Future %) all-events-readers))
+              cache-invalidations (flatten (map #(.get ^Future %) cache-invalidaters))
               final-events (events/get-all-events-since 0)
               final-events-by-app-id (group-by :application/id final-events)]
 
-          (comment
-            (prn 'writer-attempts (count writer-attempts))
-            (prn 'writer-results (count writer-results))
-            (prn 'app-events-reader-results (count app-events-reader-results))
-            (prn 'all-events-reader-results (count all-events-reader-results)))
+          (log/info "Writer attempts" (count writer-attempts))
+          (log/info "Writer results" (count writer-results))
+          (log/info "App events reader results" (count app-events-reader-results))
+          (log/info "All events reader results" (count all-events-reader-results))
+          (log/info "Cache invalidations" (count cache-invalidations))
 
           (testing "all commands succeeded"
             (is (seq writer-results)
                 "at least one result")
-            (is (every? #(= [:events] (keys %))
-                        writer-results)
+            (is (every? :events writer-results)
                 "no errors")
             (is (= (count writer-results)
                    (count writer-attempts))

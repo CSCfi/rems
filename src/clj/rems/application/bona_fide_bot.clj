@@ -168,9 +168,15 @@
                          (generate-commands (assoc event :application/decision :rejected) referer-attributes application))))))))))))
 
 
+(defn- maybe-generate-commands [event]
+  ;; performance optimization: only these events are interesting
+  (when (contains? #{:application.event/submitted
+                     :application.event/decided}
+                   (:event/type event))
+    (generate-commands event
+                       (users/get-user (:event/actor event))
+                       (applications/get-application (:application/id event)))))
 
 (defn run-bona-fide-bot [new-events]
-  (doall (mapcat #(generate-commands %
-                                     (users/get-user (:event/actor %))
-                                     (applications/get-application (:application/id %)))
+  (doall (mapcat #(maybe-generate-commands %)
                  new-events)))

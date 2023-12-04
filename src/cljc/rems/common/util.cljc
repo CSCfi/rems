@@ -195,10 +195,24 @@
   (reduce getx m ks))
 
 (def conj-set (fnil conj #{}))
+(def disj-set (fnil disj #{}))
 
 (def conj-vec (fnil conj []))
 
 (def into-vec (fnil into []))
+
+(def conj-sorted-set (fnil conj (sorted-set)))
+(def disj-sorted-set (fnil disj (sorted-set)))
+(def to-sorted-set (fn [coll] (apply sorted-set coll)))
+
+(deftest test-sorted-set
+  (is (= (sorted-set 1) (conj-sorted-set nil 1)))
+  (is (= (sorted-set 1 2 3)
+         (apply conj-sorted-set nil [3 2 1])))
+  (is (= (sorted-set)
+         (disj-sorted-set nil 1)))
+  (is (= (sorted-set 1 2 3)
+         (to-sorted-set [3 2 1]))))
 
 (defn select-vals
   "Select values in map `m` specified by given keys `ks`.
@@ -257,6 +271,10 @@
                                          [{:a 1} {:b 2}])))
     (is (= {1 #{10 11} 2 #{10}}
            (build-index {:keys [:a] :value-fn :c :collect-fn set}
+                        [{:a 1 :c 10} {:a 1 :c 11} {:a 2 :c 10}])))
+
+    (is (= {1 (sorted-set 10 11) 2 (sorted-set 10)}
+           (build-index {:keys [:a] :value-fn :c :collect-fn to-sorted-set}
                         [{:a 1 :c 10} {:a 1 :c 11} {:a 2 :c 10}])))))
 
 (defn index-by

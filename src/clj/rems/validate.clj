@@ -16,6 +16,7 @@
             [rems.ext.duo]
             [schema.core :as s]))
 
+;; TODO: should be part of rems.db.form
 (def ^:private validate-form-template
   (s/validator rems.api.schema/FormTemplate))
 
