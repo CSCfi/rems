@@ -14,6 +14,8 @@ Changes since v2.34.2
 - Administration dropdown buttons should now respond to clicks more widely, and not only by directly clicking text. (#3167)
 - Catalogue item unarchive should no longer fail when form does not exist. (#3217)
 - Current page updates correctly. (#3218)
+- Show organization in create workflow Forms dropdown (#3230)
+- When copying an item, reset the organization, if it's not owned by the user. (#2880)
 
 ## v2.34.2 "Santakatu +2" 2023-11-03
 
