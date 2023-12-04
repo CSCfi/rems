@@ -202,7 +202,7 @@
                        (let [title (:title (localized (:localizations license)))
                              organization (localized (get-in license [:organization
                                                                       :organization/short-name]))]
-                         (str title " (org: " organization ")"))) ; XXX: workaround for get-localized-title
+                         (str title " (" (text :t.administration/org) ": " organization ")"))) ; XXX: workaround for get-localized-title
          :item-selected? #(contains? (set selected-licenses) %)
          :multi? true
          :on-change #(rf/dispatch [::set-licenses %])}])]))
@@ -411,7 +411,7 @@
                        (let [title (:form/internal-name form)
                              organization (localized (get-in form [:organization
                                                                    :organization/short-name]))]
-                         (str title " (org: " organization ")")))
+                         (str title " (" (text :t.administration/org) ": " organization ")")))
          :item-selected? #(contains? selected-form-ids (:form/id %))
          ;; TODO support ordering multiple forms
          :multi? true
