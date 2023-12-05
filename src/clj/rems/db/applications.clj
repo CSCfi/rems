@@ -91,7 +91,8 @@
   NB: only the necessary invalidations have been implemented"
   [cache-key]
   (swap! (case cache-key
-           :blacklisted? blacklist-cache)
+           :blacklisted? blacklist-cache
+           :get-workflow workflow-cache)
          empty))
 
 (def fetcher-injections
@@ -234,7 +235,9 @@
   ;; - raw          - not enriched (no injections)
   ;; - personalized - app for user (no :application/user-roles)
   ;; - updated      - only those that changed this round
+  ;; - deleted      - applications that are going away
   (let [cached-injections (map-vals memoize fetcher-injections)
+        updated-app-ids (set (into updated-app-ids deleted-app-ids)) ; let's consider deleted to be automatically an app to update
 
         old-raw-apps (::raw-apps state)
         old-enriched-apps (::enriched-apps state)
@@ -265,10 +268,13 @@
                                                                (fn [old-apps]
                                                                  (let [personalized-apps (->> userid
                                                                                               new-updated-apps-by-user
-                                                                                              (mapv #(model/apply-user-permissions % userid)))]
+                                                                                              ;; e.g. handler doesn't see draft
+                                                                                              (keep #(model/apply-user-permissions % userid))
+                                                                                              doall)]
                                                                    (->> old-apps
                                                                         (remove (comp updated-app-ids :application/id))
-                                                                        (concat personalized-apps))))))
+                                                                        (concat personalized-apps)
+                                                                        vec)))))
                                                      old-apps-by-user
                                                      updated-users))
 
@@ -287,6 +293,7 @@
                                ;; add users back to correct groups
                                (merge-with set/union (group-users-by-role (vals new-updated-raw-apps)))
                                doall)]
+
     {::raw-apps new-raw-apps
      ::enriched-apps new-enriched-apps
      ::apps-by-user new-personalized-apps-by-user
@@ -299,27 +306,19 @@
    (fn [state events]
      (update-cache {:state state
                     :updated-app-ids (set (map :application/id events))
-                    :deleted-app-ids (->> events
-                                          (filter (comp #{:application.event/deleted :event/type}))
-                                          (map :application/id)
-                                          set)
                     :events events}))))
 
 (defn- update-in-all-applications-cache! [app-ids]
   (events-cache/update-cache! all-applications-cache
                               (fn [state]
                                 (update-cache {:state state
-                                               :updated-app-ids (set app-ids)
-                                               :deleted-app-ids nil
-                                               :events nil}))))
+                                               :updated-app-ids (set app-ids)}))))
 
 (defn- delete-from-all-applications-cache! [app-id]
   (events-cache/update-cache! all-applications-cache
                               (fn [state]
                                 (update-cache {:state state
-                                               :updated-app-ids (set [app-id])
-                                               :deleted-app-ids (set [app-id])
-                                               :events nil}))))
+                                               :deleted-app-ids (set [app-id])}))))
 
 (defn get-all-unrestricted-applications []
   (-> (refresh-all-applications-cache!)
@@ -329,7 +328,7 @@
 (defn get-all-applications [user-id]
   (-> (refresh-all-applications-cache!)
       (get-in [::apps-by-user user-id])
-      (->> (map ->ApplicationOverview))))
+      (->> (mapv ->ApplicationOverview))))
 
 (defn- get-all-applications-full [user-id] ;; full i.e. not overview
   (-> (refresh-all-applications-cache!)
@@ -350,7 +349,7 @@
 
 (defn get-my-applications [user-id]
   (->> (get-all-applications user-id)
-       (filter my-application?)))
+       (filterv my-application?)))
 
 (defn export-applications-for-form-as-csv [user-id form-id language]
   (let [applications (get-all-applications-full user-id)
@@ -373,10 +372,28 @@
                            (select-keys env [:buzy-hours]))
   :stop (scheduler/stop! all-applications-cache-reloader))
 
-(defn reload-applications! [{:keys [by-userid]}]
-  (refresh-all-applications-cache!) ; NB: try make sure the cache is up to date so we have any new applications present
-  (let [app-ids (get-in @all-applications-cache [:state ::apps-by-user by-userid])]
-    (update-in-all-applications-cache! app-ids)))
+(defn reload-applications! [{:keys [by-userids by-workflow-ids]}]
+  ;; NB: try make sure the cache is up to date so we have any new applications present
+  (when (seq by-userids)
+    (let [apps (refresh-all-applications-cache!)
+          app-ids (->> by-userids
+                       (mapcat (fn [by-userid]
+                                 (get-in apps [:state ::apps-by-user by-userid])))
+                       distinct)]
+      (log/info "Reloading" (count app-ids) "applications because of user changes")
+      (update-in-all-applications-cache! app-ids)))
+
+  (when (seq by-workflow-ids)
+    (let [apps (refresh-all-applications-cache!)
+          wf-ids (set by-workflow-ids)
+          app-ids (->> (::enriched-apps apps)
+                       vals
+                       (filter (comp wf-ids :workflow/id :application/workflow))
+                       (mapv :application/id))]
+      (log/info "Reloading" (count app-ids) "applications because of workflow changes")
+      (update-in-all-applications-cache! app-ids)))
+
+  nil)
 
 (defn delete-application!
   [app-id]

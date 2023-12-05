@@ -1,8 +1,9 @@
 (ns ^:integration rems.service.test-workflow
   (:require [clojure.test :refer :all]
-            [rems.service.workflow :as workflow]
+            [rems.db.applications :as applications]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.db.testing :refer [reset-caches-fixture rollback-db-fixture test-db-fixture]]
+            [rems.service.workflow :as workflow]
             [rems.testing-util :refer [with-user]]))
 
 (use-fixtures
@@ -13,6 +14,7 @@
 (use-fixtures :each rollback-db-fixture)
 
 (defn- create-users []
+  (test-helpers/create-user! {:userid "alice" :name "Alice Applicant" :email "alice@example.com"})
   (test-helpers/create-user! {:userid "user1" :name "User 1" :email "user1@example.com"})
   (test-helpers/create-user! {:userid "user2" :name "User 2" :email "user2@example.com"})
   (test-helpers/create-user! {:userid "user3" :name "User 3" :email "user3@example.com"})
@@ -115,9 +117,34 @@
       (let [wf-id (test-helpers/create-workflow! {:organization {:organization/id "abc"}
                                                   :type :workflow/master
                                                   :title "original title"
-                                                  :handlers ["user1"]})]
+                                                  :handlers ["user1"]})
+            cat-id (test-helpers/create-catalogue-item! {:actor "owner" :workflow-id wf-id})
+            app-id (test-helpers/create-application! {:catalogue-item-ids [cat-id] :actor "alice"})]
+
+        (let [app (applications/get-application app-id)]
+          (is (= {"alice" #{:applicant} "user1" #{:handler}} (:application/user-roles app)))
+          (is (= [{:userid "user1" :name "User 1" :email "user1@example.com"}] (get-in app [:application/workflow :workflow.dynamic/handlers]))))
+
+        (testing "before changing handlers"
+          (is (= [] (mapv :application/id (applications/get-all-applications "user1"))) "handler can't see draft")
+          (is (= [] (applications/get-all-applications "user2")))
+
+          (test-helpers/submit-application {:application-id app-id :actor "alice"})
+
+          (is (= [app-id] (mapv :application/id (applications/get-all-applications "user1"))))
+          (is (= [] (applications/get-all-applications "user2"))))
+
         (workflow/edit-workflow! {:id wf-id
                                   :handlers ["user2"]})
+
+        (testing "handlers should have changed"
+          (let [app (applications/get-application app-id)]
+            (is (= {"alice" #{:applicant} "user2" #{:handler}} (:application/user-roles app)))
+            (is (= [{:userid "user2" :name "User 2" :email "user2@example.com"}] (get-in app [:application/workflow :workflow.dynamic/handlers]))))
+
+          (is (= [] (applications/get-all-applications "user1")))
+          (is (= [app-id] (mapv :application/id (applications/get-all-applications "user2")))))
+
         (is (= {:id wf-id
                 :title "original title"
                 :workflow {:type :workflow/master
