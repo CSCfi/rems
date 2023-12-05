@@ -12,14 +12,18 @@
    :event/comment (:comment command)})
 
 (defn add-user-to-blacklist! [actor command]
-  (blacklist/add-event! (-> (command->event command actor)
-                            (assoc :event/type :blacklist.event/add)))
-  (applications/reload-cache!))
+  (let [event (-> (command->event command actor)
+                  (assoc :event/type :blacklist.event/add))]
+    (blacklist/add-event! event)
+    (applications/empty-injection-cache! :blacklisted?)
+    (applications/reload-applications! {:by-userid (get-in command [:blacklist/user :userid])})))
 
 (defn remove-user-from-blacklist! [actor command]
-  (blacklist/add-event! (-> (command->event command actor)
-                            (assoc :event/type :blacklist.event/remove)))
-  (applications/reload-cache!))
+  (let [event (-> (command->event command actor)
+                  (assoc :event/type :blacklist.event/remove))]
+    (blacklist/add-event! event)
+    (applications/empty-injection-cache! :blacklisted?)
+    (applications/reload-applications! {:by-userid (get-in command [:blacklist/user :userid])})))
 
 (defn- format-blacklist-entry [entry]
   {:blacklist/resource {:resource/ext-id (:resource/ext-id entry)}

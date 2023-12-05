@@ -83,6 +83,17 @@
   (swap! workflow-cache empty)
   (swap! blacklist-cache empty))
 
+(defn empty-injection-cache!
+  "Sometimes another part of REMS invalidates the injections. While the caches
+  are being reimplemented, we can still offer specific support functions for
+  partial cache refreshes.
+
+  NB: only the necessary invalidations have been implemented"
+  [cache-key]
+  (swap! (case cache-key
+           :blacklisted? blacklist-cache)
+         empty))
+
 (def fetcher-injections
   {:get-attachments-for-application attachments/get-attachments-for-application
    :get-form-template #(cache/lookup-or-miss form-template-cache % form/get-form-template)
@@ -294,6 +305,14 @@
                                           set)
                     :events events}))))
 
+(defn- update-in-all-applications-cache! [app-ids]
+  (events-cache/update-cache! all-applications-cache
+                              (fn [state]
+                                (update-cache {:state state
+                                               :updated-app-ids (set app-ids)
+                                               :deleted-app-ids nil
+                                               :events nil}))))
+
 (defn- delete-from-all-applications-cache! [app-id]
   (events-cache/update-cache! all-applications-cache
                               (fn [state]
@@ -353,6 +372,11 @@
                            (Duration/standardHours 1)
                            (select-keys env [:buzy-hours]))
   :stop (scheduler/stop! all-applications-cache-reloader))
+
+(defn reload-applications! [{:keys [by-userid]}]
+  (refresh-all-applications-cache!) ; NB: try make sure the cache is up to date so we have any new applications present
+  (let [app-ids (get-in @all-applications-cache [:state ::apps-by-user by-userid])]
+    (update-in-all-applications-cache! app-ids)))
 
 (defn delete-application!
   [app-id]
