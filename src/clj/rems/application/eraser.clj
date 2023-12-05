@@ -11,7 +11,7 @@
 
 (defn process-applications! []
   (log/info :start #'process-applications!)
-  ; check that bot user exists, else log missing
+  ;; check that bot user exists, else log missing
   (if (users/user-exists? expirer-bot/bot-userid)
     (doseq [application (applications/get-all-unrestricted-applications)]
       (when-some [cmd (expirer-bot/run-expirer-bot application)]
