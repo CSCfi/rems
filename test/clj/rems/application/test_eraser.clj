@@ -104,6 +104,7 @@
 
         (test-helpers/create-user! {:userid expirer-bot/bot-userid})
         (roles/add-role! expirer-bot/bot-userid :expirer)
+        (applications/reload-cache!) ; we change roles which affect applications
 
         (testing "does not delete applications when configuration is not valid"
           (reset! log-messages [])
