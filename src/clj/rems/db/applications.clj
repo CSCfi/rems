@@ -380,6 +380,7 @@
 
 (defn delete-application!
   [app-id]
+  (refresh-all-applications-cache!) ; NB: try make sure the cache is up to date so we have any new applications present
   (let [application (get-application app-id)]
     (assert (= :application.state/draft (:application/state application))
             (str "Tried to delete application " app-id " which is not a draft!"))
