@@ -5,10 +5,10 @@
             [rems.application.rejecter-bot :as rejecter-bot]
             [rems.db.applications :as applications]
             [rems.db.test-data-helpers :as test-helpers]
-            [rems.db.testing :refer [test-db-fixture rollback-db-fixture]]))
+            [rems.db.testing :refer [test-db-fixture reset-caches-fixture rollback-db-fixture]]))
 
 (use-fixtures :once test-db-fixture)
-(use-fixtures :each rollback-db-fixture)
+(use-fixtures :each rollback-db-fixture reset-caches-fixture)
 
 ;; These tests are integration tests via rems.service.command
 ;; since we'd need to mock get-application to unit-test
