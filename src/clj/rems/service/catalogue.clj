@@ -31,22 +31,20 @@
     {:success (not (some nil? (cons id loc-ids)))
      :id id}))
 
-(defn- join-dependencies [item]
+(defn- join-dependencies [item query-params]
   (when item
-    (-> item
-        organizations/join-organization
-        (update :categories category/enrich-categories)
-        ;; XXX: not used at the moment
-        #_licenses/join-catalogue-item-licenses
-        #_(transform [:licenses ALL] organizations/join-organization))))
+    (cond-> item
+      (:join-organization? query-params true) organizations/join-organization
+      (not (:join-organization? query-params true)) (update :organization (fn [id] {:organization/id id}))
+      true (update :categories category/enrich-categories))))
 
 (defn get-localized-catalogue-items [& [query-params]]
   (->> (catalogue/get-localized-catalogue-items (or query-params {}))
-       (mapv join-dependencies)))
+       (mapv #(join-dependencies % query-params))))
 
 (defn get-localized-catalogue-item [id]
-  (->> (catalogue/get-localized-catalogue-item id)
-       join-dependencies))
+  (-> (catalogue/get-localized-catalogue-item id)
+      (join-dependencies nil)))
 
 (defn get-catalogue-tree [& [query-params]]
   (let [catalogue-items (get-localized-catalogue-items query-params)

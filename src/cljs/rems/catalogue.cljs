@@ -24,8 +24,8 @@
                  (when (roles/is-logged-in? (get-in db [:identity :roles])) [::draft-applications])
                  [:rems.table/reset]]}))
 
-(fetcher/reg-fetcher ::full-catalogue "/api/catalogue")
-(fetcher/reg-fetcher ::full-catalogue-tree "/api/catalogue/tree" {:result :roots})
+(fetcher/reg-fetcher ::full-catalogue "/api/catalogue?join-organization=false")
+(fetcher/reg-fetcher ::full-catalogue-tree "/api/catalogue/tree?join-organization=false" {:result :roots})
 
 (rf/reg-sub
  ::catalogue

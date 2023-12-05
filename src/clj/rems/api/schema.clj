@@ -25,7 +25,7 @@
    (s/optional-key :form-name) (s/maybe s/Str)
    :resid s/Str
    :resource-id s/Int
-   :organization schema-base/OrganizationOverview
+   :organization (s/either schema-base/OrganizationId schema-base/OrganizationOverview)
    (s/optional-key :resource-name) s/Str
    :start DateTime
    :end (s/maybe DateTime)
