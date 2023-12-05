@@ -72,7 +72,6 @@
                                   getx-organization-by-id
                                   (select-keys [:organization/id :organization/name :organization/short-name]))]
     (-> x
-        (update-existing :organization (fn [_] organization-overview))
         (update-existing :organization (fn [_] organization-overview)))))
 
 (defn set-organization! [organization]
