@@ -291,7 +291,7 @@
                                ;; remove users updated in this round
                                (map-vals (fn [users] (apply disj users updated-users)))
                                ;; add users back to correct groups
-                               (merge-with set/union (group-users-by-role (vals new-updated-raw-apps)))
+                               (merge-with set/union (group-users-by-role (vals new-updated-enriched-apps)))
                                doall)]
 
     {::raw-apps new-raw-apps

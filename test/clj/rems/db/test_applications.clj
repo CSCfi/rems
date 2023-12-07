@@ -146,6 +146,7 @@
     (is (= [app-id1] (map :application/id (applications/get-my-applications "applicant1"))))
     (is (= #{:applicant} (applications/get-all-application-roles "applicant1")))
     (is (= #{"applicant1"} (applications/get-users-with-role :applicant)))
+    (is (= #{"handler"} (applications/get-users-with-role :handler)))
 
     (test-helpers/command! {:type :application.command/add-member
                             :application-id app-id1
@@ -154,6 +155,7 @@
 
     (is (= #{"applicant1"} (applications/get-users-with-role :applicant)))
     (is (= #{"applicant2"} (applications/get-users-with-role :member)))
+    (is (= #{"handler"} (applications/get-users-with-role :handler)))
 
     (test-helpers/command! {:type :application.command/change-applicant
                             :application-id app-id1
@@ -162,6 +164,7 @@
 
     (is (= #{"applicant2"} (applications/get-users-with-role :applicant)))
     (is (= #{"applicant1"} (applications/get-users-with-role :member)))
+    (is (= #{"handler"} (applications/get-users-with-role :handler)))
 
     (test-helpers/command! {:type :application.command/remove-member
                             :application-id app-id1
@@ -170,6 +173,7 @@
 
     (is (= #{"applicant2"} (applications/get-users-with-role :applicant)))
     (is (= #{} (applications/get-users-with-role :member)))
+    (is (= #{"handler"} (applications/get-users-with-role :handler)))
 
     (testing "application disappears from my applications"
       (is (= [] (applications/get-my-applications "applicant1"))))
