@@ -116,6 +116,7 @@
          :type :t.form.validation/invalid-value}))))
 
 (defn- validate-field-content [field]
+  ;; TODO optimize by using case for field type
   (or (wrong-value-type-error field)
       (invalid-email-address-error field)
       (invalid-phone-number-error field)

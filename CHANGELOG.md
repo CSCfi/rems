@@ -12,8 +12,10 @@ Changes since v2.34.2
 
 ### Additions
 - By default administration pages show only "own organization" items. (#2046)
+- The command-line use of REMS has been sped up. There are new commands `dev-setup` and `perf-setup` that `dev_db.sh` uses to start faster (a combination of migrate and data).
 
 ### Fixes
+- Big improvements in performance from small improvements in how applications and events are processed and cached. REMS should be able to handle a 100k event DB without breaking a sweat. (#2783)
 - Administration dropdown buttons should now respond to clicks more widely, and not only by directly clicking text. (#3167)
 - Catalogue item unarchive should no longer fail when form does not exist. (#3217)
 - Current page updates correctly. (#3218)

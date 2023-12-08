@@ -47,19 +47,19 @@
       add-deprecated-title
       (update :organization (fn [o] {:organization/id o}))))
 
-(defn- add-validation-errors [template]
-  (assoc template :form/errors (common-form/validate-form-template template (:languages env))))
+(defn add-validation-errors [form]
+  (when form
+    (assoc form :form/errors (common-form/validate-form-template form (:languages env)))))
 
 (defn get-form-templates [filters]
   (->> (db/get-form-templates)
        (map parse-db-row)
        (apply-filters filters)
-       (map add-validation-errors)))
+       doall))
 
 (defn get-form-template [id]
-  (let [row (db/get-form-template {:id id})]
-    (when row
-      (add-validation-errors (parse-db-row row)))))
+  (some-> (db/get-form-template {:id id})
+          parse-db-row))
 
 (defn- validate-given-ids
   "Check that `:field/id` values are distinct, not empty (or not given)."

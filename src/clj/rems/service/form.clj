@@ -55,8 +55,18 @@
   (-> (form/get-form-template id)
       join-dependencies))
 
+(defn get-form-template-for-api [id]
+  (-> (form/get-form-template id)
+      form/add-validation-errors
+      join-dependencies))
+
 (defn get-form-templates [filters]
   (->> (form/get-form-templates filters)
+       (mapv join-dependencies)))
+
+(defn get-form-templates-for-api [filters]
+  (->> (form/get-form-templates filters)
+       (mapv form/add-validation-errors)
        (mapv join-dependencies)))
 
 (defn edit-form! [form]

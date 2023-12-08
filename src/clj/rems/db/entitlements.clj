@@ -183,7 +183,12 @@
                      :application.event/revoked}
                    (:event/type event))
     (let [application (applications/get-application-internal (:application/id event))]
-      (update-entitlements-for-application application (:event/actor event)))))
+      ;; performance improvement 2: only need to check entitlements in the "end states"
+      (when (contains? #{:application.state/approved
+                         :application.state/closed
+                         :application.state/revoked}
+                       (:application/state application))
+        (update-entitlements-for-application application (:event/actor event))))))
 
 (defn update-entitlements-for-events [events]
   (doseq [event events]

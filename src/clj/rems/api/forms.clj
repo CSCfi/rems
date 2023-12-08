@@ -12,7 +12,7 @@
 
 (defn- get-form-templates [filters]
   (doall
-   (for [form (form/get-form-templates filters)]
+   (for [form (form/get-form-templates-for-api filters)]
      (select-keys form [:form/id :organization :form/title :form/internal-name :form/external-title :form/errors :enabled :archived]))))
 
 (s/defschema CreateFormCommand
@@ -58,7 +58,7 @@
       :roles +admin-read-roles+
       :path-params [form-id :- (describe s/Int "form-id")]
       :return schema/FormTemplate
-      (let [form (form/get-form-template form-id)]
+      (let [form (form/get-form-template-for-api form-id)]
         (if form
           (ok form)
           (not-found-json-response))))
