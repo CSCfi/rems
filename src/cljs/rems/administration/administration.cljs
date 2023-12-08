@@ -76,7 +76,7 @@
 
 (defn own-organization-selection []
   [roles/show-when-not #{:owner :reporter}
-   [:div.mt-1.d-flex.flex-row.align-items-start.justify-content-between {:style {:gap "2rem"}}
+   [:div.mt-1.d-flex.flex-row.align-items-start {:style {:gap "2rem"}}
     [:p (text :t.administration/display-own-organization-only-explanation)]
     [display-own-organization-only]]])
 
