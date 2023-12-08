@@ -17,15 +17,15 @@
  ::enter-page
  (fn [{:keys [db]} _]
    {:db (dissoc db ::catalogue ::draft-applications)
-    :dispatch-n [(when (:enable-catalogue-table (:config db))
-                   [::full-catalogue])
+    :dispatch-n [[:rems.table/reset]
+                 (when (roles/is-logged-in? (get-in db [:identity :roles])) [::draft-applications])
                  (when (:enable-catalogue-tree (:config db))
                    [::full-catalogue-tree])
-                 (when (roles/is-logged-in? (get-in db [:identity :roles])) [::draft-applications])
-                 [:rems.table/reset]]}))
+                 (when (:enable-catalogue-table (:config db))
+                   [::full-catalogue])]}))
 
-(fetcher/reg-fetcher ::full-catalogue "/api/catalogue")
-(fetcher/reg-fetcher ::full-catalogue-tree "/api/catalogue/tree" {:result :roots})
+(fetcher/reg-fetcher ::full-catalogue "/api/catalogue?join-organization=false")
+(fetcher/reg-fetcher ::full-catalogue-tree "/api/catalogue/tree?join-organization=false" {:result :roots})
 
 (rf/reg-sub
  ::catalogue
@@ -166,18 +166,24 @@
      [document-title (text :t.catalogue/catalogue)]
      [flash-message/component :top]
      (text :t.catalogue/intro)
-     (if (or @(rf/subscribe [::full-catalogue :fetching?])
-             @(rf/subscribe [::full-catalogue-tree :fetching?])
-             @(rf/subscribe [::draft-applications :fetching?]))
-       [spinner/big]
-       [:div
-        (when @(rf/subscribe [:logged-in])
-          [:<>
-           [draft-application-list]
-           (when (:enable-cart config)
-             [cart/cart-list-container])
-           [:h2 (text :t.catalogue/apply-resources)]])
-        (when (:enable-catalogue-tree config)
-          [catalogue-tree])
-        (when (:enable-catalogue-table config)
-          [catalogue-table])])]))
+     [:div
+      (when @(rf/subscribe [:logged-in])
+        [:<>
+         [draft-application-list]
+
+         (when (:enable-cart config)
+           (when-not (or @(rf/subscribe [::full-catalogue :fetching?])
+                         @(rf/subscribe [::full-catalogue-tree :fetching?]))
+             [cart/cart-list-container]))
+
+         [:h2 (text :t.catalogue/apply-resources)]])
+
+      (when (:enable-catalogue-tree config)
+        (if @(rf/subscribe [::full-catalogue :fetching?])
+          [spinner/big]
+          [catalogue-tree]))
+
+      (when (:enable-catalogue-table config)
+        (if @(rf/subscribe [::full-catalogue-tree :fetching?])
+          [spinner/big]
+          [catalogue-table]))]]))

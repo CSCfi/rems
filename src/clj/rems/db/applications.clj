@@ -84,6 +84,18 @@
   (swap! workflow-cache empty)
   (swap! blacklist-cache empty))
 
+(defn empty-injection-cache!
+  "Sometimes another part of REMS invalidates the injections. While the caches
+  are being reimplemented, we can still offer specific support functions for
+  partial cache refreshes.
+
+  NB: only the necessary invalidations have been implemented"
+  [cache-key]
+  (swap! (case cache-key
+           :blacklisted? blacklist-cache
+           :get-workflow workflow-cache)
+         empty))
+
 (def fetcher-injections
   {:get-attachments-for-application attachments/get-attachments-for-application
    :get-form-template #(cache/lookup-or-miss form-template-cache % form/get-form-template)
@@ -217,69 +229,97 @@
             :bar #{"user-1"}}
            (group-users-by-role apps)))))
 
+(defn- update-cache [{:keys [state updated-app-ids deleted-app-ids events]}]
+  ;; terminology:
+  ;; - old          - all from previous round
+  ;; - new          - new results from this round
+  ;; - raw          - not enriched (no injections)
+  ;; - personalized - app for user (no :application/user-roles)
+  ;; - updated      - only those that changed this round
+  ;; - deleted      - applications that are going away
+  (let [cached-injections (map-vals memoize fetcher-injections)
+        updated-app-ids (set (into updated-app-ids deleted-app-ids)) ; let's consider deleted to be automatically an app to update
+
+        old-raw-apps (::raw-apps state)
+        old-enriched-apps (::enriched-apps state)
+        old-updated-enriched-apps (select-keys old-enriched-apps updated-app-ids)
+        old-updated-apps-by-user (group-apps-by-user (vals old-updated-enriched-apps))
+        old-apps-by-user (::apps-by-user state)
+        old-roles-by-user (::roles-by-user state)
+        old-users-by-role (::users-by-role state)
+
+        new-raw-apps (as-> old-raw-apps apps
+                       (reduce all-applications-view apps events)
+                       (apply dissoc apps deleted-app-ids)
+                       (doall apps))
+        new-updated-raw-apps (select-keys new-raw-apps updated-app-ids)
+        new-updated-enriched-apps (doall (map-vals #(model/enrich-with-injections % cached-injections) new-updated-raw-apps))
+        new-enriched-apps (as-> new-updated-enriched-apps apps
+                            (merge old-enriched-apps apps)
+                            (apply dissoc apps deleted-app-ids)
+                            (doall apps))
+        new-updated-apps-by-user (group-apps-by-user (vals new-updated-enriched-apps))
+
+        ;; we need to update the users related to the old and new applications in this round
+        updated-users (set/union (set (keys old-updated-apps-by-user))
+                                 (set (keys new-updated-apps-by-user)))
+
+        new-personalized-apps-by-user (doall (reduce (fn [old-apps-by-user userid]
+                                                       (update old-apps-by-user userid
+                                                               (fn [old-apps]
+                                                                 (let [personalized-apps (->> userid
+                                                                                              new-updated-apps-by-user
+                                                                                              ;; e.g. handler doesn't see draft
+                                                                                              (keep #(model/apply-user-permissions % userid))
+                                                                                              doall)]
+                                                                   (->> old-apps
+                                                                        (remove (comp updated-app-ids :application/id))
+                                                                        (concat personalized-apps)
+                                                                        vec)))))
+                                                     old-apps-by-user
+                                                     updated-users))
+
+        ;; update all the users that are in this round
+        updated-roles-by-user (->> updated-users
+                                   (mapcat new-updated-apps-by-user)
+                                   (distinct-by :application/id)
+                                   group-roles-by-user)
+        new-roles-by-user (doall (merge (apply dissoc old-roles-by-user updated-users)
+                                        updated-roles-by-user))
+
+        ;; update all the users that are in this round
+        new-users-by-role (->> old-users-by-role
+                               ;; remove users updated in this round
+                               (map-vals (fn [users] (apply disj users updated-users)))
+                               ;; add users back to correct groups
+                               (merge-with set/union (group-users-by-role (vals new-updated-enriched-apps)))
+                               doall)]
+
+    {::raw-apps new-raw-apps
+     ::enriched-apps new-enriched-apps
+     ::apps-by-user new-personalized-apps-by-user
+     ::roles-by-user new-roles-by-user
+     ::users-by-role new-users-by-role}))
+
 (defn refresh-all-applications-cache! []
   (events-cache/refresh!
    all-applications-cache
    (fn [state events]
-     ;; terminology:
-     ;; - old          - all from previous round
-     ;; - new          - new results from this round
-     ;; - raw          - not enriched (no injections)
-     ;; - personalized - app for user (no :application/user-roles)
-     ;; - updated      - only those that changed this round
-     (let [updated-app-ids (set (map :application/id events))
-           cached-injections (map-vals memoize fetcher-injections)
+     (update-cache {:state state
+                    :updated-app-ids (set (map :application/id events))
+                    :events events}))))
 
-           old-raw-apps (::raw-apps state)
-           old-enriched-apps (::enriched-apps state)
-           old-updated-enriched-apps (select-keys old-enriched-apps updated-app-ids)
-           old-updated-apps-by-user (group-apps-by-user (vals old-updated-enriched-apps))
-           old-apps-by-user (::apps-by-user state)
-           old-roles-by-user (::roles-by-user state)
-           old-users-by-role (::users-by-role state)
+(defn- update-in-all-applications-cache! [app-ids]
+  (events-cache/update-cache! all-applications-cache
+                              (fn [state]
+                                (update-cache {:state state
+                                               :updated-app-ids (set app-ids)}))))
 
-           new-raw-apps (reduce all-applications-view old-raw-apps events)
-           new-updated-raw-apps (select-keys new-raw-apps updated-app-ids)
-           new-updated-enriched-apps (doall (map-vals #(model/enrich-with-injections % cached-injections) new-updated-raw-apps))
-           new-enriched-apps (doall (merge old-enriched-apps new-updated-enriched-apps))
-           new-updated-apps-by-user (group-apps-by-user (vals new-updated-enriched-apps))
-
-           ;; we need to update the users related to the old and new applications in this round
-           updated-users (set/union (set (keys old-updated-apps-by-user))
-                                    (set (keys new-updated-apps-by-user)))
-
-           new-personalized-apps-by-user (doall (reduce (fn [old-apps-by-user userid]
-                                                          (update old-apps-by-user userid
-                                                                  (fn [old-apps]
-                                                                    (let [personalized-apps (->> userid
-                                                                                                 new-updated-apps-by-user
-                                                                                                 (mapv #(model/apply-user-permissions % userid)))]
-                                                                      (->> old-apps
-                                                                           (remove (comp updated-app-ids :application/id))
-                                                                           (concat personalized-apps))))))
-                                                        old-apps-by-user
-                                                        updated-users))
-
-           ;; update all the users that are in this round
-           updated-roles-by-user (->> updated-users
-                                      (mapcat new-updated-apps-by-user)
-                                      (distinct-by :application/id)
-                                      group-roles-by-user)
-           new-roles-by-user (doall (merge (apply dissoc old-roles-by-user updated-users)
-                                           updated-roles-by-user))
-
-           ;; update all the users that are in this round
-           new-users-by-role (->> old-users-by-role
-                                  ;; remove users updated in this round
-                                  (map-vals (fn [users] (apply disj users updated-users)))
-                                  ;; add users back to correct groups
-                                  (merge-with set/union (group-users-by-role (vals new-updated-raw-apps)))
-                                  doall)]
-       {::raw-apps new-raw-apps
-        ::enriched-apps new-enriched-apps
-        ::apps-by-user new-personalized-apps-by-user
-        ::roles-by-user new-roles-by-user
-        ::users-by-role new-users-by-role}))))
+(defn- delete-from-all-applications-cache! [app-id]
+  (events-cache/update-cache! all-applications-cache
+                              (fn [state]
+                                (update-cache {:state state
+                                               :deleted-app-ids (set [app-id])}))))
 
 (defn get-all-unrestricted-applications []
   (-> (refresh-all-applications-cache!)
@@ -289,7 +329,7 @@
 (defn get-all-applications [user-id]
   (-> (refresh-all-applications-cache!)
       (get-in [::apps-by-user user-id])
-      (->> (map ->ApplicationOverview))))
+      (->> (mapv ->ApplicationOverview))))
 
 (defn- get-all-applications-full [user-id] ;; full i.e. not overview
   (-> (refresh-all-applications-cache!)
@@ -310,7 +350,7 @@
 
 (defn get-my-applications [user-id]
   (->> (get-all-applications user-id)
-       (filter my-application?)))
+       (filterv my-application?)))
 
 (defn export-applications-for-form-as-csv [user-id form-id language]
   (let [applications (get-all-applications-full user-id)
@@ -333,20 +373,40 @@
                            (select-keys env [:buzy-hours]))
   :stop (scheduler/stop! all-applications-cache-reloader))
 
+(defn reload-applications! [{:keys [by-userids by-workflow-ids]}]
+  ;; NB: try make sure the cache is up to date so we have any new applications present
+  (when (seq by-userids)
+    (let [apps (refresh-all-applications-cache!)
+          app-ids (->> by-userids
+                       (mapcat (fn [by-userid]
+                                 (get-in apps [:state ::apps-by-user by-userid])))
+                       distinct)]
+      (log/info "Reloading" (count app-ids) "applications because of user changes")
+      (update-in-all-applications-cache! app-ids)))
+
+  (when (seq by-workflow-ids)
+    (let [apps (refresh-all-applications-cache!)
+          wf-ids (set by-workflow-ids)
+          app-ids (->> (::enriched-apps apps)
+                       vals
+                       (filter (comp wf-ids :workflow/id :application/workflow))
+                       (mapv :application/id))]
+      (log/info "Reloading" (count app-ids) "applications because of workflow changes")
+      (update-in-all-applications-cache! app-ids)))
+
+  nil)
+
 (defn delete-application!
   [app-id]
+  (refresh-all-applications-cache!) ; NB: try make sure the cache is up to date so we have any new applications present
   (assert (application-util/draft? (get-application app-id))
           (str "Tried to delete application " app-id " which is not a draft!"))
+  (delete-from-all-applications-cache! app-id)
   (db/delete-application-attachments! {:application app-id})
   (events/delete-application-events! app-id)
   (let [result (db/delete-application! {:application app-id})]
     (log/infof "Finished deleting application %s" app-id)
     result))
 
-(defn delete-application-and-reload-cache! [app-id]
-  (delete-application! app-id)
-  (reload-cache!))
-
 (defn reset-cache! []
   (events-cache/empty! all-applications-cache))
-

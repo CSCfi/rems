@@ -1020,8 +1020,8 @@
         show-comment-field? (is-handling-user? application)
         actions (action-buttons application config)
         reload (r/partial reload! app-id)
-        go-to-catalogue #(do (flash-message/show-default-success! :top [text :t.actions/delete])
-                             (navigate! "/catalogue"))]
+        go-to-applications #(do (flash-message/show-default-success! :top [text :t.actions/delete])
+                                (navigate! "/applications"))]
     (when (seq actions)
       [collapsible/component
        {:id "actions-collapse"
@@ -1044,7 +1044,7 @@
                   [return-form app-id reload]
                   [approve-reject-form app-id reload]
                   [assign-external-id-form app-id reload]
-                  [delete-form app-id go-to-catalogue]
+                  [delete-form app-id go-to-applications]
                   [vote-form app-id application reload]]]}])))
 
 (defn- render-resource [resource language]

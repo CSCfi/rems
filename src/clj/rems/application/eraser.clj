@@ -10,7 +10,7 @@
             [rems.db.users :as users]
             [rems.scheduler :as scheduler]))
 
-(defn run-commands-and-reload-cache! [cmds]
+(defn run-commands! [cmds]
   (doseq [cmd cmds]
     (log/info (:type cmd) (select-keys cmd [:application-id :expires-on]))
     (let [result (command/command! cmd)]
@@ -18,13 +18,10 @@
         (log/warn "Command validation failed:"
                   (:type cmd)
                   (select-keys cmd [:application-id])
-                  (select-keys result [:errors])))))
-
-  (applications/reload-cache!))
+                  (select-keys result [:errors]))))))
 
 (defn process-applications! []
   (log/info :start #'process-applications!)
-
   (b/cond
     (not (users/user-exists? "expirer-bot"))
     (log/warn "Cannot process applications, because user expirer-bot does not exist")
@@ -42,8 +39,7 @@
                    (count (->> cmds (filter #(= :application.command/send-expiration-notifications (:type %)))))
                    process-limit)
 
-    (run-commands-and-reload-cache! (take process-limit cmds)))
-
+    (run-commands! (take process-limit cmds)))
   (log/info :finish #'process-applications!))
 
 (mount/defstate expired-application-poller

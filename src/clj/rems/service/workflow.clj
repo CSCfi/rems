@@ -1,14 +1,14 @@
 (ns rems.service.workflow
-  (:require [rems.service.dependencies :as dependencies]
-            [rems.service.util :as util]
-            [rems.application.commands :as commands]
+  (:require [rems.application.commands :as commands]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
             [rems.db.form :as form]
             [rems.db.licenses :as licenses]
             [rems.db.organizations :as organizations]
             [rems.db.users :as users]
-            [rems.db.workflow :as workflow]))
+            [rems.db.workflow :as workflow]
+            [rems.service.dependencies :as dependencies]
+            [rems.service.util :as util]))
 
 (defn invalid-forms-error [forms]
   (when-some [invalid (seq (remove (comp form/get-form-template :form/id) forms))]
@@ -45,7 +45,7 @@
         {:success (not (nil? id))
          :id id})))
 
-(defn edit-workflow! [{:keys [id organization handlers disable-commands voting anonymize-handling] :as cmd}]
+(defn edit-workflow! [{:keys [id organization handlers disable-commands _voting _anonymize-handling] :as cmd}]
   (let [workflow (workflow/get-workflow id)]
     (util/check-allowed-organization! (:organization workflow))
     (when organization
@@ -54,7 +54,8 @@
         (invalid-disable-commands-error disable-commands)
         (do
           (workflow/edit-workflow! (update cmd :licenses #(map :license/id %)))
-          (applications/reload-cache!)
+          (applications/empty-injection-cache! :get-workflow)
+          (applications/reload-applications! {:by-workflow-ids [id]})
           {:success true}))))
 
 (defn set-workflow-enabled! [{:keys [id enabled]}]

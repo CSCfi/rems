@@ -97,6 +97,7 @@
                     env {}]
         (test-helpers/create-user! {:userid expirer-bot/bot-userid})
         (roles/add-role! expirer-bot/bot-userid :expirer)
+        (applications/reload-cache!) ; we change roles which affect applications
 
         (log-test/with-log
           (testing "processing applications does not delete applications"

@@ -28,9 +28,7 @@
   [new-events]
   (doseq [event new-events]
     (when (= :application.event/deleted (:event/type event))
-      (if (= expirer-bot/bot-userid (:event/actor event)) ; will reload in the end
-        (applications/delete-application! (:application/id event))
-        (applications/delete-application-and-reload-cache! (:application/id event))))))
+      (applications/delete-application! (:application/id event)))))
 
 (defn delete-orphan-attachments [application-id]
   (let [application (applications/get-application-internal application-id)

@@ -19,6 +19,10 @@ Changes since v2.34.2
 
 ### Changes
 - Application expiration now logs more, and more often. (#3225)
+- Catalogue page has been sped up with optimizations. The API supports not joining organization data if not required (`join-organization=false`).
+- Adding a user to blacklist does not reload the full cache anymore. This should make it faster. Also the user is directed to Applications page after delete, not to Catalogue.
+- Deleting a (draft) application is now faster because it does not reload the full cache, only update it.
+- Editing workflows (e.g. handlers) should now be faster because it does not reload the full cache, only update it.
 
 ### Fixes
 - Big improvements in performance from small improvements in how applications and events are processed and cached. REMS should be able to handle a 100k event DB without breaking a sweat. (#2783)

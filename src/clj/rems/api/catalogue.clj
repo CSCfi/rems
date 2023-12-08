@@ -21,12 +21,14 @@
     :tags ["catalogue"]
     (GET "/" []
       :summary "Get the catalogue of items for the UI (does not include archived items)"
+      :query-params [{join-organization :- (describe s/Bool "Should organizations be returned for each item?") true}]
       :return GetCatalogueResponse
       (cond
         (or (:catalogue-is-public env)
             (roles/has-roles? :logged-in))
-        (ok (catalogue/get-catalogue-table (when-not (apply roles/has-roles? roles/+admin-read-roles+)  ; only admins get enabled and disabled items
-                                             {:enabled true})))
+        (ok (catalogue/get-catalogue-table (merge {:join-organization? join-organization}
+                                                  (when-not (apply roles/has-roles? roles/+admin-read-roles+)  ; only admins get enabled and disabled items
+                                                    {:enabled true}))))
 
         (not (roles/has-roles? :logged-in))
         (throw-unauthorized)
@@ -36,12 +38,14 @@
 
     (GET "/tree" []
       :summary "Get the catalogue of items in a tree for the UI (does not include archived items) (EXPERIMENTAL)"
+      :query-params [{join-organization :- (describe s/Bool "Should organizations be returned for each item?") true}]
       :return GetCatalogueTreeResponse
       (cond
         (or (:catalogue-is-public env)
             (roles/has-roles? :logged-in))
         (ok (catalogue/get-catalogue-tree (merge {:archived false
                                                   :expand-catalogue-data? true
+                                                  :join-organization? join-organization
                                                   :empty false}
                                                  (when-not (apply roles/has-roles? roles/+admin-read-roles+)  ; only admins get enabled and disabled items
                                                    {:enabled true}))))

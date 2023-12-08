@@ -91,7 +91,7 @@
     (is (= "1980/2" (application-external-id! (DateTime. #inst "1980-12-12"))))
     (is (= "1981/4" (application-external-id! (DateTime. #inst "1981-04-01"))))))
 
-(deftest test-delete-application-and-reload-cache!
+(deftest test-delete-application!
   (let [_ (test-helpers/create-user! {:userid "applicant1"})
         _ (test-helpers/create-user! {:userid "applicant2"})
         _ (test-helpers/create-user! {:userid "unrelated"})
@@ -102,7 +102,7 @@
     (is (= #{:applicant} (applications/get-all-application-roles "applicant1")))
     (is (= #{"applicant1" "applicant2"} (applications/get-users-with-role :applicant)))
 
-    (applications/delete-application-and-reload-cache! app-id1)
+    (applications/delete-application! app-id1)
 
     (testing "application disappears from my applications"
       (is (= [] (applications/get-my-applications "applicant1"))))
@@ -126,12 +126,12 @@
                             :type :application.command/submit
                             :actor "applicant1"})
     (testing "can't delete submitted application"
-      (is (thrown? AssertionError (applications/delete-application-and-reload-cache! app-id1))))
+      (is (thrown? AssertionError (applications/delete-application! app-id1))))
     (test-helpers/command! {:application-id app-id1
                             :type :application.command/return
                             :actor "developer"})
     (testing "can't delete returned application"
-      (is (thrown? AssertionError (applications/delete-application-and-reload-cache! app-id1))))))
+      (is (thrown? AssertionError (applications/delete-application! app-id1))))))
 
 (deftest test-cache-reload
   (let [_ (test-helpers/create-user! {:userid "applicant1"})
@@ -146,6 +146,7 @@
     (is (= [app-id1] (map :application/id (applications/get-my-applications "applicant1"))))
     (is (= #{:applicant} (applications/get-all-application-roles "applicant1")))
     (is (= #{"applicant1"} (applications/get-users-with-role :applicant)))
+    (is (= #{"handler"} (applications/get-users-with-role :handler)))
 
     (test-helpers/command! {:type :application.command/add-member
                             :application-id app-id1
@@ -154,6 +155,7 @@
 
     (is (= #{"applicant1"} (applications/get-users-with-role :applicant)))
     (is (= #{"applicant2"} (applications/get-users-with-role :member)))
+    (is (= #{"handler"} (applications/get-users-with-role :handler)))
 
     (test-helpers/command! {:type :application.command/change-applicant
                             :application-id app-id1
@@ -162,6 +164,7 @@
 
     (is (= #{"applicant2"} (applications/get-users-with-role :applicant)))
     (is (= #{"applicant1"} (applications/get-users-with-role :member)))
+    (is (= #{"handler"} (applications/get-users-with-role :handler)))
 
     (test-helpers/command! {:type :application.command/remove-member
                             :application-id app-id1
@@ -170,6 +173,7 @@
 
     (is (= #{"applicant2"} (applications/get-users-with-role :applicant)))
     (is (= #{} (applications/get-users-with-role :member)))
+    (is (= #{"handler"} (applications/get-users-with-role :handler)))
 
     (testing "application disappears from my applications"
       (is (= [] (applications/get-my-applications "applicant1"))))
