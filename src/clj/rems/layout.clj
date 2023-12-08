@@ -5,7 +5,7 @@
             [rems.common.git :as git]
             [rems.config :refer [env]]
             [rems.context :as context]
-            [rems.json :as json]
+            [rems.service.organizations :as organizations]
             [cognitect.transit]
             [rems.text :refer [text with-language]]
             [ring.middleware.anti-forgery :refer [*anti-forgery-token*]]
@@ -126,6 +126,8 @@
     (inline-value "rems.app.setConfig" (public/get-config))
     (inline-value "rems.app.setTranslations" (public/get-translations))
     (inline-value "rems.app.setTheme" (public/get-theme))
+    (when (contains? context/*roles* :handler)
+      (inline-value "rems.app.setHandledOrganizations" (organizations/get-handled-organizations (select-keys context/*user* [:userid]))))
     [:script {:type "text/javascript"} "rems.spa.mount();"])))
 
 (defn- error-content

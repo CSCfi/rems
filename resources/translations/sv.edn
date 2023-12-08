@@ -109,6 +109,8 @@
                    :disabled-commands "Avaktiverade funktioner"
                    :display-archived "Visa arkiverade"
                    :display-order "Visningsordning"
+                   :display-own-organization-only-explanation "Visa endast egen organisation?"
+                   :display-own-organization-only "Endast egen organisation"
                    :edit "Ändra"
                    :edit-catalogue-item "Ändra katalogpost"
                    :edit-category "Ändra kategori"

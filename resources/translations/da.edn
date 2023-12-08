@@ -111,6 +111,8 @@
                    :disabled-and-archived-explanation "Deaktivering skjuler en post fra ansøgere. Arkivering skjuler den også i administrationsgrænsefladen."
                    :display-archived "Vis arkiverede"
                    :display-order "Visningsrækkefølge"
+                   :display-own-organization-only-explanation nil
+                   :display-own-organization-only nil
                    :edit "Rediger"
                    :edit-catalogue-item "Rediger katalogpost"
                    :edit-category "Rediger kategori"

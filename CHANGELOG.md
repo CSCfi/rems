@@ -11,6 +11,7 @@ Changes since v2.34.2
 **NB: This release removes the experimental application PDF export API. The non-experimental PDF export API is preferred instead. (#3098)**
 
 ### Additions
+- By default administration pages show only "own organization" items. (#2046)
 - The command-line use of REMS has been sped up. There are new commands `dev-setup` and `perf-setup` that `dev_db.sh` uses to start faster (a combination of migrate and data).
 
 ### Fixes
