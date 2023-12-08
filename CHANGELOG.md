@@ -13,6 +13,12 @@ Changes since v2.34.2
 ### Additions
 - By default administration pages show only "own organization" items. (#2046)
 - The command-line use of REMS has been sped up. There are new commands `dev-setup` and `perf-setup` that `dev_db.sh` uses to start faster (a combination of migrate and data).
+- Application expiration can be configured with `:application-expiration-process-limit` to process a subset of applications instead of everything at once. (#3225)
+- Show organization in create workflow Forms dropdown (#3230)
+- When copying an item, reset the organization, if it's not owned by the user. (#2880)
+
+### Changes
+- Application expiration now logs more, and more often. (#3225)
 
 ### Changes
 - Catalogue page has been sped up with optimizations. The API supports not joining organization data if not required (`join-organization=false`).
@@ -25,8 +31,7 @@ Changes since v2.34.2
 - Administration dropdown buttons should now respond to clicks more widely, and not only by directly clicking text. (#3167)
 - Catalogue item unarchive should no longer fail when form does not exist. (#3217)
 - Current page updates correctly. (#3218)
-- Show organization in create workflow Forms dropdown (#3230)
-- When copying an item, reset the organization, if it's not owned by the user. (#2880)
+- Fixed faulty check in application expiration that prevents sending expiration notifications for applications, and expiring those applications. (#3225)
 
 ## v2.34.2 "Santakatu +2" 2023-11-03
 

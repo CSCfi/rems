@@ -14,6 +14,9 @@
     :application.state/submitted})
 ;; TODO deleted state?
 
+(defn draft? [application]
+  (= :application.state/draft (:application/state application)))
+
 (defn accepted-licenses? [application userid]
   (let [application-licenses (map :license/id (:application/licenses application))
         user-accepted-licenses (get (:application/accepted-licenses application) userid)]

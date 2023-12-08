@@ -11,6 +11,7 @@
             [rems.application.events-cache :as events-cache]
             [rems.application.model :as model]
             [rems.auth.util :refer [throw-forbidden]]
+            [rems.common.application-util :as application-util]
             [rems.common.util :refer [conj-set keep-keys]]
             [rems.config :refer [env]]
             [rems.db.attachments :as attachments]
@@ -398,13 +399,14 @@
 (defn delete-application!
   [app-id]
   (refresh-all-applications-cache!) ; NB: try make sure the cache is up to date so we have any new applications present
-  (let [application (get-application app-id)]
-    (assert (= :application.state/draft (:application/state application))
-            (str "Tried to delete application " app-id " which is not a draft!"))
-    (delete-from-all-applications-cache! app-id))
+  (assert (application-util/draft? (get-application app-id))
+          (str "Tried to delete application " app-id " which is not a draft!"))
+  (delete-from-all-applications-cache! app-id)
   (db/delete-application-attachments! {:application app-id})
   (events/delete-application-events! app-id)
-  (db/delete-application! {:application app-id}))
+  (let [result (db/delete-application! {:application app-id})]
+    (log/infof "Finished deleting application %s" app-id)
+    result))
 
 (defn reset-cache! []
   (events-cache/empty! all-applications-cache))

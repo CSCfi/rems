@@ -32,7 +32,7 @@
 
 (defn delete-orphan-attachments [application-id]
   (let [application (applications/get-application-internal application-id)
-        attachments-in-use (attachment/get-attachments-in-use application)
+        attachments-in-use (set (attachment/get-attachments-in-use application))
         all-attachments (set (map :attachment/id (:application/attachments application)))]
     (doseq [attachment-id (difference all-attachments attachments-in-use)]
       (attachments/delete-attachment! attachment-id))))

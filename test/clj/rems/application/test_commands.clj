@@ -133,7 +133,7 @@
    :get-config (constantly {})
    :get-license dummy-licenses
    :get-user (fn [userid] {:userid userid})
-   :get-users-with-role (constantly nil)
+   :get-users-with-role (fn [role] (get {:expirer #{"expirer-bot"}} role))
    :get-workflow dummy-get-workflow
    :blacklisted? (constantly false)
    :get-attachment-metadata {1 {:application/id app-id
@@ -164,7 +164,7 @@
                                         :application/external-id new-external-id})
           :copy-attachment! (fn [_new-app-id attachment-id]
                               (+ attachment-id 100))
-          :valid-user? #{applicant-user-id handler-user-id decider-user-id reviewer-user-id "somebody" "somebody2" "member1" "member2" "reviewer2" "reviewer3"}
+          :valid-user? #{applicant-user-id handler-user-id decider-user-id reviewer-user-id "expirer-bot" "somebody" "somebody2" "member1" "member2" "reviewer2" "reviewer3"}
           :find-userid identity}))
 
 (defn patch-event-ids [events]
@@ -1821,20 +1821,22 @@
            (fail-command {:type :application.command/delete
                           :actor handler-user-id}
                          (build-application-view [dummy-created-event])))))
-  (testing "applicant cannot delete submitted application"
-    (is (= {:errors [{:type :forbidden}]}
-           (fail-command {:type :application.command/delete
-                          :actor applicant-user-id}
-                         (build-application-view [dummy-created-event
-                                                  dummy-submitted-event])))))
-  (testing "applicant can delete draft application"
-    (is (= {:event/type :application.event/deleted
-            :event/time test-time
-            :event/actor applicant-user-id
-            :application/id app-id}
-           (ok-command {:type :application.command/delete
-                        :actor applicant-user-id}
-                       (build-application-view [dummy-created-event]))))))
+
+  (doseq [user [applicant-user-id "expirer-bot"]]
+    (testing (str user " cannot delete submitted application")
+      (is (= {:errors [{:type :only-draft-may-be-deleted}]}
+             (fail-command {:type :application.command/delete
+                            :actor user}
+                           (build-application-view [dummy-created-event
+                                                    dummy-submitted-event])))))
+    (testing (str user " can delete draft application")
+      (is (= {:event/type :application.event/deleted
+              :event/time test-time
+              :event/actor user
+              :application/id app-id}
+             (ok-command {:type :application.command/delete
+                          :actor user}
+                         (build-application-view [dummy-created-event])))))))
 
 (deftest test-handle-command
   (let [application (build-application-view [dummy-created-event])
@@ -2020,4 +2022,23 @@
                                                     dummy-decision-requested-event
                                                     (merge dummy-remarked-event {:event/actor decider-user-id
                                                                                  :event/attachments [{:attachment/id 5}]})])))))))
+
+(deftest send-expiration-notifications-command
+  (testing "fails if application is not a draft"
+    (is (= {:errors [{:type :only-draft-may-be-expired}]}
+           (fail-command {:type :application.command/send-expiration-notifications
+                          :actor "expirer-bot"
+                          :expires-on test-time}
+                         (build-application-view [dummy-created-event
+                                                  dummy-submitted-event])))))
+  (testing "expiration notifications can be sent for draft"
+    (is (= {:event/type :application.event/expiration-notifications-sent
+            :event/time test-time
+            :event/actor "expirer-bot"
+            :application/id app-id
+            :application/expires-on (time/plus test-time (time/hours 1))}
+           (ok-command {:type :application.command/send-expiration-notifications
+                        :actor "expirer-bot"
+                        :expires-on (time/plus test-time (time/hours 1))}
+                       (build-application-view [dummy-created-event]))))))
 

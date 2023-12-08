@@ -815,14 +815,14 @@
                               :type :application.command/submit
                               :actor applicant})
       (testing "can't delete submitted application"
-        (is (= {:errors [{:type "forbidden"}] :success false}
+        (is (= {:errors [{:type "only-draft-may-be-deleted"}] :success false}
                (api-call :post "/api/applications/delete" {:application-id app-id}
                          api-key applicant))))
       (test-helpers/command! {:application-id app-id
                               :type :application.command/return
                               :actor handler-id})
       (testing "can't delete returned application"
-        (is (= {:errors [{:type "forbidden"}] :success false}
+        (is (= {:errors [{:type "only-draft-may-be-deleted"}] :success false}
                (api-call :post "/api/applications/delete" {:application-id app-id}
                          api-key applicant)))))))
 
