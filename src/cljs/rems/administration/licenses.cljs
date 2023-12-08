@@ -81,20 +81,22 @@
  ::licenses-table-rows
  (fn [_ _]
    [(rf/subscribe [::licenses])
-    (rf/subscribe [:language])])
- (fn [[licenses language] _]
-   (map (fn [license]
-          {:key (:id license)
-           :title {:value (get-localized-title license language)}
-           :type {:value (:licensetype license)}
-           :organization {:value (get-in license [:organization :organization/short-name language])}
-           :active (let [checked? (status-flags/active? license)]
-                     {:display-value [readonly-checkbox {:value checked?}]
-                      :sort-value (if checked? 1 2)})
-           :commands {:display-value [:div.commands
-                                      [to-view-license (:id license)]
-                                      [modify-license-dropdown license]]}})
-        licenses)))
+    (rf/subscribe [:language])
+    (rf/subscribe [:rems.administration.administration/displayed-organization-ids])])
+ (fn [[licenses language displayed-organization-ids] _]
+   (->> licenses
+        (administration/filter-by-displayed-organization displayed-organization-ids #(get-in % [:organization :organization/id]))
+        (mapv (fn [license]
+                {:key (:id license)
+                 :title {:value (get-localized-title license language)}
+                 :type {:value (:licensetype license)}
+                 :organization {:value (get-in license [:organization :organization/short-name language])}
+                 :active (let [checked? (status-flags/active? license)]
+                           {:display-value [readonly-checkbox {:value checked?}]
+                            :sort-value (if checked? 1 2)})
+                 :commands {:display-value [:div.commands
+                                            [to-view-license (:id license)]
+                                            [modify-license-dropdown license]]}})))))
 
 (defn- licenses-list []
   [table/standard {:id ::licenses
@@ -124,4 +126,5 @@
           [[roles/show-when roles/+admin-write-roles+
             [atoms/commands [to-create-license]]
             [status-flags/status-flags-intro #(rf/dispatch [::fetch-licenses])]]
+           [administration/own-organization-selection]
            [licenses-list]])))

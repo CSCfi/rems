@@ -24,3 +24,5 @@
 (defn ^:export setTheme [theme]
   (rf/dispatch-sync [:loaded-theme (read-transit theme)]))
 
+(defn ^:export setHandledOrganizations [organizations]
+  (rf/dispatch-sync [:loaded-handled-organizations (read-transit organizations)]))

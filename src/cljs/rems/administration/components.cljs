@@ -288,17 +288,33 @@
             [inline-info-field (to-label lang) value]))))
 
 (defn organization-field [context {:keys [keys readonly on-change]}]
-  (let [label (text :t.administration/organization)
-        organizations @(rf/subscribe [:owned-organizations])
+  (let [id (keys-to-id keys)
+        label (text :t.administration/organization)
+        owned-organizations @(rf/subscribe [:owned-organizations])
+        valid-organizations (->> owned-organizations (filter :enabled) (remove :archived))
+        disallowed (roles/disallow-setting-organization? @(rf/subscribe [:roles]))
         language @(rf/subscribe [:language])
         form @(rf/subscribe [(:get-form context)])
-        value (get-in form keys)
+        potential-value (get-in form keys)
         on-change (or on-change (fn [_]))
+        wrapped-on-change #(let [new-value %]
+                             (rf/dispatch [(:update-form context) keys new-value])
+                             (on-change new-value))
+
+        ;; if item was copied then this org could be something old
+        ;; where we have no access to so reset here
+        value (if (or readonly
+                      disallowed
+                      (contains? (set (mapv :organization/id valid-organizations))
+                                 (:organization/id potential-value)))
+                potential-value
+
+                ;; not accessible, reset
+                (wrapped-on-change nil))
+
         form-errors (when (:get-form-errors context)
                       @(rf/subscribe [(:get-form-errors context)]))
-        id (keys-to-id keys)
-        item-selected? #(= (:organization/id %) (:organization/id value))
-        disallowed (roles/disallow-setting-organization? @(rf/subscribe [:roles]))]
+        item-selected? #(= (:organization/id %) (:organization/id value))]
     [:div.form-group
      [:label.administration-field-label {:for id} label]
      (if (or readonly disallowed)
@@ -306,13 +322,11 @@
                                :value (get-in value [:organization/name language])}]
        [dropdown/dropdown
         {:id id
-         :items (->> organizations (filter :enabled) (remove :archived))
+         :items valid-organizations
          :item-key :organization/id
          :item-label (comp language :organization/name)
          :item-selected? item-selected?
-         :on-change #(let [new-value %]
-                       (rf/dispatch [(:update-form context) keys new-value])
-                       (on-change new-value))}])
+         :on-change wrapped-on-change}])
      [field-validation-message (get-in form-errors keys) label]]))
 
 (defn date-field

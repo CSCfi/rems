@@ -10,6 +10,10 @@ Changes since v2.34.2
 
 **NB: This release removes the experimental application PDF export API. The non-experimental PDF export API is preferred instead. (#3098)**
 
+### Additions
+- By default administration pages show only "own organization" items. (#2046)
+- The command-line use of REMS has been sped up. There are new commands `dev-setup` and `perf-setup` that `dev_db.sh` uses to start faster (a combination of migrate and data).
+
 ### Changes
 - Catalogue page has been sped up with optimizations. The API supports not joining organization data if not required (`join-organization=false`).
 - Adding a user to blacklist does not reload the full cache anymore. This should make it faster. Also the user is directed to Applications page after delete, not to Catalogue.
@@ -21,6 +25,8 @@ Changes since v2.34.2
 - Administration dropdown buttons should now respond to clicks more widely, and not only by directly clicking text. (#3167)
 - Catalogue item unarchive should no longer fail when form does not exist. (#3217)
 - Current page updates correctly. (#3218)
+- Show organization in create workflow Forms dropdown (#3230)
+- When copying an item, reset the organization, if it's not owned by the user. (#2880)
 
 ## v2.34.2 "Santakatu +2" 2023-11-03
 

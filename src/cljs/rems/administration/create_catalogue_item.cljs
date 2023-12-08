@@ -183,7 +183,7 @@
          :items (->> workflows (filter :enabled) (remove :archived))
          :item-key :id
          :item-label #(str (:title %)
-                           " (org: "
+                           " (" (text :t.administration/org) ": "
                            (get-in % [:organization :organization/short-name language])
                            ")")
          :item-selected? item-selected?
@@ -240,7 +240,7 @@
          :items (->> forms (filter :enabled) (remove :archived))
          :item-key :form/id
          :item-label #(str (:form/internal-name %)
-                           " (org: "
+                           " (" (text :t.administration/org) ": "
                            (get-in % [:organization :organization/short-name language])
                            ")")
          :item-selected? item-selected?
