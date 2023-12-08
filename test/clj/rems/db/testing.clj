@@ -11,10 +11,10 @@
             [rems.db.catalogue :as catalogue]
             [rems.db.category :as category]
             [rems.db.core :as db]
+            [rems.db.events :as events]
             [rems.service.test-data :as test-data]
             [rems.db.user-mappings :as user-mappings]
-            [rems.locales])
-  (:import [org.joda.time Duration ReadableInstant]))
+            [rems.locales]))
 
 (defn reset-db-fixture [f]
   (try
@@ -29,8 +29,13 @@
                          #'rems.locales/translations
                          #'rems.db.core/*db*)
   (db/assert-test-database!)
+
+  ;; these are db level caches and tests use db rollback
+  ;; it's best for us to start from scratch here
   (applications/empty-injections-cache!)
+
   (migrations/migrate ["migrate"] {:database-url (:test-database-url env)})
+  (mount/start #'rems.db.events/low-level-events-cache) ; needs DB to start
   (f)
   (mount/stop))
 
@@ -48,8 +53,8 @@
       (catalogue/reset-cache!)
       (category/reset-cache!)
       (dependencies/reset-cache!)
-      (user-mappings/reset-cache!))))
-
+      (user-mappings/reset-cache!)
+      (events/empty-event-cache!))))
 (def +test-api-key+ test-data/+test-api-key+) ;; re-exported for convenience
 
 (defn owners-fixture [f]
@@ -59,4 +64,5 @@
 (defn rollback-db-fixture [f]
   (conman/with-transaction [db/*db* {:isolation :serializable}]
     (jdbc/db-set-rollback-only! db/*db*)
+    (events/empty-event-cache!) ; NB can't rollback this cache so reset
     (f)))

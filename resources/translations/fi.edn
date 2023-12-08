@@ -109,6 +109,8 @@
                    :disabled-and-archived-explanation "Käytöstä poistaminen piilottaa asian käyttäjiltä. Arkistoiminen piilottaa sen myös ylläpitonäkymästä."
                    :display-archived "Näytä arkistoidut"
                    :display-order "Näyttöjärjestys"
+                   :display-own-organization-only-explanation "Näytetäänkö vain oma organisaatio?"
+                   :display-own-organization-only "Vain oma organisaatio"
                    :edit "Muokkaa"
                    :edit-catalogue-item "Muokkaa aineistoa"
                    :edit-category "Muokkaa kategoriaa"

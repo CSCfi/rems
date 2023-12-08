@@ -9,8 +9,7 @@
   (empty? (:application/blacklist application)))
 
 (defn- generate-commands [event application]
-  (when (and (= :application.event/submitted (:event/type event)) ;; approver bot only reacts to fresh applications
-             (application-util/is-handler? application bot-userid)
+  (when (and (application-util/is-handler? application bot-userid)
              (should-approve? application))
     [{:type :application.command/approve
       :actor bot-userid
@@ -18,6 +17,11 @@
       :application-id (:application/id event)
       :comment ""}]))
 
+(defn- maybe-generate-commands [event]
+  (when (= :application.event/submitted (:event/type event)) ; approver bot only reacts to fresh applications
+    (let [application (applications/get-application (:application/id event))]
+      (generate-commands event application))))
+
 (defn run-approver-bot [new-events]
-  (doall (mapcat #(generate-commands % (applications/get-application (:application/id %)))
+  (doall (mapcat #(maybe-generate-commands %)
                  new-events)))

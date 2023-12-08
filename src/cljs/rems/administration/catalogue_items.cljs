@@ -119,42 +119,44 @@
  ::catalogue-table-rows
  (fn [_ _]
    [(rf/subscribe [::catalogue])
-    (rf/subscribe [:language])])
- (fn [[catalogue language] _]
-   (map (fn [item]
-          {:key (:id item)
-           :organization {:value (get-in item [:organization :organization/short-name language])}
-           :name {:value (get-localized-title item language)
-                  :sort-value [(get-localized-title item language)
-                               (- (time-coerce/to-long (:start item)))]} ; secondary sort by created, reverse
-           :resource (let [value (:resource-name item)]
-                       {:value value
-                        :display-value [atoms/link nil
-                                        (str "/administration/resources/" (:resource-id item))
-                                        value]})
-           :form (if-let [value (:form-name item)]
-                   {:value value
-                    :display-value [atoms/link nil
-                                    (str "/administration/forms/" (:formid item))
-                                    value]}
-                   {:value (text :t.administration/no-form)
-                    :sort-value "" ; push "No form" cases to the top of the list when sorting
-                    :display-value [text :t.administration/no-form]})
-           :workflow (let [value (:workflow-name item)]
-                       {:value value
-                        :display-value [atoms/link nil
-                                        (str "/administration/workflows/" (:wfid item))
-                                        value]})
-           :created (let [value (:start item)]
-                      {:value value
-                       :display-value (localize-time value)})
-           :active (let [checked? (status-flags/active? item)]
-                     {:display-value [readonly-checkbox {:value checked?}]
-                      :sort-value (if checked? 1 2)})
-           :commands {:display-value [:div.commands
-                                      [view-button (:id item)]
-                                      [modify-item-dropdown item]]}})
-        catalogue)))
+    (rf/subscribe [:language])
+    (rf/subscribe [:rems.administration.administration/displayed-organization-ids])])
+ (fn [[catalogue language displayed-organization-ids] _]
+   (->> catalogue
+        (administration/filter-by-displayed-organization displayed-organization-ids #(get-in % [:organization :organization/id]))
+        (mapv (fn [item]
+                {:key (:id item)
+                 :organization {:value (get-in item [:organization :organization/short-name language])}
+                 :name {:value (get-localized-title item language)
+                        :sort-value [(get-localized-title item language)
+                                     (- (time-coerce/to-long (:start item)))]} ; secondary sort by created, reverse
+                 :resource (let [value (:resource-name item)]
+                             {:value value
+                              :display-value [atoms/link nil
+                                              (str "/administration/resources/" (:resource-id item))
+                                              value]})
+                 :form (if-let [value (:form-name item)]
+                         {:value value
+                          :display-value [atoms/link nil
+                                          (str "/administration/forms/" (:formid item))
+                                          value]}
+                         {:value (text :t.administration/no-form)
+                          :sort-value "" ; push "No form" cases to the top of the list when sorting
+                          :display-value [text :t.administration/no-form]})
+                 :workflow (let [value (:workflow-name item)]
+                             {:value value
+                              :display-value [atoms/link nil
+                                              (str "/administration/workflows/" (:wfid item))
+                                              value]})
+                 :created (let [value (:start item)]
+                            {:value value
+                             :display-value (localize-time value)})
+                 :active (let [checked? (status-flags/active? item)]
+                           {:display-value [readonly-checkbox {:value checked?}]
+                            :sort-value (if checked? 1 2)})
+                 :commands {:display-value [:div.commands
+                                            [view-button (:id item)]
+                                            [modify-item-dropdown item]]}})))))
 
 (defn- catalogue-list []
   [table/standard {:id ::catalogue
@@ -197,4 +199,5 @@
              [change-form-button @(rf/subscribe [::selected-catalogue-items])]]
             [status-flags/status-flags-intro #(do (rf/dispatch [::fetch-catalogue])
                                                   (rf/dispatch [:rems.table/set-selected-rows {:id ::catalogue} nil]))]]
+           [administration/own-organization-selection]
            [catalogue-list]])))

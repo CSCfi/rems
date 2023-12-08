@@ -97,26 +97,28 @@
  ::forms-table-rows
  (fn [_ _]
    [(rf/subscribe [::forms])
-    (rf/subscribe [:language])])
- (fn [[forms language] _]
-   (map (fn [form]
-          {:key (:form/id form)
-           :organization {:value (get-in form [:organization :organization/short-name language])}
-           :internal-name {:value (get-in form [:form/internal-name])}
-           :external-title {:value (get-in form [:form/external-title language])}
-           :active (let [checked? (status-flags/active? form)]
-                     {:display-value [readonly-checkbox {:value checked?}]
-                      :sort-value (if checked? 1 2)})
-           :errors (if-some [errors (seq (:form/errors form))]
-                     {:value errors
-                      :display-value [errors-symbol]
-                      :sort-value 2}
-                     {:value nil
-                      :sort-value 1})
-           :commands {:display-value [:div.commands
-                                      [to-view-form form]
-                                      [modify-form-dropdown form]]}})
-        forms)))
+    (rf/subscribe [:language])
+    (rf/subscribe [:rems.administration.administration/displayed-organization-ids])])
+ (fn [[forms language displayed-organization-ids] _]
+   (->> forms
+        (administration/filter-by-displayed-organization displayed-organization-ids #(get-in % [:organization :organization/id]))
+        (mapv (fn [form]
+                {:key (:form/id form)
+                 :organization {:value (get-in form [:organization :organization/short-name language])}
+                 :internal-name {:value (get-in form [:form/internal-name])}
+                 :external-title {:value (get-in form [:form/external-title language])}
+                 :active (let [checked? (status-flags/active? form)]
+                           {:display-value [readonly-checkbox {:value checked?}]
+                            :sort-value (if checked? 1 2)})
+                 :errors (if-some [errors (seq (:form/errors form))]
+                           {:value errors
+                            :display-value [errors-symbol]
+                            :sort-value 2}
+                           {:value nil
+                            :sort-value 1})
+                 :commands {:display-value [:div.commands
+                                            [to-view-form form]
+                                            [modify-form-dropdown form]]}})))))
 
 (defn- forms-list []
   [table/standard {:id ::forms
@@ -148,4 +150,5 @@
           [[roles/show-when roles/+admin-write-roles+
             [atoms/commands [to-create-form]]
             [status-flags/status-flags-intro #(rf/dispatch [::fetch-forms])]]
+           [administration/own-organization-selection]
            [forms-list]])))

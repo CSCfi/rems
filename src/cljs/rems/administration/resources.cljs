@@ -80,19 +80,21 @@
  ::resources-table-rows
  (fn [_ _]
    [(rf/subscribe [::resources])
-    (rf/subscribe [:language])])
- (fn [[resources language] _]
-   (map (fn [resource]
-          {:key (:id resource)
-           :organization {:value (get-in resource [:organization :organization/short-name language])}
-           :title {:value (:resid resource)}
-           :active (let [checked? (status-flags/active? resource)]
-                     {:display-value [readonly-checkbox {:value checked?}]
-                      :sort-value (if checked? 1 2)})
-           :commands {:display-value [:div.commands
-                                      [to-view-resource (:id resource)]
-                                      [modify-resource-dropdown resource]]}})
-        resources)))
+    (rf/subscribe [:language])
+    (rf/subscribe [:rems.administration.administration/displayed-organization-ids])])
+ (fn [[resources language displayed-organization-ids] _]
+   (->> resources
+        (administration/filter-by-displayed-organization displayed-organization-ids #(get-in % [:organization :organization/id]))
+        (mapv (fn [resource]
+                {:key (:id resource)
+                 :organization {:value (get-in resource [:organization :organization/short-name language])}
+                 :title {:value (:resid resource)}
+                 :active (let [checked? (status-flags/active? resource)]
+                           {:display-value [readonly-checkbox {:value checked?}]
+                            :sort-value (if checked? 1 2)})
+                 :commands {:display-value [:div.commands
+                                            [to-view-resource (:id resource)]
+                                            [modify-resource-dropdown resource]]}})))))
 
 (defn- resources-list []
   [table/standard {:id ::resources
@@ -120,4 +122,5 @@
           [[roles/show-when roles/+admin-write-roles+
             [atoms/commands [to-create-resource]]
             [status-flags/status-flags-intro  #(rf/dispatch [::fetch-resources])]]
+           [administration/own-organization-selection]
            [resources-list]])))

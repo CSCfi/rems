@@ -15,14 +15,20 @@
             [rems.db.user-settings :as user-settings]
             [rems.db.users :as users]
             [rems.email.template :as template]
-            [rems.scheduler :as scheduler])
+            [rems.scheduler :as scheduler]
+            [clojure.string :as str])
   (:import [javax.mail.internet InternetAddress]
            [org.joda.time Duration Period]))
 
 (defn- event-to-emails [event]
-  (when-let [app-id (:application/id event)]
-    (template/event-to-emails (rems.application.model/enrich-event event users/get-user (constantly nil))
-                              (applications/get-application app-id))))
+  ;; performance optimization:
+  ;; avoid get application if no email should be sent for this event
+  (when-not (contains? #{:application.event/created
+                         :application.event/draft-saved}
+                       (:event/type event))
+    (when-let [app-id (:application/id event)]
+      (template/event-to-emails (rems.application.model/enrich-event event users/get-user (constantly nil))
+                                (applications/get-application app-id)))))
 
 (defn- enqueue-email! [email]
   (outbox/put! {:outbox/type :email
@@ -109,7 +115,9 @@
                      "Auto-Submitted" "auto-generated")
         to-error (validate-address (:to email))]
     (when (and (:body email) (:to email))
-      (log/info "sending email:" (pr-str email))
+      (when (or (not (:dev env))
+                (not (str/includes? (:body email "") "Performance test application")))
+        (log/info "sending email:" (pr-str email)))
       (cond
         to-error
         (do
@@ -118,7 +126,9 @@
 
         (not (and (:host smtp) (:port smtp)))
         (do
-          (log/info "no smtp server configured, only pretending to send email")
+          (when (or (not (:dev env))
+                    (not (str/includes? (:body email "") "Performance test application")))
+            (log/info "no smtp server configured, only pretending to send email"))
           nil)
 
         :else

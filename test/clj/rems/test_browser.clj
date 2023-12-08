@@ -1016,6 +1016,7 @@
         (btu/scroll-and-click [:handled-applications-collapse {:fn/text "Show all rows"}])
         (btu/wait-for-animation)
         (btu/scroll-and-click [:handled-applications-paging-pages {:fn/text "10"}])
+        (btu/wait-visible {:fn/text "test-processed-applications-10"}) ; wait for at least one to appear before checking all
         (is (= (for [i (range 10 0 -1)]
                  (str "test-processed-applications-" i))
                (mapv #(get % "description") (slurp-rows :handled-applications))))
@@ -2815,12 +2816,25 @@
                    (slurp-fields :organization)))
             (is (not (btu/visible? {:css ".edit-organization"})))
 
-            (go-to-admin "Organizations")
-            (is (= "View"
-                   (->> (slurp-table :organizations)
-                        (some #(when (= "SNEN" (get % "short-name"))
-                                 (get % "commands")))))
-                "organization actions should not be visible for non organization owner")))))))
+            (testing "organization list and own organizations"
+              (go-to-admin "Organizations")
+
+              (is (= nil
+                     (->> (slurp-table :organizations)
+                          (some #(when (= "SNEN" (get % "short-name"))
+                                   (get % "commands")))))
+                  "by default you can see only own organization and this is not anymore")
+
+              ;; toggle other organizations to view
+              (btu/scroll-and-click {:fn/text "Own organization only"})
+
+              (btu/wait-visible [:organizations {:fn/text "SNEN"}])
+
+              (is (= "View"
+                     (->> (slurp-table :organizations)
+                          (some #(when (= "SNEN" (get % "short-name"))
+                                   (get % "commands")))))
+                  "organization actions should not be visible for non organization owner"))))))))
 
 (deftest test-small-navbar
   (testing "create a test application with the API to have another page to navigate to"

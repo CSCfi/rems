@@ -70,3 +70,18 @@
          {:params {:disabled true :archived true}
           :handler #(rf/dispatch-sync [:loaded-organizations %])
           :error-handler (flash-message/default-error-handler :top "Fetch organizations")}))
+
+(rf/reg-sub
+ :handled-organizations
+ (fn [db _]
+   (:handled-organizations db)))
+
+(rf/reg-event-db
+ :loaded-handled-organizations
+ (fn [db [_ organizations]]
+   (assoc db :handled-organizations organizations)))
+
+(defn fetch-handled-organizations! []
+  (fetch "/api/organizations/handled"
+         {:handler #(rf/dispatch-sync [:loaded-handled-organizations %])
+          :error-handler (flash-message/default-error-handler :top "Fetch handled organizations")}))

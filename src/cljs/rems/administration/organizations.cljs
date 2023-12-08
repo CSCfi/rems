@@ -96,18 +96,21 @@
  ::organizations-table-rows
  (fn [_ _]
    [(rf/subscribe [::organizations])
-    (rf/subscribe [:language])])
- (fn [[organizations language] _]
-   (for [organization organizations]
-     {:key (:organization/id organization)
-      :short-name {:value (get-in organization [:organization/short-name language])}
-      :name {:value (get-in organization [:organization/name language])}
-      :active (let [checked? (status-flags/active? organization)]
-                {:display-value [readonly-checkbox {:value checked?}]
-                 :sort-value (if checked? 1 2)})
-      :commands {:display-value [:div.commands
-                                 [to-view-organization (:organization/id organization)]
-                                 [modify-organization-dropdown organization]]}})))
+    (rf/subscribe [:language])
+    (rf/subscribe [:rems.administration.administration/displayed-organization-ids])])
+ (fn [[organizations language displayed-organization-ids] _]
+   (->> organizations
+        (administration/filter-by-displayed-organization displayed-organization-ids #(get-in % [:organization/id]))
+        (mapv (fn [organization]
+                {:key (:organization/id organization)
+                 :short-name {:value (get-in organization [:organization/short-name language])}
+                 :name {:value (get-in organization [:organization/name language])}
+                 :active (let [checked? (status-flags/active? organization)]
+                           {:display-value [readonly-checkbox {:value checked?}]
+                            :sort-value (if checked? 1 2)})
+                 :commands {:display-value [:div.commands
+                                            [to-view-organization (:organization/id organization)]
+                                            [modify-organization-dropdown organization]]}})))))
 
 (defn- organizations-list []
   [table/standard {:id ::organizations
@@ -135,4 +138,5 @@
           [[roles/show-when #{:owner}
             [atoms/commands [to-create-organization]]
             [status-flags/status-flags-intro #(rf/dispatch [::fetch-organizations])]]
+           [administration/own-organization-selection]
            [organizations-list]])))

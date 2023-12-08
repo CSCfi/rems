@@ -4,10 +4,9 @@
             [rems.api.schema :as schema]
             [rems.api.testing :refer :all]
             [rems.handler :refer [handler]]
-            [rems.db.api-key :as api-key]
             [rems.db.core :as db]
             [rems.db.test-data-helpers :as test-helpers]
-            [rems.db.testing :refer [owners-fixture +test-api-key+]]
+            [rems.db.testing :refer [owners-fixture]]
             [ring.mock.request :refer :all])
   (:import (java.util UUID)))
 

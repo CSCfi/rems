@@ -53,10 +53,10 @@
         ;; developer can view much more applications than alice, so it takes longer to filter reviews from all apps
         test-get-todos #(doall (todos/get-todos "developer"))
         no-cache (fn []
-                   (mount/stop #'applications/all-applications-cache))
+                   (mount/stop #'applications/all-applications-cache #'rems.db.events/low-level-events-cache))
         cached (fn []
-                 (mount/stop #'applications/all-applications-cache)
-                 (mount/start #'applications/all-applications-cache)
+                 (mount/stop #'applications/all-applications-cache #'rems.db.events/low-level-events-cache)
+                 (mount/start #'applications/all-applications-cache #'rems.db.events/low-level-events-cache)
                  (test-get-all-unrestricted-applications))]
     (run-benchmarks [{:name "get-all-unrestricted-applications, no cache"
                       :benchmark test-get-all-unrestricted-applications

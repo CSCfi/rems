@@ -7,6 +7,7 @@
             [rems.db.organizations :as organizations]
             [rems.db.roles :as roles]
             [rems.db.users :as users]
+            [rems.db.workflow :as workflow]
             [rems.service.dependencies :as dependencies]
             [rems.service.util]))
 
@@ -75,3 +76,10 @@
           {:success true}))))
 
 (defn get-available-owners [] (users/get-users))
+
+(defn get-handled-organizations [{:keys [userid]}]
+  (for [workflow (workflow/get-workflows nil)
+        :let [handlers (set (mapv :userid (get-in workflow [:workflow :handlers])))]
+        :when (contains? handlers userid)
+        :let [organization (organizations/getx-organization-by-id (get-in workflow [:organization :organization/id]))]]
+    organization))

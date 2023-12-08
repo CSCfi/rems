@@ -623,39 +623,40 @@
                                                            :email (str user-id "@example.com")
                                                            :name (str "Performance Tester " n)})
                              user-id)))))]
-    (in-parallel
-     (for [n (range-1 application-count)]
-       (fn []
-         (log/info "Creating performance test application" n "/" application-count)
-         (let [cat-item-id (rand-nth cat-item-ids)
-               user-id (rand-nth user-ids)
-               handler (rand-nth handlers)
-               app-id (test-helpers/create-application! {:catalogue-item-ids [cat-item-id]
-                                                         :actor user-id})
-               long-answer (random-long-string)]
-           (dotimes [i 20] ; user saves ~ 20 times while writing an application
-             (test-helpers/command! {:type :application.command/save-draft
+    (with-redefs [rems.config/env (assoc rems.config/env :enable-save-compaction false)] ; generate more events without compaction
+      (in-parallel
+       (for [n (range-1 application-count)]
+         (fn []
+           (log/info "Creating performance test application" n "/" application-count)
+           (let [cat-item-id (rand-nth cat-item-ids)
+                 user-id (rand-nth user-ids)
+                 handler (rand-nth handlers)
+                 app-id (test-helpers/create-application! {:catalogue-item-ids [cat-item-id]
+                                                           :actor user-id})
+                 long-answer (random-long-string)]
+             (dotimes [i 20] ; user saves ~ 20 times while writing an application
+               (test-helpers/command! {:type :application.command/save-draft
+                                       :application-id app-id
+                                       :actor user-id
+                                       :field-values [{:form form-id
+                                                       :field (:field/id (first (:form/fields form)))
+                                                       :value (str "Performance test application " (UUID/randomUUID))}
+                                                      {:form form-id
+                                                       :field (:field/id (second (:form/fields form)))
+                                                       ;; 1000 words of lorem ipsum samples from a text from www.lipsum.com
+                                                       ;; to increase the memory requirements of an application
+                                                       :value (subs long-answer 0 (int (/ (* (inc i) (count long-answer)) (inc i))))}]}))
+             (test-helpers/command! {:type :application.command/accept-licenses
                                      :application-id app-id
                                      :actor user-id
-                                     :field-values [{:form form-id
-                                                     :field (:field/id (first (:form/fields form)))
-                                                     :value (str "Performance test application " (UUID/randomUUID))}
-                                                    {:form form-id
-                                                     :field (:field/id (second (:form/fields form)))
-                                        ;; 1000 words of lorem ipsum samples from a text from www.lipsum.com
-                                        ;; to increase the memory requirements of an application
-                                                     :value (subs long-answer 0 (int (/ (* (inc i) (count long-answer)) (inc i))))}]}))
-           (test-helpers/command! {:type :application.command/accept-licenses
-                                   :application-id app-id
-                                   :actor user-id
-                                   :accepted-licenses [license-id]})
-           (test-helpers/command! {:type :application.command/submit
-                                   :application-id app-id
-                                   :actor user-id})
-           (test-helpers/command! {:type :application.command/approve
-                                   :application-id app-id
-                                   :actor handler
-                                   :comment ""})))))
+                                     :accepted-licenses [license-id]})
+             (test-helpers/command! {:type :application.command/submit
+                                     :application-id app-id
+                                     :actor user-id})
+             (test-helpers/command! {:type :application.command/approve
+                                     :application-id app-id
+                                     :actor handler
+                                     :comment ""}))))))
     (log/info "Performance test applications created")))
 
 (defn- create-items! [users users-data]

@@ -88,6 +88,12 @@
          :when email]
      email)))
 
+(defmethod event-to-emails :application.event/created [_event _application]
+  (assert false "performance optimization, not called, no emails for created"))
+
+(defmethod event-to-emails :application.event/saved [_event _application]
+  (assert false "performance optimization, not called, no emails for saved"))
+
 (defmethod event-to-emails :application.event/approved [event application]
   (concat (emails-to-recipients (application-util/applicant-and-members application)
                                 event application

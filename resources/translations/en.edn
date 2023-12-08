@@ -111,6 +111,8 @@
                    :disabled-and-archived-explanation "Disabling hides an item from applicants. Archiving also hides it in the administration view."
                    :display-archived "Display archived"
                    :display-order "Display order"
+                   :display-own-organization-only-explanation "Should only own organization items be shown?"
+                   :display-own-organization-only "Own organization only"
                    :edit "Edit"
                    :edit-catalogue-item "Edit catalogue item"
                    :edit-category "Edit category"
