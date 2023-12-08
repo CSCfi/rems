@@ -305,7 +305,9 @@
    * `:wait` interval in milliseconds"
   [{:keys [disabled wait] :or {wait 2000} :as props}]
   [button (-> props
-              (dissoc :wait (when disabled :on-click))
+              (dissoc :wait
+                      :loading?
+                      (when disabled :on-click))
               (update-existing :on-click wrap-rate-limit wait))])
 
 (defn action-button

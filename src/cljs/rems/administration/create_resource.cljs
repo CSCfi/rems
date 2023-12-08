@@ -117,7 +117,7 @@
        :items licenses
        :item-key :id
        :item-label #(str (get-localized-title % language)
-                         " (org: "
+                         " (" (text :t.administration/org) ": "
                          (get-in % [:organization :organization/short-name language])
                          ")")
        :item-selected? #(contains? (set selected-licenses) %)
