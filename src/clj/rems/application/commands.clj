@@ -114,7 +114,8 @@
 (s/defschema SubmitCommand
   CommandBase)
 (s/defschema DeleteCommand
-  CommandBase)
+  (assoc CommandBase
+         (s/optional-key :expires-on) DateTime))
 (s/defschema UninviteMemberCommand
   (assoc CommandWithComment
          :member {:name s/Str
@@ -699,8 +700,6 @@
                                {:event/type :application.event/voted
                                 :vote/value (:vote cmd)}))
 
-
-
 (defn- forbidden-error [application cmd]
   (let [permissions (if application
                       (permissions/user-permissions application (:actor cmd))
@@ -709,16 +708,15 @@
       {:errors [{:type :forbidden}]})))
 
 (defmethod command-handler :application.command/delete
-  [cmd application injections]
-  (ok {:event/type :application.event/deleted}))
-
-(defn- invalid-expiration-error [cmd]
-  (when (time/before? (:expires-on cmd) (:last-activity cmd))
-    {:error [{:type :invalid-expiration}]}))
+  [_cmd application _injections]
+  (or (when-not (application-util/draft? application)
+        {:errors [{:type :only-draft-may-be-deleted}]})
+      (ok {:event/type :application.event/deleted})))
 
 (defmethod command-handler :application.command/send-expiration-notifications
-  [cmd _application _injections]
-  (or (invalid-expiration-error cmd)
+  [cmd application _injections]
+  (or (when-not (application-util/draft? application)
+        {:errors [{:type :only-draft-may-be-expired}]})
       (ok {:event/type :application.event/expiration-notifications-sent
            :application/expires-on (:expires-on cmd)})))
 

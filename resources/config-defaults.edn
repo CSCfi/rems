@@ -395,6 +395,10 @@
  ;; https://en.wikipedia.org/wiki/ISO_8601#Durations for duration formatting reference.
  :application-expiration nil
 
+ ;; How many applications may application expiration process at a time?
+ ;; defaults to 50
+ :application-expiration-process-limit nil
+
  ;; enable /api/permissions/:user
  ;; see also docs/ga4gh-visas.md
  :enable-permissions-api false
@@ -468,7 +472,7 @@
  :plugins nil ; by default no plugins
  :extension-points nil ; by default no plugins
  :enable-voting false ; voting (experimental)
- 
+
  ;; If `:scanner-path` is defined, it is assumed to be an executable that:
  ;; can take a binary file from `STDIN` and return a status code of zero if and only if the file passes the scan.
  ;;
@@ -502,7 +506,7 @@
  ;;   :rems.application/previous-applications-except-current
  ;;   :rems.applications/my-applications
  ;;   :rems.applications/all-applications
- 
+
  :tables {}
 
  ;; REMS can be configured to avoid heavy work
