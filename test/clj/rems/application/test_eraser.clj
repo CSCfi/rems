@@ -61,13 +61,6 @@
   (->> (applications/get-all-applications user-id)
        (map :application/id)))
 
-(def original-log* log/log*)
-
-(defn- log*-mock [coll-atom]
-  (fn [logger level throwable message]
-    (original-log* logger level throwable message)
-    (swap! coll-atom conj {:logger logger :level level :throwable throwable :message message})))
-
 (deftest test-expire-application
   (let [_ (test-helpers/create-user! {:userid "alice"})
         draft (create-application! {:draft? true
