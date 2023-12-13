@@ -18,6 +18,7 @@ Changes since v2.35
 - Application expiration can be configured with `:application-expiration-process-limit` to process a subset of applications instead of everything at once. (#3225)
 - Show organization in create workflow Forms dropdown (#3230)
 - When copying an item, reset the organization, if it's not owned by the user. (#2880)
+- Added malware scanning support. When `:malware-scanner-path` is set REMS will scan uploaded attachments and licenses with the executable at the provided path. Enabling `:enable-malware-scanner-logging` will pass the scanner executables output on `STDERR` to the REMS application log. (#2905)
 
 ### Changes
 - Application expiration now logs more, and more often. (#3225)
@@ -70,7 +71,6 @@ Changes since v2.35
 - The handling users can now see whether an event is shown to the applicant from a small eye icon in the event history. (#3156)
 - Event now shows which attachments were redacted when viewing as handling user. (#3190)
 - Workflow has new option to anonymize handling users. When enabled, applying users may only see "Handler" in events where handling user's name would appear. Event emails to applying users similarly show only anonymized name where handling user's name would appear. Application API also returns only anonymized name to applying users. Anonymized name is customizable with translation key `:t.roles/anonymous-handler`, which defaults to `:t.roles/handler`.
-- Added malware scanning support. When `:malware-scanner-path` is set REMS will scan uploaded attachments and licenses with the executable at the provided path. Enabling `:enable-malware-scanner-logging` will pass the scanner executables output on `STDERR` to the REMS application log. (#2905)
 
 ### Fixes
 - Email template parameters for `:application-expiration-notification` event are now documented. The parameters are different from standard event email parameters, which may have caused confusion.
