@@ -6,7 +6,9 @@ have notable changes.
 
 ## Unreleased
 
-Changes since v2.34.2
+Changes since v2.35
+
+## v2.35 "Selkämerenkatu" 2023-12-13
 
 **NB: This release removes the experimental application PDF export API. The non-experimental PDF export API is preferred instead. (#3098)**
 
