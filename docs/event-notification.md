@@ -33,6 +33,42 @@ The body of the HTTP PUT request will be a JSON object that contains:
 
 Other keys may also be present depending on the event type.
 
+REMS sends event notifications of the following:
+
+    :application.event/attachments-redacted AttachmentsRedactedEvent
+    :application.event/applicant-changed ApplicantChangedEvent
+    :application.event/approved ApprovedEvent
+    :application.event/closed ClosedEvent
+    :application.event/review-requested ReviewRequestedEvent
+    :application.event/reviewed ReviewedEvent
+    :application.event/copied-from CopiedFromEvent
+    :application.event/copied-to CopiedToEvent
+    :application.event/created CreatedEvent
+    :application.event/decided DecidedEvent
+    :application.event/decider-invited DeciderInvitedEvent
+    :application.event/decider-joined DeciderJoinedEvent
+    :application.event/decision-requested DecisionRequestedEvent
+    :application.event/deleted DeletedEvent
+    :application.event/draft-saved DraftSavedEvent
+    :application.event/external-id-assigned ExternalIdAssignedEvent
+    :application.event/expiration-notifications-sent ExpirationNotificationsSentEvent
+    :application.event/licenses-accepted LicensesAcceptedEvent
+    :application.event/licenses-added LicensesAddedEvent
+    :application.event/member-added MemberAddedEvent
+    :application.event/member-invited MemberInvitedEvent
+    :application.event/member-joined MemberJoinedEvent
+    :application.event/member-removed MemberRemovedEvent
+    :application.event/member-uninvited MemberUninvitedEvent
+    :application.event/rejected RejectedEvent
+    :application.event/remarked RemarkedEvent
+    :application.event/resources-changed ResourcesChangedEvent
+    :application.event/returned ReturnedEvent
+    :application.event/reviewer-invited ReviewerInvitedEvent
+    :application.event/reviewer-joined ReviewerJoinedEvent
+    :application.event/revoked RevokedEvent
+    :application.event/submitted SubmittedEvent
+    :application.event/voted VotedEvent
+
 ## Examples
 
 See [Bona fide pusher for an example use case](../resources/addons/bona-fide-pusher/README.md)
