@@ -10,7 +10,7 @@
             [rems.tempura]
             [rems.testing-util :refer [create-temp-dir]]
             [rems.util :refer [getx-in delete-directory-recursively]]
-            [taoensso.tempura.impl :refer [compile-dictionary]])
+            [taoensso.tempura.impl])
   (:import (java.io FileNotFoundException)))
 
 (deftest test-unused-translation-keys
@@ -92,10 +92,10 @@
     (assert (seq keys-in-source))
     (doseq [lang [:en :fi :sv]]
       (testing lang
-        (let [dictionary (->> (locales/load-translations {:languages [lang]
-                                                          :translations-directory "translations/"})
-                              lang
-                              (compile-dictionary false))
+        (let [dictionary (-> (locales/load-translations {:languages [lang]
+                                                         :translations-directory "translations/"})
+                             lang
+                             taoensso.tempura.impl/compile-dictionary)
               keys-in-dictionary (set (keys dictionary))]
           (assert (seq keys-in-dictionary))
           (testing "dictionary is missing translations"
