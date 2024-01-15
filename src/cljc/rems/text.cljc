@@ -1,11 +1,13 @@
 (ns rems.text
-  (:require [clojure.test :refer [deftest is]]
+  (:require [clojure.string :as str]
+            [clojure.test :refer [deftest is]]
             #?(:clj [clj-time.core :as time]
                :cljs [cljs-time.core :as time])
             #?(:clj [clj-time.format :as time-format]
                :cljs [cljs-time.format :as time-format])
             #?(:cljs [cljs-time.coerce :as time-coerce])
-            [clojure.string :as str]
+            #?(:clj [rems.locales]
+               :cljs [re-frame.core :as rf])
             [rems.common.application-util :as application-util]
             #?(:clj [rems.context :as context])
             [rems.tempura]))
@@ -24,26 +26,43 @@
                  (cons k args)))))
 
 (defn text-format
-  "Return the tempura translation for a given key and arguments.
-   Map can be used for named parameters as `(first args)`,
-   when the localization resource supports them. `(rest args)`
-   are then used as vector arguments if localization resource does not support
-   named parameters. See `rems.tempura/tr`
+  "Return the tempura translation for a given key and arguments:
 
-   (text-format :key {:arg :value} varg-1 varg-2 ...)"
+   `(text-format :key 1 2)`"
   [k & args]
-  #?(:clj (rems.tempura/tr [k :t/missing]
+  #?(:clj (rems.tempura/tr rems.locales/translations
+                           context/*lang*
+                           [k :t/missing]
                            args)
-     :cljs (rems.tempura/tr [k :t/missing (failsafe-fallback k args)]
+     :cljs (rems.tempura/tr @(rf/subscribe [:translations])
+                            @(rf/subscribe [:language])
+                            [k :t/missing (failsafe-fallback k args)]
                             args)))
+
+(defn text-format-map
+  "Return the tempura translation for a given key and argument map:
+
+   `(text-format-map :key {:a 1 :b 2})`
+
+   Additional vector of keys can be given to create vector arguments from map,
+   in which case resource compiler infers (from resource) which parameters to use:
+
+   `(text-format-map :key {:a 1 :b 2} [:b :a])`"
+  ([k arg-map] (text-format k arg-map))
+  ([k arg-map arg-vec] (apply text-format k arg-map (for [k arg-vec]
+                                                      (get arg-map k)))))
 
 (defn text-no-fallback
   "Return the tempura translation for a given key. Additional fallback
   keys can be given but there is no default fallback text."
   [& ks]
-  #?(:clj (rems.tempura/tr ks)
+  #?(:clj (rems.tempura/tr rems.locales/translations
+                           context/*lang*
+                           ks)
      :cljs (try
-             (rems.tempura/tr ks)
+             (rems.tempura/tr @(rf/subscribe [:translations])
+                              @(rf/subscribe [:language])
+                              ks)
              (catch js/Object e
                ;; fail gracefully if the re-frame state is incomplete
                (.error js/console e)
@@ -53,21 +72,23 @@
   "Return the tempura translation for a given key. Additional fallback
   keys can be given."
   [& ks]
-  #?(:clj (apply text-no-fallback
-                 (conj (vec ks)
-                       (text-format :t/missing (vec ks))))
+  #?(:clj (rems.tempura/tr rems.locales/translations
+                           context/*lang*
+                           (conj (vec ks) (text-format :t/missing (vec ks))))
      ;; NB: we can't call the text-no-fallback here as in CLJS
      ;; we can both call this as function or use as a React component
      :cljs (try
-             (rems.tempura/tr (conj (vec ks)
-                                    (text-format :t/missing (vec ks))))
+             (rems.tempura/tr @(rf/subscribe [:translations])
+                              @(rf/subscribe [:language])
+                              (conj (vec ks) (text-format :t/missing (vec ks))))
              (catch js/Object e
                ;; fail gracefully if the re-frame state is incomplete
                (.error js/console e)
                (str (vec ks))))))
 
 (defn localized [m]
-  (let [lang (rems.tempura/get-language)]
+  (let [lang #?(:clj context/*lang*
+                :cljs @(rf/subscribe [:language]))]
     (or (get m lang)
         (first (vals m)))))
 

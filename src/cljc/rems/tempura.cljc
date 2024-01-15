@@ -1,21 +1,13 @@
 (ns rems.tempura
-  (:require [clojure.string]
+  (:require [better-cond.core :as b]
+            [clojure.string]
             [clojure.test :refer [deftest is testing]]
             [clojure.walk]
-            #?(:cljs [re-frame.core :as rf])
-            #?@(:clj [[rems.context :as context]
-                      [rems.locales]])
             [taoensso.tempura]))
 
-;; backtick (`) is used to escape vector argument (%)
-(defonce ^:private +map-args+ #"(?<!`)%:([^\s`%]+)%")
-(defonce ^:private +vector-args+ #"(?<!`)%\d")
-
-(deftest test-map-args
-  (is (= ["key" "my.special/namespace?"]
-         (->> "%:key% for (%:my.special/namespace?%) `%:ignored% %:also-ignored`%"
-              (re-seq +map-args+)
-              (mapv last)))))
+;; backtick (`) is used to escape parameter (%)
+(def +vector-args+ #"(?<!`)%\d")
+(def +map-args+ #"(?<!`)%:([^\s`%]+)%")
 
 (defn- replace-map-args [resource]
   (let [res-keys (atom {})
@@ -24,73 +16,103 @@
                   (when-not (contains? @res-keys k)
                     (swap! res-keys assoc k (swap! idx inc)))
                   (get @res-keys k))
+        index! (fn [match]
+                 (let [map-arg (keyword (second match))
+                       vec-arg (upsert! map-arg)]
+                   (str "%" vec-arg)))
         resource (->> resource
-                      (clojure.walk/postwalk
-                       (fn [node]
-                         (if (string? node)
-                           (clojure.string/replace node +map-args+ #(let [map-arg (keyword (second %))
-                                                                          vec-arg (upsert! map-arg)]
-                                                                      (str "%" vec-arg)))
-                           node))))]
+                      (clojure.walk/postwalk #(if (string? %)
+                                                (clojure.string/replace % +map-args+ index!)
+                                                %)))]
     {:resource resource
      :resource-keys (->> (sort-by val @res-keys)
                          (mapv key))}))
-
-(def ^:private memoized-replace-map-args (memoize replace-map-args))
 
 (deftest test-replace-map-args
   (testing "string transformation"
     (is (= {:resource "{:x %1 :y %2}"
             :resource-keys [:x :y]}
            (replace-map-args "{:x %:x% :y %:y%}"))))
-  (testing "memoized"
-    (let [memoized-f (memoize replace-map-args)]
-      (is (= {:resource "{:x %1 :y %2}"
-              :resource-keys [:x :y]}
-             (memoized-f "{:x %:x% :y %:y%}")
-             (memoized-f "{:x %:x% :y %:y%}")))))
   (testing "hiccup transformation"
     (is (= {:resource [:div {:aria-label "argument x is %1, argument y is %2"} "{:x %1 :y %2}"]
             :resource-keys [:x :y]}
            (replace-map-args [:div {:aria-label "argument x is %:x%, argument y is %:y%"} "{:x %:x% :y %:y%}"])))))
 
-(def ^:private get-resource-compiler (:resource-compiler taoensso.tempura/default-tr-opts))
+(defn find-map-params [resource]
+  (b/cond
+    :let [extract-args #(->> (re-seq +map-args+ %)
+                             (map second))]
 
-(defn- compile-vec-args [resource vargs]
-  (let [compile-vargs (get-resource-compiler resource)]
-    (compile-vargs (vec vargs))))
+    (string? resource) (set (extract-args resource))
+    (vector? resource) (set (->> (flatten resource)
+                                 (filter string?)
+                                 (mapcat extract-args)))
+    nil))
 
-(defn- compile-map-args [resource arg-map]
-  (let [res-map (memoized-replace-map-args resource)]
-    (compile-vec-args (:resource res-map)
-                      (map arg-map (:resource-keys res-map)))))
+(deftest test-find-map-params
+  (is (= #{"x" "long.ns/y" "z"}
+         (find-map-params "arg %:x%, arg %:long.ns/y%, args %:x% %:long.ns/y% %:z%")
+         (find-map-params [:div "arg %:x%" [:span "arg %:long.ns/y%"] [:span "args %:x% %:long.ns/y% %:z%"]])))
+  (is (= #{}
+         (find-map-params (constantly "arg %:x%, arg %:long.ns/y%, args %:x% %:long.ns/y% %:z%"))
+         (find-map-params nil))))
 
-(defn- tempura-config []
-  {:dict #?(:clj rems.locales/translations
-            :cljs @(rf/subscribe [:translations]))
-   :resource-compiler (fn [resource]
-                        (fn [vargs]
-                          (cond
-                            (map? (first vargs)) (if (re-find +vector-args+ resource)
-                                                   (compile-vec-args resource (rest vargs))
-                                                   (compile-map-args resource (first vargs)))
-                            :else (compile-vec-args resource vargs))))})
+(def ^:private get-default-resource-compiler (:resource-compiler taoensso.tempura/default-tr-opts))
 
-(defn get-language []
-  #?(:clj context/*lang*
-     :cljs @(rf/subscribe [:language])))
+(defn- get-vec-compiler [resource]
+  (let [f (get-default-resource-compiler resource)]
+    (fn compile-vec-args [vargs]
+      (let [res-args (if (map? (first vargs))
+                       (vec (rest vargs))
+                       vargs)]
+        (f res-args)))))
+
+(defn- get-map-compiler [{:keys [resource resource-keys]}]
+  (let [f (get-default-resource-compiler resource)]
+    (fn compile-map-args [vargs]
+      (assert (map? (first vargs)) {:resource resource
+                                    :vargs vargs})
+      (let [res-args (mapv (first vargs) resource-keys)]
+        (f res-args)))))
+
+(defn- get-resource-compiler [resource]
+  (if (seq (find-map-params resource))
+    (get-map-compiler (replace-map-args resource))
+    (get-vec-compiler resource)))
 
 (defn tr
-  "When translation function is called with both map and vector arguments,
-   custom resource compiler can use either argument format for translation.
-   Argument formats cannot be mixed. When using both argument formats,
-   map argument must be given first followed by vector arguments:
+  "Wrapper for `taoensso.tempura/tr`."
+  ([translations language ks] (taoensso.tempura/tr {:dict translations}
+                                                   [language]
+                                                   (vec ks)))
+  ([translations language ks args] (taoensso.tempura/tr {:dict translations
+                                                         :resource-compiler get-resource-compiler}
+                                                        [language]
+                                                        (vec ks)
+                                                        (vec args))))
 
-   (tr [:key] [{:k :v} x1 x2])"
-  ([ks args] (taoensso.tempura/tr (tempura-config)
-                                  [(get-language)]
-                                  (vec ks)
-                                  (vec args)))
-  ([ks] (taoensso.tempura/tr (tempura-config)
-                             [(get-language)]
-                             (vec ks))))
+(deftest test-resource-compiler
+  (let [dict {:en
+              {:string {:no-args "test"
+                        :vector "%1 %2 %1"
+                        :map "%:x% %:y% %:x%"}
+               :hiccup {:no-args [:div {:aria-label "test"} [:span "test"]]
+                        :vector [:div {:aria-label "%1 %2 %1"} [:span "%1 %2 %1"]]
+                        :map [:div {:aria-label "%:x% %:y% %:x%"} [:span "%:x% %:y% %:x%"]]}}}]
+    (testing "no args"
+      (is (= "test"
+             (tr dict [:en] [:string/no-args])))
+      (is (= [:div {:aria-label "test"} [:span "test"]]
+             (tr dict [:en] [:hiccup/no-args]))))
+    (testing "index parameters"
+      (is (= "1 2 1"
+             (tr dict [:en] [:string/vector] [1 2 3])))
+      ;; XXX: map attributes are not translated
+      (is (= [:div {:aria-label "%1 %2 %1"} [:span "" 1 " " 2 " " 1]]
+             (tr dict [:en] [:hiccup/vector] [1 2 3]))))
+    (testing "named parameters"
+      (is (= "1 2 1"
+             (tr dict [:en] [:string/map] [{:x 1 :y 2 :z 3}])))
+      ;; XXX: map attributes are not translated
+      (is (= [:div {:aria-label "%:x% %:y% %:x%"} [:span "" 1 " " 2 " " 3]]
+             (tr dict [:en] [:hiccup/map] [{:x 1 :y 2 :z 3}]))))))
