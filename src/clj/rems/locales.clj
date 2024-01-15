@@ -2,6 +2,7 @@
   {:ns-tracker/resource-deps ["translations/da.edn" "translations/en.edn" "translations/fi.edn" "translations/sv.edn"]}
   (:require [clojure.java.io :as io]
             [clojure.set]
+            [clojure.test :refer [deftest is]]
             [clojure.tools.logging :as log]
             [medley.core :refer [deep-merge]]
             [mount.core :refer [defstate]]
@@ -37,6 +38,13 @@
     (->> (clojure.set/difference extra-keys keys)
          (map to-keyword)
          set)))
+
+(deftest test-unused-translation-keys
+  (is (empty? (unused-translation-keys {:a {:b "x" :c "x"}}
+                                       {:a {:b "y"}})))
+  (is (= #{:x :a/d}
+         (unused-translation-keys {:a {:b "x" :c "x"}}
+                                  {:a {:b "y" :d "y"} :x "y"}))))
 
 (defn- load-translation [language translations-directory theme-path]
   (let [filename (str (name language) ".edn")

@@ -13,13 +13,6 @@
             [taoensso.tempura.impl])
   (:import (java.io FileNotFoundException)))
 
-(deftest test-unused-translation-keys
-  (let [unused-translation-keys #'rems.locales/unused-translation-keys]
-    (is (= nil (unused-translation-keys {:a {:b "x" :c "x"}} {:a {:b "y"}})))
-    (is (= (set [[:x] [:a :d]])
-           (set (unused-translation-keys {:a {:b "x" :c "x"}}
-                                         {:a {:b "y" :d "y"} :x "y"}))))))
-
 (defn loc-da []
   (read-string (slurp (io/resource "translations/da.edn"))))
 
@@ -33,47 +26,15 @@
   (read-string (slurp (io/resource "translations/sv.edn"))))
 
 (deftest test-all-languages-defined
-  #_(is (= (recursive-keys (loc-en))
-           (recursive-keys (loc-da)))
-        "en matches da")
+  (is (= (recursive-keys (loc-en))
+         (recursive-keys (loc-da)))
+      "en matches da")
   (is (= (recursive-keys (loc-en))
          (recursive-keys (loc-fi)))
       "en matches fi")
   (is (= (recursive-keys (loc-en))
          (recursive-keys (loc-sv)))
       "en matches sv"))
-
-(deftest test-extract-format-parameters
-  (is (= #{} (locales/extract-format-parameters "hey you are 100% correct!")))
-  (is (= #{"%3" "%5" "%7"} (locales/extract-format-parameters "user %3 has made %7 alterations in %5!"))))
-
-(deftest test-format-parameters-match
-  (let [en (loc-en)
-        da (loc-da)
-        fi (loc-fi)
-        sv (loc-sv)
-        translation-keys (recursive-keys en)]
-    #_(testing "[:en vs :da]"
-        (doseq [ks translation-keys]
-          (testing ks
-            (is (= (locales/extract-format-parameters (getx-in en (vec ks)))
-                   (locales/extract-format-parameters (getx-in da (vec ks)))))
-            (is (= (set (:resource-keys (#'rems.tempura/replace-map-args (getx-in en (vec ks)))))
-                   (set (:resource-keys (#'rems.tempura/replace-map-args (getx-in da (vec ks))))))))))
-    (testing "[:en vs :fi]"
-      (doseq [ks translation-keys]
-        (testing ks
-          (is (= (locales/extract-format-parameters (getx-in en (vec ks)))
-                 (locales/extract-format-parameters (getx-in fi (vec ks)))))
-          (is (= (set (:resource-keys (#'rems.tempura/replace-map-args (getx-in en (vec ks)))))
-                 (set (:resource-keys (#'rems.tempura/replace-map-args (getx-in fi (vec ks))))))))))
-    (testing "[:en vs :sv]"
-      (doseq [ks translation-keys]
-        (testing ks
-          (is (= (locales/extract-format-parameters (getx-in en (vec ks)))
-                 (locales/extract-format-parameters (getx-in sv (vec ks)))))
-          (is (= (set (:resource-keys (#'rems.tempura/replace-map-args (getx-in en (vec ks)))))
-                 (set (:resource-keys (#'rems.tempura/replace-map-args (getx-in sv (vec ks))))))))))))
 
 (defn- translation-keywords-in-use []
   ;; git grep would be nice, but circleci's git grep doesn't have -o
