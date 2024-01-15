@@ -230,7 +230,10 @@
         item-selected? #(= (:form/id %) (:form/id selected-form))
         language @(rf/subscribe [:language])]
     [:div.form-group
-     [:label.administration-field-label {:for form-dropdown-id} (text :t.administration/form)]
+     [:label.administration-field-label {:for form-dropdown-id}
+      (text :t.administration/form)
+      " "
+      (text :t.administration/optional)]
      (if editing?
        (let [form (item-by-id forms :form/id (:form/id selected-form))]
          [fields/readonly-field {:id form-dropdown-id
@@ -251,9 +254,13 @@
 (defn- catalogue-item-categories-field []
   (let [categories @(rf/subscribe [::categories])
         selected-categories @(rf/subscribe [::selected-categories])
-        item-selected? (set selected-categories)]
+        item-selected? (set selected-categories)
+        config @(rf/subscribe [:rems.config/config])]
     [:div.form-group
-     [:label.administration-field-label {:for categories-dropdown-id} (text :t.administration/categories)]
+     [:label.administration-field-label {:for categories-dropdown-id}
+      (text :t.administration/categories)
+      (when-not (:enable-catalogue-tree config)
+        (str " " (text :t.administration/optional)))]
      [dropdown/dropdown
       {:id categories-dropdown-id
        :items categories

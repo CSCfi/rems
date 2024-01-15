@@ -1614,7 +1614,7 @@
             "More info URL (optional) (EN)" ""
             "More info URL (optional) (FI)" ""
             "More info URL (optional) (SV)" ""
-            "Form" "test-edit-catalogue-item form"
+            "Form (optional)" "test-edit-catalogue-item form"
             "Categories" "No categories"
             "Workflow" "test-edit-catalogue-item workflow"
             "Resource" "test-edit-catalogue-item resource"}
@@ -1655,7 +1655,7 @@
                 "More info URL (optional) (EN)" "http://google.com"
                 "More info URL (optional) (FI)" ""
                 "More info URL (optional) (SV)" ""
-                "Form" "test-edit-catalogue-item form"
+                "Form (optional)" "test-edit-catalogue-item form"
                 "Categories" "No categories"
                 "Workflow" "test-edit-catalogue-item workflow"
                 "Resource" "test-edit-catalogue-item resource"}
