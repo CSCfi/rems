@@ -9,7 +9,7 @@ have notable changes.
 Changes since v2.35
 
 ### Fixes
-- Fix users roles after deletion. This was introduced in the previous release that optimizes cache updates. (#3243)
+- Fix issue with user roles after deletion. This was introduced in the previous release that optimizes cache updates. (#3243)
 
 ## v2.35 "Selkämerenkatu" 2023-12-13
 
