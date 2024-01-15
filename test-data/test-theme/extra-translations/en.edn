@@ -1,0 +1,6 @@
+{:t
+ {:footer "CSC – Overridden in Extra Translations"
+  :unused-key "Unused"
+  :applications {:view-application-without-description "View application %:application/id% for resources: %2"
+                 :view-application-with-description "View application %1: %:application/description%"}
+  :actions {:errors {:invalid-token [:div [:p "Joining application failed."] [:p "Check the invitation token."]]}}}}
