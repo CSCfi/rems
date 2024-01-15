@@ -121,6 +121,38 @@
     (testing "db entry for application is gone"
       (is (not (contains? (set (map :id (db/get-application-ids {}))) app-id1)))))
 
+  (testing "with two applications"
+    (let [app-id1 (test-helpers/create-application! {:actor "applicant1"})
+          app-id2 (test-helpers/create-application! {:actor "applicant1"})]
+      (test-helpers/command! {:application-id app-id2
+                              :type :application.command/submit
+                              :actor "applicant1"})
+      (is (applications/get-application app-id1))
+      (is (applications/get-application app-id2))
+      (is (= [app-id1 app-id2] (sort (map :application/id (applications/get-my-applications "applicant1")))))
+      (is (= #{:applicant} (applications/get-all-application-roles "applicant1")))
+      (is (= #{"applicant1" "applicant2"} (applications/get-users-with-role :applicant)))
+
+      (applications/delete-application! app-id1)
+
+      (testing "application disappears from my applications"
+        (is (= [app-id2] (map :application/id (applications/get-my-applications "applicant1")))))
+      (testing "application disappears from all-applications-cache (apps-by-user)"
+        (is (= [app-id2] (map :application/id (applications/get-all-applications "applicant1")))))
+      (testing "role persists in roles-by-user"
+        (is (= #{:applicant} (applications/get-all-application-roles "applicant1"))))
+      (testing "role persists in users-by-role"
+        (is (= #{"applicant1" "applicant2"} (applications/get-users-with-role :applicant))))
+      (testing "deleted draft is gone"
+        (is (not (applications/get-application app-id1))))
+      (is (applications/get-application app-id2))
+      (testing "events are gone from event cache"
+        (is (empty? (db-events/get-application-events app-id1))))
+      (testing "events are gone from DB"
+        (is (empty? (db/get-application-events {:application app-id1}))))
+      (testing "db entry for application is gone"
+        (is (not (contains? (set (map :id (db/get-application-ids {}))) app-id1))))))
+
   (let [app-id1 (test-helpers/create-application! {:actor "applicant1"})]
     (test-helpers/command! {:application-id app-id1
                             :type :application.command/submit
