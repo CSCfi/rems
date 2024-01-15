@@ -1,11 +1,11 @@
 (ns rems.locales
   {:ns-tracker/resource-deps ["translations/da.edn" "translations/en.edn" "translations/fi.edn" "translations/sv.edn"]}
   (:require [clojure.java.io :as io]
-            [clojure.set :as set]
+            [clojure.set]
             [clojure.tools.logging :as log]
             [medley.core :refer [deep-merge]]
             [mount.core :refer [defstate]]
-            [rems.common.util :refer [recursive-keys]]
+            [rems.common.util :refer [recursive-keys to-keyword]]
             [rems.config :refer [env]])
   (:import (java.io FileNotFoundException)))
 
@@ -31,25 +31,12 @@
   (let [theme-dir (.getParentFile (io/file theme-path))]
     (io/file theme-dir "extra-translations")))
 
-(defn extract-format-parameters [string]
-  (set
-   (when (string? string)
-     (re-seq #"%\d+" string))))
-
-(defn- unused-translation-keys [translations extras]
+(defn unused-translation-keys [translations extras]
   (let [keys (set (recursive-keys translations))
         extra-keys (set (recursive-keys extras))]
-    (seq (set/difference extra-keys keys))))
-
-(defn- nonmatching-format-parameters [translations extras]
-  (seq
-   (for [k (recursive-keys extras)
-         :let [params (extract-format-parameters (get-in translations k))
-               extra-params (extract-format-parameters (get-in extras k))]
-         :when (not= params extra-params)]
-     {:key k
-      :translations params
-      :extra-translations extra-params})))
+    (->> (clojure.set/difference extra-keys keys)
+         (map to-keyword)
+         set)))
 
 (defn- load-translation [language translations-directory theme-path]
   (let [filename (str (name language) ".edn")
@@ -59,10 +46,8 @@
       (let [extra-file (io/file extra-path filename)
             extra-translations (translations-from-file extra-file)]
         (log/info "Loaded extra translations from" (str extra-file))
-        (when-let [unused (unused-translation-keys translations extra-translations)]
+        (when-some [unused (not-empty (unused-translation-keys translations extra-translations))]
           (log/warn "Unused translation keys defined in" (str extra-file) ":" unused))
-        (when-let [errors (nonmatching-format-parameters translations extra-translations)]
-          (log/warn "Nonmatching format parameters in" (str extra-file) ":" (pr-str errors)))
         (deep-merge {language translations} {language extra-translations}))
       {language translations})))
 
@@ -74,7 +59,3 @@
     (throw (RuntimeException. ":translations-directory was not set in config"))))
 
 (defstate translations :start (load-translations env))
-
-(defn tempura-config []
-  (assert (map? translations) {:translations translations})
-  {:dict translations})

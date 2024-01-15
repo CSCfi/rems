@@ -497,6 +497,21 @@
   (is (= #{[:a :b] [:a :c] [:a :d :e] [:a :d :f]}
          (recursive-keys {:a {:b 1 :c nil :d {:e "foo" :f [3]}}}))))
 
+(defn to-keyword [ks]
+  (case (count ks)
+    0 nil
+    1 (keyword (name (first ks)))
+    (let [kw-ns (->> (butlast ks)
+                     (map name)
+                     (str/join "."))]
+      (keyword kw-ns
+               (name (last ks))))))
+
+(deftest test-to-keyword
+  (is (= nil (to-keyword [])))
+  (is (= :test (to-keyword ["test"])))
+  (is (= :x.y.z/test (to-keyword ["x" "y" "z" "test"]))))
+
 (defn parse-int [s]
   #?(:clj (try
             (when s
