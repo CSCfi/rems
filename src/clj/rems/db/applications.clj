@@ -280,19 +280,29 @@
                                                      updated-users))
 
         ;; update all the users that are in this round
-        updated-roles-by-user (->> updated-users
-                                   (mapcat new-updated-apps-by-user)
-                                   (distinct-by :application/id)
-                                   group-roles-by-user)
+        updated-roles-by-user (into {}
+                                    (for [userid updated-users
+                                          :let [apps (->> userid
+                                                          new-personalized-apps-by-user
+                                                          (distinct-by :application/id))
+                                                roles (->> apps
+                                                           (mapcat :application/roles)
+                                                           set)]]
+                                      [userid roles]))
         new-roles-by-user (doall (merge (apply dissoc old-roles-by-user updated-users)
                                         updated-roles-by-user))
 
+        ;; now calculate the reverse, i.e. users by role
+        new-updated-users-by-role (->> (for [user updated-users
+                                             role (updated-roles-by-user user)]
+                                         {role #{user}})
+                                       (apply merge-with set/union))
         ;; update all the users that are in this round
         new-users-by-role (->> old-users-by-role
                                ;; remove users updated in this round
                                (map-vals (fn [users] (apply disj users updated-users)))
                                ;; add users back to correct groups
-                               (merge-with set/union (group-users-by-role (vals new-updated-enriched-apps)))
+                               (merge-with set/union new-updated-users-by-role)
                                doall)]
 
     {::raw-apps new-raw-apps
