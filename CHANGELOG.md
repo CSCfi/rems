@@ -8,6 +8,9 @@ have notable changes.
 
 Changes since v2.35
 
+### Fixes
+- Mark form as optional in catalogue item creation. Also consider categories optional unless the catalogue tree is enabled. (#3244)
+
 ## v2.35 "Selkämerenkatu" 2023-12-13
 
 **NB: This release removes the experimental application PDF export API. The non-experimental PDF export API is preferred instead. (#3098)**
