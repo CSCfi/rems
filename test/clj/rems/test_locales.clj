@@ -113,7 +113,8 @@
       (testing "warnings from unused translation keys"
         (is (log-test/logged? "rems.locales"
                               :warn
-                              "Unused translation keys defined in ./test-data/test-theme/extra-translations/en.edn: :t/unused-key"))))))
+                              "Unused translation keys defined in ./test-data/test-theme/extra-translations/en.edn : #{:t/unused-key}")
+            {:log (log-test/the-log)})))))
 
 (deftest theme-path-given-no-extra-translations
   (testing "translations work with theme-path in config and no extra-translations"

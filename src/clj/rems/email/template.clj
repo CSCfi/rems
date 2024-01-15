@@ -303,7 +303,7 @@
                                                       [:application-id :applicant]))
             params {:actions-url (str (:public-url env) "actions")
                     :applications (str/join "\n" formatted-applications)
-                    :recipient handler}]
+                    :recipient (application-util/get-member-name handler)}]
         {:to-user (:userid handler)
          :subject (text :t.email.handler-reminder/subject)
          :body (text-format-map :t.email.handler-reminder/message
@@ -321,7 +321,7 @@
                                                       [:application-id :applicant]))
             params {:actions-url (str (:public-url env) "actions")
                     :applications (str/join "\n" formatted-applications)
-                    :recipient reviewer}]
+                    :recipient (application-util/get-member-name reviewer)}]
         {:to-user (:userid reviewer)
          :subject (text :t.email.reviewer-reminder/subject)
          :body (text-format-map :t.email.reviewer-reminder/message

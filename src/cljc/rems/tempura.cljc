@@ -53,9 +53,8 @@
   (is (= #{"x" "long.ns/y" "z"}
          (find-map-params "arg %:x%, arg %:long.ns/y%, args %:x% %:long.ns/y% %:z%")
          (find-map-params [:div "arg %:x%" [:span "arg %:long.ns/y%"] [:span "args %:x% %:long.ns/y% %:z%"]])))
-  (is (= #{}
-         (find-map-params (constantly "arg %:x%, arg %:long.ns/y%, args %:x% %:long.ns/y% %:z%"))
-         (find-map-params nil))))
+  (is (nil? (find-map-params (constantly "arg %:x%, arg %:long.ns/y%, args %:x% %:long.ns/y% %:z%"))))
+  (is (nil? (find-map-params nil))))
 
 (def ^:private get-default-resource-compiler (:resource-compiler taoensso.tempura/default-tr-opts))
 
@@ -101,18 +100,18 @@
                         :map [:div {:aria-label "%:x% %:y% %:x%"} [:span "%:x% %:y% %:x%"]]}}}]
     (testing "no args"
       (is (= "test"
-             (tr dict [:en] [:string/no-args])))
+             (tr dict :en [:string/no-args])))
       (is (= [:div {:aria-label "test"} [:span "test"]]
-             (tr dict [:en] [:hiccup/no-args]))))
+             (tr dict :en [:hiccup/no-args]))))
     (testing "index parameters"
       (is (= "1 2 1"
-             (tr dict [:en] [:string/vector] [1 2 3])))
-      ;; XXX: map attributes are not translated
+             (tr dict :en [:string/vector] [1 2 3])))
+      ;; map attributes are identified by custom resource compiler, but tempura does not use them
       (is (= [:div {:aria-label "%1 %2 %1"} [:span "" 1 " " 2 " " 1]]
-             (tr dict [:en] [:hiccup/vector] [1 2 3]))))
+             (tr dict :en [:hiccup/vector] [1 2 3]))))
     (testing "named parameters"
       (is (= "1 2 1"
-             (tr dict [:en] [:string/map] [{:x 1 :y 2 :z 3}])))
-      ;; XXX: map attributes are not translated
-      (is (= [:div {:aria-label "%:x% %:y% %:x%"} [:span "" 1 " " 2 " " 3]]
-             (tr dict [:en] [:hiccup/map] [{:x 1 :y 2 :z 3}]))))))
+             (tr dict :en [:string/map] [{:x 1 :y 2 :z 3}])))
+      ;; map attributes are identified by custom resource compiler, but tempura does not use them
+      (is (= [:div {:aria-label "%1 %2 %1"} [:span "" 1 " " 2 " " 1]]
+             (tr dict :en [:hiccup/map] [{:x 1 :y 2 :z 3}]))))))
