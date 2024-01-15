@@ -8,6 +8,9 @@ have notable changes.
 
 Changes since v2.35
 
+### Additions
+- Email templates may now use named format parameters. English localizations have been updated for reference. (#3241)
+
 ### Fixes
 - Fix issue with user roles after deletion. This was introduced in the previous release that optimizes cache updates. (#3243)
 - Mark form as optional in catalogue item creation. Also consider categories optional unless the catalogue tree is enabled. (#3244)
