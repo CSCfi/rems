@@ -432,7 +432,7 @@
                       :users "Godkendte brugere"}
         :title "Data Use Ontology"
         :validation {:mondo-not-valid "Angivne Mondo-koder er ikke kompatible:"
-                     :needs-validation "Data Use Ontology restriction needs to be reviewed manually:"}}
+                     :needs-validation "DUO-begrænsninger skal gennemses manuelt:"}}
   ;; Format parameters for all emails (unless otherwise noted):
   ;; %1 - name of recipient
   ;; %2 - name of event actor
@@ -591,10 +591,10 @@
          :opens-in-new-window "Åbner i nyt vindue"}
   :login {:alternative "Andre muligheder for log-ind"
           :alternative-text ""
-          :errors {:invalid-user "Log-ind mislykkedes på grund af manglende information (%1). Kontroller venligst din  identifikationstjeneste."
+          :errors {:invalid-user "Log-ind mislykkedes på grund af manglende information (%1). Kontroller venligst din identifikationstjeneste."
                    :email "E-mail"
                    :name "Navn"
-                   :unknown "Log-ind mislykkedes. Kontroller venligst din  identifikationstjeneste."}
+                   :unknown "Log-ind mislykkedes. Kontroller venligst din identifikationstjeneste."}
           :fake-text ""
           :fake-title ""
           :intro [:div [:h1 "Velkommen til REMS"] [:p "Dette er en demo-version hvor du kan teste REMS. Demo-versionen udstiller nogle fiktive datasæt som du kan ansøge om adgang til. Læs mere påon " [:a {:href "/extra-pages/about"} "info-siden"] " page."]]
