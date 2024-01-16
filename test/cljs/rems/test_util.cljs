@@ -1,9 +1,12 @@
 (ns rems.test-util
-  (:require [clojure.test :refer [deftest is testing]]
+  (:require [clojure.test :refer [deftest is testing use-fixtures]]
             [cljs-time.core :as time]
             [cljs-time.format :as format]
             [rems.text :refer [time-format localize-time]]
+            [rems.testing :refer [init-client-fixture]]
             [rems.util :refer [linkify]]))
+
+(use-fixtures :each init-client-fixture)
 
 (def test-time #inst "1980-01-02T13:45:00.000Z")
 
@@ -22,7 +25,8 @@
 (deftest test-linkify
   (let [link [:a {:target :_blank :href "http://www.abc.com"} "http://www.abc.com"]]
     (testing "retain original string"
-      (is (= (apply str (linkify "a b c") "a b c"))))
+      (is (= (linkify "a b c")
+             ["a b c"])))
     (testing "change link strings to hiccup links"
       (is (= (linkify "See http://www.abc.com")
              ["See " link]))

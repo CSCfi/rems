@@ -1,16 +1,10 @@
 (ns rems.test-fields
   (:require [clojure.test :refer [deftest is testing use-fixtures]]
-            [re-frame.core :as rf]
             [rems.fields :refer [field-wrapper toggle-diff-button]]
-            [rems.spa]))
+            [rems.spa]
+            [rems.testing :refer [init-client-fixture]]))
 
-(use-fixtures
-  :once
-  (fn [f]
-   ;; TODO: load translations file
-    (rf/dispatch [:initialize-db])
-    (rf/dispatch [:loaded-translations {}])
-    (f)))
+(use-fixtures :each init-client-fixture)
 
 (defn contains-hiccup? [needle haystack]
   (some #(= % needle) (tree-seq vector? identity haystack)))

@@ -1,6 +1,9 @@
 (ns rems.administration.test-create-license
-  (:require [clojure.test :refer [deftest is testing]]
-            [rems.administration.create-license :refer [parse-textcontent build-request]]))
+  (:require [clojure.test :refer [deftest is testing use-fixtures]]
+            [rems.administration.create-license :refer [parse-textcontent build-request]]
+            [rems.testing :refer [init-client-fixture]]))
+
+(use-fixtures :each init-client-fixture)
 
 (deftest parse-textcontent-test
   (testing "linked license"

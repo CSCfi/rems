@@ -2,16 +2,14 @@
   (:require [clojure.test :refer [deftest is testing use-fixtures]]
             [re-frame.core :as rf]
             [rems.administration.create-form :refer [build-request build-request-field build-localized-string]]
-            [rems.testing :refer [isolate-re-frame-state]]
+            [rems.identity] ; XXX: initializes missing event handlers like :set-roles
+            [rems.testing :refer [init-client-fixture]]
             [rems.util :refer [getx-in]]))
 
-(use-fixtures
-  :each
-  isolate-re-frame-state)
+(use-fixtures :each init-client-fixture)
 
 (defn reset-form []
   (rf/dispatch-sync [:rems.administration.create-form/enter-page]))
-
 
 (deftest add-form-field-test
   (rf/dispatch-sync [:set-roles [:owner]])

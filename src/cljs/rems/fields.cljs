@@ -57,7 +57,7 @@
   (into [:div.form-control.diff {:id id}]
         (formatted-diff value previous-value)))
 
-(defn- toggle-diff-button [diff-visible on-toggle-diff]
+(defn toggle-diff-button [diff-visible on-toggle-diff]
   [:a.toggle-diff {:href "#"
                    :on-click (fn [event]
                                (.preventDefault event)

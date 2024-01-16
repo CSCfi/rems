@@ -102,10 +102,10 @@
     ""
     (text (get todos todo :t.applications.todos/unknown))))
 
-(defn- time-format []
+(defn time-format []
   (time-format/formatter "yyyy-MM-dd HH:mm" (time/default-time-zone)))
 
-(defn- time-format-with-seconds []
+(defn time-format-with-seconds []
   (time-format/formatter "yyyy-MM-dd HH:mm:ss" (time/default-time-zone)))
 
 (defn localize-time [time]
