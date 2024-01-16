@@ -8,10 +8,10 @@ have notable changes.
 
 Changes since v2.35.1
 
-## v2.35.1 "Selkämerenkatu +1" 2024-01-16
-
 ### Additions
 - Email templates may now use named format parameters. English localizations have been updated for reference. (#3241)
+
+## v2.35.1 "Selkämerenkatu +1" 2024-01-16
 
 ### Fixes
 - Fix issue with user roles after deletion. This was introduced in the previous release that optimizes cache updates. (#3243)
