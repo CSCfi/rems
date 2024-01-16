@@ -1,4 +1,11 @@
 {
+  "scripts": {
+    "deps-ci": "npm install --save=false --package-lock=true",
+    "shadow-build": "shadow-cljs compile app --config-merge '{:build-options {:cache-level :jars}}'",
+    "shadow-release": "shadow-cljs release app",
+    "shadow-test": "shadow-cljs compile cljs-test && karma start karma.conf.js --single-run",
+    "shadow-watch": "shadow-cljs watch app"
+  },
   "devDependencies": {
     "diff-match-patch": "^1.0.5",
     "karma": "^6.3.20",

@@ -37,7 +37,7 @@ jobs:
             - &cache-key v4-dependencies-{{ checksum "project.clj" }}-{{ checksum "package-lock.json" }}-{{ checksum "shadow-cljs.edn" }}
             # fallback to using the latest cache if no exact match is found
             - v4-dependencies-
-      # build shadow-cljs already so that all maven deps get cached
+      # shadow-build installs npm packages, builds shadow-cljs app and caches maven deps as well
       - run: lein do deps, shadow-build
       - save_cache:
           paths:
@@ -63,7 +63,7 @@ jobs:
           key: *cache-key
       # verify that we can run unit tests without the database:
       - run: DATABASE_URL=invalid lein kaocha --reporter kaocha.report/documentation unit
-      - run: lein shadow-test
+      - run: npm run shadow-test # skips installing npm dependencies as they are already in workspace
       - store_test_results:
           path: target/test-results
 
