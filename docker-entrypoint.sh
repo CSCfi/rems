@@ -30,7 +30,7 @@ for cmd in "${cmd_array[@]}"
 do
     [ "${cmd}" = "run" ] && cmd_prefix="exec"
 
-    FULL_COMMAND="${cmd_prefix} java --illegal-access=deny -Drems.config=config/config.edn -jar rems.jar ${cmd}"
+    FULL_COMMAND="${cmd_prefix} java -Drems.config=config/config.edn -jar rems.jar ${cmd}"
     echo "####################"
     echo "########## RUNNING COMMAND: ${FULL_COMMAND}"
     echo "####################"
