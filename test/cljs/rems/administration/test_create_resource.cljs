@@ -1,6 +1,9 @@
 (ns rems.administration.test-create-resource
-  (:require [clojure.test :refer [deftest is testing]]
-            [rems.administration.create-resource :refer [build-request]]))
+  (:require [clojure.test :refer [deftest is testing use-fixtures]]
+            [rems.administration.create-resource :refer [build-request]]
+            [rems.testing :refer [init-spa-fixture]]))
+
+(use-fixtures :each init-spa-fixture)
 
 (deftest build-request-test
   (let [form {:organization {:organization/id "organization1"}

@@ -1,6 +1,9 @@
 (ns rems.administration.test-create-catalogue-item
-  (:require [clojure.test :refer [deftest is testing]]
-            [rems.administration.create-catalogue-item :refer [build-request resource-label]]))
+  (:require [clojure.test :refer [deftest is testing use-fixtures]]
+            [rems.administration.create-catalogue-item :refer [build-request resource-label]]
+            [rems.testing :refer [init-spa-fixture]]))
+
+(use-fixtures :each init-spa-fixture)
 
 (deftest build-request-test
   (let [form {:title {:en "en title"

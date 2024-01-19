@@ -1,6 +1,9 @@
 (ns rems.administration.test-create-workflow
-  (:require [clojure.test :refer [deftest is testing]]
-            [rems.administration.create-workflow :refer [build-create-request build-edit-request]]))
+  (:require [clojure.test :refer [deftest is testing use-fixtures]]
+            [rems.administration.create-workflow :refer [build-create-request build-edit-request]]
+            [rems.testing :refer [init-spa-fixture]]))
+
+(use-fixtures :each init-spa-fixture)
 
 (deftest build-create-request-test
   (testing "all workflows"

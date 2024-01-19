@@ -91,11 +91,11 @@
 
   :clean-targets ["target"]
 
-  :aliases {"npm-deps" ["shell" "sh" "-c" "npm install --save=false --package-lock=true"] ; npm ci always removes node_modules by design, which is unnecessary and time consuming
-            "shadow-build" ["do" ["npm-deps"] ["shell" "sh" "-c" "npx shadow-cljs compile app --config-merge '{:build-options {:cache-level :jars}}'"]]
-            "shadow-release" ["do" ["npm-deps"] ["shell" "sh" "-c" "npx shadow-cljs release app"]]
-            "shadow-test" ["do" ["npm-deps"] ["shell" "sh" "-c" "npx shadow-cljs compile cljs-test && npx karma start"]]
-            "shadow-watch" ["do" ["npm-deps"] ["shell" "sh" "-c" "npx shadow-cljs watch app"]]
+  :aliases {"npm-deps" ["shell" "sh" "-c" "npm run deps-ci"] ; npm ci always removes node_modules by design, which is unnecessary and time consuming
+            "shadow-build" ["do" ["npm-deps"] ["shell" "sh" "-c" "npm run shadow-build"]]
+            "shadow-release" ["do" ["npm-deps"] ["shell" "sh" "-c" "npm run shadow-release"]]
+            "shadow-test" ["do" ["npm-deps"] ["shell" "sh" "-c" "npm run shadow-test"]]
+            "shadow-watch" ["do" ["npm-deps"] ["shell" "sh" "-c" "npm run shadow-watch"]]
             "kaocha" ["with-profile" "test" "run" "-m" "kaocha.runner"]
             "browsertests" ["do" ["shadow-build"] ["kaocha" "browser"]]
             "alltests" ["do" ["shadow-build"] ["kaocha"] ["shadow-test"]]

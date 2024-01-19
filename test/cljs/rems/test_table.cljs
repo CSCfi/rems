@@ -1,6 +1,9 @@
 (ns rems.test-table
-  (:require [clojure.test :refer [deftest is testing]]
-            [rems.table :refer [apply-row-defaults parse-search-terms]]))
+  (:require [clojure.test :refer [deftest is testing use-fixtures]]
+            [rems.table :refer [apply-row-defaults parse-search-terms]]
+            [rems.testing :refer [init-spa-fixture]]))
+
+(use-fixtures :each init-spa-fixture)
 
 (deftest test-apply-row-defaults
   (testing "all custom"

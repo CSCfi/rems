@@ -9,7 +9,6 @@ module.exports = function (config) {
     junitReporter: {outputDir: 'target/test-results'},
     colors: true,
     logLevel: config.LOG_INFO,
-    singleRun: true,
     client: {
       args: ["shadow.test.karma.init"],
     }

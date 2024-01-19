@@ -133,6 +133,13 @@ They will run the tests in a headless Chrome via Karma and Shadow-CLJS.
 
 You may need to run `npm install karma karma-cljs-test karma-chrome-launcher` first to install the necessary tools and packages.
 
+Running tests in watch mode requires a background process that watches ClojureScript code and re-compiles on changes. This can be achieved by starting both Karma and Shadow-CLJS in separate processes:
+
+```
+npx karma start karma.conf.js
+npx shadow-cljs watch cljs-test
+```
+
 ### Running all the tests
 
 To conveniently run all the tests you can run the lein alias
