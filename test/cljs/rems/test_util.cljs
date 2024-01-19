@@ -25,31 +25,29 @@
 (deftest test-linkify
   (let [link [:a {:target :_blank :href "http://www.abc.com"} "http://www.abc.com"]]
     (testing "retain original string"
-      (is (= (linkify "a b c")
-             ["a b c"])))
+      (is (= ["a b c"]
+             (linkify "a b c"))))
     (testing "change link strings to hiccup links"
-      (is (= (linkify "See http://www.abc.com")
-             ["See " link]))
-      (is (= (linkify "See https://www.abc.com")
-             ["See " [:a {:target :_blank :href "https://www.abc.com"} "https://www.abc.com"]])))
+      (is (= ["See " link]
+             (linkify "See http://www.abc.com")))
+      (is (= ["See " [:a {:target :_blank :href "https://www.abc.com"} "https://www.abc.com"]]
+             (linkify "See https://www.abc.com"))))
     (testing "do not include subsequent punctuation marks in the link"
-      (is (= (linkify "See http://www.abc.com.")
-             ["See " link "."]))
-      (is (= (linkify "See http://www.abc.com, please.")
-             ["See " link ", please."]))
-      (is (= (linkify "See http://www.abc.com?")
-             ["See " link "?"]))
-      (is (= (linkify "See http://www.abc.com...")
-             ["See " link "..."]))
-      (is (= (linkify "See http://www.abc.com!")
-             ["See " link "!"])))
+      (is (= ["See " link "."]
+             (linkify "See http://www.abc.com.")))
+      (is (= ["See " link ", please."]
+             (linkify "See http://www.abc.com, please.")))
+      (is (= ["See " link "?"]
+             (linkify "See http://www.abc.com?")))
+      (is (= ["See " link "..."]
+             (linkify "See http://www.abc.com...")))
+      (is (= ["See " link "!"]
+             (linkify "See http://www.abc.com!"))))
     (testing "do not include subsequent parentheses in the link"
-      (is (= (linkify "(See http://www.abc.com.)")
-             ["(See " link ".)"]))
-      (is (= (linkify "(See http://www.abc.com?)")
-             ["(See " link "?)"])))
+      (is (= ["(See " link ".)"]
+             (linkify "(See http://www.abc.com.)")))
+      (is (= ["(See " link "?)"]
+             (linkify "(See http://www.abc.com?)"))))
     (testing "a link without http-prefix"
-      (is (= (linkify "(See www-page at www.abc.com.)")
-             ["(See www-page at "
-              [:a {:target :_blank :href "http://www.abc.com"} "www.abc.com"]
-              ".)"])))))
+      (is (= ["(See www-page at " [:a {:target :_blank :href "http://www.abc.com"} "www.abc.com"] ".)"]
+             (linkify "(See www-page at www.abc.com.)"))))))
