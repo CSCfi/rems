@@ -15,7 +15,7 @@
                  [com.fasterxml.jackson.datatype/jackson-datatype-joda "2.14.1"]
                  [com.stuartsierra/dependency "1.0.0"]
                  [com.rpl/specter "1.1.4"]
-                 [com.taoensso/tempura "1.2.1"] ; 1.5.3 fails Wrong number of args (2) passed to: taoensso.tempura.impl/eval38628/compile-dictionary--38641, there must be a backwards incompatible change somewhere
+                 [com.taoensso/tempura "1.5.3"]
                  [compojure "1.7.0"]
                  [conman "0.8.4"] ; 0.8.5 switches to next.jdbc, which breaks stuff and requires proper testing in production
                  [cprop "0.1.19"]

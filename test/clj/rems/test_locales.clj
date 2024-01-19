@@ -5,20 +5,14 @@
             [clojure.string :as str]
             [clojure.test :refer [deftest is testing]]
             [clojure.tools.logging]
+            [clojure.tools.logging.test :as log-test]
             [rems.common.util :refer [recursive-keys]]
             [rems.locales :as locales]
             [rems.tempura]
             [rems.testing-util :refer [create-temp-dir]]
             [rems.util :refer [getx-in delete-directory-recursively]]
-            [taoensso.tempura.impl :refer [compile-dictionary]])
+            [taoensso.tempura.impl])
   (:import (java.io FileNotFoundException)))
-
-(deftest test-unused-translation-keys
-  (let [unused-translation-keys #'rems.locales/unused-translation-keys]
-    (is (= nil (unused-translation-keys {:a {:b "x" :c "x"}} {:a {:b "y"}})))
-    (is (= (set [[:x] [:a :d]])
-           (set (unused-translation-keys {:a {:b "x" :c "x"}}
-                                         {:a {:b "y" :d "y"} :x "y"}))))))
 
 (defn loc-da []
   (read-string (slurp (io/resource "translations/da.edn"))))
@@ -33,47 +27,15 @@
   (read-string (slurp (io/resource "translations/sv.edn"))))
 
 (deftest test-all-languages-defined
-  #_(is (= (recursive-keys (loc-en))
-           (recursive-keys (loc-da)))
-        "en matches da")
+  (is (= (recursive-keys (loc-en))
+         (recursive-keys (loc-da)))
+      "en matches da")
   (is (= (recursive-keys (loc-en))
          (recursive-keys (loc-fi)))
       "en matches fi")
   (is (= (recursive-keys (loc-en))
          (recursive-keys (loc-sv)))
       "en matches sv"))
-
-(deftest test-extract-format-parameters
-  (is (= #{} (locales/extract-format-parameters "hey you are 100% correct!")))
-  (is (= #{"%3" "%5" "%7"} (locales/extract-format-parameters "user %3 has made %7 alterations in %5!"))))
-
-(deftest test-format-parameters-match
-  (let [en (loc-en)
-        da (loc-da)
-        fi (loc-fi)
-        sv (loc-sv)
-        translation-keys (recursive-keys en)]
-    #_(testing "[:en vs :da]"
-        (doseq [ks translation-keys]
-          (testing ks
-            (is (= (locales/extract-format-parameters (getx-in en (vec ks)))
-                   (locales/extract-format-parameters (getx-in da (vec ks)))))
-            (is (= (set (:resource-keys (#'rems.tempura/replace-map-args (getx-in en (vec ks)))))
-                   (set (:resource-keys (#'rems.tempura/replace-map-args (getx-in da (vec ks))))))))))
-    (testing "[:en vs :fi]"
-      (doseq [ks translation-keys]
-        (testing ks
-          (is (= (locales/extract-format-parameters (getx-in en (vec ks)))
-                 (locales/extract-format-parameters (getx-in fi (vec ks)))))
-          (is (= (set (:resource-keys (#'rems.tempura/replace-map-args (getx-in en (vec ks)))))
-                 (set (:resource-keys (#'rems.tempura/replace-map-args (getx-in fi (vec ks))))))))))
-    (testing "[:en vs :sv]"
-      (doseq [ks translation-keys]
-        (testing ks
-          (is (= (locales/extract-format-parameters (getx-in en (vec ks)))
-                 (locales/extract-format-parameters (getx-in sv (vec ks)))))
-          (is (= (set (:resource-keys (#'rems.tempura/replace-map-args (getx-in en (vec ks)))))
-                 (set (:resource-keys (#'rems.tempura/replace-map-args (getx-in sv (vec ks))))))))))))
 
 (defn- translation-keywords-in-use []
   ;; git grep would be nice, but circleci's git grep doesn't have -o
@@ -92,10 +54,10 @@
     (assert (seq keys-in-source))
     (doseq [lang [:en :fi :sv]]
       (testing lang
-        (let [dictionary (->> (locales/load-translations {:languages [lang]
-                                                          :translations-directory "translations/"})
-                              lang
-                              (compile-dictionary false))
+        (let [dictionary (-> (locales/load-translations {:languages [lang]
+                                                         :translations-directory "translations/"})
+                             lang
+                             taoensso.tempura.impl/compile-dictionary)
               keys-in-dictionary (set (keys dictionary))]
           (assert (seq keys-in-dictionary))
           (testing "dictionary is missing translations"
@@ -140,25 +102,19 @@
                                                       :languages [:xx]})))))
 
 (deftest override-translations-with-extra-translations
-  (let [log (atom [])
-        ;; redeffing log* is hacky, could instead set *logger-factory* to a fake logger
-        translations (with-redefs [clojure.tools.logging/log* (fn [_ _ _ msg] (swap! log conj (str msg)))]
-                       (locales/load-translations {:languages [:en]
+  (log-test/with-log
+    (let [translations (locales/load-translations {:languages [:en]
                                                    :translations-directory "translations/"
-                                                   :theme-path "./example-theme/theme.edn"}))]
-    (testing "extra translations override translations"
-      (is (= "CSC – Overridden in Extra Translations" (getx-in translations [:en :t :footer])))
-      (is (= "Text %1" (getx-in translations [:en :t :create-license :license-text]))))
-    (testing "extra translations don't override keys that are not defined in extras"
-      (is (= "Active" (getx-in translations [:en :t :administration :active]))))
-    (testing "warnings"
-      (is (< 0 (count @log)))
-      (testing "for unused key"
-        (is (some #(.contains % ":unused-key") @log)
-            (pr-str @log)))
-      (testing "for extra format parameters"
-        (is (some #(.contains % "%1") @log)
-            (pr-str @log))))))
+                                                   :theme-path "./test-data/test-theme/theme.edn"})]
+      (testing "extra translations override translations"
+        (is (= "CSC – Overridden in Extra Translations" (getx-in translations [:en :t :footer]))))
+      (testing "extra translations don't override keys that are not defined in extras"
+        (is (= "Active" (getx-in translations [:en :t :administration :active]))))
+      (testing "warnings from unused translation keys"
+        (is (log-test/logged? "rems.locales"
+                              :warn
+                              "Unused translation keys defined in ./test-data/test-theme/extra-translations/en.edn : #{:t/unused-key}")
+            {:log (log-test/the-log)})))))
 
 (deftest theme-path-given-no-extra-translations
   (testing "translations work with theme-path in config and no extra-translations"
