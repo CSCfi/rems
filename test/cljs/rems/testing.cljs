@@ -8,7 +8,7 @@
   #_(rf/clear-sub)
   (rf/clear-subscription-cache!))
 
-(defn init-client-fixture [f]
+(defn init-spa-fixture [f]
   (let [restore-fn (rf/make-restore-fn)]
     (try
       (clear-rf-state!)

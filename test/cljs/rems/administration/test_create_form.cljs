@@ -3,10 +3,10 @@
             [re-frame.core :as rf]
             [rems.administration.create-form :refer [build-request build-request-field build-localized-string]]
             [rems.identity] ; XXX: initializes missing event handlers like :set-roles
-            [rems.testing :refer [init-client-fixture]]
+            [rems.testing :refer [init-spa-fixture]]
             [rems.util :refer [getx-in]]))
 
-(use-fixtures :each init-client-fixture)
+(use-fixtures :each init-spa-fixture)
 
 (defn reset-form []
   (rf/dispatch-sync [:rems.administration.create-form/enter-page]))

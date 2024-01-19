@@ -3,10 +3,10 @@
             [cljs-time.core :as time]
             [cljs-time.format :as format]
             [rems.text :refer [time-format localize-time]]
-            [rems.testing :refer [init-client-fixture]]
+            [rems.testing :refer [init-spa-fixture]]
             [rems.util :refer [linkify]]))
 
-(use-fixtures :each init-client-fixture)
+(use-fixtures :each init-spa-fixture)
 
 (def test-time #inst "1980-01-02T13:45:00.000Z")
 

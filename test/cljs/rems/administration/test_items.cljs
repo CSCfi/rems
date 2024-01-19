@@ -1,9 +1,9 @@
 (ns rems.administration.test-items
   (:require [clojure.test :refer [deftest is use-fixtures]]
             [rems.administration.items :as items]
-            [rems.testing :refer [init-client-fixture]]))
+            [rems.testing :refer [init-spa-fixture]]))
 
-(use-fixtures :each init-client-fixture)
+(use-fixtures :each init-spa-fixture)
 
 (deftest add-item-test
   (is (vector? (items/add nil {})))

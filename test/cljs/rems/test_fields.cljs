@@ -2,9 +2,9 @@
   (:require [clojure.test :refer [deftest is testing use-fixtures]]
             [rems.fields :refer [field-wrapper toggle-diff-button]]
             [rems.spa]
-            [rems.testing :refer [init-client-fixture]]))
+            [rems.testing :refer [init-spa-fixture]]))
 
-(use-fixtures :each init-client-fixture)
+(use-fixtures :each init-spa-fixture)
 
 (defn contains-hiccup? [needle haystack]
   (some #(= % needle) (tree-seq vector? identity haystack)))
