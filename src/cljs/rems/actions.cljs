@@ -8,7 +8,7 @@
             [rems.flash-message :as flash-message]
             [rems.profile :as profile]
             [rems.search :as search]
-            [rems.text :refer [text text-format]]))
+            [rems.text :refer [text text-format text-format-map]]))
 
 (rf/reg-event-fx
  ::enter-page
@@ -48,7 +48,7 @@
         :open? true
         :title (text :t.actions/todo-applications)
         :bottom-less-button? false
-        :always [:div (text-format :t.actions/todo-applications-count {:count (some-> @(rf/subscribe [::todo-applications :data]) count)})]
+        :always [:div (text-format-map :t.actions/todo-applications-count {:count (some-> @(rf/subscribe [::todo-applications :data]) count)})]
         :collapse [:<>
                    [search/application-search-field {:id "todo-search"
                                                      :on-search #(rf/dispatch [::todo-applications {:query %}])
@@ -64,7 +64,7 @@
                       (rf/dispatch [::handled-applications-count]))
         :top-less-button? false
         :bottom-less-button? false
-        :always (when handled-count [:div [:p (text-format :t.actions/handled-applications-count {:count handled-count})]])
+        :always (when handled-count [:div [:p (text-format-map :t.actions/handled-applications-count {:count handled-count})]])
         :collapse (when (and handled-count (pos? handled-count)) ; is there anything to show?
                     [:<>
                      [search/application-search-field {:id "handled-search"

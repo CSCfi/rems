@@ -433,88 +433,118 @@
         :title "Data Use Ontology"
         :validation {:mondo-not-valid "Provided Mondo codes are not compatible:"
                      :needs-validation "Data Use Ontology restriction needs to be reviewed manually:"}}
+
   ;; Format parameters for all emails (unless otherwise noted):
-  ;; %1 - name of recipient
-  ;; %2 - name of event actor
-  ;; %3 - id of application (+ description of application if available)
-  ;; %4 - name of applicant
-  ;; %5 - catalogue items of application, comma separated list
-  ;; %6 - link to application
-  :email {:applicant-changed {:subject-to-member "Applicant for application %3 changed"
-                              :message-to-member "Dear %1,\n\nThe applicant for application %3 has been changed to %4 by %2.\n\nYou can view the application at %6."
-                              :subject-to-handler "(%3) Applicant changed"
-                              :message-to-handler "Dear %1,\n\nThe applicant for application %3 has been changed to %4 by %2.\n\nYou can view the application at %6."}
-          :application-approved {:subject-to-applicant "Your application %3 has been approved"
-                                 :message-to-applicant "Dear %1,\n\nYour application %3 has been approved.\n\nYou can view the application and the decision at %6"
-                                 :subject-to-handler "(%3) Application has been approved"
-                                 :message-to-handler "Dear %1,\n\n%2 has approved the application %3 from %4.\n\nYou can view the application and the decision at %6"}
-          :application-rejected {:subject-to-applicant "Your application %3 has been rejected"
-                                 :message-to-applicant "Dear %1,\n\nYour application %3 has been rejected.\n\nYou can view the application and the decision at %6"
-                                 :subject-to-handler "(%3) Application has been rejected"
-                                 :message-to-handler "Dear %1,\n\n%2 has rejected the application %3 from %4.\n\nYou can view the application and the decision at %6"}
-          :application-closed {:subject-to-applicant "Your application %3 has been closed"
-                               :message-to-applicant "Dear %1,\n\nYour application %3 has been closed.\n\nYou can still view the application at %6"
-                               :subject-to-handler "(%3) Application has been closed"
-                               :message-to-handler "Dear %1,\n\n%2 has closed the application %3 from %4.\n\nYou can view the application at %6"}
-          ;; %1 - name of recipient
-          ;; %2 - id of application (+ description of application if available)
-          ;; %3 - date of last activity in application
-          ;; %4 - date of application expiration (after which draft application will be removed)
-          ;; %5 - link to application
-          :application-expiration-notification {:subject-to-member "Your unsubmitted application %2 will be deleted soon"
-                                                :message-to-member "Dear %1,\n\nYour unsubmitted application has been inactive since %3 and it will be deleted after %4, if it is not edited.\n\nYou can view and edit the application at %5"}
-          :application-returned {:subject-to-applicant "Your application %3 needs to be amended"
-                                 :message-to-applicant "Dear %1,\n\nYour application %3 has been returned for your consideration. Please, amend according to requests and resubmit.\n\nYou can view and edit the application at %6"
-                                 :subject-to-handler "(%3) Application has been returned to applicant"
-                                 :message-to-handler "Dear %1,\n\n%2 has returned the application %3 to the applicant %4 for modifications.\n\nYou can view the application at %6"}
-          :application-revoked {:subject-to-applicant "Entitlements related to your application %3 have been revoked"
-                                :message-to-applicant "Dear %1,\n\nEntitlements related to your application %3 have been revoked.\n\nYou can view the application at %6"
-                                :subject-to-handler "(%3) Entitlements have been revoked"
-                                :message-to-handler "Dear %1,\n\n%2 has revoked the entitlements related to application %3 from %4.\n\nYou can view the application at %6"}
-          :application-licenses-added {:subject "Your application's %3 terms of use have changed"
-                                       :message "Dear %1,\n\n%2 has requested your approval for changed terms of use to application %3.\n\nYou can view the application and approve the changed terms of use at %6"}
-          :application-resubmitted {:subject-to-handler "(%3) Application has been resubmitted"
-                                    :message-to-handler "Dear %1,\n\nApplication %3 has been resubmitted by %4.\n\nYou can review the application at %6"}
-          :application-submitted {:subject-to-applicant "Your application %3 has been submitted"
-                                  :message-to-applicant "Dear %1,\n\nYour application %3 has been submitted. You will be notified by email when the application has been handled.\n\nYou can view the application at %6"
-                                  :subject-to-handler "(%3) A new application has been submitted"
-                                  :message-to-handler "Dear %1,\n\n%4 has submitted a new application %3 to access resource(s) %5.\n\nYou can review the application at %6"}
-          :decided {:subject "(%3) Application decision notification"
-                    :message "Dear %1,\n\n%2 has filed a decision on application %3, submitted by %4.\n\nYou can review the application at %6"}
-          ;; generic text shared by decider-invited and reviewer-invited at the moment
-          ;; %1 - name of invited person, as entered in application
-          ;; %2 - applicant name
-          ;; %3 - application id (+ description if available)
-          ;; %4 - invitation link
-          :decider-invited {:subject "Invitation to participate in handling application %3"
-                            :message "Dear %1,\n\nYou have been invited to participate in handling application %3, by %2.\n\nYou can view the application at %4"}
-          :decision-requested {:subject "(%3) Decision request"
-                               :message "Dear %1,\n\n%2 has requested your decision on application %3, submitted by %4.\n\nYou can review application at %6"}
+  ;; %1 - %:recipient% - name of recipient
+  ;; %2 - %:event-actor% - name of event actor
+  ;; %3 - %:application-id% - id of application (+ description of application if available)
+  ;; %4 - %:applicant% - name of applicant
+  ;; %5 - %:catalogue-items% - catalogue items of application, comma separated list
+  ;; %6 - %:application-url% - link to application
+  ;;
+  ;; Vector parameters (%1, %2, ...) in extra translations are supported for backwards compatibility.
+  ;; They cannot be mixed with named format parameters, and have fixed positions.
+  :email {:applicant-changed {:subject-to-member "Applicant for application %:application-id% changed"
+                              :message-to-member "Dear %:recipient%,\n\nThe applicant for application %:application-id% has been changed to %:applicant% by %:event-actor%.\n\nYou can view the application at %:application-url%."
+                              :subject-to-handler "(%:application-id%) Applicant changed"
+                              :message-to-handler "Dear %:recipient%,\n\nThe applicant for application %:application-id% has been changed to %:applicant% by %:event-actor%.\n\nYou can view the application at %:application-url%."}
+          :application-approved {:subject-to-applicant "Your application %:application-id% has been approved"
+                                 :message-to-applicant "Dear %:recipient%,\n\nYour application %:application-id% has been approved.\n\nYou can view the application and the decision at %:application-url%"
+                                 :subject-to-handler "(%:application-id%) Application has been approved"
+                                 :message-to-handler "Dear %:recipient%,\n\n%:event-actor% has approved the application %:application-id% from %:applicant%.\n\nYou can view the application and the decision at %:application-url%"}
+          :application-rejected {:subject-to-applicant "Your application %:application-id% has been rejected"
+                                 :message-to-applicant "Dear %:recipient%,\n\nYour application %:application-id% has been rejected.\n\nYou can view the application and the decision at %:application-url%"
+                                 :subject-to-handler "(%:application-id%) Application has been rejected"
+                                 :message-to-handler "Dear %:recipient%,\n\n%:event-actor% has rejected the application %:application-id% from %:applicant%.\n\nYou can view the application and the decision at %:application-url%"}
+          :application-closed {:subject-to-applicant "Your application %:application-id% has been closed"
+                               :message-to-applicant "Dear %:recipient%,\n\nYour application %:application-id% has been closed.\n\nYou can still view the application at %:application-url%"
+                               :subject-to-handler "(%:application-id%) Application has been closed"
+                               :message-to-handler "Dear %:recipient%,\n\n%:event-actor% has closed the application %:application-id% from %:applicant%.\n\nYou can view the application at %:application-url%"}
+          ;; Format parameters for application-expiration-notification:
+          ;; %1 - %:recipient% - name of recipient
+          ;; %2 - %:application-id% - id of application (+ description of application if available)
+          ;; %3 - %:last-activity% - date of last activity in application
+          ;; %4 - %:expires-on% - date of application expiration (after which draft application will be removed)
+          ;; %5 - %:application-url% - link to application
+          :application-expiration-notification {:subject-to-member "Your unsubmitted application %:application-id% will be deleted soon"
+                                                :message-to-member "Dear %:recipient%,\n\nYour unsubmitted application has been inactive since %:last-activity% and it will be deleted after %:expires-on%, if it is not edited.\n\nYou can view and edit the application at %:application-url%"}
+          :application-returned {:subject-to-applicant "Your application %:application-id% needs to be amended"
+                                 :message-to-applicant "Dear %:recipient%,\n\nYour application %:application-id% has been returned for your consideration. Please, amend according to requests and resubmit.\n\nYou can view and edit the application at %:application-url%"
+                                 :subject-to-handler "(%:application-id%) Application has been returned to applicant"
+                                 :message-to-handler "Dear %:recipient%,\n\n%:event-actor% has returned the application %:application-id% to the applicant %:applicant% for modifications.\n\nYou can view the application at %:application-url%"}
+          :application-revoked {:subject-to-applicant "Entitlements related to your application %:application-id% have been revoked"
+                                :message-to-applicant "Dear %:recipient%,\n\nEntitlements related to your application %:application-id% have been revoked.\n\nYou can view the application at %:application-url%"
+                                :subject-to-handler "(%:application-id%) Entitlements have been revoked"
+                                :message-to-handler "Dear %:recipient%,\n\n%:event-actor% has revoked the entitlements related to application %:application-id% from %:applicant%.\n\nYou can view the application at %:application-url%"}
+          :application-licenses-added {:subject "Your application's %:application-id% terms of use have changed"
+                                       :message "Dear %:recipient%,\n\n%:event-actor% has requested your approval for changed terms of use to application %:application-id%.\n\nYou can view the application and approve the changed terms of use at %:application-url%"}
+          :application-resubmitted {:subject-to-handler "(%:application-id%) Application has been resubmitted"
+                                    :message-to-handler "Dear %:recipient%,\n\nApplication %:application-id% has been resubmitted by %:applicant%.\n\nYou can review the application at %:application-url%"}
+          :application-submitted {:subject-to-applicant "Your application %:application-id% has been submitted"
+                                  :message-to-applicant "Dear %:recipient%,\n\nYour application %:application-id% has been submitted. You will be notified by email when the application has been handled.\n\nYou can view the application at %:application-url%"
+                                  :subject-to-handler "(%:application-id%) A new application has been submitted"
+                                  :message-to-handler "Dear %:recipient%,\n\n%:applicant% has submitted a new application %:application-id% to access resource(s) %:catalogue-items%.\n\nYou can review the application at %:application-url%"}
+          :decided {:subject "(%:application-id%) Application decision notification"
+                    :message "Dear %:recipient%,\n\n%:event-actor% has filed a decision on application %:application-id%, submitted by %:applicant%.\n\nYou can review the application at %:application-url%"}
+          ;; Format parameters for decider-invited:
+          ;; %1 - %:recipient% - name of recipient
+          ;; %2 - %:applicant% - name of applicant
+          ;; %3 - %:application-id% - id of application (+ description of application if available)
+          ;; %4 - %:invitation-url% - invitation link
+          :decider-invited {:subject "Invitation to participate in handling application %:application-id%"
+                            :message "Dear %:recipient%,\n\nYou have been invited to participate in handling application %:application-id%, by %:applicant%.\n\nYou can view the application at %:invitation-url%"}
+          :decision-requested {:subject "(%:application-id%) Decision request"
+                               :message "Dear %:recipient%,\n\n%:event-actor% has requested your decision on application %:application-id%, submitted by %:applicant%.\n\nYou can review application at %:application-url%"}
           :footer "\n\nPlease do not reply to this automatically generated message."
-          :handler-reminder {:application "%1, submitted by %2"
-                             :message "Dear %1,\n\nThe following applications are in progress and may require your actions:\n\n%2\n\nYou can view the applications at %3"
+          :handler-reminder {;; Format parameters for handler-reminder/application:
+                             ;; %1 - %:applicant% - name of applicant
+                             ;; %2 - %:application-id% - id of application (+ description of application if available)
+                             :application "%:application-id%, submitted by %:applicant%"
+                             ;; Format parameters for handler-reminder/message:
+                             ;; %1 - %:recipient% - name of handler user
+                             ;; %2 - %:applications% - list of applications which require action
+                             ;; %3 - %:actions-url% - link to actions page
+                             :message "Dear %:recipient%,\n\nThe following applications are in progress and may require your actions:\n\n%:applications%\n\nYou can view the applications at %:actions-url%"
                              :subject "Applications in progress"}
-          :member-added {:subject "Added as a member of an application %3"
-                         :message "Dear %1,\n\nYou've been added as a member of application %3, submitted by %4.\n\nYou can view application and accept the terms of use at %6"}
-          ;; %1 - name of member, as entered in application
-          ;; %2 - applicant name
-          ;; %3 - application id (+ description if available)
-          ;; %4 - invitation link
-          :member-invited {:subject "Invitation to participate in application %3"
-                           :message "Dear %1,\n\nYou have been invited to participate in application %3, by %2.\n\nYou can view the application and accept the terms of use at %4"}
+          :member-added {:subject "Added as a member of an application %:application-id%"
+                         :message "Dear %:recipient%,\n\nYou've been added as a member of application %:application-id%, submitted by %:applicant%.\n\nYou can view application and accept the terms of use at %:application-url%"}
+          ;; Format parameters for member-invited:
+          ;; %1 - %:recipient% - name of recipient
+          ;; %2 - %:applicant% - name of applicant
+          ;; %3 - %:application-id% - id of application (+ description of application if available)
+          ;; %4 - %:invitation-url% - invitation link
+          :member-invited {:subject "Invitation to participate in application %:application-id%"
+                           :message "Dear %:recipient%,\n\nYou have been invited to participate in application %:application-id%, by %:applicant%.\n\nYou can view the application and accept the terms of use at %:invitation-url%"}
           :regards "\n\nKind regards,\n\nREMS\n"
-          :remarked {:subject "(%3) Application has been commented"
-                     :message "Dear %1,\n\n%2 has commented your application %3, submitted by %4.\n\nYou can view the application and the comment at %6"}
-          :review-requested {:subject "(%3) Review request"
-                             :message "Dear %1,\n\n%2 has requested your review on application %3, submitted by %4.\n\nYou can review the application at %6"}
-          :reviewed {:subject "(%3) Application has been reviewed"
-                     :message "Dear %1,\n\n%2 has reviewed the application %3, submitted by %4.\n\nYou can review the application at %6"}
-          :reviewer-invited {:subject "Invitation to participate in handling application %3"
-                             :message "Dear %1,\n\nYou have been invited to participate in handling application %3, by %2.\n\nYou can view the application at %4"}
-          :reviewer-reminder {:application "%1, submitted by %2"
-                              :message "Dear %1,\n\nThe following applications are waiting for a review from you:\n\n%2\n\nYou can view the applications at %3"
+          :remarked {:subject "(%:application-id%) Application has been commented"
+                     :message "Dear %:recipient%,\n\n%:event-actor% has commented your application %:application-id%, submitted by %:applicant%.\n\nYou can view the application and the comment at %:application-url%"}
+          :review-requested {:subject "(%:application-id%) Review request"
+                             :message "Dear %:recipient%,\n\n%:event-actor% has requested your review on application %:application-id%, submitted by %:applicant%.\n\nYou can review the application at %:application-url%"}
+          :reviewed {:subject "(%:application-id%) Application has been reviewed"
+                     :message "Dear %:recipient%,\n\n%:event-actor% has reviewed the application %:application-id%, submitted by %:applicant%.\n\nYou can review the application at %:application-url%"}
+          ;; Format parameters for reviewer-invited:
+          ;; %1 - %:recipient% - name of recipient
+          ;; %2 - %:applicant% - name of applicant
+          ;; %3 - %:application-id% - id of application (+ description of application if available)
+          ;; %4 - %:invitation-url% - invitation link
+          :reviewer-invited {:subject "Invitation to participate in handling application %:application-id%"
+                             :message "Dear %:recipient%,\n\nYou have been invited to participate in handling application %:application-id%, by %:applicant%.\n\nYou can view the application at %:invitation-url%"}
+          :reviewer-reminder {;; Format parameters for reviewer-reminder/application:
+                              ;; %1 - %:applicant% - name of applicant
+                              ;; %2 - %:application-id% - id of application (+ description of application if available)
+                              :application "%:application-id%, submitted by %:applicant%"
+                              ;; Format parameters for reviewer-reminder/message:
+                              ;; %1 - %:recipient% - name of handler user
+                              ;; %2 - %:applications% - list of applications which require action
+                              ;; %3 - %:actions-url% - link to actions page
+                              :message "Dear %:recipient%,\n\nThe following applications are waiting for a review from you:\n\n%:applications%\n\nYou can view the applications at %:actions-url%"
                               :subject "Applications pending review"}
-          :workflow-handler-invitation {:message "Dear %1,\n\n%2 has invited you to be a handler of applications of workflow %3.\n\nYou can view the workflow at %4"
+          ;; Format parameters for workflow-handler-invitation:
+          ;; %1 - %:recipient% - name of invited person, as entered in application
+          ;; %2 - %:invited-by% - name of person who sent the invitation
+          ;; %3 - %:workflow% - workflow title
+          ;; %4 - %:invitation-url% - invitation link
+          :workflow-handler-invitation {:message "Dear %:recipient%,\n\n%:invited-by% has invited you to be a handler of applications of workflow %:workflow%.\n\nYou can view the workflow at %:invitation-url%"
                                         :subject "Invitation to handle applications"}}
   :footer "CSC – IT Center for Science"
   :form {:accepted-licenses "Accepted terms of use"

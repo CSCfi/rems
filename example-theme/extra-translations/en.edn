@@ -1,9 +1,3 @@
 {:t
  {:footer "CSC – Overridden in Extra Translations"
-  ;; the extra %1 and the :unused-key are for rems.test-locales
-  :create-license {:license-text "Text %1"}
-  :unused-key "Unused"
-  :login {:errors {:group "group"}}
-  ;; example of using named parameters instead of vector index params
-  :applications {:view-application-without-description "View application %:application/id% for resources: %:catalogue-item-names%"
-                 :view-application-with-description "View application %:application/id%: %:application/description%"}}}
+  :login {:errors {:group "group"}}}}
