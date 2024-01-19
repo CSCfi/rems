@@ -85,7 +85,6 @@
  :ga4gh-visa-public-key "test-data/example-public-key.jwk"
  :catalogue-is-public false
  :accessibility-report true
- :enable-ega true
  :enable-doi true
  :enable-duo true
  :enable-catalogue-tree true

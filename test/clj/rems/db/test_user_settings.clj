@@ -22,39 +22,25 @@
            (s/validate user-settings/UserSettings
                        (user-settings/get-user-settings "user")))))
 
-  (testing "add settings without EGA flag"
-    (is (= {:success false}
-           (with-redefs [config/env {:enable-ega false}]
-             (user-settings/update-user-settings! "user" {:language :fi
-                                                          :ega {:api-key-expiration-date expiration-date}}))))
-    (is (= {:language :en
-            :notification-email nil}
-           (user-settings/get-user-settings "user"))
-        "nothing was saved since something was wrong"))
-
   (testing "add settings"
     (is (= {:success true}
-           (user-settings/update-user-settings! "user" {:language :fi
-                                                        :ega {:api-key-expiration-date expiration-date}})))
+           (user-settings/update-user-settings! "user" {:language :fi})))
     (is (= {:language :fi
-            :notification-email nil
-            :ega {:api-key-expiration-date expiration-date}}
+            :notification-email nil}
            (user-settings/get-user-settings "user"))))
 
   (testing "modify settings"
     (is (= {:success true}
            (user-settings/update-user-settings! "user" {:notification-email "user@example.com"})))
     (is (= {:language :fi
-            :notification-email "user@example.com"
-            :ega {:api-key-expiration-date expiration-date}}
+            :notification-email "user@example.com"}
            (user-settings/get-user-settings "user"))))
 
   (testing "updating with empty settings does not change settings"
     (is (= {:success true}
            (user-settings/update-user-settings! "user" {})))
     (is (= {:language :fi
-            :notification-email "user@example.com"
-            :ega {:api-key-expiration-date expiration-date}}
+            :notification-email "user@example.com"}
            (user-settings/get-user-settings "user"))))
 
   (testing "updating with invalid settings does not change settings"
@@ -66,8 +52,7 @@
                                                         :language :de})) ; invalid
         "partially invalid")
     (is (= {:language :fi
-            :notification-email "user@example.com"
-            :ega {:api-key-expiration-date expiration-date}}
+            :notification-email "user@example.com"}
            (user-settings/get-user-settings "user"))))
 
   (testing "changing one user's settings does not change another user's settings"

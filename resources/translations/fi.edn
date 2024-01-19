@@ -36,7 +36,6 @@
                      :validation-errors "Tarkasta seuraavat virheet:"
                      :validation-warnings "Tarkasta vielä seuraavat ennen lähetystä:"
                      :entitlement-end-not-in-future "Pääsyoikeuksien vanhenemispäivän täytyy olla tulevaisuudessa."}
-            :generate-ega-api-key-in-profile "Luo avain Profiili-sivulla."
             :handled-applications "Käsitellyt hakemukset"
             :handled-applications-count "Käsiteltyjä hakemuksia on %:count% kpl."
             :invite-member "Kutsu jäsen"
@@ -582,15 +581,7 @@
            :phase-revoked "Vaihe peruttu:"
            :rejected "Hylätty"
            :revoked "Peruttu"}
-  :profile {:delete-api-key "Poista API-avain"
-            :ega-api-key-expiration-date "API-avain vanhenee"
-            :ega-api-key-expired [:p "Sinulla on vanhentunut API-avain. Luo itsellesi uusi avain."]
-            :ega-api-key-none [:p "Näyttää siltä, että sinulla ei ole vielä API-avainta."]
-            :ega-api-key-valid [:p "Sinulla on voimassa oleva API-avain."]
-            :ega-full "The European Genome-phenome Archive"
-            :ega-intro [:p "Hyväksymiesi hakemusten käyttövaltuudet voidaan lähettää EGA-palvelimille. Tämä vaatii, että sinulla on voimassa oleva API-avain. Varmista, että olet ensin yhdistänyt ELIXIR-käyttäjätunnuksesi EGA-tunnukseesi."]
-            :generate-api-key "Luo API-avain"
-            :idp-email "Sähköpostiosoite tunnistautumispalvelulta"
+  :profile {:idp-email "Sähköpostiosoite tunnistautumispalvelulta"
             :no-email "(ei sähköpostiosoitetta)"
             :notification-email "Käytä toista sähköpostiosoitetta ilmoituksille"
             :save "Tallenna"

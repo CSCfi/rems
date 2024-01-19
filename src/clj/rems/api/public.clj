@@ -37,7 +37,6 @@
    :oidc-extra-attributes [{:attribute s/Str
                             s/Keyword s/Any}]
    :dev s/Bool
-   (s/optional-key :enable-ega) s/Bool
    (s/optional-key :enable-doi) s/Bool
    (s/optional-key :enable-duo) s/Bool
    (s/optional-key :enable-catalogue-table) s/Bool

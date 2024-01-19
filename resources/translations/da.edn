@@ -38,7 +38,6 @@
                      :validation-errors "Undersøg følgende fejl:"
                      :validation-warnings "Undersøg følgende før indsendelse:"
                      :entitlement-end-not-in-future "Udløbsdato for adgangsrettigheder skal være i fremtiden."}
-            :generate-ega-api-key-in-profile "Dan en på profilsiden."
             :handled-applications "Behandlede ansøgninger"
             :handled-applications-count "Der er %:count% behandlede ansøgninger."
             :invite-member "Inviter medlem"
@@ -631,15 +630,7 @@
            :phase-revoked "Status tilbagekaldt:"
            :rejected "Afslået"
            :revoked "Tilbagekaldt"}
-  :profile {:delete-api-key "Slet API-nøgle"
-            :ega-api-key-expiration-date "API-nøgles udløbsdato"
-            :ega-api-key-expired [:p "Du har en udløbet EGA API-nøgle. Generer venligst en ny."]
-            :ega-api-key-none [:p "Du har ikke en gyldig EGA API-nøgle endnu."]
-            :ega-api-key-valid [:p "Du har en gyldig EGA API-nøgle."]
-            :ega-full "The European Genome-phenome Archive"
-            :ega-intro [:p "Rettigheder til ansøgninger du godkender kan overføres til EGA-servere. Dette kræver at du har en gyldig API-nøgle. For at generere en, skal du først koble din ELIXIR brugerkonto til EGA-kontoen."]
-            :generate-api-key "Generer API-nøgle"
-            :idp-email "E-mailadresse fra identifikationstjeneste"
+  :profile {:idp-email "E-mailadresse fra identifikationstjeneste"
             :no-email "(ingen e-mailadresse)"
             :notification-email "Anvend en anden e-mailadresse til notifikationer"
             :save "Gem"

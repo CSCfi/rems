@@ -82,18 +82,7 @@ REMS can push entitlements to external systems with a few different options. The
 
 ### Entitlement push (v2)
 
-The entitlement push can be configured using the `:entitlement-push` key like so in your `config.edn`. Any number of external system targets can be defined.
-
-```edn
-  :entitlement-push [{:id "ega"
-                      :type :ega
-                      :connect-server-url "https://ega.server.url:1234/ega-openid-connect-server"
-                      :permission-server-url "https://ega.server.url:1234/ega-permissions"
-                      :client-id "..."
-                      :client-secret "..."}
-```
-
-So far the only supported type is `:ega`, i.e. entitlements are meant to be pushed to [European Genome-Phoenome Archive](https://ega-archive.org/). Enable the EGA support also by adding `:enable-ega true`.
+There are currently no implementations as the only existing implementation was removed as unnecessary. There are many things that can be improved in v1, but we can consider using plugins and refining them instead as a new v2.
 
 ### Entitlement post (v1)
 
