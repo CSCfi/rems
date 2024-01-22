@@ -16,11 +16,9 @@
                 ::todo-applications
                 ::handled-applications
                 ::handled-applications-count
-                ::show-all-rows
-                ::user-settings)
+                ::show-all-rows)
     :dispatch-n [[::todo-applications]
                  [::handled-applications-count]
-                 [::user-settings]
                  [:rems.table/reset]]}))
 
 (fetcher/reg-fetcher ::todo-applications "/api/applications/todo")
