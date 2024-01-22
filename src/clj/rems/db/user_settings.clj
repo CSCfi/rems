@@ -5,8 +5,7 @@
             [rems.db.core :as db]
             [rems.json :as json]
             [schema.coerce :as coerce]
-            [schema.core :as s])
-  (:import (org.joda.time DateTime)))
+            [schema.core :as s]))
 
 (defn- default-settings []
   {:language (:default-language env)

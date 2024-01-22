@@ -1,16 +1,12 @@
 (ns ^:integration rems.db.test-user-settings
   (:require [clojure.test :refer :all]
-            [clj-time.core :as time-core]
             [rems.db.testing :refer [rollback-db-fixture test-db-fixture]]
-            [rems.config :as config]
             [rems.db.user-settings :as user-settings]
             [rems.db.users :as users]
             [schema.core :as s]))
 
 (use-fixtures :once test-db-fixture)
 (use-fixtures :each rollback-db-fixture)
-
-(def expiration-date (time-core/date-time 2021 3 18))
 
 (deftest test-user-settings
   (users/add-user! {:userid "user"})

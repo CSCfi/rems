@@ -2,12 +2,10 @@
   (:require [compojure.api.sweet :refer :all]
             [rems.api.schema :as schema]
             [rems.api.util :refer [extended-logging]]
-            [rems.config :refer [env]]
             [rems.service.user-settings :as user-settings]
             [rems.util :refer [getx-user-id get-user-id]]
             [ring.util.http-response :refer :all]
-            [schema.core :as s])
-  (:import (org.joda.time DateTime)))
+            [schema.core :as s]))
 
 (def GetUserSettings user-settings/UserSettings)
 

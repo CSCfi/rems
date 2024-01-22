@@ -7,7 +7,6 @@
             [luminus-migrations.core :as migrations]
             [luminus.http-server :as http]
             [luminus.repl-server :as repl]
-            [medley.core :refer [find-first]]
             [mount.core :as mount]
             [rems.application.search :as search]
             [rems.common.git :as git]
