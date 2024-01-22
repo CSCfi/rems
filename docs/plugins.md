@@ -84,4 +84,6 @@ another system.
 
 Expects `process` function.
 
+The function can implement a networked request to push the entitlements to another system entirely. Notify us in case there are desired features missing.
+
 See [LS-AAI-GA4GH-push.md](../resources/plugins/LS-AAI-GA4GH-push.md)

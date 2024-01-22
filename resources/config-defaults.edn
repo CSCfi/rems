@@ -130,23 +130,12 @@
  :mail-from nil
  :email-retry-period "P3D" ;; in ISO 8601 duration format https://en.wikipedia.org/wiki/ISO_8601#Durations
 
- ;; External systems for pushing entitlements (v1)
+ ;; External systems for pushing entitlements (v1). Another customizable way is using plugins.
  ;;
  ;; URLs to notify about granted and revoked entitlements.
  :entitlements-target {:add nil
                        :remove nil}
 
- ;; External systems for pushing entitlements (v2)
- ;; NB: remember feature flag `:enable-ega`
- ;;
- ;; Example:
- ;; :entitlement-push [{:id "ega"
- ;;                     :type :ega
- ;;                     :connect-server-url "https://ega.ebi.ac.uk:8053/ega-openid-connect-server"
- ;;                     :permission-server-url "https://ega.ebi.ac.uk:8053/ega-permissions"
- ;;                     :client-id "..."
- ;;                     :client-secret "..."}
- :entitlement-push nil
 
  ;; Default length for entitlements, in days. This only affects the UI of the approve command.
  ;; The default, nil, means indefinite entitlements.
@@ -418,7 +407,6 @@
  ;; Options used only for development
  :test-database-url nil
  :accessibility-report false ; should the axe accessibility tooling be included?
- :enable-ega false ; should the EGA features be shown in the UI
  :enable-doi false ; should the DOI features be shown in the UI
  :enable-duo false ; should the DUO features be shown in the UI
 

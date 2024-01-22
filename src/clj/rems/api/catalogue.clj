@@ -37,7 +37,7 @@
         (throw-forbidden)))
 
     (GET "/tree" []
-      :summary "Get the catalogue of items in a tree for the UI (does not include archived items) (EXPERIMENTAL)"
+      :summary "Get the catalogue of items in a tree for the UI (does not include archived items)"
       :query-params [{join-organization :- (describe s/Bool "Should organizations be returned for each item?") true}]
       :return GetCatalogueTreeResponse
       (cond

@@ -312,11 +312,6 @@
                                                                                                                        :sv "Blankett för arbetsflöde"}
                                                                                                  :organization {:organization/id "nbn"}
                                                                                                  :form/fields [description-field]})}]})
-        ega (test-helpers/create-workflow! {:actor owner
-                                            :organization {:organization/id "csc"}
-                                            :title "EGA workflow, a variant of default"
-                                            :type :workflow/default
-                                            :handlers handlers})
         restricted (test-helpers/create-workflow! {:actor owner
                                                    :organization {:organization/id "nbn"}
                                                    :title "Restricted workflow"
@@ -329,7 +324,6 @@
                                                                        :when/role [:applicant]}]
                                                    :anonymize-handling true})]
     {:default default
-     :ega ega
      :decider decider
      :master master
      :auto-approve auto-approve
@@ -700,16 +694,6 @@
                                                                                  :fi "https://www.apache.org/licenses/LICENSE-2.0"
                                                                                  :sv "https://www.apache.org/licenses/LICENSE-2.0"}})
 
-        ega-creative-commons-license (test-helpers/create-license! {:actor owner
-                                                                    :license/type :link
-                                                                    :organization {:organization/id "csc"}
-                                                                    :license/title {:en "CC Attribution 4.0"
-                                                                                    :fi "CC Nimeä 4.0"
-                                                                                    :sv "CC Erkännande 4.0"}
-                                                                    :license/link {:en "https://creativecommons.org/licenses/by/4.0/legalcode"
-                                                                                   :fi "https://creativecommons.org/licenses/by/4.0/legalcode.fi"
-                                                                                   :sv "https://creativecommons.org/licenses/by/4.0/legalcode.sv"}})
-
         _ (create-disabled-license! {:actor owner
                                      :organization {:organization/id "nbn"}})
         attachment-license (test-helpers/create-attachment-license! {:actor owner
@@ -727,11 +711,6 @@
                                              :organization {:organization/id "hus"}
                                              :actor owner
                                              :license-ids [license1 extra-license attachment-license]})
-
-        ega-resource (test-helpers/create-resource! {:resource-ext-id "EGAD00001006673"
-                                                     :organization {:organization/id "csc"}
-                                                     :actor owner
-                                                     :license-ids [ega-creative-commons-license]})
 
         res-organization-owner (test-helpers/create-resource! {:resource-ext-id "Owned by organization owner"
                                                                :organization {:organization/id "organization1"}
@@ -810,16 +789,6 @@
                                                                       {:en "Owned by organization owner"
                                                                        :fi "Omistaja organization owner"
                                                                        :sv "Ägare organization owner"})
-
-        ega-form (test-helpers/create-form! {:actor owner
-                                             :organization {:organization/id "csc"}
-                                             :form/internal-name "EGA Application Form"
-                                             :form/external-title {:en "EGA Form"
-                                                                   :fi "EGA Lomake"
-                                                                   :sv "EGA Blankett"}
-                                             :form/fields [(assoc text-field :field/title {:en "Description"
-                                                                                           :fi "Kuvaus"
-                                                                                           :sv "Text"})]})
 
         ;; Create categories
         ordinary-category {:category/id (test-helpers/create-category! {:actor owner
@@ -906,15 +875,6 @@
                                           :organization {:organization/id "hus"}
                                           :workflow-id (:default workflows)
                                           :categories [ordinary-category]})
-    (test-helpers/create-catalogue-item! {:actor owner
-                                          :title {:en "CINECA synthetic cohort EUROPE UK1 referencing fake samples"
-                                                  :fi "CINECA synthetic cohort EUROPE UK1 referencing fake samples"
-                                                  :sv "CINECA synthetic cohort EUROPE UK1 referencing fake samples"}
-                                          :resource-id ega-resource
-                                          :form-id ega-form
-                                          :organization {:organization/id "csc"}
-                                          :workflow-id (:ega workflows)
-                                          :categories [special-category]})
     (test-helpers/create-catalogue-item! {:actor owner
                                           :title {:en "Default workflow with extra license"
                                                   :fi "Oletustyövuo ylimääräisellä lisenssillä"

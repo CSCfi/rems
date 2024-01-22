@@ -13,8 +13,7 @@
             [rems.ga4gh :as ga4gh]
             [rems.json :as json]
             [rems.plugins :as plugins]
-            [rems.scheduler :as scheduler]
-            [rems.service.ega :as ega]))
+            [rems.scheduler :as scheduler]))
 
 (defn- get-entitlements-payload [entitlements action]
   (case action
@@ -32,17 +31,7 @@
     (plugins/process :extension-point/process-entitlements entitlements)
 
     ;; TODO consider removing in favour of plugins
-    :ega
-    (when config
-      (try (doseq [entitlement entitlements] ; technically these could be grouped per user & api-key
-             (ega/entitlement-push action entitlement config))
-           (catch Exception e
-             (log/error "POST failed" e)
-             (or (ex-data e)
-                 [{:status "exception"}]))))
-
-    ;; TODO consider removing in favour of plugins
-    :basic ; TODO: let's move this :entitlements-target (v1) at some point to :entitlement-post (v2)
+    :basic
     (when-let [target (get-in env [:entitlements-target action])]
       (let [payload (get-entitlements-payload entitlements action)
             json-payload (json/generate-string payload)]
@@ -107,9 +96,7 @@
     ;; TODO could generate only one outbox entry per application. Currently one per user-resource pair.
     (let [entitlements (db/get-entitlements {:application application-id :user user-id :resource resource-id})]
       (add-to-outbox! :add :basic entitlements nil)
-      (add-to-outbox! :add :plugin entitlements nil)
-      (doseq [config (:entitlement-push env)]
-        (add-to-outbox! :add (:type config) entitlements config)))))
+      (add-to-outbox! :add :plugin entitlements nil))))
 
 (defn- revoke-entitlements! [application-id user-id resource-ids actor end]
   (log/info "revoking entitlements on application" application-id "to" user-id "resources" resource-ids "at" end)
@@ -121,8 +108,7 @@
                            :end end})
     (let [entitlements (db/get-entitlements {:application application-id :user user-id :resource resource-id})]
       (add-to-outbox! :remove :basic entitlements nil)
-      (doseq [config (:entitlement-push env)]
-        (add-to-outbox! :remove (:type config) entitlements config)))))
+      (add-to-outbox! :remove :plugin entitlements nil))))
 
 (defn- get-entitlements-by-user [application-id]
   (->> (db/get-entitlements {:application application-id :active-at (time/now)})

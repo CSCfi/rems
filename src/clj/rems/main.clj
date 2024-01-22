@@ -7,9 +7,7 @@
             [luminus-migrations.core :as migrations]
             [luminus.http-server :as http]
             [luminus.repl-server :as repl]
-            [medley.core :refer [find-first]]
             [mount.core :as mount]
-            [rems.service.ega :as ega]
             [rems.application.search :as search]
             [rems.common.git :as git]
             [rems.config :refer [env]]
@@ -143,7 +141,6 @@
         Example regex: /api/applications/[0-9]+/?
      \"api-key allow-all <api-key>\" -- clears the allowed method/path whitelist.
         An empty list means all methods and paths are allowed.
-     \"ega api-key <userid> <username> <password> <config-id>\" -- generate a new API-Key for the user using EGA login
      \"rename-user <old-userid> <new-userid>\" -- change a user's identity from old to new"
   [& args]
   (try
@@ -252,18 +249,6 @@
             (if api-key
               (prn (api-key/get-api-key api-key))
               (mapv prn (api-key/get-api-keys))))
-
-          "ega"
-          (let [[_ command userid username password config-id & _] args]
-            (mount/start #'rems.config/env #'rems.db.core/*db*)
-            (case command
-              "api-key" (let [ega-config (->> (:entitlement-push env)
-                                              (filter (comp #{:ega} :type))
-                                              (find-first (comp #{config-id} :id)))]
-                          (assert ega-config (str "Could not find :entitlement-push with :type :ega and :id " (pr-str config-id)))
-                          (ega/generate-api-key-with-account {:userid userid :username username :password password :config ega-config}))
-              (do (usage)
-                  (System/exit 1))))
 
           "list-users"
           (do

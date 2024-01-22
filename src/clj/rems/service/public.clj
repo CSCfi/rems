@@ -29,7 +29,6 @@
                     :languages
                     :oidc-extra-attributes
                     :enable-assign-external-id-ui
-                    :enable-ega
                     :enable-doi
                     :enable-duo
                     :attachment-max-size

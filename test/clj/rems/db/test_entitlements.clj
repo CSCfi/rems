@@ -39,19 +39,6 @@
                                                                :remove (str (:uri server) "/remove")})]
       (callback server))))
 
-(defn ega-config [server]
-  {:id :test-entitlement-push
-   :type :ega
-   :connect-server-url (str (:uri server) "/c")
-   :permission-server-url (str (:uri server) "/p")})
-
-(defn run-with-ega-server
-  [spec callback]
-  (with-open [server (stub/start! spec)]
-    (with-redefs [rems.config/env (assoc rems.config/env
-                                         :entitlement-push [(ega-config server)])]
-      (callback server))))
-
 (deftest test-post-entitlements!
   (testing "ok :add action"
     (run-with-server
@@ -304,35 +291,3 @@
              (is (= [{:path "/remove" :body [{:resource "resource1" :application app-id :user "bob" :mail "b@o.b" :end +test-time-string+}]}]
                     (get-requests server))))))))))
 
-
-(deftest test-entitlement-push
-  (let [post-data-for (fn [server]
-                        {:action :add
-                         :type :ega
-                         :entitlements [{:resid "EGAD00001006673" :userid "elixir-user" :start (time/date-time 2002 10 11) :mail "elixir-user@elixir.org"}]
-                         :config (ega-config server)})]
-    (testing "ok :add action"
-      (run-with-ega-server
-       {"/p/permissions" {:status 200 :content-type "application/json" :body (json/generate-string {})}}
-       (fn [server]
-         (is (= nil (#'entitlements/post-entitlements! (post-data-for server))))
-         (let [post (update-in (first (stub/recorded-requests server)) [:body "postData"] json/parse-string)]
-           (is (= "elixir-user" (get-in post [:headers :x-account-id]))))))) ; sanity check only, content test is in ega.clj
-
-    (testing "not-found"
-      (run-with-ega-server
-       {"/p/permissions" {:status 404}}
-       (fn [server]
-         (is (= 404 (:status (#'entitlements/post-entitlements! (post-data-for server))))))))
-
-    (testing "timeout"
-      (run-with-ega-server
-       {"/p/permissions" {:status 200 :delay 5000}} ;; timeout of 2500 in code
-       (fn [server]
-         (is (= [{:status "exception"}] (#'entitlements/post-entitlements! (post-data-for server)))))))
-
-    (testing "invalid url"
-      (is (= [{:status "exception"}] (#'entitlements/post-entitlements! (post-data-for {:uri "http://invalid/address/altogether"})))))
-
-    (testing "no server configured means no problem"
-      (is (= nil (#'entitlements/post-entitlements! (dissoc (post-data-for {:uri "http://invalid/address/no/problem"}) :config)))))))

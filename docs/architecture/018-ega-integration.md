@@ -2,6 +2,8 @@
 
 Authors: @Macroz
 
+NB: Support is removed 2024-01-18. If a something like this is required in the future, consider using plugins. See https://github.com/CSCfi/rems/issues/3239
+
 ## Situation
 
 REMS instances, such as the THL Biobank, wish to synchronize (push) access rights (entitlements) to The European Genome-phenome Archive (EGA).

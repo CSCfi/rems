@@ -528,21 +528,6 @@ DO UPDATE SET settings = :settings::jsonb;
 DELETE FROM user_settings
 WHERE userId = :user
 
--- :name get-user-secrets :? :1
-SELECT secrets::TEXT
-FROM user_secrets
-WHERE userId = :user;
-
--- :name update-user-secrets! :!
-INSERT INTO user_secrets (userId, secrets)
-VALUES (:user, :secrets::jsonb)
-ON CONFLICT (userId)
-DO UPDATE SET secrets = :secrets::jsonb;
-
--- :name delete-user-secrets! :!
-DELETE FROM user_secrets
-WHERE userId = :user
-
 -- :name get-users :? :*
 SELECT userId
 FROM users;

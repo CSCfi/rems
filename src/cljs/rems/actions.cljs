@@ -6,7 +6,6 @@
             [rems.collapsible :as collapsible]
             [rems.fetcher :as fetcher]
             [rems.flash-message :as flash-message]
-            [rems.profile :as profile]
             [rems.search :as search]
             [rems.text :refer [text text-format text-format-map]]))
 
@@ -17,14 +16,11 @@
                 ::todo-applications
                 ::handled-applications
                 ::handled-applications-count
-                ::show-all-rows
-                ::user-settings)
+                ::show-all-rows)
     :dispatch-n [[::todo-applications]
                  [::handled-applications-count]
-                 [::user-settings]
                  [:rems.table/reset]]}))
 
-(fetcher/reg-fetcher ::user-settings "/api/user-settings") ; for the EGA warning
 (fetcher/reg-fetcher ::todo-applications "/api/applications/todo")
 (fetcher/reg-fetcher ::handled-applications "/api/applications/handled")
 (fetcher/reg-fetcher ::handled-applications-count "/api/applications/handled/count")
@@ -41,7 +37,6 @@
     [:div
      [document-title (text :t.navigation/actions)]
      [flash-message/component :top]
-     [profile/maybe-ega-api-key-warning]
      [:div.spaced-sections
       [collapsible/component
        {:id "todo-applications-collapse"

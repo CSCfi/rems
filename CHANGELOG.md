@@ -13,6 +13,12 @@ Changes since v2.35.1
 
 ## v2.35.1 "Selkämerenkatu +1" 2024-01-16
 
+**NB: This release contains migrations!**
+
+### Changes
+- The EGA implementation has been removed as unnecessary. It's not used and the plugins supersede this feature. (#3239).
+- The word experimental has been dropped from the catalogue tree API as it is a standard feature already. (#3251)
+
 ### Fixes
 - Fix issue with user roles after deletion. This was introduced in the previous release that optimizes cache updates. (#3243)
 - Mark form as optional in catalogue item creation. Also consider categories optional unless the catalogue tree is enabled. (#3244)

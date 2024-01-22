@@ -5,8 +5,7 @@
             [rems.db.core :as db]
             [rems.json :as json]
             [schema.coerce :as coerce]
-            [schema.core :as s])
-  (:import (org.joda.time DateTime)))
+            [schema.core :as s]))
 
 (defn- default-settings []
   {:language (:default-language env)
@@ -15,13 +14,11 @@
 ;; TODO should this be in schema-base?
 (s/defschema UserSettings
   {:language s/Keyword
-   :notification-email (s/maybe s/Str)
-   (s/optional-key :ega) {(s/optional-key :api-key-expiration-date) DateTime}})
+   :notification-email (s/maybe s/Str)})
 
 (s/defschema DbUserSettings
   {:language s/Keyword
-   (s/optional-key :notification-email) (s/maybe s/Str)
-   (s/optional-key :ega) {(s/optional-key :api-key-expiration-date) DateTime}})
+   (s/optional-key :notification-email) (s/maybe s/Str)})
 
 (def ^:private validate-user-settings
   (s/validator UserSettings))
@@ -58,10 +55,7 @@
                                   (when (and (contains? new-settings :notification-email)
                                              (str/blank? notification-email))
                                     ;; clear notification email to use identity provider's email instead
-                                    {:notification-email nil})
-                                  (when (:enable-ega env)
-                                    (when-let [ega (:ega new-settings)]
-                                      {:ega (select-keys ega [:api-key-expiration-date])})))]
+                                    {:notification-email nil}))]
     (when (= (set (keys valid-new-settings)) ; fail completely if any were invalid
              (set (keys new-settings)))
       valid-new-settings)))
