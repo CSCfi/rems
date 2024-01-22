@@ -13,7 +13,7 @@ Changes since v2.35.1
 **NB: This release contains migrations!**
 
 ### Changes
-- The EGA implementation has been removed as unnecessary (#3239).
+- The EGA implementation has been removed as unnecessary. It's not used and the plugins supersede this feature. (#3239).
 - The word experimental has been dropped from the catalogue tree API as it is a standard feature already. (#3251)
 
 ### Fixes
