@@ -130,16 +130,12 @@
  :mail-from nil
  :email-retry-period "P3D" ;; in ISO 8601 duration format https://en.wikipedia.org/wiki/ISO_8601#Durations
 
- ;; External systems for pushing entitlements (v1)
+ ;; External systems for pushing entitlements (v1). Another customizable way is using plugins.
  ;;
  ;; URLs to notify about granted and revoked entitlements.
  :entitlements-target {:add nil
                        :remove nil}
 
- ;; External systems for pushing entitlements (v2)
- ;;
- ;; NB: currently not used as the only implementation was removed. Consider using and developing plugins.
- :entitlement-push nil
 
  ;; Default length for entitlements, in days. This only affects the UI of the approve command.
  ;; The default, nil, means indefinite entitlements.
