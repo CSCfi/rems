@@ -6,7 +6,7 @@
             [clojure.java.io :as io]
             [clojure.stacktrace]
             [clojure.string :as str]
-            [clojure.test :refer :all]
+            [clojure.test :refer [compose-fixtures]]
             [clojure.tools.logging :as log]
             [com.rpl.specter :refer [ALL select]]
             [etaoin.api :as et]
@@ -330,7 +330,6 @@
   [filename q]
   (screenshot-element filename [q {:xpath "./../../.."}]))
 
-
 (defn dump-content [content filename]
   (when (seq content)
     (let [full-filename (format "%03d-%s-%s%s"
@@ -387,7 +386,6 @@
 (def accept-alert (wrap-etaoin et/accept-alert))
 (def reload (wrap-etaoin et/reload))
 ;; TODO add more of etaoin here
-
 
 ;;; etaoin extensions
 
@@ -475,7 +473,6 @@
 
 (defn wait-page-loaded []
   (wait-invisible {:css ".fa-spinner"}))
-
 
 (defn field-visible? [label]
   (or (visible? [{:css ".fields"}
@@ -660,7 +657,6 @@
      (catch Exception e#
        (rems.browser-test-util/postmortem-handler e#)
        (throw e#))))
-
 
 (defn wait-for-animation
   "Waits for a short while for animations to finish.

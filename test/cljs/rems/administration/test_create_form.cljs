@@ -2,9 +2,9 @@
   (:require [clojure.test :refer [deftest is testing use-fixtures]]
             [re-frame.core :as rf]
             [rems.administration.create-form :refer [build-request build-request-field build-localized-string]]
+            [rems.common.util :refer [getx-in]]
             [rems.identity] ; XXX: initializes missing event handlers like :set-roles
-            [rems.testing :refer [init-spa-fixture]]
-            [rems.util :refer [getx-in]]))
+            [rems.testing :refer [init-spa-fixture]]))
 
 (use-fixtures :each init-spa-fixture)
 

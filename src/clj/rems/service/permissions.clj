@@ -4,9 +4,10 @@
             [rems.auth.util :refer [throw-forbidden]]
             [rems.db.core :as db]
             [rems.common.roles :refer [has-roles?]]
+            [rems.common.util :refer [getx]]
             [rems.config :refer [env]]
             [rems.ga4gh :as ga4gh]
-            [rems.util :refer [getx getx-user-id]]))
+            [rems.util :refer [getx-user-id]]))
 
 (defn get-jwks []
   (let [jwk (getx env :ga4gh-visa-public-key)]

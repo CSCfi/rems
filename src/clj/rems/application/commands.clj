@@ -4,11 +4,11 @@
             [medley.core :refer [assoc-some distinct-by update-existing]]
             [rems.common.application-util :as application-util]
             [rems.common.form :as form]
-            [rems.common.util :refer [build-index]]
+            [rems.common.util :refer [getx getx-in build-index]]
             [rems.form-validation :as form-validation]
             [rems.permissions :as permissions]
             [rems.schema-base :as schema-base]
-            [rems.util :refer [assert-ex getx getx-in try-catch-ex]]
+            [rems.util :refer [assert-ex try-catch-ex]]
             [schema-refined.core :as r]
             [schema.core :as s]
             [clj-time.core :as time])

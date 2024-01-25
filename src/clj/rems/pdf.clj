@@ -5,11 +5,10 @@
             [clojure.string :as str]
             [rems.common.application-util :as application-util]
             [rems.common.form :as form]
-            [rems.common.util :refer [build-index index-by]]
+            [rems.common.util :refer [getx build-index index-by]]
             [rems.config :refer [env]]
             [rems.context :as context]
-            [rems.text :refer [localized localize-decision localize-event localize-attachment localize-state localize-time text text-format with-language]]
-            [rems.util :refer [getx]])
+            [rems.text :refer [localized localize-decision localize-event localize-attachment localize-state localize-time text text-format with-language]])
   (:import [java.io ByteArrayOutputStream]))
 
 (def heading-style {:spacing-before 20})

@@ -2,6 +2,7 @@
   (:require [clojure.java.io :as io]
             [buddy.core.nonce :as buddy-nonce]
             [buddy.core.codecs :as buddy-codecs]
+            [rems.common.util :refer [getx]]
             [rems.context :as context])
   (:import [clojure.lang Atom]
            [java.io ByteArrayOutputStream FileInputStream]))
@@ -10,19 +11,6 @@
   "Throw a RuntimeException, args passed to `clojure.core/format`."
   [& fmt-args]
   (throw (RuntimeException. (apply format fmt-args))))
-
-(defn getx
-  "Like `get` but throws an exception if the key is not found."
-  [m k]
-  (let [e (get m k ::sentinel)]
-    (if-not (= e ::sentinel)
-      e
-      (throw (ex-info "Missing required key" {:map m :key k})))))
-
-(defn getx-in
-  "Like `get-in` but throws an exception if the key is not found."
-  [m ks]
-  (reduce getx m ks))
 
 (def never-match-route
   (constantly nil))
@@ -83,7 +71,6 @@
                                 :bytes (.toByteArray baos)})))
           (recur files))
         files))))
-
 
 (defn delete-directory-contents-recursively
   "Deletes `dir` contents recursively, if the `dir` exists.

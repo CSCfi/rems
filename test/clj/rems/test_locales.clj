@@ -6,11 +6,11 @@
             [clojure.test :refer [deftest is testing]]
             [clojure.tools.logging]
             [clojure.tools.logging.test :as log-test]
-            [rems.common.util :refer [recursive-keys]]
+            [rems.common.util :refer [getx-in recursive-keys]]
             [rems.locales :as locales]
             [rems.tempura]
             [rems.testing-util :refer [create-temp-dir]]
-            [rems.util :refer [getx-in delete-directory-recursively]]
+            [rems.util :refer [delete-directory-recursively]]
             [taoensso.tempura.impl])
   (:import (java.io FileNotFoundException)))
 

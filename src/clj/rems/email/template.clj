@@ -2,12 +2,12 @@
   (:require [clojure.string :as str]
             [rems.application.model :as model]
             [rems.common.application-util :as application-util]
+            [rems.common.util :refer [getx]]
             [rems.config :refer [env]]
             [rems.context :as context]
             [rems.db.user-settings :as user-settings]
             [rems.permissions :as permissions]
-            [rems.text :refer [localize-user localize-utc-date text text-no-fallback text-format-map with-language]]
-            [rems.util :as util]))
+            [rems.text :refer [localize-user localize-utc-date text text-no-fallback text-format-map with-language]]))
 
 ;;; Mapping events to emails
 
@@ -23,7 +23,7 @@
 
 (defn- format-application-for-email [application]
   (str
-   (case (util/getx env :application-id-column)
+   (case (getx env :application-id-column)
      :generated-and-assigned-external-id (:application/external-id application)
      :external-id (:application/external-id application)
      :id (:application/id application))

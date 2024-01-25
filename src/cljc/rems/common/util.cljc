@@ -180,7 +180,6 @@
   (is (= "fdce:de09:d25d:b23e:de8:d0e8:de8:de8"
          (first (re-matches +reserved-ipv6-range-regex+ "fdce:de09:d25d:b23e:de8:d0e8:de8:de8")))))
 
-;; TODO remove separate clj and cljs implementations of getx and getx-in
 (defn getx
   "Like `get` but throws an exception if the key is not found."
   [m k]

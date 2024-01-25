@@ -6,9 +6,9 @@
             [rems.application.model :as model]
             [rems.auth.util :refer [throw-forbidden]]
             [rems.common.attachment-util :refer [getx-filename]]
+            [rems.common.util :refer [getx]]
             [rems.db.applications :as applications]
             [rems.db.attachments :as attachments]
-            [rems.util :refer [getx]]
             [ring.util.http-response :refer [ok content-type header]])
   (:import [java.io ByteArrayInputStream ByteArrayOutputStream]
            [java.util.zip ZipOutputStream ZipEntry ZipException]))
