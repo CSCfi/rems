@@ -109,11 +109,11 @@
         ^{:key vote}
         [:div.form-group.row
          [:label.col-sm-3.col-form-label (text (keyword (str "t" ".applications.voting.votes") vote))]
-         [:div.col-sm-9.form-control (goog.string/format "%.2f%% (%s)"
-                                                         n-pct
-                                                         (->> vote-voters
-                                                              (mapv application-util/get-member-name)
-                                                              (str/join ", ")))]])
+         [:div.col-sm-9.form-control (str (goog.string/format "%.2f%% " n-pct)
+                                          (when (seq vote-voters)
+                                            (->> vote-voters
+                                                 (mapv application-util/get-member-name)
+                                                 (str/join ", "))))]])
 
       (let [n (- (count voters) (count votes))
             n-pct (* 100 (/ n (count voters)))
@@ -121,8 +121,9 @@
                                 (remove (comp (set (keys votes)) :userid))
                                 (mapv application-util/get-member-name)
                                 (str/join ", "))]
-        [:div.form-group.row
-         [:label.col-sm-3.col-form-label (text :t.applications.voting.votes/empty)]
-         [:div.col-sm-9.form-control (goog.string/format "%.2f%% (%s)"
-                                                         n-pct
-                                                         missing-voters)]])]]))
+        (when (seq missing-voters)
+          [:div.form-group.row
+           [:label.col-sm-3.col-form-label (text :t.applications.voting.votes/empty)]
+           [:div.col-sm-9.form-control (goog.string/format "%.2f%% (%s)"
+                                                           n-pct
+                                                           missing-voters)]]))]]))
