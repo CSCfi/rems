@@ -3,8 +3,9 @@
             [rems.application.commands :as commands]
             [rems.application.events :as events]
             [rems.application.model :as model]
+            [rems.common.util :refer [getx]]
             [rems.permissions :as permissions]
-            [rems.util :refer [assert-ex getx]]
+            [rems.util :refer [assert-ex]]
             [rems.testing-util :refer [with-fixed-time]]
             [clj-time.core :as time])
   (:import [clojure.lang ExceptionInfo]

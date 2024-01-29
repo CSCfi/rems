@@ -11,7 +11,7 @@
   (:require [clj-http.client :as http]
             [clojure.string :as str]
             [clojure.set :refer [intersection]]
-            [clojure.test :refer :all]
+            [clojure.test :refer [deftest is testing use-fixtures]]
             [com.rpl.specter :refer [select ALL]]
             [etaoin.keys]
             [medley.core :refer [find-first]]

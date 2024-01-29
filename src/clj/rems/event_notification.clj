@@ -5,12 +5,12 @@
             [clojure.tools.logging :as log]
             [mount.core :as mount]
             [rems.api.schema :as schema]
+            [rems.common.util :refer [getx]]
             [rems.config]
             [rems.db.applications :as applications]
             [rems.db.outbox :as outbox]
             [rems.json :as json]
-            [rems.scheduler :as scheduler]
-            [rems.util :refer [getx]]))
+            [rems.scheduler :as scheduler]))
 
 (def ^:private default-timeout 60)
 

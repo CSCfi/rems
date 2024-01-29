@@ -1,10 +1,10 @@
 (ns rems.db.outbox
   (:require [clj-time.core :as time]
             [clojure.test :refer [deftest is testing]]
+            [rems.common.util :refer [getx]]
             [rems.db.core :as db]
             [rems.db.pg-util :refer [pg-interval->joda-duration joda-duration->pg-interval]]
             [rems.json :as json]
-            [rems.util :refer [getx]]
             [schema.coerce :as coerce]
             [schema.core :as s])
   (:import [org.joda.time Duration DateTime]))

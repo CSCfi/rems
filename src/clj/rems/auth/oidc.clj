@@ -5,6 +5,7 @@
             [clojure.tools.logging :as log]
             [compojure.core :refer [GET defroutes]]
             [medley.core :refer [find-first]]
+            [rems.common.util :refer [getx]]
             [rems.config :refer [env oidc-configuration]]
             [rems.db.user-mappings :as user-mappings]
             [rems.db.users :as users]
@@ -12,7 +13,6 @@
             [rems.json :as json]
             [rems.jwt :as jwt]
             [rems.plugins :as plugins]
-            [rems.util :refer [getx]]
             [ring.util.response :refer [redirect]])
   (:import [java.time Instant]))
 

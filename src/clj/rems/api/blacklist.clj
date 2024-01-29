@@ -7,11 +7,12 @@
             [rems.api.util :refer [extended-logging unprocessable-entity-json-response]] ; required for route :roles
             [rems.application.rejecter-bot :as rejecter-bot]
             [rems.common.roles :refer [+admin-read-roles+]]
+            [rems.common.util :refer [getx-in]]
             [rems.db.resource :as resource]
             [rems.db.users :as users]
             [rems.db.user-mappings :as user-mappings]
             [rems.schema-base :as schema-base]
-            [rems.util :refer [getx-in getx-user-id]]
+            [rems.util :refer [getx-user-id]]
             [ring.util.http-response :refer [ok]]
             [schema.core :as s])
   (:import [org.joda.time DateTime]))
