@@ -123,7 +123,7 @@
             :title "t"
             :handlers ["a" "b"]
             :disable-commands [{:command :application.command/close}]
-            :voting :reviwers-vote
+            :voting :reviewers-vote
             :anonymize-handling true}
            (build-edit-request 3 {:organization {:organization/id "o"}
                                   :title "t"
