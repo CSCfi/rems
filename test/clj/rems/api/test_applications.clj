@@ -1560,7 +1560,7 @@
                  (->> (filter (comp #{"application.event/voted"} :event/type)))
                  (->> (mapv #(select-keys % [:event/actor :event/type :vote/value])))))))))
 
-(deftest test-reviewer-vote
+(deftest test-reviewers-vote
   (let [api-key "42"
         applicant-id "alice"
         handler-id "handler"

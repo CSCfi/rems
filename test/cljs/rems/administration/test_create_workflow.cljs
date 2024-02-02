@@ -130,7 +130,7 @@
                                   :handlers [{:userid "a"} {:userid "b"}]
                                   :licenses [{:id 1}] ; licenses should not be mapped
                                   :disable-commands [{:command :application.command/close}]
-                                  :voting :reviewer-vote
+                                  :voting :reviewers-vote
                                   :anonymize-handling true}))))
 
   (is (nil? (build-edit-request nil {:title "t" :handlers [{:userid "a"} {:userid "b"}]})))
