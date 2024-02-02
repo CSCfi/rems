@@ -125,4 +125,4 @@
    (s/optional-key :when/role) [s/Keyword]})
 
 (s/defschema WorkflowVoting
-  {:type (s/maybe (s/enum :handlers-vote))})
+  {:type (s/maybe (s/enum :handlers-vote :reviewers-vote))})

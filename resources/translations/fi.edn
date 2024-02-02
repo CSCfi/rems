@@ -155,6 +155,7 @@
                    :resources "Resurssit"
                    :review-email-n "Katselmointisähköposti %1"
                    :review-emails "Katselmointisähköpostit"
+                   :reviewers-vote "Katselmoijat äänestää"
                    :save "Tallenna"
                    :short-name "Lyhenne"
                    :start "Alku"

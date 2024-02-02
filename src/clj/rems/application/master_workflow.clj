@@ -53,16 +53,14 @@
     :application.command/return
     :application.command/approve
     :application.command/reject
-    :application.command/close
-    :application.command/vote})
+    :application.command/close})
 
 (def ^:private handler-returned-commands
   (disj handler-all-commands
         :application.command/return
         :application.command/approve
         :application.command/reject
-        :application.command/request-decision
-        :application.command/vote))
+        :application.command/request-decision))
 
 (def ^:private created-permissions
   {:applicant (conj submittable-application-commands

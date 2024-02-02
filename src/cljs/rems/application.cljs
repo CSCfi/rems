@@ -838,6 +838,10 @@
                                                        (render-events application (take 1 events))))
                               :collapse [:div
                                          [application-state-details application config]
+                                         ;; NB: possibly all handling users could use the above handler component
+                                         (when (is-handling-user? application)
+                                           (when (seq (:application/votes application))
+                                             [votes-summary application]))
                                          [application-events application events]]}])))
 
 (defn member-info

@@ -362,7 +362,8 @@
    [dropdown/dropdown
     {:id "voting-type"
      :items [{:type nil :label (text :t.administration/no-voting)}
-             {:type :handlers-vote :label (text :t.administration/handlers-vote)}]
+             {:type :handlers-vote :label (text :t.administration/handlers-vote)}
+             {:type :reviewers-vote :label (text :t.administration/reviewers-vote)}]
      :item-label :label
      :item-selected? #(= value (:type %))
      :on-change (comp on-change :type)}]])

@@ -116,6 +116,21 @@
                                   :licenses [{:id 1}] ; licenses should not be mapped
                                   :disable-commands [{:command :application.command/close}]
                                   :voting :handlers-vote
+                                  :anonymize-handling true})))
+
+    (is (= {:id 3
+            :organization {:organization/id "o"}
+            :title "t"
+            :handlers ["a" "b"]
+            :disable-commands [{:command :application.command/close}]
+            :voting :reviwers-vote
+            :anonymize-handling true}
+           (build-edit-request 3 {:organization {:organization/id "o"}
+                                  :title "t"
+                                  :handlers [{:userid "a"} {:userid "b"}]
+                                  :licenses [{:id 1}] ; licenses should not be mapped
+                                  :disable-commands [{:command :application.command/close}]
+                                  :voting :reviewer-vote
                                   :anonymize-handling true}))))
 
   (is (nil? (build-edit-request nil {:title "t" :handlers [{:userid "a"} {:userid "b"}]})))

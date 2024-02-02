@@ -155,6 +155,7 @@
                    :resources "Resurser"
                    :review-email-n "E-postadress för granskning %1"
                    :review-emails "E-postadresser för granskning"
+                   :reviewers-vote "Granskarna röstar"
                    :save "Spara"
                    :short-name "Förkortning"
                    :start "Början"

@@ -92,28 +92,47 @@
                                                      :attachments attachments
                                                      :on-finished on-finished}])}]))
 
+;; TODO too difficult, consider changing data model
+;; TODO consider moving to a util
+(defn- get-reviewers [application]
+  (for [event (:application/events application)
+        :let [type (:event/type event)]
+        :when (= type :application.event/review-requested)
+        reviewer (:application/reviewers event)]
+    reviewer))
+
+(defn- get-potential-voters [application]
+  (case (-> application :application/workflow :workflow/voting :type)
+    :handlers-vote
+    (get-in application [:application/workflow :workflow.dynamic/handlers])
+
+    :reviewers-vote
+    (get-reviewers application)
+
+    nil))
+
 (defn votes-summary
   [application]
   (let [votes (get-in application [:application/votes])
         summary (frequencies (vals votes))
-        voters (get-in application [:application/workflow :workflow.dynamic/handlers])
+        voters (get-potential-voters application)
         voter-by-userid (build-index {:keys [:userid]} voters)
         voters-by-vote (build-index {:keys [val] :value-fn (comp voter-by-userid key) :collect-fn conj} votes)]
     [:div.my-3
      [:h3 (text :t.applications/votes)]
 
      [:div.container-fluid
-      (for [[vote n] (sort-by val summary)
-            :let [n-pct (* 100 (/ n (count voters)))
-                  vote-voters (get voters-by-vote vote)]]
-        ^{:key vote}
-        [:div.form-group.row
-         [:label.col-sm-3.col-form-label (text (keyword (str "t" ".applications.voting.votes") vote))]
-         [:div.col-sm-9.form-control (str (goog.string/format "%.2f%% " n-pct)
-                                          (when (seq vote-voters)
-                                            (->> vote-voters
-                                                 (mapv application-util/get-member-name)
-                                                 (str/join ", "))))]])
+      (doall (for [[vote n] (sort-by val summary)
+                   :let [n-pct (* 100 (/ n (count voters)))
+                         vote-voters (get voters-by-vote vote)]]
+               ^{:key vote}
+               [:div.form-group.row
+                [:label.col-sm-3.col-form-label (text (keyword (str "t" ".applications.voting.votes") vote))]
+                [:div.col-sm-9.form-control (str (goog.string/format "%.2f%% " n-pct)
+                                                 (when (seq vote-voters)
+                                                   (->> vote-voters
+                                                        (mapv application-util/get-member-name)
+                                                        (str/join ", "))))]]))
 
       (let [n (- (count voters) (count votes))
             n-pct (* 100 (/ n (count voters)))
@@ -122,6 +141,7 @@
                                 (mapv application-util/get-member-name)
                                 (str/join ", "))]
         (when (seq missing-voters)
+          ^{:key "empty"}
           [:div.form-group.row
            [:label.col-sm-3.col-form-label (text :t.applications.voting.votes/empty)]
            [:div.col-sm-9.form-control (goog.string/format "%.2f%% (%s)"

@@ -276,13 +276,20 @@
                                                 :type :workflow/default
                                                 :handlers handlers
                                                 :licenses [link text]})
-        decider (test-helpers/create-workflow! {:actor owner
-                                                :organization {:organization/id "nbn"}
-                                                :title "Decider workflow"
-                                                :type :workflow/decider
-                                                :handlers handlers
-                                                :licenses [link text]
-                                                :voting {:type :handlers-vote}})
+        decider1 (test-helpers/create-workflow! {:actor owner
+                                                 :organization {:organization/id "nbn"}
+                                                 :title "Decider workflow"
+                                                 :type :workflow/decider
+                                                 :handlers handlers
+                                                 :licenses [link text]
+                                                 :voting {:type :handlers-vote}})
+        decider2 (test-helpers/create-workflow! {:actor owner
+                                                 :organization {:organization/id "nbn"}
+                                                 :title "Decider workflow 2"
+                                                 :type :workflow/decider
+                                                 :handlers handlers
+                                                 :licenses [link text]
+                                                 :voting {:type :reviewers-vote}})
         master (test-helpers/create-workflow! {:actor owner
                                                :organization {:organization/id "nbn"}
                                                :title "Master workflow"
@@ -324,7 +331,8 @@
                                                                        :when/role [:applicant]}]
                                                    :anonymize-handling true})]
     {:default default
-     :decider decider
+     :decider1 decider1
+     :decider2 decider1
      :master master
      :auto-approve auto-approve
      :organization-owner organization-owner
@@ -826,16 +834,28 @@
                                           :workflow-id (:master workflows)
                                           :categories [technical-category]})
     (test-helpers/create-catalogue-item! {:actor owner
-                                          :title {:en "Decider workflow"
-                                                  :fi "Päättäjätyövuo"
-                                                  :sv "Arbetsflöde för beslutsfattande"}
+                                          :title {:en "Decider workflow 1"
+                                                  :fi "Päättäjätyövuo 1"
+                                                  :sv "Arbetsflöde för beslutsfattande 1"}
                                           :infourl {:en "http://www.google.com"
                                                     :fi "http://www.google.fi"
                                                     :sv "http://www.google.se"}
                                           :resource-id res1
                                           :form-id form
                                           :organization {:organization/id "nbn"}
-                                          :workflow-id (:decider workflows)
+                                          :workflow-id (:decider1 workflows)
+                                          :categories [special-category]})
+    (test-helpers/create-catalogue-item! {:actor owner
+                                          :title {:en "Decider workflow 2"
+                                                  :fi "Päättäjätyövuo 2"
+                                                  :sv "Arbetsflöde för beslutsfattande 2"}
+                                          :infourl {:en "http://www.google.com"
+                                                    :fi "http://www.google.fi"
+                                                    :sv "http://www.google.se"}
+                                          :resource-id res2
+                                          :form-id form
+                                          :organization {:organization/id "nbn"}
+                                          :workflow-id (:decider2 workflows)
                                           :categories [special-category]})
     (let [cat {:actor owner
                :title {:en "Default workflow"
@@ -1065,7 +1085,7 @@
                                                        :resource-id resource-id
                                                        :form-id form-id
                                                        :organization {:organization/id "nbn"}
-                                                       :workflow-id (:decider workflows)
+                                                       :workflow-id (:decider1 workflows)
                                                        :categories [special-category]})
           app-id (test-helpers/create-draft! applicant [cat-id] "redacted attachments")]
       (test-helpers/invite-and-accept-member! {:actor applicant
