@@ -48,7 +48,8 @@
       {:id id
        ;; XXX: consider making choices dynamic
        :items [{:value "accept" :label (text :t.applications.voting.votes/accept)}
-               {:value "reject" :label (text :t.applications.voting.votes/reject)}]
+               {:value "reject" :label (text :t.applications.voting.votes/reject)}
+               {:value "empty" :label (text :t.applications.voting.votes/empty)}]
        :item-label (comp rc/as-element :label)
        :item-selected? #(= (or vote previous-vote) (:value %))
        :on-change #(on-vote (:value %))}]]))
@@ -144,9 +145,9 @@
                                   (mapv application-util/get-member-name)
                                   (str/join ", "))]
           (when (seq missing-voters)
-            ^{:key "empty"}
+            ^{:key "not-voted"}
             [:div.form-group.row
-             [:label.col-sm-3.col-form-label (text :t.applications.voting.votes/empty)]
+             [:label.col-sm-3.col-form-label (text :t.applications.voting.votes/not-voted)]
              [:div.col-sm-9.form-control (goog.string/format "%.2f%% (%s)"
                                                              n-pct
                                                              missing-voters)]]))]])))

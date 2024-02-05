@@ -275,6 +275,7 @@
                  :voting {:previously-voted [:p "Äänestit aiemmin %1. Voit vaihtaa ääntäsi tästä."]
                           :votes {:accept "Jaa"
                                   :empty "Tyhjä"
+                                  :not-voted "Ei ole äänestänyt"
                                   :reject "Ei"}}}
   :cart {:add "Lisää koriin"
          :apply "Hae"

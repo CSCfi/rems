@@ -275,6 +275,7 @@
                  :voting {:previously-voted [:p "Tidigare du röstade %1. Du kan förändra rösten här."]
                           :votes {:accept "Ja"
                                   :empty "Ingen"
+                                  :not-voted "Oröstrad"
                                   :reject "Nej"}}}
   :cart {:add "Lägg i korgen"
          :apply "Ansök"
