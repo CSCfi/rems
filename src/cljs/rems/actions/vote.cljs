@@ -118,32 +118,35 @@
         voters (get-potential-voters application)
         voter-by-userid (build-index {:keys [:userid]} voters)
         voters-by-vote (build-index {:keys [val] :value-fn (comp voter-by-userid key) :collect-fn conj} votes)]
-    [:div.my-3
-     [:h3 (text :t.applications/votes)]
+    (when (seq voters)
+      [:div.my-3
+       [:h3 (text :t.applications/votes)]
 
-     [:div.container-fluid
-      (doall (for [[vote n] (sort-by val summary)
-                   :let [n-pct (* 100 (/ n (count voters)))
-                         vote-voters (get voters-by-vote vote)]]
-               ^{:key vote}
-               [:div.form-group.row
-                [:label.col-sm-3.col-form-label (text (keyword (str "t" ".applications.voting.votes") vote))]
-                [:div.col-sm-9.form-control (str (goog.string/format "%.2f%% " n-pct)
-                                                 (when (seq vote-voters)
-                                                   (->> vote-voters
-                                                        (mapv application-util/get-member-name)
-                                                        (str/join ", "))))]]))
+       [:div.container-fluid
+        (doall (for [[vote n] (sort-by val summary)
+                     :let [n-pct (* 100 (/ n (count voters)))
+                           vote-voters (->> vote
+                                            (get voters-by-vote)
+                                            (remove nil?))]
+                     :when (seq vote-voters)
+                     :let [voters-text (->> vote-voters
+                                            (mapv application-util/get-member-name)
+                                            (str/join ", "))]]
+                 ^{:key vote}
+                 [:div.form-group.row
+                  [:label.col-sm-3.col-form-label (text (keyword (str "t" ".applications.voting.votes") vote))]
+                  [:div.col-sm-9.form-control (str (goog.string/format "%.2f%% (%s)" n-pct voters-text))]]))
 
-      (let [n (- (count voters) (count votes))
-            n-pct (* 100 (/ n (count voters)))
-            missing-voters (->> voters
-                                (remove (comp (set (keys votes)) :userid))
-                                (mapv application-util/get-member-name)
-                                (str/join ", "))]
-        (when (seq missing-voters)
-          ^{:key "empty"}
-          [:div.form-group.row
-           [:label.col-sm-3.col-form-label (text :t.applications.voting.votes/empty)]
-           [:div.col-sm-9.form-control (goog.string/format "%.2f%% (%s)"
-                                                           n-pct
-                                                           missing-voters)]]))]]))
+        (let [n (- (count voters) (count votes))
+              n-pct (* 100 (/ n (count voters)))
+              missing-voters (->> voters
+                                  (remove (comp (set (keys votes)) :userid))
+                                  (mapv application-util/get-member-name)
+                                  (str/join ", "))]
+          (when (seq missing-voters)
+            ^{:key "empty"}
+            [:div.form-group.row
+             [:label.col-sm-3.col-form-label (text :t.applications.voting.votes/empty)]
+             [:div.col-sm-9.form-control (goog.string/format "%.2f%% (%s)"
+                                                             n-pct
+                                                             missing-voters)]]))]])))

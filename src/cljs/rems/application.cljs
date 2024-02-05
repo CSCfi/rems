@@ -825,8 +825,7 @@
                                        [:div.mb-3
                                         [phases state (get-application-phases state)]]
                                        [application-state-details application config]
-                                       (when (seq (:application/votes application))
-                                         [votes-summary application])
+                                       [votes-summary application]
                                        [application-events application (take 3 events)]]
                               :collapse (into [:<>]
                                               (render-events application (drop 3 events)))}]
@@ -840,8 +839,7 @@
                                          [application-state-details application config]
                                          ;; NB: possibly all handling users could use the above handler component
                                          (when (is-handling-user? application)
-                                           (when (seq (:application/votes application))
-                                             [votes-summary application]))
+                                           [votes-summary application])
                                          [application-events application events]]}])))
 
 (defn member-info
