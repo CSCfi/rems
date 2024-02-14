@@ -1564,11 +1564,9 @@
   (let [api-key "42"
         applicant-id "alice"
         handler-id "handler"
-        reviewer-id1 "reviewer1"
-        reviewer-id2 "reviewer2"
         owner "owner"
-        _ (test-helpers/create-user! {:userid reviewer-id1})
-        _ (test-helpers/create-user! {:userid reviewer-id2})
+        reviewer-id1 (test-helpers/create-user! {:userid "reviewer1"})
+        reviewer-id2 (test-helpers/create-user! {:userid "reviewer2"})
         form-id (test-helpers/create-form! {})
         workflow-id (test-helpers/create-workflow! {:type :workflow/master
                                                     :handlers [handler-id]})
