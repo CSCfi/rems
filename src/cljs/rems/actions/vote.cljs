@@ -141,14 +141,14 @@
 
         (let [n (- (count voters) (count votes))
               n-pct (* 100 (/ n (count voters)))
-              missing-voters (->> voters
-                                  (remove (comp (set (keys votes)) :userid))
-                                  (mapv application-util/get-member-name)
-                                  (str/join ", "))]
+              missing-voters (remove (comp (set (keys votes)) :userid) voters)
+              voters-text (->> missing-voters
+                               (mapv application-util/get-member-name)
+                               (str/join ", "))]
           (when (seq missing-voters)
             ^{:key "not-voted"}
             [:div.form-group.row
              [:label.col-sm-3.col-form-label (text :t.applications.voting.votes/not-voted)]
              [:div.col-sm-9.form-control (goog.string/format "%.2f%% (%s)"
                                                              n-pct
-                                                             missing-voters)]]))]])))
+                                                             voters-text)]]))]])))
