@@ -818,29 +818,40 @@
 (defn- application-state [{:keys [application config userid]}]
   (let [state (:application/state application)
         events (sort-by :event/time > (:application/events application))]
-    (if (is-handler? application userid)
-      [collapsible/component {:id "header"
-                              :title (text :t.applications/state)
-                              :always [:div
-                                       [:div.mb-3
-                                        [phases state (get-application-phases state)]]
-                                       [application-state-details application config]
-                                       [votes-summary application]
-                                       [application-events application (take 3 events)]]
-                              :collapse (into [:<>]
-                                              (render-events application (drop 3 events)))}]
-      [collapsible/component {:id "header"
-                              :title (text :t.applications/state)
-                              :always [phases state (get-application-phases state)]
-                              :collapse-hidden (when (seq events)
-                                                 (into [:div.my-3]
-                                                       (render-events application (take 1 events))))
-                              :collapse [:div
-                                         [application-state-details application config]
-                                         ;; NB: possibly all handling users could use the above handler component
-                                         (when (is-handling-user? application)
-                                           [votes-summary application])
-                                         [application-events application events]]}])))
+    [collapsible/component (merge {:id "header"
+                                   :title (text :t.applications/state)}
+
+                                  (cond (is-handler? application userid)
+                                        ;; handler sees everything
+                                        {:always [:div
+                                                  [:div.mb-3
+                                                   [phases state (get-application-phases state)]]
+                                                  [application-state-details application config]
+                                                  [votes-summary application]
+                                                  [application-events application (take 3 events)]]
+                                         :collapse (into [:<>]
+                                                         (render-events application (drop 3 events)))}
+
+                                        (is-handling-user? application)
+                                        ;; handling users see most important state
+                                        {:always [phases state (get-application-phases state)]
+                                         :collapse-hidden [:div.my-3
+                                                           [votes-summary application]
+                                                           [application-events application (take 1 events)]]
+                                         :collapse [:div
+                                                    [application-state-details application config]
+                                                    [votes-summary application]
+                                                    [application-events application events]]}
+
+                                        :else
+                                        ;; applying users see minimal state
+                                        {:always [phases state (get-application-phases state)]
+                                         :collapse-hidden (when (seq events)
+                                                            (into [:div.my-3]
+                                                                  (render-events application (take 1 events))))
+                                         :collapse [:div
+                                                    [application-state-details application config]
+                                                    [application-events application events]]}))]))
 
 (defn member-info
   "Renders a applicant, member or invited member of an application
