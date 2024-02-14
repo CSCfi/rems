@@ -124,21 +124,20 @@
        [:h3 (text :t.applications/votes)]
 
        [:div.container-fluid
-        (doall (for [[vote n] (sort-by val summary)
-                     :let [n-pct (* 100 (/ n (count voters)))
-                           vote-voters (->> vote
-                                            (get voters-by-vote)
-                                            (remove nil?))]
-                     :when (seq vote-voters)
-                     :let [voters-text (->> vote-voters
-                                            (mapv application-util/get-member-name)
-                                            (str/join ", "))]]
-                 ^{:key vote}
-                 [:div.form-group.row
-                  [:label.col-sm-3.col-form-label (text (keyword (str "t" ".applications.voting.votes") vote))]
-                  [:div.col-sm-9.form-control (goog.string/format "%.2f%% (%s)"
-                                                                  n-pct
-                                                                  voters-text)]]))
+        (into [:<>] (for [[vote n] (sort-by val summary)
+                          :let [n-pct (* 100 (/ n (count voters)))
+                                vote-voters (->> vote
+                                                 (get voters-by-vote)
+                                                 (remove nil?))]
+                          :when (seq vote-voters)
+                          :let [voters-text (->> vote-voters
+                                                 (mapv application-util/get-member-name)
+                                                 (str/join ", "))]]
+                      [:div.form-group.row
+                       [:label.col-sm-3.col-form-label (text (keyword (str "t" ".applications.voting.votes") vote))]
+                       [:div.col-sm-9.form-control (goog.string/format "%.2f%% (%s)"
+                                                                       n-pct
+                                                                       voters-text)]]))
 
         (let [n (- (count voters) (count votes))
               n-pct (* 100 (/ n (count voters)))
