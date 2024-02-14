@@ -767,20 +767,19 @@
                                        :role role}))))))
 
 (defn- update-voting-permissions [application voting]
-  (if (contains? #{:application.state/submitted
-                   :application.state/returned}
-                 (:application/state application))
-    (permissions/update-role-permissions
-     application
-     (case (:type voting)
-       :reviewers-vote
-       {:reviewer (into (-> application :application/role-permissions :reviewer set)
-                        [:application.command/vote])
-        :past-reviewer (into (-> application :application/role-permissions :past-reviewer set)
-                             [:application.command/vote])}
-       :handlers-vote
-       {:handler (into (-> application :application/role-permissions :handler set)
-                       [:application.command/vote])}))
+  (case (:type voting)
+    :reviewers-vote
+    (permissions/blacklist application
+                           (permissions/compile-rules
+                            [{:permission :application.command/vote
+                              :role :handler}]))
+    :handlers-vote
+    (permissions/blacklist application
+                           (permissions/compile-rules
+                            [{:permission :application.command/vote
+                              :role :reviewer}
+                             {:permission :application.command/vote
+                              :role :past-reviewer}]))
 
     application))
 

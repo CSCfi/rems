@@ -53,7 +53,8 @@
     :application.command/return
     :application.command/approve
     :application.command/reject
-    :application.command/close})
+    :application.command/close
+    :application.command/vote})
 
 (def ^:private handler-returned-commands
   (disj handler-all-commands
@@ -79,10 +80,12 @@
    :reviewer #{:see-everything
                :application.command/redact-attachments
                :application.command/remark
-               :application.command/review}
+               :application.command/review
+               :application.command/vote}
    :past-reviewer #{:see-everything
                     :application.command/redact-attachments
-                    :application.command/remark}
+                    :application.command/remark
+                    :application.command/vote}
    :decider #{:see-everything
               :application.command/redact-attachments
               :application.command/remark
@@ -114,6 +117,12 @@
               :application.command/uninvite-member
               :application.command/close
               :application.command/revoke}
+   :reviewer #{:see-everything
+               :application.command/redact-attachments
+               :application.command/remark}
+   :past-reviewer #{:see-everything
+                    :application.command/redact-attachments
+                    :application.command/remark}
    :decider #{:see-everything
               :application.command/redact-attachments
               :application.command/remark
