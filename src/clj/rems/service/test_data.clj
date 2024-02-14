@@ -281,8 +281,21 @@
                                                 :title "Decider workflow"
                                                 :type :workflow/decider
                                                 :handlers handlers
-                                                :licenses [link text]
-                                                :voting {:type :handlers-vote}})
+                                                :licenses [link text]})
+        handlers-vote (test-helpers/create-workflow! {:actor owner
+                                                      :organization {:organization/id "nbn"}
+                                                      :title "Handlers vote workflow"
+                                                      :type :workflow/default
+                                                      :handlers handlers
+                                                      :licenses [link text]
+                                                      :voting {:type :handlers-vote}})
+        reviewers-vote (test-helpers/create-workflow! {:actor owner
+                                                       :organization {:organization/id "nbn"}
+                                                       :title "Reviewers vote workflow"
+                                                       :type :workflow/default
+                                                       :handlers handlers
+                                                       :licenses [link text]
+                                                       :voting {:type :reviewers-vote}})
         master (test-helpers/create-workflow! {:actor owner
                                                :organization {:organization/id "nbn"}
                                                :title "Master workflow"
@@ -325,6 +338,8 @@
                                                    :anonymize-handling true})]
     {:default default
      :decider decider
+     :handlers-vote handlers-vote
+     :reviewers-vote reviewers-vote
      :master master
      :auto-approve auto-approve
      :organization-owner organization-owner
@@ -758,6 +773,15 @@
                                                                                                          :field/max-length 100
                                                                                                          :field/privacy :private})]})
 
+        simple-form (test-helpers/create-form! {:actor owner
+                                                :organization {:organization/id "csc"}
+                                                :form/internal-name "Simple form"
+                                                :form/external-title {:en "Form"
+                                                                      :fi "Lomake"
+                                                                      :sv "Blankett"}
+                                                :form/fields [(merge text-field {:field/max-length 100
+                                                                                 :field/privacy :private})]})
+
         form-private-nbn (test-helpers/create-form! {:actor owner
                                                      :organization {:organization/id "nbn"}
                                                      :form/internal-name "Simple form"
@@ -826,9 +850,9 @@
                                           :workflow-id (:master workflows)
                                           :categories [technical-category]})
     (test-helpers/create-catalogue-item! {:actor owner
-                                          :title {:en "Decider workflow"
-                                                  :fi "Päättäjätyövuo"
-                                                  :sv "Arbetsflöde för beslutsfattande"}
+                                          :title {:en "Decider workflow 1"
+                                                  :fi "Päättäjätyövuo 1"
+                                                  :sv "Arbetsflöde för beslutsfattande 1"}
                                           :infourl {:en "http://www.google.com"
                                                     :fi "http://www.google.fi"
                                                     :sv "http://www.google.se"}
@@ -836,6 +860,24 @@
                                           :form-id form
                                           :organization {:organization/id "nbn"}
                                           :workflow-id (:decider workflows)
+                                          :categories [special-category]})
+    (test-helpers/create-catalogue-item! {:actor owner
+                                          :title {:en "Handlers vote"
+                                                  :fi "Käsittelijät äänestää"
+                                                  :sv "Händläggarna röstar"}
+                                          :resource-id res2
+                                          :form-id simple-form
+                                          :organization {:organization/id "csc"}
+                                          :workflow-id (:handlers-vote workflows)
+                                          :categories [special-category]})
+    (test-helpers/create-catalogue-item! {:actor owner
+                                          :title {:en "Reviewers vote"
+                                                  :fi "Kastelmoijat äänestää"
+                                                  :sv "Granskarna röstar"}
+                                          :resource-id res2
+                                          :form-id simple-form
+                                          :organization {:organization/id "csc"}
+                                          :workflow-id (:reviewers-vote workflows)
                                           :categories [special-category]})
     (let [cat {:actor owner
                :title {:en "Default workflow"

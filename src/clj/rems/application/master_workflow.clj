@@ -61,8 +61,7 @@
         :application.command/return
         :application.command/approve
         :application.command/reject
-        :application.command/request-decision
-        :application.command/vote))
+        :application.command/request-decision))
 
 (def ^:private created-permissions
   {:applicant (conj submittable-application-commands
@@ -81,10 +80,12 @@
    :reviewer #{:see-everything
                :application.command/redact-attachments
                :application.command/remark
-               :application.command/review}
+               :application.command/review
+               :application.command/vote}
    :past-reviewer #{:see-everything
                     :application.command/redact-attachments
-                    :application.command/remark}
+                    :application.command/remark
+                    :application.command/vote}
    :decider #{:see-everything
               :application.command/redact-attachments
               :application.command/remark
@@ -116,6 +117,12 @@
               :application.command/uninvite-member
               :application.command/close
               :application.command/revoke}
+   :reviewer #{:see-everything
+               :application.command/redact-attachments
+               :application.command/remark}
+   :past-reviewer #{:see-everything
+                    :application.command/redact-attachments
+                    :application.command/remark}
    :decider #{:see-everything
               :application.command/redact-attachments
               :application.command/remark

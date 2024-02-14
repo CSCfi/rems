@@ -9,6 +9,7 @@ have notable changes.
 Changes since v2.35.1
 
 ### Additions
+- (Experimental) Voting options are expanded to have types, i.e. reviewer and handler voting. Use `:enable-voting`. (#3257)
 - Email templates `:t.email/...` now support named format parameters, and default english localizations have been updated for reference. While REMS moves towards fully supporting named parameters, all translations with index parameters should continue to work. Localizations with many parameters (like emails) have been burdensome to maintain with index parameters, so transitioning into named parameters is highly encouraged. (#3241)
 
 ## v2.35.1 "Selkämerenkatu +1" 2024-01-16

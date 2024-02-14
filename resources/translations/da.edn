@@ -159,6 +159,7 @@
                    ;; %1 - number
                    :review-email-n "E-mailadresse til gennemsyn %1"
                    :review-emails "E-mailadresser til gennemsyn"
+                   :reviewers-vote nil
                    :save "Gem"
                    :short-name "Forkortelse"
                    :start "Begyndelse"
@@ -294,6 +295,7 @@
                  :voting {:previously-voted [:p "Du har tidligere stemt %1. Du kan ændre din stemme her."]
                           :votes {:accept "Godkend"
                                   :empty "Blank"
+                                  :not-voted nil
                                   :reject "Afvis"}}}
   :cart {:add "Læg i kurven"
          :apply "Ansøg"

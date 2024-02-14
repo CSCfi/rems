@@ -766,6 +766,23 @@
                                       {:permission (:command command)
                                        :role role}))))))
 
+(defn- update-voting-permissions [application voting]
+  (case (:type voting)
+    :reviewers-vote
+    (permissions/blacklist application
+                           (permissions/compile-rules
+                            [{:permission :application.command/vote
+                              :role :handler}]))
+    :handlers-vote
+    (permissions/blacklist application
+                           (permissions/compile-rules
+                            [{:permission :application.command/vote
+                              :role :reviewer}
+                             {:permission :application.command/vote
+                              :role :past-reviewer}]))
+
+    application))
+
 (defn enrich-workflow-voting [application get-config get-workflow]
   (let [workflow-id (get-in application [:application/workflow :workflow/id])
         workflow (get-workflow workflow-id)
@@ -773,7 +790,9 @@
         voting (get-in workflow [:workflow :voting])]
 
     (if (and (:enable-voting config) voting (:type voting))
-      (assoc-in application [:application/workflow :workflow/voting] voting)
+      (-> application
+          (assoc-in [:application/workflow :workflow/voting] voting)
+          (update-voting-permissions voting))
 
       (permissions/blacklist application (permissions/compile-rules [{:permission :application.command/vote}])))))
 

@@ -1448,7 +1448,7 @@
                  (first (:application/members application))
                  (get-in application [:application/events 2 :application/member]))))))))
 
-(deftest test-application-vote
+(deftest test-handler-vote
   (let [api-key "42"
         applicant-id "alice"
         handler-id1 "handler"
@@ -1471,20 +1471,6 @@
                                            {:type :application.command/request-review
                                             :application-id application-id
                                             :reviewers [reviewer-id]}))))
-    (testing "unrelated user can't vote"
-      (is (= {:success false
-              :errors [{:type "forbidden"}]}
-             (send-command applicant-id
-                           {:type :application.command/vote
-                            :application-id application-id
-                            :vote "Accept"})))
-
-      (is (= {:success false
-              :errors [{:type "forbidden"}]}
-             (send-command reviewer-id
-                           {:type :application.command/vote
-                            :application-id application-id
-                            :vote "Accept"}))))
 
     (testing "handler can't vote if voting is not enabled"
       (is (= {:success false
@@ -1506,6 +1492,15 @@
                              :voting {:type "handlers-vote"}})
                  handler
                  read-ok-body))))
+
+    (testing "unrelated user can't vote"
+      (doseq [userid [applicant-id reviewer-id]]
+        (is (= {:success false
+                :errors [{:type "forbidden"}]}
+               (send-command userid
+                             {:type :application.command/vote
+                              :application-id application-id
+                              :vote "Accept"})))))
 
     (testing "vote 1"
       (is (= {:success true} (send-command handler-id1
@@ -1543,6 +1538,18 @@
                                        (get-application-for-user handler-id1)
                                        (get-in [:application/votes])))))
 
+    (testing "no voting after application if finished"
+      (is (= {:success true} (send-command handler-id1
+                                           {:type :application.command/close
+                                            :application-id application-id})))
+
+      (is (= {:success false
+              :errors [{:type "forbidden"}]}
+             (send-command handler-id2
+                           {:type :application.command/vote
+                            :application-id application-id
+                            :vote "Reject"}))))
+
     (testing "voting events"
       (is (= [{:event/type "application.event/voted" :event/actor handler-id1 :vote/value "Accept"}
               {:event/type "application.event/voted" :event/actor handler-id1 :vote/value "Reject"}
@@ -1550,8 +1557,126 @@
              (-> application-id
                  (get-application-for-user handler-id1)
                  (get-in [:application/events])
-                 (->> (take-last 3)
-                      (mapv #(select-keys % [:event/actor :event/type :vote/value])))))))))
+                 (->> (filter (comp #{"application.event/voted"} :event/type)))
+                 (->> (mapv #(select-keys % [:event/actor :event/type :vote/value])))))))))
+
+(deftest test-reviewers-vote
+  (let [api-key "42"
+        applicant-id "alice"
+        handler-id "handler"
+        owner "owner"
+        reviewer-id1 (test-helpers/create-user! {:userid "reviewer1"})
+        reviewer-id2 (test-helpers/create-user! {:userid "reviewer2"})
+        form-id (test-helpers/create-form! {})
+        workflow-id (test-helpers/create-workflow! {:type :workflow/master
+                                                    :handlers [handler-id]})
+        cat-item-id (test-helpers/create-catalogue-item! {:workflow-id workflow-id
+                                                          :form-id form-id})
+        application-id (test-helpers/create-application! {:catalogue-item-ids [cat-item-id]
+                                                          :actor applicant-id})]
+    (testing "submit"
+      (is (= {:success true} (send-command applicant-id
+                                           {:type :application.command/submit
+                                            :application-id application-id}))))
+    (testing "invite reviewers"
+      (is (= {:success true} (send-command handler-id
+                                           {:type :application.command/request-review
+                                            :application-id application-id
+                                            :reviewers [reviewer-id1 reviewer-id2]}))))
+    (testing "reviewer can't vote if voting is not enabled"
+      (is (= {:success false
+              :errors [{:type "forbidden"}]}
+             (send-command reviewer-id1
+                           {:type :application.command/vote
+                            :application-id application-id
+                            :vote "Accept"}))))
+
+    (testing "enable voting"
+      (is (= {:success true}
+             (-> (request :put "/api/workflows/edit")
+                 (authenticate api-key owner)
+                 (json-body {:id workflow-id
+                             :organization {:organization/id "abc"}
+                             :title "Workflow with voting"
+                             :handlers [handler-id]
+                             :disable-commands []
+                             :voting {:type "reviewers-vote"}})
+                 handler
+                 read-ok-body))))
+
+    (testing "unrelated user can't vote"
+      (doseq [userid [applicant-id handler-id]]
+        (is (= {:success false
+                :errors [{:type "forbidden"}]}
+               (send-command userid
+                             {:type :application.command/vote
+                              :application-id application-id
+                              :vote "Accept"})))))
+
+    (testing "vote 1"
+      (is (= {:success true} (send-command reviewer-id1
+                                           {:type :application.command/vote
+                                            :application-id application-id
+                                            :vote "Accept"}))))
+
+    (testing "handling users can see voting and votes"
+      (doseq [userid [handler-id reviewer-id1 reviewer-id2]]
+        (let [application (get-application-for-user application-id userid)]
+          (is (= {:reviewer1 "Accept"} (get-in application [:application/votes])))
+          (is (= {:type "reviewers-vote"} (get-in application [:application/workflow :workflow/voting]))))))
+
+    (testing "applicant can't see voting or votes"
+      (let [application (get-application-for-user application-id applicant-id)]
+        (is (= nil (get-in application [:application/votes])))
+        (is (= nil (get-in application [:application/workflow :workflow/voting])))))
+
+    (testing "vote 2 overrides vote 1"
+      (is (= {:success true} (send-command reviewer-id1
+                                           {:type :application.command/vote
+                                            :application-id application-id
+                                            :vote "Reject"})))
+      (is (= {:reviewer1 "Reject"} (-> application-id
+                                       (get-application-for-user reviewer-id1)
+                                       (get-in [:application/votes])))))
+
+    (testing "vote 3 is in addition to vote 2"
+      (testing "voting can be done even after reviewing"
+
+        (is (= {:success true} (send-command reviewer-id2
+                                             {:type :application.command/review
+                                              :application-id application-id
+                                              :comment "Looks good"})))
+
+        (is (= {:success true} (send-command reviewer-id2
+                                             {:type :application.command/vote
+                                              :application-id application-id
+                                              :vote "Accept"})))
+        (is (= {:reviewer1 "Reject"
+                :reviewer2 "Accept"} (-> application-id
+                                         (get-application-for-user reviewer-id1)
+                                         (get-in [:application/votes]))))))
+
+    (testing "no voting after application if finished"
+      (is (= {:success true} (send-command handler-id
+                                           {:type :application.command/approve
+                                            :application-id application-id})))
+
+      (is (= {:success false
+              :errors [{:type "forbidden"}]}
+             (send-command reviewer-id2
+                           {:type :application.command/vote
+                            :application-id application-id
+                            :vote "Reject"}))))
+
+    (testing "voting events"
+      (is (= [{:event/type "application.event/voted" :event/actor reviewer-id1 :vote/value "Accept"}
+              {:event/type "application.event/voted" :event/actor reviewer-id1 :vote/value "Reject"}
+              {:event/type "application.event/voted" :event/actor reviewer-id2 :vote/value "Accept"}]
+             (-> application-id
+                 (get-application-for-user reviewer-id1)
+                 (get-in [:application/events])
+                 (->> (filter (comp #{"application.event/voted"} :event/type)))
+                 (->> (mapv #(select-keys % [:event/actor :event/type :vote/value])))))))))
 
 (deftest test-application-export
   (let [applicant "alice"

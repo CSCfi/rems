@@ -159,6 +159,7 @@
                    ;; %1 - number
                    :review-email-n "Review email %1"
                    :review-emails "Review emails"
+                   :reviewers-vote "Reviewers vote"
                    :save "Save"
                    :short-name "Short name"
                    :start "Start"
@@ -294,6 +295,7 @@
                  :voting {:previously-voted [:p "Previously you voted %1. You can change your vote here."]
                           :votes {:accept "Accept"
                                   :empty "Empty"
+                                  :not-voted "Has not voted"
                                   :reject "Reject"}}}
   :cart {:add "Add to cart"
          :apply "Apply"

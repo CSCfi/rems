@@ -155,6 +155,7 @@
                    :resources "Resurssit"
                    :review-email-n "Katselmointisähköposti %1"
                    :review-emails "Katselmointisähköpostit"
+                   :reviewers-vote "Katselmoijat äänestää"
                    :save "Tallenna"
                    :short-name "Lyhenne"
                    :start "Alku"
@@ -274,6 +275,7 @@
                  :voting {:previously-voted [:p "Äänestit aiemmin %1. Voit vaihtaa ääntäsi tästä."]
                           :votes {:accept "Jaa"
                                   :empty "Tyhjä"
+                                  :not-voted "Ei ole äänestänyt"
                                   :reject "Ei"}}}
   :cart {:add "Lisää koriin"
          :apply "Hae"
