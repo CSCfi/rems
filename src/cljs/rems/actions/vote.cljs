@@ -136,7 +136,9 @@
                  ^{:key vote}
                  [:div.form-group.row
                   [:label.col-sm-3.col-form-label (text (keyword (str "t" ".applications.voting.votes") vote))]
-                  [:div.col-sm-9.form-control (str (goog.string/format "%.2f%% (%s)" n-pct voters-text))]]))
+                  [:div.col-sm-9.form-control (goog.string/format "%.2f%% (%s)"
+                                                                  n-pct
+                                                                  voters-text)]]))
 
         (let [n (- (count voters) (count votes))
               n-pct (* 100 (/ n (count voters)))
