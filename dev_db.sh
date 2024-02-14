@@ -10,5 +10,5 @@ if [ "$1" == "perf" ]; then
     ARGS="run perf-setup"
 fi
 
-echo "LEIN_FAST_TRAMPOLINE=y lein $ARGS"
-LEIN_FAST_TRAMPOLINE=y lein $ARGS
+echo "lein $ARGS"
+lein $ARGS
