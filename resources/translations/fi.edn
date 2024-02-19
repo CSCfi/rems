@@ -271,7 +271,7 @@
                  :view "Näytä"
                  :view-application-with-description "Näytä hakemus %1: %2"
                  :view-application-without-description "Näytä hakemus %1 resursseille: %2"
-                 :votes "Votes"
+                 :votes "Äänestys"
                  :voting {:previously-voted [:p "Äänestit aiemmin %1. Voit vaihtaa ääntäsi tästä."]
                           :votes {:accept "Jaa"
                                   :empty "Tyhjä"
