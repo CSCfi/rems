@@ -291,12 +291,12 @@
                  ;; %1 - application id
                  ;; %2 - comma-separated list of catalogue item names
                  :view-application-without-description "View application %1 for resources: %2"
-                 :votes "Votes"
                  :voting {:previously-voted [:p "Previously you voted %1. You can change your vote here."]
                           :votes {:accept "Accept"
                                   :empty "Empty"
                                   :not-voted "Has not voted"
-                                  :reject "Reject"}}}
+                                  :reject "Reject"}
+                          :voting "Voting"}}
   :cart {:add "Add to cart"
          :apply "Apply"
          ;; %1 - number of resources

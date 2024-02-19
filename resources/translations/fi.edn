@@ -271,12 +271,12 @@
                  :view "Näytä"
                  :view-application-with-description "Näytä hakemus %1: %2"
                  :view-application-without-description "Näytä hakemus %1 resursseille: %2"
-                 :votes "Äänestys"
                  :voting {:previously-voted [:p "Äänestit aiemmin %1. Voit vaihtaa ääntäsi tästä."]
                           :votes {:accept "Jaa"
                                   :empty "Tyhjä"
                                   :not-voted "Ei ole äänestänyt"
-                                  :reject "Ei"}}}
+                                  :reject "Ei"}
+                          :voting "Äänestys"}}
   :cart {:add "Lisää koriin"
          :apply "Hae"
          :apply-for-bundle "Hae %1 aineistoa yhdessä "

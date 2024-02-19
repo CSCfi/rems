@@ -291,12 +291,12 @@
                  ;; %1 - application id
                  ;; %2 - comma-separated list of catalogue item names
                  :view-application-without-description "Vis ansøgning %1 for ressourcer: %2"
-                 :votes "Stemmer"
                  :voting {:previously-voted [:p "Du har tidligere stemt %1. Du kan ændre din stemme her."]
                           :votes {:accept "Godkend"
                                   :empty "Blank"
                                   :not-voted nil
-                                  :reject "Afvis"}}}
+                                  :reject "Afvis"}
+                          :voting "Afstemning"}}
   :cart {:add "Læg i kurven"
          :apply "Ansøg"
          ;; %1 - number of resources

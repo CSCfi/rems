@@ -128,7 +128,7 @@
         voters-by-vote (build-index {:keys [val] :value-fn (comp voter-by-userid key) :collect-fn conj} votes)]
     (when (seq voters)
       [:div.my-3
-       [:h3 (text :t.applications/votes)]
+       [:h3 (text :t.applications.voting/voting)]
 
        [:div.container-fluid
         (into [:<>] (for [[vote n] (sort-by val summary)
