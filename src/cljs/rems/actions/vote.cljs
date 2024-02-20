@@ -97,9 +97,16 @@
 ;; TODO consider moving to a util
 (defn- get-reviewers [application]
   (for [event (:application/events application)
-        :let [type (:event/type event)]
-        :when (= type :application.event/review-requested)
-        reviewer (:application/reviewers event)]
+        :let [type (:event/type event)
+              reviewers (case type
+                          :application.event/review-requested
+                          (:application/reviewers event)
+
+                          :application.event/reviewer-joined
+                          [(:event/actor-attributes event)]
+
+                          nil)]
+        reviewer reviewers]
     reviewer))
 
 (defn- get-potential-voters [application]
@@ -121,7 +128,7 @@
         voters-by-vote (build-index {:keys [val] :value-fn (comp voter-by-userid key) :collect-fn conj} votes)]
     (when (seq voters)
       [:div.my-3
-       [:h3 (text :t.applications/votes)]
+       [:h3 (text :t.applications.voting/voting)]
 
        [:div.container-fluid
         (into [:<>] (for [[vote n] (sort-by val summary)
