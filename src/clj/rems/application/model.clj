@@ -869,7 +869,7 @@
   (let [invitations (vals (:application/invitation-tokens application))
         members (keep :application/member invitations)]
     (-> application
-        (assoc :application/invited-members (set members)))))
+        (assoc-some :application/invited-members (not-empty (set members))))))
 
 (defn enrich-with-injections
   [application {:keys [blacklisted?
