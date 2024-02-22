@@ -21,6 +21,7 @@
             :cancel "Afbryd"
             :change-applicant "Gør til ansøger"
             :change-resources "Rediger ressourcer"
+            :change-processing-state nil
             :clear "Ryd"
             :close "Luk ansøgning"
             :close-intro [:div.intro [:p "NB: Hvis ansøgningen er lukket, kan den ikke ændres eller indsendes længere."]]
@@ -147,6 +148,7 @@
                    :no-licenses "Ingen brugsvilkår"
                    :no-voting "Ingen afstemning"
                    :optional "(valgfrit)"
+                   :optional-fields nil
                    :org "Org"
                    :organization "Organisation"
                    :organizations "Organisationer"
@@ -174,7 +176,8 @@
                    :workflow "Arbejdsgang"
                    :workflows "Arbejdsgange"
                    :workflow-anonymize-handling-explanation "Denne arbejdsgang skjuler brugers personhenførbare information (f.eks. navn og e-mail) for ansøgere."
-                   :workflow-disabled-commands-explanation [:p "Denne arbejdsgang deaktiverer funktioner for brugere når vilkår er opfyldt. Funktioner, ansøgningsstatus og brugerroller kan findes på " [:a {:href "https://github.com/CSCfi/rems/blob/master/docs/application-permissions.md" :target :_blank} "REMS Github-side."]]
+                   :workflow-disabled-commands-explanation "Denne arbejdsgang deaktiverer funktioner for brugere når vilkår er opfyldt."
+                   :workflow-processing-states-explanation nil
                    :workflow-type "Arbejdsgangstype"}
   :applicant-info {:applicant "Ansøger"
                    :applicants "Ansøgere"
@@ -325,6 +328,7 @@
              :approve "Godkend"
              :assign-external-id "Tildel ekstern id"
              :change-applicant "Gør til ansøger"
+             :change-processing-state nil
              :change-resources "Rediger ressourcer"
              :close "Luk ansøgning"
              :copy-as-new "Kopier som ny ansøgning"
@@ -405,15 +409,18 @@
   :create-resource {:licenses-selection "Vilkår"
                     :resid "Ressource id"
                     :resid-placeholder "urn:test:fi:some-uuid"}
-  :create-workflow {:create-new-rule "Ny regel"
+  :create-workflow {:anonymize-handling-explanation nil
+                    :create-new-rule "Ny regel"
                     :decider-workflow "Arbejdsgang for beslutningstager"
                     :decider-workflow-description "Behandler kan ikke godkende eller afslå ansøgningen, kun beslutningstagere kan gøre dette."
                     :default-workflow "Standard arbejdsgang"
                     :default-workflow-description "Behandler er i fuld kontrol over ansøgningsprocessen, og kan bede om gennemsyn og afgørelser fra andre efter behov."
                     :disable-commands "Deaktiver funktioner"
+                    :disable-commands-explanation nil
                     :handlers "Behandlere"
                     :master-workflow "Master-workflow"
                     :master-workflow-description "KUN TIL TEST. Foreningsmængde af alle arbejdsgange."
+                    :processing-states-explanation nil
                     :rule "Regel"
                     :title "Arbejdsgangens navn"
                     :voting-explanation "Du kan påkræve en afstemning om ansøgningen."}

@@ -916,9 +916,8 @@
    [:.rotate-180 {:transform "rotate(180deg)"}]
 
    [:.mt-2rem {:margin-top (u/rem 2)}]
-   [:.gap-1 {:gap (u/rem 0.5)}]
-   [:.gap-2 {:gap (u/rem 1)}]
-   [:.gap-3 {:gap (u/rem 1.5)}]
+   (for [i (range 1 10)]
+     [(str ".gap-" i) {:gap (u/rem (* i 0.5))}])
 
    [:.select-attachments {:display :flex
                           :flex-direction :column

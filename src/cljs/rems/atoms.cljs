@@ -312,27 +312,50 @@
 
 (defn action-button
   "Takes an `action` description and creates a button that triggers it."
-  [action]
-  [link {:id (:id action)
-         :label (:label action)
-         :href (:url action)
-         :on-click (:on-click action)
-         :class (str "btn btn-secondary " (:class action))}])
+  [{:keys [class id label on-click url]}]
+  [link {:id id
+         :label label
+         :href url
+         :on-click on-click
+         :class (str/trim (str "btn btn-secondary " class))}])
 
 (defn action-link
   "Takes an `action` description and creates a link that triggers it."
+  [{:keys [class id label on-click url]}]
+  [link {:id id
+         :label label
+         :href url
+         :on-click on-click
+         :class (str/trim (str "btn btn-link " class))}])
+
+(defn rate-limited-action-button
+  "Takes an `action` description and creates a button that triggers it.
+   Click events are rate limited."
+  [{:keys [class disabled id label on-click]}]
+  [rate-limited-button {:class (str/trim (str "btn-secondary " class))
+                        :disabled disabled
+                        :id id
+                        :on-click on-click
+                        :text label ; XXX: button and rate-limited-button could use label instead
+                        }])
+
+(defn cancel-action
+  "Standard cancel action helper, to use with e.g. `action-button` or `action-link`."
   [action]
-  [link {:id (:id action)
-         :label (:label action)
-         :href (:url action)
-         :on-click (:on-click action)
-         :class (str/trim (str "btn btn-link " (:class action)))}])
+  (assoc action
+         :label [text :t.administration/cancel]))
 
 (defn edit-action
-  "Standard edit action helper."
+  "Standard edit action helper, to use with e.g. `action-button` or `action-link`."
   [action]
   (assoc action
          :label [text :t.administration/edit]))
+
+(defn save-action
+  "Standard save action helper, to use with e.g. `action-button` or `action-link`."
+  [action]
+  (assoc action
+         :label [text :t.administration/save]))
 
 (defn commands
   "Creates a standard commands group with left alignment."

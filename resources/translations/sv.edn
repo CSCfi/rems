@@ -21,6 +21,7 @@
             :cancel "Avbryt"
             :change-applicant "Gör till sökanden" ; TODO check
             :change-resources "Ändra resurser"
+            :change-processing-state "Ändra delstat" ; TODO: check
             :clear "Töm"
             :close "Stäng ansökan"
             :close-intro [:div.intro [:p "Notera, om ansökan är stängd kan den inte längre ändras eller skickas."]]
@@ -144,11 +145,14 @@
                    :no-licenses "Inga licenser"
                    :no-voting "Inga omröstning"
                    :optional "(valfritt)"
+                   :optional-fields "Valfria fält" ; TODO: check
                    :org "Org"
                    :organization "Organisation"
                    :organizations "Organisationer"
                    :owners "Ägare"
                    :preview "Förhandsvisning"
+                   :processing-state "Ansökans delstad" ; TODO: check
+                   :processing-states "Ansökans delstater" ; TODO: check
                    :remove "Radera"
                    :reports "Rapporter"
                    :resource "Resurs"
@@ -159,6 +163,7 @@
                    :save "Spara"
                    :short-name "Förkortning"
                    :start "Början"
+                   :technical-value "Tekniskt värde"
                    :title "Namn"
                    :type "Typ"
                    :unarchive "Avarkivera"
@@ -170,7 +175,8 @@
                    :workflow "Arbetsflöde"
                    :workflows "Arbetsflöden"
                    :workflow-anonymize-handling-explanation "Detta arbetsflöde döljer handläggarens personligt identifierbar information (t.ex. namn och e-postaddress) för sökande."
-                   :workflow-disabled-commands-explanation [:p "Detta arbetsflöde avaktiverar funktioner för användarna när villkoren uppfylls. Funktioner, ansökningar statusar och användarroller hittas på " [:a {:href "https://github.com/CSCfi/rems/blob/master/docs/application-permissions.md" :target :_blank} "REMS Github-sidan."]]
+                   :workflow-disabled-commands-explanation "Detta arbetsflöde avaktiverar funktioner för användarna när villkoren uppfylls."
+                   :workflow-processing-states-explanation "Detta arbetsflöde tillåter handläggaren att uppdatera ett mer detaljerat applikationsdelstad." ; TODO: check
                    :workflow-type "Arbetsflödets typ"}
   :applicant-info {:applicant "Sökande"
                    :applicants "Sökande"
@@ -304,6 +310,7 @@
              :approve "Godkänn"
              :assign-external-id "Ange externt id"
              :change-applicant "Gör till sökanden"
+             :change-processing-state "Ändra delstad" ; TODO: check
              :change-resources "Ändra resurser"
              :close "Stäng ansökan"
              :copy-as-new "Kopiera som nytt"
@@ -380,15 +387,19 @@
   :create-resource {:licenses-selection "Licenser"
                     :resid "Resurs-id"
                     :resid-placeholder "urn:test:fi:some-uuid"}
-  :create-workflow {:create-new-rule "Ny regel"
+  :create-workflow {:anonymize-handling-explanation "Du kan dölja handläggarens personligt identifierbar information (t.ex. namn och e-postaddress) för sökande."
+                    :create-new-processing-state "Ny delstat" ; TODO: check
+                    :create-new-rule "Ny regel"
                     :decider-workflow "Arbetsflöde för beslutsfattande"
                     :decider-workflow-description "Handläggaren har inte rätt att godkänna eller förkasta ansökan. Endast beslutsfattare kan göra detta."
                     :default-workflow "Standard"
                     :default-workflow-description "Ansökan kontrolleras helt av handläggaren. Handläggaren kan vid behov be andra att granska eller ta beslut om ansökan."
                     :disable-commands "Avaktivera funktioner"
+                    :disable-commands-explanation [:p "Du kan avaktivera funktioner för användarna när villkoren uppfylls. Funktioner, ansökningar statusar och användarroller hittas på " [:a {:href "https://github.com/CSCfi/rems/blob/master/docs/application-permissions.md" :target :_blank} "REMS Github-sidan."]]
                     :handlers "Handläggare"
                     :master-workflow "Master-arbetsflöde"
                     :master-workflow-description "ENDAST FÖR TESTNING. Sammanslagning av alla möjliga arbetsflöden."
+                    :processing-states-explanation "Handläggaren kan uppdatera applikationens delstad med \"%:command%\" funktion. Ändringar av applikationsdelstad kan användas t.ex. för att skicka automatiska meddelanden till andra system." ; TODO: check
                     :rule "Regel"
                     :title "Arbetsflödets namn"
                     :voting-explanation "Hantering av ansökningar kan innehålla omröstning."}
