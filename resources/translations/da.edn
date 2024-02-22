@@ -210,7 +210,7 @@
                  ;; %1 - name of event actor
                  :events {:applicant-changed "%1 ændrede ansøger til %2."
                           :approved "%1 godkendte ansøgningen."
-                          :attachments-redacted "%1 redacted attachments. %2"
+                          :attachments-redacted nil
                           :closed "%1 lukkede ansøgningen."
                           :copied-from "Denne ansøgning er en kopi af en tidligere ansøgning."
                           :copied-to "%1 kopierede ansøgningen til en ny ansøgning."
@@ -234,6 +234,7 @@
                           :member-joined "%1 blev deltager."
                           :member-removed "%1 fjernede %2 fra ansøgningen."
                           :member-uninvited "%1 fjernede %2 fra ansøgningen."
+                          :processing-state-changed nil
                           :rejected "%1 afviste ansøgningen."
                           :remarked "%1 tilføjede en bemærkning."
                           ;; %2 - comma-separated list of catalogue item anems

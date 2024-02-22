@@ -201,7 +201,7 @@
                          :shown-to-applicant "Näytetään hakijalle"}
                  :events {:applicant-changed "%1 vaihtoi hakijan henkilöksi %2."
                           :approved "%1 hyväksyi hakemuksen."
-                          :attachments-redacted "%1 poisti liitetiedostoja. %2"
+                          :attachments-redacted "%1 poisti liitetiedostoja."
                           :closed "%1 sulki hakemuksen."
                           :copied-from "Tämä hakemus on kopio vanhasta hakemuksesta."
                           :copied-to "%1 kopioi hakemuksen uudeksi hakemukseksi."
@@ -221,6 +221,7 @@
                           :member-joined "Henkilö %1 liittyi hakemuksen jäseneksi."
                           :member-removed "%1 poisti hakemuksesta käyttäjän %2."
                           :member-uninvited "%1 poisti hakemuksesta henkilön %2."
+                          :processing-state-changed "%:event-actor% päivitti hakemuksen alitilaan \"%:state%\"."
                           :rejected "%1 hylkäsi hakemuksen."
                           :remarked "%1 kirjasi huomion."
                           :resources-changed "%1 muutti haettavia resursseja. Uudet resurssit: %2."

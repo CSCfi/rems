@@ -201,7 +201,7 @@
                          :shown-to-applicant "Synlig för sökande"}
                  :events {:applicant-changed "%1 bytte sökande till %2." ; TODO check
                           :approved "%1 godkände ansökan."
-                          :attachments-redacted "%1 tog bort bilagor. %2"
+                          :attachments-redacted "%1 tog bort bilagor."
                           :closed "%1 stängde ansökan."
                           :copied-from "Den här ansökan är en kopia från en tidigare ansökan."
                           :copied-to "%1 kopierade ansökan som ny ansökan."
@@ -221,6 +221,7 @@
                           :member-joined "%1 blev deltagare."
                           :member-removed "%1 tog bort deltagare %2."
                           :member-uninvited "%1 tog bort deltagare %2."
+                          :processing-state-changed "%:event-actor% bytte ansökans delstad till \"%:state%\"." ; TODO: check
                           :rejected "%1 avslog ansökan."
                           :remarked "%1 gjorde en anteckning."
                           :resources-changed "%1 ändrade sökta resurser. Nya resurser: %2."
