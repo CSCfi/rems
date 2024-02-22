@@ -1,5 +1,6 @@
 (ns rems.text
-  (:require [clojure.string :as str]
+  (:require [better-cond.core :as b]
+            [clojure.string :as str]
             [clojure.test :refer [deftest is]]
             #?(:clj [clj-time.core :as time]
                :cljs [cljs-time.core :as time])
@@ -107,8 +108,10 @@
    :application.state/returned :t.applications.states/returned
    :application.state/revoked :t.applications.states/revoked})
 
-(defn localize-state [state]
-  (text (get states state :t.applications.states/unknown)))
+(defn localize-state [state & [processing-state]]
+  (if processing-state
+    (text-format :t.label/parens (text (get states state :t.applications.states/unknown)) (localized processing-state))
+    (text (get states state :t.applications.states/unknown))))
 
 (def ^:private todos
   {:new-application :t.applications.todos/new-application
@@ -315,6 +318,7 @@
    :application.command/approve :t.commands/approve
    :application.command/assign-external-id :t.commands/assign-external-id
    :application.command/change-applicant :t.commands/change-applicant
+   :application.command/change-processing-state :t.commands/change-processing-state
    :application.command/change-resources :t.commands/change-resources
    :application.command/close :t.commands/close
    :application.command/copy-as-new :t.commands/copy-as-new

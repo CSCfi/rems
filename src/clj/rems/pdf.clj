@@ -1,6 +1,7 @@
 (ns rems.pdf
   "Rendering applications as pdf"
-  (:require [clj-pdf.core :refer [pdf]]
+  (:require [better-cond.core :as b]
+            [clj-pdf.core :refer [pdf]]
             [clj-time.core :as time]
             [clojure.string :as str]
             [rems.common.application-util :as application-util]
@@ -30,8 +31,7 @@
       " "
       (localize-time (time/now))]
      [:paragraph
-      (text :t.applications/state)
-      (when state [:phrase ": " (localize-state state)])])))
+      (text-format :t.label/default (text :t.applications/state) (localize-state state))])))
 
 (defn- render-user [application user label]
   (let [userid (:userid user)
