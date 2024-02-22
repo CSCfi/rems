@@ -45,21 +45,20 @@
                       :fi {:title "fi title"
                            :textcontent "fi link"}}}})
 
-(defn dummy-get-workflow [id]
-  (get {1 {:workflow {:type :workflow/default
-                      :handlers [{:userid handler-user-id
-                                  :name "user"
-                                  :email "user@example.com"}]}}
-        2 {:workflow {:type :workflow/default
-                      :handlers [{:userid handler-user-id
-                                  :name "user"
-                                  :email "user@example.com"}]
-                      :forms [{:form/id 1} {:form/id 3} {:form/id 4}]}}
-        3 {:workflow {:type :workflow/decider
-                      :handlers [{:userid handler-user-id
-                                  :name "user"
-                                  :email "user@example.com"}]}}}
-       id))
+(def dummy-workflows
+  {1 {:workflow {:type :workflow/default
+                 :handlers [{:userid handler-user-id
+                             :name "user"
+                             :email "user@example.com"}]}}
+   2 {:workflow {:type :workflow/default
+                 :handlers [{:userid handler-user-id
+                             :name "user"
+                             :email "user@example.com"}]
+                 :forms [{:form/id 1} {:form/id 3} {:form/id 4}]}}
+   3 {:workflow {:type :workflow/decider
+                 :handlers [{:userid handler-user-id
+                             :name "user"
+                             :email "user@example.com"}]}}})
 
 (def dummy-forms
   {1 {:form/id 1
@@ -135,7 +134,7 @@
    :get-license dummy-licenses
    :get-user (fn [userid] {:userid userid})
    :get-users-with-role (fn [role] (get {:expirer #{"expirer-bot"}} role))
-   :get-workflow dummy-get-workflow
+   :get-workflow dummy-workflows
    :blacklisted? (constantly false)
    :get-attachment-metadata {1 {:application/id app-id
                                 :attachment/id 1
@@ -186,18 +185,36 @@
     (not= :application.command/create (:type cmd))
     (assoc :application-id app-id)))
 
+(defn get-test-failure-data [{:keys [application cmd injections result]}]
+  (merge (select-keys application [:application/state])
+         {:cmd cmd
+          :injections injections
+          :result result}))
+
+(defn debug-command
+  "For occasional manual-drive moments."
+  [print-fn test-fn & args]
+  (with-redefs [rems.application.test-commands/get-test-failure-data print-fn]
+    (apply test-fn args)))
+
 (defn fail-command [cmd & [application injections]]
   (let [cmd (set-command-defaults cmd)
         result (->> (or injections command-injections)
                     (commands/handle-command cmd application))]
-    (assert-ex (:errors result) {:cmd cmd :result result})
+    (assert-ex (:errors result) (get-test-failure-data {:application application
+                                                        :cmd cmd
+                                                        :injections injections
+                                                        :result result}))
     result))
 
 (defn ok-command [cmd & [application injections]]
   (let [cmd (set-command-defaults cmd)
         result (->> (or injections command-injections)
                     (commands/handle-command cmd application))]
-    (assert-ex (not (:errors result)) {:cmd cmd :result result})
+    (assert-ex (not (:errors result)) (get-test-failure-data {:application application
+                                                              :cmd cmd
+                                                              :injections injections
+                                                              :result result}))
     (let [events (:events result)]
       (events/validate-events events)
       ;; most tests expect only one event, so this avoids having to wrap the expectation to a list
@@ -307,6 +324,12 @@
                            :application/comment "handler's remark"
                            :event/public false
                            :event/attachments [{:attachment/id 1}]})
+(def dummy-processing-state-changed-event {:event/type :application.event/processing-state-changed
+                                           :event/time test-time
+                                           :event/actor handler-user-id
+                                           :event/public false
+                                           :application/id app-id
+                                           :application/processing-state {:processing-state/value "in review"}})
 
 ;;; Tests
 
@@ -2043,3 +2066,108 @@
                         :expires-on (time/plus test-time (time/hours 1))}
                        (build-application-view [dummy-created-event]))))))
 
+(deftest change-processing-state-command
+  (testing "forbidden when config is disabled"
+    (is (= {:errors [{:type :forbidden}]}
+           (fail-command {:type :application.command/change-processing-state
+                          :actor handler-user-id
+                          :comment "thank you for your patience"
+                          :processing-state "in voting"
+                          :public true}
+                         (build-application-view [dummy-created-event
+                                                  dummy-submitted-event]
+                                                 (-> application-injections
+                                                     (assoc :get-config (constantly {:enable-processing-states false}))
+                                                     (assoc-in [:get-workflow 1 :workflow :processing-states] [{:title {:en "In voting"}
+                                                                                                                :value "in voting"}])))))))
+  (testing "forbidden when workflow does not contain any processing states"
+    (is (= {:errors [{:type :forbidden}]}
+           (fail-command {:type :application.command/change-processing-state
+                          :actor handler-user-id
+                          :comment "thank you for your patience"
+                          :processing-state "in voting"
+                          :public true}
+                         (build-application-view [dummy-created-event
+                                                  dummy-submitted-event]
+                                                 (-> application-injections
+                                                     (assoc :get-config (constantly {:enable-processing-states true}))
+                                                     (assoc-in [:get-workflow 1 :workflow :processing-states] [])))))))
+  (testing "applicant or reviewer cannot change processing state"
+    (is (= {:errors [{:type :forbidden}]}
+           (fail-command {:type :application.command/change-processing-state
+                          :actor applicant-user-id
+                          :comment "allow me"
+                          :processing-state "in voting"
+                          :public true}
+                         (build-application-view [dummy-created-event
+                                                  dummy-submitted-event]
+                                                 (-> application-injections
+                                                     (assoc :get-config (constantly {:enable-processing-states true}))
+                                                     (assoc-in [:get-workflow 1 :workflow :processing-states] [{:title {:en "In voting"}
+                                                                                                                :value "in voting"}]))))
+           (fail-command {:type :application.command/change-processing-state
+                          :actor reviewer-user-id
+                          :comment "allow me"
+                          :processing-state "in voting"
+                          :public false}
+                         (build-application-view [dummy-created-event
+                                                  dummy-submitted-event
+                                                  dummy-review-requested-event]
+                                                 (-> application-injections
+                                                     (assoc :get-config (constantly {:enable-processing-states true}))
+                                                     (assoc-in [:get-workflow 1 :workflow :processing-states] [{:title {:en "In voting"}
+                                                                                                                :value "in voting"}])))))))
+  (testing "cannot change draft processing state"
+    (is (= {:errors [{:type :forbidden}]}
+           (fail-command {:type :application.command/change-processing-state
+                          :actor handler-user-id
+                          :comment "let me help you"
+                          :processing-state "in voting"
+                          :public true}
+                         (build-application-view [dummy-created-event]
+                                                 (-> application-injections
+                                                     (assoc :get-config (constantly {:enable-processing-states true}))
+                                                     (assoc-in [:get-workflow 1 :workflow :processing-states] [{:title {:en "In voting"}
+                                                                                                                :value "in voting"}])))))))
+  (testing "handler can change processing state"
+    (is (= {:event/type :application.event/processing-state-changed
+            :event/time test-time
+            :event/actor handler-user-id
+            :application/id app-id
+            :application/comment "thank you for your patience"
+            :event/attachments [{:attachment/id 1}]
+            :event/public true
+            :application/processing-state {:processing-state/value "in voting"}}
+           (ok-command {:type :application.command/change-processing-state
+                        :actor handler-user-id
+                        :comment "thank you for your patience"
+                        :attachments [{:attachment/id 1}]
+                        :processing-state "in voting"
+                        :public true}
+                       (build-application-view [dummy-created-event
+                                                dummy-submitted-event]
+                                               (-> application-injections
+                                                   (assoc :get-config (constantly {:enable-processing-states true}))
+                                                   (assoc-in [:get-workflow 1 :workflow :processing-states] [{:title {:en "In voting"}
+                                                                                                              :value "in voting"}])))))))
+  (testing "handler can change processing state many times"
+    (is (= {:event/type :application.event/processing-state-changed
+            :event/time test-time
+            :event/actor handler-user-id
+            :application/id app-id
+            :event/public true
+            :application/processing-state {:processing-state/value "seal of approval"}}
+           (ok-command {:type :application.command/change-processing-state
+                        :actor handler-user-id
+                        :processing-state "seal of approval"
+                        :public true}
+                       (build-application-view [dummy-created-event
+                                                dummy-submitted-event
+                                                dummy-processing-state-changed-event
+                                                dummy-remarked-event]
+                                               (-> application-injections
+                                                   (assoc :get-config (constantly {:enable-processing-states true}))
+                                                   (assoc-in [:get-workflow 1 :workflow :processing-states] [{:title {:en "In voting"}
+                                                                                                              :value "in voting"}
+                                                                                                             {:title {:en "Initially approved"}
+                                                                                                              :value "seal of approval"}]))))))))
