@@ -154,6 +154,8 @@
                    :organizations "Organisationer"
                    :owners "Ejere"
                    :preview "Forhåndsvisning"
+                   :processing-state nil
+                   :processing-states nil
                    :remove "Slet"
                    :reports "Rapporter"
                    :resource "Ressource"
@@ -165,6 +167,7 @@
                    :save "Gem"
                    :short-name "Forkortelse"
                    :start "Begyndelse"
+                   :technical-value nil
                    :title "Navn"
                    :type "Type"
                    :unarchive "Dearkiver"
@@ -410,6 +413,7 @@
                     :resid "Ressource id"
                     :resid-placeholder "urn:test:fi:some-uuid"}
   :create-workflow {:anonymize-handling-explanation nil
+                    :create-new-processing-state nil
                     :create-new-rule "Ny regel"
                     :decider-workflow "Arbejdsgang for beslutningstager"
                     :decider-workflow-description "Behandler kan ikke godkende eller afslå ansøgningen, kun beslutningstagere kan gøre dette."

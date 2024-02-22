@@ -451,7 +451,6 @@
                     :master-workflow-description "ONLY FOR TESTING. Union of all possible workflows."
                     :processing-states-explanation "Handlers can set and update application processing state using \"%:command%\" action. Changes to processing state can be used e.g. to send automatic notifications to other systems."
                     :rule "Rule"
-                    :show-to-applicant? "Show to applicant?"
                     :title "Title"
                     :voting-explanation "You can require a vote to decide on the application."}
   :dropdown {:no-results "No results"

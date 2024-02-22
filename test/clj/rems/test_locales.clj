@@ -27,14 +27,14 @@
   (read-string (slurp (io/resource "translations/sv.edn"))))
 
 (deftest test-all-languages-defined
-  (is (= (recursive-keys (loc-en))
-         (recursive-keys (loc-da)))
+  (is (= #{} (clojure.set/difference (recursive-keys (loc-en))
+                                     (recursive-keys (loc-da))))
       "en matches da")
-  (is (= (recursive-keys (loc-en))
-         (recursive-keys (loc-fi)))
+  (is (= #{} (clojure.set/difference (recursive-keys (loc-en))
+                                     (recursive-keys (loc-fi))))
       "en matches fi")
-  (is (= (recursive-keys (loc-en))
-         (recursive-keys (loc-sv)))
+  (is (= #{} (clojure.set/difference (recursive-keys (loc-en))
+                                     (recursive-keys (loc-sv))))
       "en matches sv"))
 
 (defn- translation-keywords-in-use []
@@ -61,9 +61,9 @@
               keys-in-dictionary (set (keys dictionary))]
           (assert (seq keys-in-dictionary))
           (testing "dictionary is missing translations"
-            (is (empty? (sort (set/difference keys-in-source keys-in-dictionary)))))
+            (is (= #{} (set/difference keys-in-source keys-in-dictionary))))
           (testing "dictionary has unused translations"
-            (is (empty? (sort (set/difference keys-in-dictionary keys-in-source))))))))))
+            (is (= #{} (set/difference keys-in-dictionary keys-in-source)))))))))
 
 (deftest load-translations-test
   (testing "loads internal translations"
