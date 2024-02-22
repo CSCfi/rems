@@ -608,17 +608,19 @@
                            (set/union public-events sensitive-events)))
         "seems like a new event has been added; is public or sensitive?")))
 
-(defn get-event-visibility [event]
-  (let [event-public (:event/public event)
-        event-type (:event/type event)]
-    (case event-public
-      true :visibility/public
-      false :visibility/handling-users
-      (cond
-        (contains? sensitive-events event-type)
-        :visibility/handling-users
+(defn- get-event-visibility [{event-public :event/public
+                              event-type :event/type}]
+  (b/cond
+    (true? event-public)
+    :visibility/public
 
-        :else :visibility/public))))
+    (false? event-public)
+    :visibility/handling-users
+
+    (contains? sensitive-events event-type)
+    :visibility/handling-users
+
+    :visibility/public))
 
 (defn enrich-event [event get-user get-catalogue-item]
   (let [event-type (:event/type event)]
@@ -824,6 +826,12 @@
     (-> application
         (assoc-some-in [:application/workflow :workflow/anonymize-handling] anonymize-handling))))
 
+(defn- enrich-invited-members [application]
+  (let [invitations (vals (:application/invitation-tokens application))
+        members (keep :application/member invitations)]
+    (-> application
+        (assoc :application/invited-members (set members)))))
+
 (defn enrich-with-injections
   [application {:keys [blacklisted?
                        get-form-template
@@ -856,7 +864,8 @@
       (enrich-super-users get-users-with-role)
       (enrich-workflow-disable-commands get-config get-workflow)
       (enrich-workflow-voting get-config get-workflow)
-      (enrich-attachments get-user)))
+      (enrich-attachments get-user)
+      enrich-invited-members))
 
 (defn build-application-view [events injections]
   (-> (reduce application-view nil events)
@@ -942,17 +951,6 @@
       (dissoc :application/votes)
       hide-extra-user-attributes))
 
-(defn- hide-invitation-tokens [application]
-  (-> application
-      ;; the keys of the invitation-tokens map are secret
-      (dissoc :application/invitation-tokens)
-      (assoc :application/invited-members (->> application
-                                               :application/invitation-tokens
-                                               vals
-                                               (keep :application/member)
-                                               set))
-      (update :application/events (partial mapv #(dissoc % :invitation/token)))))
-
 (defn- may-see-private-answers? [roles]
   (some #{:applicant :member :decider :past-decider :handler :reporter}
         roles))
@@ -1007,10 +1005,10 @@
 
 (defn hide-non-public-information [application]
   (-> application
-      hide-invitation-tokens
-      ;; these are not used by the UI, so no need to expose them (especially the user IDs)
       (dissoc ::latest-review-request-by-user ::latest-decision-request-by-user)
       (dissoc :application/past-members)
+      (dissoc :application/invitation-tokens) ; the keys of the invitation-tokens map are secret
+      (update :application/events (partial mapv #(dissoc % :invitation/token)))
       (update :application/attachments (partial mapv #(dissoc % :attachment/redact-roles)))))
 
 (defn- personalize-todo [application userid]
