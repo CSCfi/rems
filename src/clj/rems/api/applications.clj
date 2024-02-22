@@ -269,6 +269,7 @@
     (command-endpoint :application.command/approve commands/ApproveCommand)
     (command-endpoint :application.command/assign-external-id commands/AssignExternalIdCommand)
     (command-endpoint :application.command/change-resources commands/ChangeResourcesCommand)
+    (command-endpoint :application.command/change-processing-state commands/ChangeProcessingStateCommand)
     (command-endpoint :application.command/close commands/CloseCommand)
     (command-endpoint :application.command/decide commands/DecideCommand)
     (command-endpoint :application.command/delete commands/DeleteCommand "Only drafts can be deleted. Only applicants can delete drafts.")

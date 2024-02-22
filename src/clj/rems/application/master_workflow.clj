@@ -40,6 +40,7 @@
     :application.command/add-licenses
     :application.command/add-member
     :application.command/assign-external-id
+    :application.command/change-processing-state
     :application.command/change-resources
     :application.command/redact-attachments
     :application.command/remove-member
@@ -111,6 +112,7 @@
               :application.command/redact-attachments
               :application.command/remark
               :application.command/add-member
+              :application.command/change-processing-state
               :application.command/change-resources
               :application.command/remove-member
               :application.command/invite-member
@@ -132,6 +134,7 @@
   {:applicant #{:application.command/copy-as-new}
    :member #{:application.command/copy-as-new}
    :handler #{:see-everything
+              :application.command/change-processing-state
               :application.command/redact-attachments
               :application.command/remark}
    :reviewer #{:see-everything

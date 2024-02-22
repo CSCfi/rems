@@ -3,7 +3,7 @@
             [rems.api.schema :as schema]
             [rems.service.workflow :as workflow]
             [rems.api.util :refer [not-found-json-response extended-logging]] ; required for route :roles
-            [rems.application.events :as events]
+            [rems.common.application-util :as application-util]
             [rems.common.roles :refer [+admin-read-roles+ +admin-write-roles+]]
             [rems.schema-base :as schema-base]
             [ring.util.http-response :refer [ok]]
@@ -13,12 +13,13 @@
   {:organization schema-base/OrganizationId
    :title s/Str
    (s/optional-key :forms) [{:form/id s/Int}]
-   :type (apply s/enum events/workflow-types) ; TODO: exclude master workflow?
+   :type (apply s/enum application-util/workflow-types) ; TODO: exclude master workflow?
    (s/optional-key :handlers) [schema-base/UserId]
    (s/optional-key :licenses) [schema-base/LicenseId]
    (s/optional-key :disable-commands) [schema-base/DisableCommandRule]
    (s/optional-key :voting) (s/maybe schema-base/WorkflowVoting)
-   (s/optional-key :anonymize-handling) (s/maybe s/Bool)})
+   (s/optional-key :anonymize-handling) (s/maybe s/Bool)
+   (s/optional-key :processing-states) [schema-base/WorkflowProcessingState]})
 
 (s/defschema EditWorkflowCommand
   {:id s/Int
@@ -28,7 +29,8 @@
    (s/optional-key :handlers) [schema-base/UserId]
    (s/optional-key :disable-commands) [schema-base/DisableCommandRule]
    (s/optional-key :voting) (s/maybe schema-base/WorkflowVoting)
-   (s/optional-key :anonymize-handling) (s/maybe s/Bool)})
+   (s/optional-key :anonymize-handling) (s/maybe s/Bool)
+   (s/optional-key :processing-states) [schema-base/WorkflowProcessingState]})
 
 (s/defschema CreateWorkflowResponse
   {:success s/Bool

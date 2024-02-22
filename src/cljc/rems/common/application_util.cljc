@@ -4,6 +4,11 @@
             [medley.core :refer [find-first]]
             [rems.common.util :as util]))
 
+(def workflow-types
+  #{:workflow/default
+    :workflow/decider
+    :workflow/master})
+
 (def states
   #{:application.state/approved
     :application.state/closed
@@ -59,7 +64,7 @@
   "Returns true if current user is applying for `application`.
 
    See `rems.common.application-util/+applying-user-roles+`"
-  [application]
+  [{application-roles :application/roles :as application}]
   (let [roles (set (:application/roles application))
         applying-roles (clojure.set/intersection +applying-user-roles+ roles)]
     (some? (seq applying-roles))))
@@ -68,8 +73,8 @@
   "Returns true if current user is taking part in handling process of `application` .
 
    See `rems.common.application-util/+handling-user-roles+`"
-  [application]
-  (let [roles (set (:application/roles application))
+  [{application-roles :application/roles :as application}]
+  (let [roles (set application-roles)
         handling-roles (clojure.set/intersection +handling-user-roles+ roles)]
     (some? (seq handling-roles))))
 

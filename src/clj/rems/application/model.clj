@@ -1,11 +1,12 @@
 (ns rems.application.model
-  (:require [clojure.set :as set]
+  (:require [better-cond.core :as b]
+            [clojure.set :as set]
             [clojure.test :refer [deftest is testing]]
             [com.rpl.specter :refer [ALL transform select]]
             [medley.core :refer [assoc-some dissoc-in distinct-by filter-vals find-first map-vals update-existing update-existing-in]]
             [rems.application.events :as events]
             [rems.application.master-workflow :as master-workflow]
-            [rems.common.application-util :refer [applicant-and-members can-redact-attachment? is-applying-user?]]
+            [rems.common.application-util :refer [applicant-and-members can-redact-attachment? is-applying-user? is-handling-user?]]
             [rems.common.form :as form]
             [rems.common.roles :refer [+handling-roles+]]
             [rems.common.util :refer [assoc-some-in conj-vec getx getx-in into-vec]]
@@ -17,6 +18,11 @@
 
 ;;;; Application
 
+(defn- update-application-state [application state]
+  (-> application
+      (assoc :application/state state)
+      (dissoc ::processing-state)))
+
 (defmulti ^:private application-base-view
   "Updates the data in the application based on the given event.
   Contrast with calculate-permissions which updates permissions based
@@ -26,10 +32,10 @@
 (defmethod application-base-view :application.event/created
   [application event]
   (-> application
+      (update-application-state :application.state/draft)
       (assoc :application/id (:application/id event)
              :application/external-id (:application/external-id event)
              :application/generated-external-id (:application/external-id event)
-             :application/state :application.state/draft
              :application/todo nil
              :application/created (:event/time event)
              :application/modified (:event/time event)
@@ -146,11 +152,11 @@
 (defmethod application-base-view :application.event/submitted
   [application event]
   (-> application
+      (update-application-state :application.state/submitted)
       (assoc ::previous-submitted-answers (::submitted-answers application))
       (assoc ::submitted-answers (::draft-answers application))
       (update :application/first-submitted #(or % (:event/time event)))
       (dissoc ::draft-answers)
-      (assoc :application/state :application.state/submitted)
       (assoc :application/todo (if (:application/first-submitted application)
                                  :resubmitted-application
                                  :new-application))))
@@ -158,8 +164,8 @@
 (defmethod application-base-view :application.event/returned
   [application _event]
   (-> application
+      (update-application-state :application.state/returned)
       (assoc ::draft-answers (::submitted-answers application)) ; guard against re-submit without saving a new draft
-      (assoc :application/state :application.state/returned)
       (assoc :application/todo nil)))
 
 (defmethod application-base-view :application.event/review-requested
@@ -208,14 +214,14 @@
 (defmethod application-base-view :application.event/approved
   [application event]
   (-> application
-      (assoc :application/state :application.state/approved)
+      (update-application-state :application.state/approved)
       (merge (select-keys event [:entitlement/end]))
       (assoc :application/todo nil)))
 
 (defmethod application-base-view :application.event/rejected
   [application _event]
   (-> application
-      (assoc :application/state :application.state/rejected)
+      (update-application-state :application.state/rejected)
       (assoc :application/todo nil)))
 
 (defmethod application-base-view :application.event/resources-changed
@@ -230,13 +236,13 @@
 (defmethod application-base-view :application.event/closed
   [application _event]
   (-> application
-      (assoc :application/state :application.state/closed)
+      (update-application-state :application.state/closed)
       (assoc :application/todo nil)))
 
 (defmethod application-base-view :application.event/revoked
   [application _event]
   (-> application
-      (assoc :application/state :application.state/revoked)
+      (update-application-state :application.state/revoked)
       (assoc :application/todo nil)))
 
 (defmethod application-base-view :application.event/copied-from
@@ -270,6 +276,12 @@
             [:application/votes (:event/actor event)]
             (:vote/value event)))
 
+(defmethod application-base-view :application.event/processing-state-changed
+  [application event]
+  (-> application
+      (assoc ::processing-state {:value (get-in event [:application/processing-state :processing-state/value])
+                                 :event event})))
+
 (deftest test-event-type-specific-application-view
   (testing "supports all event types"
     (is (= (set (keys events/event-schemas))
@@ -296,6 +308,7 @@
     {:permission :application.command/add-member}
     {:permission :application.command/assign-external-id}
     {:permission :application.command/change-applicant}
+    {:permission :application.command/change-processing-state}
     {:permission :application.command/change-resources}
     {:permission :application.command/close}
     {:permission :application.command/copy-as-new}
@@ -331,6 +344,7 @@
     {:permission :application.command/add-member}
     {:permission :application.command/assign-external-id}
     {:permission :application.command/change-applicant}
+    {:permission :application.command/change-processing-state}
     {:permission :application.command/change-resources}
     {:permission :application.command/close}
     {:permission :application.command/copy-as-new}
@@ -595,6 +609,7 @@
                         :application.event/member-joined
                         :application.event/member-removed
                         :application.event/member-uninvited
+                        :application.event/processing-state-changed
                         :application.event/rejected
                         :application.event/remarked
                         :application.event/resources-changed
@@ -826,6 +841,30 @@
     (-> application
         (assoc-some-in [:application/workflow :workflow/anonymize-handling] anonymize-handling))))
 
+(defn- join-processing-state [x processing-states]
+  (b/when-let [value (:processing-state/value x)
+               processing-state (find-first #(= value (:value %)) processing-states)]
+    {:processing-state/title (:title processing-state)
+     :processing-state/value (:value processing-state)}))
+
+(defn- enrich-processing-states [application get-config get-workflow]
+  (b/cond
+    :let [workflow (get-workflow (get-in application [:application/workflow :workflow/id]))
+          workflow-processing-states (get-in workflow [:workflow :processing-states])]
+
+    (or (not (:enable-processing-states (get-config)))
+        (empty? workflow-processing-states))
+    (permissions/blacklist application (permissions/compile-rules [{:permission :application.command/change-processing-state}]))
+
+    :let [current-processing-state (get-in application [::processing-state :value])]
+
+    (-> application
+        (assoc-some-in [:application/processing-state :processing-state/value] current-processing-state)
+        (update-existing :application/processing-state join-processing-state workflow-processing-states)
+        (assoc-in [:application/workflow :workflow/processing-states] workflow-processing-states)
+        ;; enrich-event is used elsewhere and does not have application, so this is just easier for now
+        (update :application/events (partial mapv #(update % :application/processing-state join-processing-state workflow-processing-states))))))
+
 (defn- enrich-invited-members [application]
   (let [invitations (vals (:application/invitation-tokens application))
         members (keep :application/member invitations)]
@@ -853,6 +892,7 @@
       enrich-duos ; uses enriched resources
       (enrich-workflow-licenses get-workflow)
       (update :application/licenses enrich-licenses get-license)
+      (enrich-processing-states get-config get-workflow)
       (update :application/events (partial mapv #(enrich-event % get-user get-catalogue-item)))
       (assoc :application/applicant (get-user (get-in application [:application/applicant :userid])))
       (update :application/attachments #(merge-lists-by :attachment/id % (get-attachments-for-application (getx application :application/id))))
@@ -947,7 +987,8 @@
       apply-workflow-anonymization
       (dissoc-in [:application/workflow :workflow.dynamic/handlers]
                  [:application/workflow :workflow/voting]
-                 [:application/workflow :workflow/anonymize-handling])
+                 [:application/workflow :workflow/anonymize-handling]
+                 [:application/workflow :workflow/processing-states])
       (dissoc :application/votes)
       hide-extra-user-attributes))
 
@@ -1006,6 +1047,7 @@
 (defn hide-non-public-information [application]
   (-> application
       (dissoc ::latest-review-request-by-user ::latest-decision-request-by-user)
+      (dissoc ::processing-state)
       (dissoc :application/past-members)
       (dissoc :application/invitation-tokens) ; the keys of the invitation-tokens map are secret
       (update :application/events (partial mapv #(dissoc % :invitation/token)))
@@ -1018,6 +1060,18 @@
 
     (contains? (::latest-decision-request-by-user application) userid)
     (assoc :application/todo :waiting-for-your-decision)))
+
+(defn- apply-processing-state-privacy [application roles]
+  (b/cond
+    :let [processing-state-event (get-in application [::processing-state :event])]
+
+    (= :visibility/public (get-event-visibility processing-state-event))
+    application
+
+    (is-handling-user? {:application/roles roles})
+    application
+
+    (dissoc application :application/processing-state)))
 
 (defn see-application? [application userid]
   (let [state (:application/state application)
@@ -1036,15 +1090,19 @@
         permissions (permissions/user-permissions application userid)
         see-application? (see-application? application userid)
         see-everything? (contains? permissions :see-everything)]
+
     (when see-application?
       (-> (if see-everything?
             application
             (hide-sensitive-information application))
+
           (personalize-todo userid)
           (apply-privacy-by-roles roles)
           (hide-non-accessible-attachments)
           (apply-attachments-privacy userid)
+          (apply-processing-state-privacy roles)
           (assoc :application/permissions permissions)
           (assoc :application/roles roles)
           (hide-non-public-information)
+
           (permissions/cleanup)))))

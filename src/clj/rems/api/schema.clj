@@ -268,7 +268,8 @@
                           :workflow/type s/Keyword
                           (s/optional-key :workflow.dynamic/handlers) [Handler]
                           (s/optional-key :workflow/voting) schema-base/WorkflowVoting
-                          (s/optional-key :workflow/anonymize-handling) s/Bool}
+                          (s/optional-key :workflow/anonymize-handling) s/Bool
+                          (s/optional-key :workflow/processing-states) [schema-base/WorkflowProcessingState]}
    :application/roles #{s/Keyword}
    :application/permissions Permissions
    :application/attachments [ApplicationAttachment]
@@ -276,7 +277,9 @@
    (s/optional-key :entitlement/end) (s/maybe DateTime)
    (s/optional-key :application/votes) {schema-base/UserId s/Str}
    (s/optional-key :application/duo) {(s/optional-key :duo/codes) [schema-base/DuoCodeFull]
-                                      (s/optional-key :duo/matches) [DuoCodeMatch]}})
+                                      (s/optional-key :duo/matches) [DuoCodeMatch]}
+   (s/optional-key :application/processing-state) {:processing-state/title schema-base/LocalizedString
+                                                   :processing-state/value s/Str}})
 
 (s/defschema ApplicationRaw
   (-> Application
