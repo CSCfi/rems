@@ -152,7 +152,7 @@
                       @(rf/subscribe [(:get-form-errors context)]))
         keys (if localizations-key
                [:localizations lang localizations-key]
-               (conj keys-prefix lang))
+               (conj (vec keys-prefix) lang))
         normalizer (or normalizer identity)
         on-change (or on-change (fn [_]))
         id (keys-to-id keys)
