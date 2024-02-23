@@ -1188,6 +1188,7 @@
           :application/members #{}
           :application/past-members #{}
           :application/invitation-tokens {}
+          :application/invited-members #{}
           :application/blacklist [{:blacklist/user {:userid "applicant"
                                                     :email "applicant@example.com"
                                                     :name "Applicant"
