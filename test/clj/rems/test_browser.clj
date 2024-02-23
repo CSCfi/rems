@@ -973,7 +973,6 @@
       (btu/wait-visible {:fn/text (str "There are " (count (btu/context-getx :todos)) " processed applications.")})
       (btu/screenshot "processed-applications-closed")
       (btu/scroll-and-click [:handled-applications-collapse {:fn/text "Show more"}])
-      (btu/wait-for-animation)
       (btu/wait-visible {:fn/text "Showing the first 50 rows only."})
       (btu/screenshot "processed-applications-opened")
       (btu/scroll-and-click [:handled-applications-collapse {:fn/text "Show all rows"}])
@@ -985,7 +984,6 @@
       (click-navigation-menu "Catalogue")
       (click-navigation-menu "Actions")
       (btu/scroll-and-click [:handled-applications-collapse {:fn/text "Show more"}])
-      (btu/wait-for-animation)
       (btu/screenshot "processed-applications-paged-opened-page-1")
       (testing "first page has newest rows"
         (is (= (for [i (range 100 90 -1)]
@@ -1005,7 +1003,6 @@
         (click-navigation-menu "Catalogue")
         (click-navigation-menu "Actions")
         (btu/scroll-and-click [:handled-applications-collapse {:fn/text "Show more"}])
-        (btu/wait-for-animation)
         (btu/screenshot "processed-applications-paged-revisit")
         (testing "first page still has newest rows"
           (is (= (for [i (range 100 90 -1)]
@@ -1014,7 +1011,6 @@
 
       (testing "load all rows to visit 10th page"
         (btu/scroll-and-click [:handled-applications-collapse {:fn/text "Show all rows"}])
-        (btu/wait-for-animation)
         (btu/scroll-and-click [:handled-applications-paging-pages {:fn/text "10"}])
         (btu/wait-visible {:fn/text "test-processed-applications-10"}) ; wait for at least one to appear before checking all
         (is (= (for [i (range 10 0 -1)]

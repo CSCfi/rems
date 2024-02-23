@@ -389,6 +389,15 @@
 
 ;;; etaoin extensions
 
+(defn wait-for-idle
+  "Use requestIdleCallback API to wait until browser has idle period. This may sometimes
+   work more reliably than waiting for an arbitrary amount of time."
+  [& [{:keys [timeout] :or {timeout 500}}]]
+  (js-async (format
+             "var args = arguments;
+              var callback = args[args.length - 1];
+              window.requestIdleCallback(callback, { timeout: %d });" timeout)))
+
 ;; exceptions make for ugly test failures: here are some wrappers that
 ;; are better adapted for (is ...) assertions
 
@@ -401,9 +410,11 @@
      false)))
 
 (defn eventually-visible? [& args]
+  (wait-for-idle)
   (no-timeout? #(apply wait-visible args)))
 
 (defn eventually-invisible? [& args]
+  (wait-for-idle)
   (no-timeout? #(apply wait-invisible args)))
 
 ;; TODO our input fields process every character through re-frame.
@@ -415,7 +426,9 @@
 (def +typo-probability+ 0.05)
 
 (defn fill-human [q text]
+  (wait-for-idle)
   (wait-visible q)
+
   (doseq [c text]
     (et/wait (* +max-extra-delay+ (Math/pow (rand) 5)))
     (when (< (rand) +typo-probability+)
@@ -426,6 +439,9 @@
     (et/wait +character-delay+)
     (et/fill (get-driver) q c))
   (et/wait +character-delay+)
+
+  (wait-for-idle)
+
   (let [value (get-element-attr q "value")]
     (when-not (= text value)
       (log/warn "Failed to fill field to" (pr-str text) "got" (pr-str value) "instead."))))
@@ -437,6 +453,7 @@
 
 (defn wait-visible-el [el & [opt]]
   (let [message (format "Wait for %s element is visible" el)]
+    (wait-for-idle)
     (wait-predicate #(visible-el? el)
                     (assoc opt :message message))))
 
@@ -458,6 +475,7 @@
   "Wait a button to become visible, scroll it to middle
   (to make sure it's not hidden under navigation) and click."
   [q & [opt]]
+  (wait-for-idle)
   (wait-visible q opt)
   (scroll-query q {"block" "center"})
   (assert (not (get-element-attr q "disabled")))
@@ -472,6 +490,7 @@
   (click-el el))
 
 (defn wait-page-loaded []
+  (wait-for-idle)
   (wait-invisible {:css ".fa-spinner"}))
 
 (defn field-visible? [label]
@@ -485,6 +504,7 @@
   (scroll-and-click [{:css (str "input[value='" value "']")}]))
 
 (defn wait-for-downloads [string-or-regex]
+  (wait-for-idle)
   (wait-predicate #(seq (downloaded-files string-or-regex))
                   #(do {:string-or-regex string-or-regex
                         :downloaded-files (downloaded-files)})))
@@ -657,10 +677,3 @@
      (catch Exception e#
        (rems.browser-test-util/postmortem-handler e#)
        (throw e#))))
-
-(defn wait-for-animation
-  "Waits for a short while for animations to finish.
-  Ideally there would be a more accurate mechanism. Often
-  it helps if there is something to wait to appear."
-  []
-  (Thread/sleep 120))
