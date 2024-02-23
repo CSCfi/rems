@@ -2483,7 +2483,7 @@
               "Forms" "Simple form"
               "Licenses" "General Terms of Use"
               "Active" true}
-             (slurp-fields :workflow))))
+             (slurp-fields {:id :workflow-common-fields}))))
     (testing "edit workflow"
       (btu/scroll-and-click {:css ".edit-workflow"})
       (is (btu/eventually-visible? {:tag :h1 :fn/text "Edit workflow"}))
@@ -2510,7 +2510,7 @@
               "Forms" "Simple form"
               "Licenses" "General Terms of Use"
               "Active" true}
-             (slurp-fields :workflow)))
+             (slurp-fields {:id :workflow-common-fields})))
       (is (btu/visible? {:tag :a :fn/text "Simple form"})))))
 
 (deftest test-blacklist
