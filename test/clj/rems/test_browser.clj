@@ -1130,7 +1130,8 @@
         (btu/wait-page-loaded)
         ;; NB: this differs a bit from `login-as` and we should keep them the same
         (is (btu/eventually-visible? {:tag :div :fn/has-text "Successfully joined workflow handling."}))
-        (is (btu/eventually-visible? [:workflow {:fn/has-text (btu/context-getx :workflow-title)}]))
+        (is (btu/eventually-visible? [{:id :workflow-common-fields}
+                                      {:fn/has-text (btu/context-getx :workflow-title)}]))
         (is (= {"Organization" "The Default Organization"
                 "Title" (btu/context-getx :workflow-title)
                 "Type" "Master workflow"
@@ -1138,7 +1139,7 @@
                 "Active" true
                 "Forms" "No forms"
                 "Licenses" "No licenses"}
-               (slurp-fields :workflow)))))))
+               (slurp-fields {:id :workflow-common-fields})))))))
 
 (deftest test-invite-reviewer
   (testing "create test data"
@@ -1444,7 +1445,7 @@
               "Forms" "No forms"
               "Licenses" "No licenses"
               "Active" true}
-             (slurp-fields :workflow)))
+             (slurp-fields {:id :workflow-common-fields})))
       (go-to-admin "Workflows")
       (is (some #(= (btu/context-getx :workflow-name) (get % "title"))
                 (slurp-rows :workflows))))))
