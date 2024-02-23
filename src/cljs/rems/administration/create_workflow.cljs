@@ -25,8 +25,7 @@
                                ::actors nil
                                ::commands nil
                                ::editing? (some? workflow-id)
-                               ::form {:type :workflow/default}
-                               ::touched-form-fields nil)
+                               ::form {:type :workflow/default})
                     :dispatch-n [[::actors]
                                  [::forms {:disabled true :archived true}]
                                  [::licenses]
@@ -67,17 +66,19 @@
 
 (defn- valid-create-request? [request]
   (and
+   ;; required
    (contains? application-util/workflow-types (:type request))
-   (seq (:handlers request))
+   (seq (keep not-blank (:handlers request)))
    (not-blank (get-in request [:organization :organization/id]))
    (not-blank (:title request))
+   ;; optional (validated values)
    (every? :command (:disable-commands request))
    (every? (comp not-blank :value) (:processing-states request))
    (every? (comp at-least-one-localization :title) (:processing-states request))))
 
 (defn build-create-request [form]
   (let [request (merge
-                 {:anonymize-handling (:anonymize-handling form false)
+                 {:anonymize-handling (:anonymize-handling form)
                   :disable-commands (->> (:disable-commands form)
                                          (mapv #(update-existing % :when/state vec))
                                          (mapv #(update-existing % :when/role vec)))
@@ -93,25 +94,28 @@
       request)))
 
 (defn- valid-edit-request? [request]
-  (and (number? (:id request))
-       (seq (:handlers request))
-       (not-blank (get-in request [:organization :organization/id]))
-       (not-blank (:title request))
-       (every? :command (:disable-commands request))
-       (every? (comp not-blank :value) (:processing-states request))
-       (every? (comp at-least-one-localization :title) (:processing-states request))))
+  (and
+   ;; required
+   (number? (:id request))
+   (seq (keep not-blank (:handlers request)))
+   (not-blank (get-in request [:organization :organization/id]))
+   (not-blank (:title request))
+   ;; optional (validated values)
+   (every? :command (:disable-commands request))
+   (every? (comp not-blank :value) (:processing-states request))
+   (every? (comp at-least-one-localization :title) (:processing-states request))))
 
 (defn build-edit-request [id form]
-  (let [request {:organization {:organization/id (get-in form [:organization :organization/id])}
-                 :id id
-                 :title (:title form)
-                 :handlers (mapv :userid (:handlers form))
+  (let [request {:anonymize-handling (:anonymize-handling form)
                  :disable-commands (->> (:disable-commands form)
                                         (mapv #(update-existing % :when/state vec))
                                         (mapv #(update-existing % :when/role vec)))
-                 :voting (:voting form)
-                 :anonymize-handling (:anonymize-handling form false)
-                 :processing-states (:processing-states form)}]
+                 :handlers (mapv :userid (:handlers form))
+                 :id id
+                 :organization {:organization/id (get-in form [:organization :organization/id])}
+                 :processing-states (:processing-states form)
+                 :title (:title form)
+                 :voting (:voting form)}]
     (when (valid-edit-request? request)
       request)))
 
