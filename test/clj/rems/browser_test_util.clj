@@ -392,7 +392,7 @@
 (defn wait-for-idle
   "Use requestIdleCallback API to wait until browser has idle period. This may sometimes
    work more reliably than waiting for an arbitrary amount of time."
-  [& [{:keys [timeout] :or {timeout 500}}]]
+  [& [{:keys [timeout] :or {timeout 200}}]]
   (js-async (format
              "var args = arguments;
               var callback = args[args.length - 1];
