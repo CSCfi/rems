@@ -1,6 +1,6 @@
 (ns ^:integration rems.test-pdf
   (:require [clj-time.core :as time]
-            [clojure.test :refer :all]
+            [clojure.test :refer [deftest is testing use-fixtures]]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
             [rems.service.test-data :as test-data]
@@ -122,7 +122,7 @@
       (is (= [{}
               [[:heading pdf/heading-style "Ansökan 2000/1: "]
                [:paragraph pdf/field-style "Denna pdf skapades" " " "2010-01-01 00:00"]
-               [:paragraph "Status" [:phrase ": " "Inlämnad"]]]
+               [:paragraph "Status: Inlämnad"]]
               [[:heading pdf/heading-style "Sökande"]
                [[:paragraph pdf/field-style
                  [:phrase {:style :bold} "Sökande"]
@@ -158,7 +158,7 @@
       (is (= [{}
               [[:heading pdf/heading-style "Application 2000/1: "]
                [:paragraph pdf/field-style "This PDF generated at" " " "2010-01-01 00:00"]
-               [:paragraph "State" [:phrase ": " "Applied"]]]
+               [:paragraph "State: Applied"]]
               [[:heading pdf/heading-style "Applicants"]
                [[:paragraph pdf/field-style
                  [:phrase {:style :bold} "Applicant"]
@@ -221,7 +221,7 @@
       (is (= [{}
               [[:heading pdf/heading-style "Hakemus 2000/1: "]
                [:paragraph pdf/field-style "Tämä PDF luotu" " " "2010-01-01 00:00"]
-               [:paragraph "Tila" [:phrase ": " "Haettu"]]]
+               [:paragraph "Tila: Haettu"]]
               [[:heading pdf/heading-style "Hakijat"]
                [[:paragraph pdf/field-style
                  [:phrase {:style :bold} "Hakija"]
@@ -284,7 +284,7 @@
       (is (= [{}
               [[:heading pdf/heading-style "Ansökan 2000/1: "]
                [:paragraph pdf/field-style "Denna pdf skapades" " " "2010-01-01 00:00"]
-               [:paragraph "Status" [:phrase ": " "Inlämnad"]]]
+               [:paragraph "Status: Inlämnad"]]
               [[:heading pdf/heading-style "Sökande"]
                [[:paragraph pdf/field-style
                  [:phrase {:style :bold} "Sökande"]
@@ -449,7 +449,7 @@
       (is (= [{}
               [[:heading pdf/heading-style "Application 2000/1: pdf test"]
                [:paragraph pdf/field-style "This PDF generated at" " " "2010-01-01 00:00"]
-               [:paragraph "State" [:phrase ": " "Approved"]]]
+               [:paragraph "State: Approved"]]
               [[:heading pdf/heading-style "Applicants"]
                [[:paragraph pdf/field-style
                  [:phrase {:style :bold} "Applicant"]
