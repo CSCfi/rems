@@ -16,21 +16,22 @@
 (def field-style {:spacing-before 8})
 
 (defn- render-header [application]
-  (let [state (getx application :application/state)]
-    (list
-     [:heading heading-style
-      (str (text :t.applications/application)
-           " "
-           (get application :application/external-id
-                (getx application :application/id))
-           (when-let [description (get application :application/description)]
-             (str ": " description)))]
-     [:paragraph field-style
-      (text :t.pdf/generated)
-      " "
-      (localize-time (time/now))]
-     [:paragraph
-      (text-format :t.label/default (text :t.applications/state) (localize-state state))])))
+  (list
+   [:heading heading-style
+    (str (text :t.applications/application)
+         " "
+         (get application :application/external-id
+              (getx application :application/id))
+         (when-let [description (get application :application/description)]
+           (str ": " description)))]
+   [:paragraph field-style
+    (text :t.pdf/generated)
+    " "
+    (localize-time (time/now))]
+   [:paragraph
+    (let [state (getx application :application/state)
+          processing-state (get-in application [:application/processing-state :processing-state/title])]
+      (text-format :t.label/default (text :t.applications/state) (localize-state state processing-state)))]))
 
 (defn- render-user [application user label]
   (let [userid (:userid user)
