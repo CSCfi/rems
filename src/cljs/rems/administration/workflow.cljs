@@ -133,8 +133,10 @@
                               nil)]
     (text wf-localization-key)))
 
-(defn- common-fields [workflow language]
-  (let [organization (:organization workflow)
+(defn- common-fields []
+  (let [language @(rf/subscribe [:language])
+        workflow @(rf/subscribe [::workflow])
+        organization (:organization workflow)
         organization-long (get-in organization [:organization/name language])
         organization-short (get-in organization [:organization/short-name language])
         title (:title workflow)
@@ -160,8 +162,8 @@
                                                                       [render-licenses licenses]
                                                                       (text :t.administration/no-licenses))]]}]))
 
-(defn- anonymize-handling-fields [workflow]
-  (when (get-in workflow [:workflow :anonymize-handling])
+(defn- anonymize-handling-fields []
+  (when (get-in @(rf/subscribe [::workflow]) [:workflow :anonymize-handling])
     [collapsible/component
      {:id "workflow-anonymize-handling-fields"
       :title (text :t.administration/anonymize-handling)
@@ -169,8 +171,8 @@
                [:div.alert.alert-info (text :t.administration/workflow-anonymize-handling-explanation)]
                [inline-info-field (text :t.administration/anonymize-handling) [readonly-checkbox {:value true}]]]}]))
 
-(defn- voting-fields [workflow]
-  (when-let [voting (get-in workflow [:workflow :voting])]
+(defn- voting-fields []
+  (when-let [voting (get-in @(rf/subscribe [::workflow]) [:workflow :voting])]
     [collapsible/component
      {:id "workflow-voting-fields"
       :title (text :t.administration/voting)
@@ -180,8 +182,8 @@
                 (text :t.administration/voting)
                 (text (keyword (str "t" ".administration") (:type voting)))]]}]))
 
-(defn- disable-commands-fields [workflow]
-  (when (seq (get-in workflow [:workflow :disable-commands]))
+(defn- disable-commands-fields []
+  (when (seq (get-in @(rf/subscribe [::workflow]) [:workflow :disable-commands]))
     [collapsible/component
      {:id "workflow-disable-commands-fields"
       :title (text :t.administration/disabled-commands)
@@ -189,8 +191,8 @@
                [:div.alert.alert-info (text :t.administration/workflow-disabled-commands-explanation)]
                [disable-commands-table]]}]))
 
-(defn- processing-states-fields [workflow]
-  (when (seq (get-in workflow [:workflow :processing-states]))
+(defn- processing-states-fields []
+  (when (seq (get-in @(rf/subscribe [::workflow]) [:workflow :processing-states]))
     [collapsible/component
      {:id "workflow-processing-states-fields"
       :title (text :t.administration/processing-states)
@@ -214,14 +216,13 @@
       @(rf/subscribe [::loading?])
       [spinner/big]
 
-      :let [language @(rf/subscribe [:language])
-            workflow @(rf/subscribe [::workflow])]
+      :let [workflow @(rf/subscribe [::workflow])]
       [:<>
-       [common-fields workflow language]
-       [anonymize-handling-fields workflow]
-       [voting-fields workflow]
-       [disable-commands-fields workflow]
-       [processing-states-fields workflow]
+       [common-fields]
+       [anonymize-handling-fields]
+       [voting-fields]
+       [disable-commands-fields]
+       [processing-states-fields]
 
        [:div.col.commands
         [administration/back-button "/administration/workflows"]
