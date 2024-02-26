@@ -209,7 +209,7 @@
    [document-title (text :t.administration/workflow)]
    [flash-message/component :top]
 
-   [:div#workflow-view.d-flex.flex-column.gap-4
+   [:div#workflow-view.spaced-vertically-4
     (b/cond
       @(rf/subscribe [::loading?])
       [spinner/big]

@@ -667,9 +667,8 @@
                 :min-width (u/rem 5.5)}]
    [:td.more-info {:display :flex
                    :justify-content :flex-end}]
-   [".spaced-vertically > *:not(:first-child)" {:margin-top (u/rem 0.5)}]
-   [".spaced-vertically-3 > *:not(:first-child)" {:margin-top (u/rem 1.5)}]
-   [".spaced-vertically-5 > *:not(:first-child)" {:margin-top (u/rem 3)}]
+   (for [i (range 1 6)]
+     [(format ".spaced-vertically-%d > *:not(:first-child)" i) {:margin-top (u/rem (* i 0.5))}])
 
    [".btn-opens-more::after" {:content "'...'"}]
 
@@ -916,7 +915,7 @@
    [:.rotate-180 {:transform "rotate(180deg)"}]
 
    [:.mt-2rem {:margin-top (u/rem 2)}]
-   (for [i (range 1 10)]
+   (for [i (range 1 6)]
      [(str ".gap-" i) {:gap (u/rem (* i 0.5))}])
 
    [:.select-attachments {:display :flex

@@ -591,7 +591,7 @@
                      (text :t.administration/create-workflow))]
    [flash-message/component :top]
 
-   [:div#workflow-editor.d-flex.flex-column.gap-4
+   [:div#workflow-editor.spaced-vertically-4
     [common-fields]
     [optional-fields {:start-collapsed? true}]
     [disable-commands-fields {:start-collapsed? true}]
