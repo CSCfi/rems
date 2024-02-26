@@ -1,7 +1,6 @@
 (ns rems.pdf
   "Rendering applications as pdf"
-  (:require [better-cond.core :as b]
-            [clj-pdf.core :refer [pdf]]
+  (:require [clj-pdf.core :refer [pdf]]
             [clj-time.core :as time]
             [clojure.string :as str]
             [rems.common.application-util :as application-util]
