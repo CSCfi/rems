@@ -468,6 +468,18 @@
                 [action-link example-command])
        (component-info action-button)
        (example "example command as button" [action-button example-command])
+       (component-info rate-limited-action-button)
+       (example "example command as rate-limited button"
+
+                (defn- stateful-context [[c cmd]]
+                  (r/with-let [n (r/atom 0)
+                               on-click #(r/rswap! n inc)]
+                    [:<>
+                     [c (assoc cmd :on-click on-click)]
+                     [:span.ml-2 "Count: " @n]]))
+
+                [stateful-context
+                 [rate-limited-action-button example-command]])
 
        (component-info commands)
        (example "empty commands" [commands])
