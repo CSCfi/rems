@@ -795,7 +795,8 @@
                                                 :form/external-title {:en "Form"
                                                                       :fi "Lomake"
                                                                       :sv "Blankett"}
-                                                :form/fields [(merge text-field {:field/max-length 100
+                                                :form/fields [description-field
+                                                              (merge text-field {:field/max-length 100
                                                                                  :field/privacy :private})]})
 
         form-private-nbn (test-helpers/create-form! {:actor owner
