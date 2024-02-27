@@ -126,7 +126,7 @@
                                 [macroz/tangle "0.2.2"]
                                 [peridot "0.5.4"]]
 
-                 :plugins [[lein-ancient "0.6.15"]]
+                 :plugins [[lein-ancient "0.7.0"]]
 
                  :jvm-opts ["-Drems.config=dev-config.edn"
                             "-Djdk.attach.allowAttachSelf" ; needed by clj-memory-meter on Java 9+
