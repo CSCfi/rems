@@ -77,16 +77,14 @@
   :main rems.main
   :migratus {:store :database :db ~(get (System/getenv) "DATABASE_URL" "postgresql://localhost/rems?user=rems")}
 
-  :plugins [[lein-cljfmt "0.6.7"]
+  :plugins [[dev.weavejester/lein-cljfmt "0.12.0"]
             [lein-shell "0.5.0"]
             [migratus-lein "0.5.7"]
             [com.github.liquidz/antq "RELEASE"]]
 
   :antq {}
 
-  :cljfmt {:paths ["project.clj" "src/clj" "src/cljc" "src/cljs" "test/clj" "test/cljc" "test/cljs"] ; need explicit paths to include cljs
-           :indents {delay [[:inner 0]]}
-           :remove-consecutive-blank-lines? false} ; too many changes for now, probably not desirable
+  :cljfmt {:load-config-file? true} ; reads from root .cljfmt.edn
 
   :clean-targets ["target"]
 
