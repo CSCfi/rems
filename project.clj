@@ -61,7 +61,6 @@
                  [ring/ring-core "1.9.6"]
                  [ring/ring-defaults "0.3.4"]
                  [ring/ring-devel "1.9.6"]
-                 [ring/ring-servlet "1.9.6"]
                  [nano-id "1.0.0"]
                  [org.babashka/sci "0.7.39"]
                  [com.nextjournal/beholder "1.0.2"]]

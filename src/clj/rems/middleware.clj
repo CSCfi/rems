@@ -27,22 +27,9 @@
             [ring.middleware.defaults :refer [site-defaults wrap-defaults]]
             [ring.util.http-response :refer [unauthorized]]
             [ring.util.response :refer [bad-request redirect header]])
-  (:import [javax.servlet ServletContext]
-           [rems.auth ForbiddenException UnauthorizedException]))
+  (:import [rems.auth ForbiddenException UnauthorizedException]))
 
 (def nano-id (nano-id/custom "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz" 8))
-
-(defn calculate-root-path [request]
-  (if-let [context (:servlet-context request)]
-    ;; If we're not inside a servlet environment
-    ;; (for example when using mock requests), then
-    ;; .getContextPath might not exist
-    (try (.getContextPath ^ServletContext context)
-         (catch IllegalArgumentException _ context))
-    ;; if the context is not specified in the request
-    ;; we check if one has been specified in the environment
-    ;; instead
-    (:app-context env)))
 
 (defn- csrf-error-handler
   "CSRF error is typical when the user session is timed out
@@ -70,7 +57,7 @@
 (defn wrap-context [handler]
   (fn [request]
     (binding [context/*request* (assoc request :request-id (random-uuid))
-              context/*root-path* (calculate-root-path request)
+              context/*root-path* (:app-context env)
               context/*roles* (set/union
                                (when context/*user*
                                  (set/union (roles/get-roles (getx-user-id))
