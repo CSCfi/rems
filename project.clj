@@ -59,7 +59,7 @@
                  [ring-middleware-format "0.7.5"]
                  [ring-webjars "0.2.0"]
                  [ring/ring-core "1.9.6"]
-                 [ring/ring-defaults "0.3.4"]
+                 [ring/ring-defaults "0.4.0"]
                  [ring/ring-devel "1.9.6"]
                  [nano-id "1.1.0"]
                  [org.babashka/sci "0.8.41"]

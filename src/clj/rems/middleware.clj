@@ -286,16 +286,14 @@
       (when response
         (header response "Cache-Control" (str "max-age=" (* 60 60 23)))))))
 
+;; NB: some of these have become defaults over time, but it's still good to pay attention when updating ring-defaults.
+;; e.g. (-> site-defaults :session :cookie-attrs :same-site) should be :lax, otherwise OIDC logins could stop working.
 (defn wrap-defaults-settings []
   (-> site-defaults
-      (dissoc :static) ;; we handle serving static resources in rems.handler
+      (dissoc :static) ; we handle serving static resources in rems.handler
       (assoc-in [:security :anti-forgery] false)
       (assoc-in [:session :store] session-store)
-      (assoc-in [:session :flash] true)
-      (assoc-in [:params :multipart] {:store (rems.multipart/size-limiting-temp-file-store {:max-size (:attachment-max-size env) :expires-in 3600})})
-      ;; ring-defaults sets the cookies with strict same-site limits, but this breaks OpenID Connect logins.
-      ;; Different options for using lax cookies are described in the authentication ADR.
-      (assoc-in [:session :cookie-attrs] {:http-only true, :same-site :lax})))
+      (assoc-in [:params :multipart] {:store (rems.multipart/size-limiting-temp-file-store {:max-size (:attachment-max-size env) :expires-in 3600})})))
 
 (defn wrap-base [handler]
   (-> handler
