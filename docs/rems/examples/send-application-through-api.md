@@ -37,7 +37,7 @@ This should return a simple success response.
 
 Create a new application using the newly created applicant user. 
 
-Catalogue item ids can be determined by the catalogue API beforehand. NB, currently there is no way to specify external resource ids (resid) here as there is with direct apply links (`&resource=...`, see [linking.md](linking.md)).
+Catalogue item ids can be determined by the catalogue API beforehand. NB, currently there is no way to specify external resource ids (resid) here as there is with direct apply links (`&resource=...`, see [linking.md](../linking.md)).
 
 ```sh
 curl -X 'POST' \
