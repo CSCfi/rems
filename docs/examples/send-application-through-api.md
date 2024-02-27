@@ -4,7 +4,7 @@ This is an example of how REMS can be used to process applications where the app
 
 This simple flow is enough to create a user and send an application for processing. The process gets slightly more complicated, if the application can be returned to the applicant for changes, or for example if a copy of an old application is used.
 
-## Create the applicant user.
+## Create the applicant user
 
 First, create a user who is the applicant. This call is made with the technical user who has the `owner` or `user-owner` role.
 
