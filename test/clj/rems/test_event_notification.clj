@@ -1,7 +1,6 @@
 (ns ^:integration rems.test-event-notification
   (:require [clj-time.core :as time]
             [clojure.test :refer :all]
-            [medley.core :refer [dissoc-in]]
             [rems.config]
             [rems.service.command :as command]
             [rems.api.testing :refer [api-fixture api-call]]
@@ -77,7 +76,11 @@
             handler "handler"
             workflow-id (test-helpers/create-workflow! {:title "wf"
                                                         :handlers [handler]
-                                                        :type :workflow/default})
+                                                        :type :workflow/default
+                                                        :processing-states [{:title {:en "Distributed DAC EN"
+                                                                                     :fi "Distributed DAC FI"
+                                                                                     :sv "Distributed DAC SV"}
+                                                                             :value "distributed dac"}]})
             ext-id "resres"
             res-id (test-helpers/create-resource! {:resource-ext-id ext-id})
             cat-id (test-helpers/create-catalogue-item! {:form-id form-id
@@ -183,6 +186,74 @@
                            :application/field-values
                            first
                            :value)))
+                (is (contains? (:data all-request) :event/application))
+                (is (not (contains? (:data no-app-request) :event/application)))))))
+
+        (testing "submit"
+          (let [submitted-event (-> (command/command! {:type :application.command/submit
+                                                       :application-id app-id
+                                                       :actor applicant
+                                                       :time (time/date-time 2001)})
+                                    :events
+                                    first)]
+
+            (event-notification/process-outbox!)
+
+            (testing "submitted event gets sent to /all and /no-application"
+              (let [requests (get-notifications)
+                    ;; the requests are sorted by path
+                    all-request (nth requests 4 nil)
+                    no-app-request (nth requests 8 nil)]
+                (is (= 9 (count requests))
+                    "request count should increase by 2")
+                (is (= "/all" (:path all-request)))
+                (is (= "/no-application" (:path no-app-request)))
+                (is (= "application.event/submitted" (get-in all-request [:data :event/type])))
+                (is (= "application.event/submitted" (get-in no-app-request [:data :event/type])))
+                (is (= (:event/id submitted-event)
+                       (:event/id (:data all-request))
+                       (:event/id (:data no-app-request))))
+                (is (contains? (:data all-request) :event/application))
+                (is (not (contains? (:data no-app-request) :event/application)))))))
+
+        (testing "change processing state"
+          (let [processing-state-event (-> (command/command! {:type :application.command/change-processing-state
+                                                              :application-id app-id
+                                                              :actor handler
+                                                              :time (time/date-time 2001)
+                                                              :processing-state "distributed dac"
+                                                              :public false})
+                                           :events
+                                           first)]
+
+            (event-notification/process-outbox!)
+
+            (testing "processing state changed event gets sent to /all and /no-application"
+              (let [requests (get-notifications)
+                    ;; the requests are sorted by path
+                    all-request (nth requests 5 nil)
+                    no-app-request (nth requests 10 nil)]
+                (is (= 11 (count requests))
+                    "request count should increase by 2")
+                (is (= "/all" (:path all-request)))
+                (is (= "/no-application" (:path no-app-request)))
+                (is (= "application.event/processing-state-changed" (get-in all-request [:data :event/type])))
+                (is (= "application.event/processing-state-changed" (get-in no-app-request [:data :event/type])))
+                (is (= (:event/id processing-state-event)
+                       (:event/id (:data all-request))
+                       (:event/id (:data no-app-request))))
+                (is (= {:application/processing-state {:processing-state/title {:en "Distributed DAC EN"
+                                                                                :fi "Distributed DAC FI"
+                                                                                :sv "Distributed DAC SV"}
+                                                       :processing-state/value "distributed dac"}}
+                       (-> all-request
+                           :data
+                           :event/application
+                           (select-keys [:application/processing-state]))))
+                (is (= {:application/processing-state {:processing-state/value "distributed dac"}}
+                       (-> no-app-request
+                           :data
+                           (select-keys [:application/processing-state]))))
                 (is (contains? (:data all-request) :event/application))
                 (is (not (contains? (:data no-app-request) :event/application)))))))))))
 
