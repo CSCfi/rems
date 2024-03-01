@@ -56,7 +56,6 @@
                  [org.webjars/jquery "3.7.1"]
                  [prismatic/schema-generators "0.1.4"] ; event consistency tests fail with "0.1.5"
                  [ring-cors "0.1.13"]
-                 [ring-middleware-format "0.7.5"]
                  [ring-webjars "0.2.0"]
                  [ring/ring-core "1.9.6"]
                  [ring/ring-defaults "0.4.0"]
