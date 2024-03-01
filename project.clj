@@ -19,6 +19,7 @@
                  [compojure "1.7.1"]
                  [conman "0.8.4"] ; 0.8.5 switches to next.jdbc, which breaks stuff and requires proper testing in production
                  [cprop "0.1.20"]
+                 [dev.weavejester/medley "1.7.0"]
                  [garden "1.3.10"]
                  [hiccup "1.0.5"]
                  [com.cognitect/transit-clj "1.0.333"]
@@ -30,7 +31,6 @@
                  [luminus/ring-ttl-session "0.3.3"]
                  [macroz/hiccup-find "0.6.1"]
                  [markdown-clj "1.11.9"]
-                 [medley "1.4.0"]
                  [metosin/compojure-api "2.0.0-alpha30" :exclusions [cheshire com.fasterxml.jackson.core/jackson-core]]
                  [metosin/jsonista "0.3.8"]
                  [metosin/ring-swagger "0.26.2"]
