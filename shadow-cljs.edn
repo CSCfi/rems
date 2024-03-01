@@ -5,13 +5,13 @@
                 [com.rpl/specter "1.1.4"]
                 [com.taoensso/tempura "1.5.3"]
                 [dev.weavejester/medley "1.7.0"]
-                [markdown-clj "1.10.9"]
-                [metosin/komponentit "0.3.11"]
+                [markdown-clj "1.11.9"]
+                [metosin/komponentit "0.3.14"]
                 [re-frame "1.2.0"]
                 [reagent "1.2.0"]
-                [reagent-utils "0.3.4"]
+                [reagent-utils "0.3.8"]
                 [venantius/accountant "0.2.5"]
-                [prismatic/schema "1.2.1"]]
+                [prismatic/schema "1.4.1"]]
 
  :source-paths ["target/uberjar/resources"
                 "env/dev/clj"
