@@ -203,8 +203,6 @@
                  :duos {:validation {:missing-duo-codes "DUO-koodit ovat määritetty resursseihin, mutta puuttuvat hakemuksesta:"}}
                  :empty "Ei hakemuksia."
                  :entitlement-end "Pääsyoikeudet loppuvat %1."
-                 :event {:not-shown-to-applicant "Ei näytetä hakijalle"
-                         :shown-to-applicant "Näytetään hakijalle"}
                  :events {:applicant-changed "%1 vaihtoi hakijan henkilöksi %2."
                           :approved "%1 hyväksyi hakemuksen."
                           :attachments-redacted "%1 poisti liitetiedostoja."
@@ -252,10 +250,12 @@
                  :last-activity "Muokattu"
                  :latest-activity "Viimeisin toimenpide"
                  :my-applications "Omat hakemukset"
+                 :not-shown-to-applying-users "Ei näytetä hakijoille"
                  :redacted-attachments "Poistetut liitetiedostot"
                  :redacted-attachments-replaced "Uudet liitetiedostot korvaavat poistetut liitetiedostot."
                  :replacing-attachments "Uudet liitetiedostot"
                  :resource "Resurssi"
+                 :shown-to-applying-users "Näytetään hakijoille"
                  :state "Tila"
                  :states {:approved "Hyväksytty"
                           :closed "Suljettu"

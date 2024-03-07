@@ -108,10 +108,15 @@
    :application.state/returned :t.applications.states/returned
    :application.state/revoked :t.applications.states/revoked})
 
-(defn localize-state [state & [processing-state]]
-  (if processing-state
-    (text-format :t.label/parens (text (get states state :t.applications.states/unknown)) (localized processing-state))
-    (text (get states state :t.applications.states/unknown))))
+(defn localize-state [state]
+  (text (get states state :t.applications.states/unknown)))
+
+(defn localize-processing-states [application]
+  (let [states (:application/processing-state application)
+        public-state (some-> states :public :processing-state/title localized)
+        private-state (some-> states :private :processing-state/title localized)]
+    (str/join ", "
+              (remove str/blank? [public-state private-state]))))
 
 (def ^:private todos
   {:new-application :t.applications.todos/new-application

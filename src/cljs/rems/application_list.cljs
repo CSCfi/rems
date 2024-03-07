@@ -9,7 +9,7 @@
             [rems.guide-util :refer [component-info example]]
             [rems.spinner :as spinner]
             [rems.table :as table]
-            [rems.text :refer [localize-state localize-todo localize-time localized text text-format]]))
+            [rems.text :refer [localize-state localize-processing-states localize-todo localize-time localized text text-format]]))
 
 (defn- format-catalogue-items [app]
   (->> (:application/resources app)
@@ -106,12 +106,13 @@
                                          (sort)
                                          (str/join ", "))]
                        {:value handlers})
-           :state (let [value (localize-state (:application/state app))]
-                    {:value value
+           :state (let [state (localize-state (:application/state app))
+                        processing-states (localize-processing-states app)]
+                    {:value state
                      :td [:td.state
                           {:class (when (application-util/form-fields-editable? app)
                                     "text-highlight")}
-                          value]})
+                          (str/join ", " (remove str/blank? [state processing-states]))]})
            :todo (let [value (localize-todo (:application/todo app))]
                    {:value value
                     :td [:td.todo

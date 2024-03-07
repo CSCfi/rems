@@ -210,8 +210,6 @@
                  :empty "Ingen ansøgninger."
                  ;; %1 - date
                  :entitlement-end "Udløbsdato for rettighederne: %1."
-                 :event {:not-shown-to-applicant "Skjult for ansøgere"
-                         :shown-to-applicant "Synlig for ansøgere"}
                  ;; Format parameters for all events:
                  ;; %1 - name of event actor
                  :events {:applicant-changed "%1 ændrede ansøger til %2."
@@ -268,10 +266,12 @@
                  :last-activity "Ændret"
                  :latest-activity "Seneste aktivitet"
                  :my-applications "Mine ansøgninger"
+                 :not-shown-to-applying-users "Skjult for ansøgere"
                  :redacted-attachments "Erstattede bilag"
                  :redacted-attachments-replaced "Nye bilag erstattede de gamle bilag."
                  :replacing-attachments "Nye bilag"
                  :resource "Ressource"
+                 :shown-to-applying-users "Synlig for ansøgere"
                  :state "Status"
                  :states {:approved "Godkendt"
                           :closed "Lukket"

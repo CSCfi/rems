@@ -68,6 +68,14 @@
   (let [symbol (or symbol (success-symbol))]
     [:span {:style {:opacity 0}} symbol]))
 
+(defn not-shown-to-applying-users-symbol []
+  [:i.fas.fa-eye-slash {:title (text :t.applications/not-shown-to-applying-users)}
+   [:span.sr-only (text :t.applications/not-shown-to-applying-users)]])
+
+(defn shown-to-applying-users-symbol []
+  [:i.fas.fa-eye {:title (text :t.applications/shown-to-applying-users)}
+   [:span.sr-only (text :t.applications/shown-to-applying-users)]])
+
 (defn textarea [attrs]
   [autosize/textarea (merge {:min-rows 5}
                             (update attrs :class #(str/trim (str "form-control " %))))])

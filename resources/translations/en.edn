@@ -210,8 +210,6 @@
                  :empty "No applications."
                  ;; %1 - date
                  :entitlement-end "Access rights end %1."
-                 :event {:not-shown-to-applicant "Not shown to applicant"
-                         :shown-to-applicant "Shown to applicant"}
 
                  ;; Format parameters for all events:
                  ;; %1 - %:event-actor% - name of event actor
@@ -293,10 +291,12 @@
                  :last-activity "Last activity"
                  :latest-activity "Latest activity"
                  :my-applications "My Applications"
+                 :not-shown-to-applying-users "Not shown to applicants"
                  :redacted-attachments "Redacted attachments"
                  :redacted-attachments-replaced "New attachments replace the redacted attachments."
                  :replacing-attachments "New attachments"
                  :resource "Resource"
+                 :shown-to-applying-users "Shown to applicants"
                  :state "State"
                  :states {:approved "Approved"
                           :closed "Closed"

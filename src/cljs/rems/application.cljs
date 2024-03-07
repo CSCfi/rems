@@ -48,7 +48,7 @@
             [rems.guide-util :refer [component-info example lipsum lipsum-paragraphs]]
             [rems.phase :refer [phases]]
             [rems.spinner :as spinner]
-            [rems.text :refer [localize-attachment localize-decision localize-event localized localize-state localize-time localize-time-with-seconds text text-format]]
+            [rems.text :refer [localize-attachment localize-decision localize-event localized localize-state localize-processing-states localize-time localize-time-with-seconds text text-format]]
             [rems.user :as user]
             [rems.util :refer [navigate! fetch post! focus-input-field focus-when-collapse-opened format-file-size]]))
 
@@ -668,15 +668,13 @@
     :visibility/public
     [:div.row.no-gutters.gap-1
      [:div.col-sm-auto
-      [:i.fas.fa-eye {:title (text :t.applications.event/shown-to-applicant)}
-       [:span.sr-only (text :t.applications.event/shown-to-applicant)]]]
+      [atoms/shown-to-applying-users-symbol]]
      [:b.col-sm (localize-event event)]]
 
     :visibility/handling-users
     [:div.row.no-gutters.gap-1
      [:div.col-sm-auto
-      [:i.fas.fa-eye-slash {:title (text :t.applications.event/not-shown-to-applicant)}
-       [:span.sr-only (text :t.applications.event/not-shown-to-applicant)]]]
+      [atoms/not-shown-to-applying-users-symbol]]
      [:b.col-sm (localize-event event)]]
 
     [:b (localize-event event)]))
@@ -787,6 +785,31 @@
                                  [application-link new-app nil]))))
        ")"])))
 
+(defn- render-state [application]
+  (b/cond
+    :let [state (localize-state (:application/state application))
+          processing-states (:application/processing-state application)]
+
+    (empty? processing-states)
+    [:div#application-state state]
+
+    (not (is-handling-user? application))
+    [:div#application-state
+     (str/join ", " (remove nil? [state (localize-processing-states application)]))]
+
+    :let [public-state (some-> processing-states :public :processing-state/title localized)
+          private-state (some-> processing-states :private :processing-state/title localized)]
+    [:div#application-state
+     state
+     (when public-state
+       [:div.processing-state
+        [atoms/shown-to-applying-users-symbol]
+        [:span.ml-2 public-state]])
+     (when private-state
+       [:div.processing-state
+        [atoms/not-shown-to-applying-users-symbol]
+        [:span.ml-2 private-state]])]))
+
 (defn- application-state-details [application config]
   [:<>
    [:h3.mt-3 (text :t.applications/details)]
@@ -804,9 +827,7 @@
       {:inline? true}])
 
    [info-field (text :t.applications/state)
-    [:span#application-state
-     (localize-state (:application/state application)
-                     (get-in application [:application/processing-state :processing-state/title]))]
+    [render-state application]
     {:inline? true}]
 
    [info-field (text :t.applications/latest-activity)
