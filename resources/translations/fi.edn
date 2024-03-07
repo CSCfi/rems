@@ -394,7 +394,7 @@
                     :default-workflow "Oletustyövuo"
                     :default-workflow-description "Hakemus on täysin käsittelijän hallinnassa. Käsittelijä voi pyytää toisilta katselmointeja ja päätöksiä tarpeen mukaan."
                     :disable-commands "Poista toimintoja käytöstä"
-                    :disable-commands-explanation [:p "Voit poistaa toimintoja käyttäjiltä ehtojen täyttyessä. Toiminnot, hakemusten tilat ja käyttäjien roolit löytyvät " [:a {:href "https://github.com/CSCfi/rems/blob/master/docs/application-permissions.md" :target :_blank} "REMSin Github-sivulta."]]
+                    :disable-commands-explanation [:<> "Voit poistaa toimintoja käyttäjiltä ehtojen täyttyessä. Toiminnot, hakemusten tilat ja käyttäjien roolit löytyvät " [:a {:href "https://github.com/CSCfi/rems/blob/master/docs/application-permissions.md" :target :_blank} "REMSin Github-sivulta."]]
                     :handlers "Käsittelijät"
                     :master-workflow "Master-työvuo"
                     :master-workflow-description "VAIN TESTAUKSEEN. Unioni kaikista mahdollista työvoista."

@@ -394,7 +394,7 @@
                     :default-workflow "Standard"
                     :default-workflow-description "Ansökan kontrolleras helt av handläggaren. Handläggaren kan vid behov be andra att granska eller ta beslut om ansökan."
                     :disable-commands "Avaktivera funktioner"
-                    :disable-commands-explanation [:p "Du kan avaktivera funktioner för användarna när villkoren uppfylls. Funktioner, ansökningar statusar och användarroller hittas på " [:a {:href "https://github.com/CSCfi/rems/blob/master/docs/application-permissions.md" :target :_blank} "REMS Github-sidan."]]
+                    :disable-commands-explanation [:<> "Du kan avaktivera funktioner för användarna när villkoren uppfylls. Funktioner, ansökningar statusar och användarroller hittas på " [:a {:href "https://github.com/CSCfi/rems/blob/master/docs/application-permissions.md" :target :_blank} "REMS Github-sidan."]]
                     :handlers "Handläggare"
                     :master-workflow "Master-arbetsflöde"
                     :master-workflow-description "ENDAST FÖR TESTNING. Sammanslagning av alla möjliga arbetsflöden."
