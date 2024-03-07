@@ -148,7 +148,6 @@
                    :no-licenses "Ingen brugsvilkår"
                    :no-voting "Ingen afstemning"
                    :optional "(valgfrit)"
-                   :optional-fields nil
                    :org "Org"
                    :organization "Organisation"
                    :organizations "Organisationer"

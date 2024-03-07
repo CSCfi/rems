@@ -148,7 +148,6 @@
                    :no-licenses "No licenses"
                    :no-voting "No voting"
                    :optional "(optional)"
-                   :optional-fields "Optional fields"
                    :org "Org"
                    :organization "Organization"
                    :organizations "Organizations"

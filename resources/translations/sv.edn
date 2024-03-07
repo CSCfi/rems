@@ -145,7 +145,6 @@
                    :no-licenses "Inga licenser"
                    :no-voting "Inga omröstning"
                    :optional "(valfritt)"
-                   :optional-fields "Valfria fält" ; TODO: check
                    :org "Org"
                    :organization "Organisation"
                    :organizations "Organisationer"

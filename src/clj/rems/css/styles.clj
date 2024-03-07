@@ -667,7 +667,7 @@
                 :min-width (u/rem 5.5)}]
    [:td.more-info {:display :flex
                    :justify-content :flex-end}]
-   (for [i (range 1 6)]
+   (for [i (range 1 10)]
      [(format ".spaced-vertically-%d > *:not(:first-child)" i) {:margin-top (u/rem (* i 0.5))}])
 
    [".btn-opens-more::after" {:content "'...'"}]

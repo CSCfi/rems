@@ -145,7 +145,6 @@
                    :no-licenses "Ei lisenssejä"
                    :no-voting "Ei äänestystä"
                    :optional "(valinnainen)"
-                   :optional-fields "Valinnaiset kentät"
                    :org "Org"
                    :organization "Organisaatio"
                    :organizations "Organisaatiot"

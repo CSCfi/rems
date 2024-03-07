@@ -172,12 +172,11 @@
                     :label (text :t.create-workflow/decider-workflow)}]
                   (when (config/dev-environment?)
                     [{:value :workflow/master
-                      :label (text :t.create-workflow/master-workflow)}]))}]]
-     [:div.alert.alert-info
-      (case @(rf/subscribe [::workflow-type])
-        :workflow/default (text :t.create-workflow/default-workflow-description)
-        :workflow/decider (text :t.create-workflow/decider-workflow-description)
-        :workflow/master (text :t.create-workflow/master-workflow-description))]]))
+                      :label (text :t.create-workflow/master-workflow)}]))}]
+      [:p (case @(rf/subscribe [::workflow-type])
+            :workflow/default (text :t.create-workflow/default-workflow-description)
+            :workflow/decider (text :t.create-workflow/decider-workflow-description)
+            :workflow/master (text :t.create-workflow/master-workflow-description))]]]))
 
 (rf/reg-sub ::workflow-handlers (fn [db _] (get-in db [::form :handlers])))
 (rf/reg-event-db ::set-handlers (fn [db [_ handlers]] (assoc-in db [::form :handlers] (sort-by :userid handlers))))
@@ -209,31 +208,37 @@
 (rf/reg-sub ::workflow-forms (fn [db _] (get-in db [::form :forms])))
 (rf/reg-event-db ::set-forms (fn [db [_ form-ids]] (assoc-in db [::form :forms] form-ids)))
 
+(defn- render-readonly-forms [{:keys [all-forms id selected-forms]}]
+  (let [forms-by-id (build-index {:keys [:form/id]} all-forms)
+        forms (for [form-id selected-forms
+                    :let [form (get forms-by-id form-id)
+                          uri (str "/administration/forms/" form-id)
+                          title (:form/internal-name form)]]
+                [atoms/link {} uri title])]
+    [fields/readonly-field-raw {:id id
+                                :value (if (seq forms)
+                                         (into [:<>] (interpose ", ") forms)
+                                         (text :t.administration/no-forms))}]))
+
 (defn- workflow-forms []
   (let [id "workflow-forms"
         editing? @(rf/subscribe [::editing?])]
     [:div.form-group.field
      [:label.administration-field-label {:for id}
-      (text :t.administration/forms)]
+      (cond->> (text :t.administration/forms)
+        (not editing?) (text-format :t.label/optional))]
 
      (b/cond
        @(rf/subscribe [::forms :fetching?])
        [spinner/big]
 
        :let [all-forms @(rf/subscribe [::forms])
-             forms-by-id (build-index {:keys [:form/id]} all-forms)
              selected-forms (map :form/id @(rf/subscribe [::workflow-forms]))]
 
        editing?
-       (if (seq selected-forms)
-         [fields/readonly-field-raw {:id id
-                                     :values (for [form-id selected-forms
-                                                   :let [form (get forms-by-id form-id)
-                                                         uri (str "/administration/forms/" form-id)
-                                                         title (:form/internal-name form)]]
-                                               [atoms/link {} uri title])}]
-         [fields/readonly-field-raw {:id id
-                                     :value (text :t.administration/no-forms)}])
+       [render-readonly-forms {:all-forms all-forms
+                               :id id
+                               :selected-forms selected-forms}]
 
        [dropdown/dropdown
         {:id id
@@ -255,12 +260,23 @@
 (rf/reg-sub ::workflow-licenses (fn [db _] (get-in db [::form :licenses])))
 (rf/reg-event-db ::set-licenses (fn [db [_ licenses]] (assoc-in db [::form :licenses] licenses)))
 
+(defn- render-readonly-licenses [id licenses]
+  (let [licenses (for [license licenses
+                       :let [uri (str "/administration/licenses/" (:license/id license))
+                             title (:title (localized (:localizations license)))]]
+                   [atoms/link {} uri title])]
+    [fields/readonly-field-raw {:id id
+                                :value (if (seq licenses)
+                                         (into [:<>] (interpose ", ") licenses)
+                                         (text :t.administration/no-licenses))}]))
+
 (defn- workflow-licenses []
   (let [id "workflow-licenses"
         editing? @(rf/subscribe [::editing?])]
     [:div.form-group.field
      [:label.administration-field-label {:for id}
-      (text :t.create-resource/licenses-selection)]
+      (cond->> (text :t.create-resource/licenses-selection)
+        (not editing?) (text-format :t.label/optional))]
 
      (b/cond
        @(rf/subscribe [::licenses :fetching?])
@@ -269,14 +285,7 @@
        :let [selected-licenses @(rf/subscribe [::workflow-licenses])]
 
        editing?
-       (if (seq selected-licenses)
-         [fields/readonly-field-raw {:id id
-                                     :values (for [license selected-licenses
-                                                   :let [uri (str "/administration/licenses/" (:license/id license))
-                                                         title (:title (localized (:localizations license)))]]
-                                               [atoms/link nil uri title])}]
-         [fields/readonly-field-raw {:id id
-                                     :value (text :t.administration/no-licenses)}])
+       [render-readonly-licenses id selected-licenses]
 
        :let [selected-ids (set (map :id selected-licenses))]
 
@@ -299,39 +308,28 @@
 (rf/reg-sub ::workflow-anonymize-handling (fn [db _] (get-in db [::form :anonymize-handling])))
 (rf/reg-event-db ::toggle-anonymize-handling (fn [db [_]] (update-in db [::form :anonymize-handling] not)))
 
-(defn- toggle-anonymize-handling-field [{:keys [value on-change]}]
-  (let [id "anonymize-handling"]
-    [:div.form-group.toggle-anonymize-handling
-     [:label.administration-field-label {:for id}
-      (text :t.administration/anonymize-handling)]
-
-     [:p (text :t.create-workflow/anonymize-handling-explanation)]
-
-     [:div.form-group.field.form-check.form-check-inline.pointer
+(defn- workflow-anonymize-handling []
+  (let [id "anonymize-handling"
+        on-change #(rf/dispatch [::toggle-anonymize-handling])
+        value (true? @(rf/subscribe [::workflow-anonymize-handling]))
+        editing? @(rf/subscribe [::editing?])]
+    [:div.form-group.field
+     [:div.form-group.field.form-check.form-check-inline.pointer.toggle-anonymize-handling
       [atoms/checkbox {:id id
                        :class :form-check-input
                        :value value
                        :on-change on-change}]
-      [:label.form-check-label {:for id
-                                :on-click on-change}
-       (text :t.administration/anonymize-handling)]]]))
-
-(defn- workflow-anonymize-handling []
-  (let [anonymize-handling @(rf/subscribe [::workflow-anonymize-handling])]
-    [:div.fields.anonymize-handling
-     [toggle-anonymize-handling-field {:value (true? anonymize-handling)
-                                       :on-change #(rf/dispatch [::toggle-anonymize-handling])}]]))
+      [:label.form-check-label {:for id :on-click on-change}
+       (cond->> (text :t.administration/anonymize-handling)
+         (not editing?) (text-format :t.label/optional))]]
+     [:p (text :t.create-workflow/anonymize-handling-explanation)]]))
 
 (rf/reg-sub ::voting (fn [db _] (get-in db [::form :voting])))
 (rf/reg-event-db ::set-voting (fn [db [_ voting]] (assoc-in db [::form :voting] voting)))
 
-(defn- select-voting-type-field [{:keys [value on-change]}]
+(defn- select-voting-type-field [{:keys [label on-change value]}]
   [:div.form-group.select-voting-type
-   [:label.administration-field-label {:for "voting-type"}
-    (text :t.administration/voting)]
-
-   [:p (text :t.create-workflow/voting-explanation)]
-
+   [:label.administration-field-label {:for "voting-type"} label]
    [dropdown/dropdown
     {:id "voting-type"
      :items [{:type nil :label (text :t.administration/no-voting)}
@@ -344,7 +342,8 @@
 (defn- workflow-voting []
   (let [voting @(rf/subscribe [::voting])]
     [:div.fields.voting
-     [select-voting-type-field {:value (:type voting)
+     [select-voting-type-field {:label (text :t.administration/voting)
+                                :value (:type voting)
                                 :on-change #(rf/dispatch [::set-voting (assoc voting :type %)])}]]))
 
 (rf/reg-sub ::disable-commands (fn [db _] (get-in db [::form :disable-commands])))
@@ -411,7 +410,6 @@
 (defn- workflow-disable-commands []
   (let [id "disable-commands"]
     [:<>
-     [:div.alert.alert-info (text :t.create-workflow/disable-commands-explanation)]
      [:div.form-group {:id id}
       (into [:div.fields.disable-commands]
             (for [[index value] (indexed @(rf/subscribe [::disable-commands]))]
@@ -447,15 +445,13 @@
 (rf/reg-event-db ::new-processing-state (fn [db _] (update-in db [::form :processing-states] conj-vec {})))
 (rf/reg-event-db ::remove-processing-state (fn [db [_ index]] (update-in db [::form :processing-states] #(vec (remove-nth index %)))))
 
-(defn- get-processing-state-title [{:keys [title]}]
+(defn- get-processing-state-title [{title :processing-state/title}]
   (or (not-blank (get title @(rf/subscribe [:language])))
       (text :t.administration/processing-state)))
 
 (defn- workflow-processing-states []
   (let [id "processing-states"]
     [:<>
-     [:div.alert.alert-info (text-format-map :t.create-workflow/processing-states-explanation
-                                             {:command (text :t.commands/change-processing-state)})]
      [:div.form-group {:id id}
       (into [:div.fields.processing-states]
             (for [[index value] (indexed @(rf/subscribe [::processing-states]))]
@@ -466,9 +462,9 @@
                  [items/remove-button (fn []
                                         (rf/dispatch [::remove-processing-state index])
                                         (rf/dispatch [:rems.focus/scroll-into-view (str "#" id) {:block :end}]))]]]
-               [text-field context {:keys [:processing-states index :value]
+               [text-field context {:keys [:processing-states index :processing-state/value]
                                     :label (text :t.administration/technical-value)}]
-               [localized-text-field context {:keys [:processing-states index :title]
+               [localized-text-field context {:keys [:processing-states index :processing-state/title]
                                               :label (text :t.administration/title)}]]))
       [:div.dashed-group.text-center
        [:a.new-rule {:href "#"
@@ -493,69 +489,56 @@
                (text :t.administration/workflow))
     :always (if @(rf/subscribe [::workflow :fetching?])
               [spinner/big]
-              [:div.fields
-               [workflow-organization]
-               [workflow-title]
-               [workflow-type]
-               [workflow-handlers]])}])
+              [:div.spaced-vertically-6
+               [:div.fields
+                [workflow-organization]
+                [workflow-title]
+                [workflow-type]
+                [workflow-anonymize-handling]]
+               [:div.fields
+                [workflow-handlers]
+                [workflow-forms]
+                [workflow-licenses]]])}])
 
-(defn- optional-fields [& [{:keys [start-collapsed?]}]]
-  (let [config @(rf/subscribe [:rems.config/config])
-        loading? @(rf/subscribe [::workflow :fetching?])
-        collapse-content [:<>
-                          (when (:enable-voting config)
-                            [workflow-voting])
-                          [workflow-anonymize-handling]]]
+(defn- voting-fields []
+  (when (:enable-voting @(rf/subscribe [:rems.config/config]))
+    (let [loading? @(rf/subscribe [::workflow :fetching?])]
+      [collapsible/component
+       {:id "workflow-voting-fields"
+        :title (text :t.administration/voting)
+        :always (if loading?
+                  [spinner/big]
+                  [:div.spaced-vertically-4
+                   [:p (text :t.create-workflow/voting-explanation)]
+                   [workflow-voting]])}])))
+
+(defn- disable-commands-fields []
+  (let [loading? (or @(rf/subscribe [::workflow :fetching?])
+                     @(rf/subscribe [::commands :fetching?]))]
     [collapsible/component
-     {:id "workflow-optional-fields"
-      :title (text :t.administration/optional-fields)
+     {:id "workflow-disable-commands-fields"
+      :title (text :t.create-workflow/disable-commands)
       :bottom-less-button? false
       :always (if loading?
                 [spinner/big]
-                [:div.fields
-                 [workflow-forms]
-                 [workflow-licenses]
-                 (when-not start-collapsed?
-                   collapse-content)])
-      :collapse (when (and (not loading?)
-                           start-collapsed?)
-                  [:div.fields
-                   collapse-content])}]))
+                [:div.spaced-vertically-4
+                 [:p (text :t.create-workflow/disable-commands-explanation)]
+                 [workflow-disable-commands]])}]))
 
-(defn- disable-commands-fields [& [{:keys [start-collapsed?]}]]
-  (let [loading? (or @(rf/subscribe [::workflow :fetching?])
-                     @(rf/subscribe [::commands :fetching?]))
-        collapse-content [:<>
-                          [workflow-disable-commands]]]
-    [collapsible/component
-     {:id "workflow-disable-commands-fields"
-      :title (text-format :t.label/optional (text :t.create-workflow/disable-commands))
-      :bottom-less-button? false
-      :always (when-not start-collapsed?
-                (if loading?
-                  [spinner/big]
-                  collapse-content))
-      :collapse (when (and (not loading?)
-                           start-collapsed?)
-                  collapse-content)}]))
-
-(defn- processing-states-fields [& [{:keys [start-collapsed?]}]]
+(defn- processing-states-fields []
   (let [config @(rf/subscribe [:rems.config/config])
-        loading? @(rf/subscribe [::workflow :fetching?])
-        collapse-content [:<>
-                          [workflow-processing-states]]]
+        loading? @(rf/subscribe [::workflow :fetching?])]
     (when (:enable-processing-states config)
       [collapsible/component
        {:id "workflow-processing-states-fields"
-        :title (text-format :t.label/optional (text :t.administration/processing-states))
+        :title (text :t.administration/processing-states)
         :bottom-less-button? false
-        :always (when-not start-collapsed?
-                  (if loading?
-                    [spinner/big]
-                    collapse-content))
-        :collapse (when (and (not loading?)
-                             start-collapsed?)
-                    collapse-content)}])))
+        :always (if loading?
+                  [spinner/big]
+                  [:div.spaced-vertically-4
+                   [:p (text-format-map :t.create-workflow/processing-states-explanation
+                                        {:command (text :t.commands/change-processing-state)})]
+                   [workflow-processing-states]])}])))
 
 (defn- save-workflow-action []
   (b/cond
@@ -593,9 +576,9 @@
 
    [:div#workflow-editor.spaced-vertically-4
     [common-fields]
-    [optional-fields {:start-collapsed? true}]
-    [disable-commands-fields {:start-collapsed? true}]
-    [processing-states-fields {:start-collapsed? true}]
+    [voting-fields]
+    [disable-commands-fields]
+    [processing-states-fields]
 
     [:div.col.commands
      [atoms/action-button (cancel-action)]

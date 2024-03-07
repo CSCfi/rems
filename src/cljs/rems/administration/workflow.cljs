@@ -95,8 +95,8 @@
             (fn [[processing-states language] _]
               (for [[index value] (indexed processing-states)]
                 {:key (str "processing-state-" index)
-                 :value {:display-value [:code.color-pre (:value value)]}
-                 :title {:display-value (get-in value [:title language])}})))
+                 :value {:display-value [:code.color-pre (:processing-state/value value)]}
+                 :title {:display-value (get-in value [:processing-state/title language])}})))
 
 (defn- processing-states-table []
   [table/table {:id ::processing-states
@@ -136,48 +136,45 @@
 (defn- common-fields []
   (let [language @(rf/subscribe [:language])
         workflow @(rf/subscribe [::workflow])
+        active? (status-flags/active? workflow)
         organization (:organization workflow)
         organization-long (get-in organization [:organization/name language])
         organization-short (get-in organization [:organization/short-name language])
         title (:title workflow)
         workflow-type (get-in workflow [:workflow :type])
+        anonymize-handling (get-in workflow [:workflow :anonymize-handling])
         handlers (for [handler (get-in workflow [:workflow :handlers])]
                    (enrich-user handler))
-        active? (status-flags/active? workflow)
         forms (get-in workflow [:workflow :forms])
         licenses (get-in workflow [:workflow :licenses])]
     [collapsible/component
      {:id "workflow-common-fields"
       :title (text-format :t.label/default organization-short title)
-      :always [:div.fields
-               [inline-info-field (text :t.administration/organization) organization-long]
-               [inline-info-field (text :t.administration/title) title]
-               [inline-info-field (text :t.administration/type) (localize-workflow workflow-type)]
-               [inline-info-field (text :t.create-workflow/handlers) (str/join ", " (map :display handlers))]
-               [inline-info-field (text :t.administration/active) [readonly-checkbox {:value active?}]]
-               [inline-info-field (text :t.administration/forms) (if (seq forms)
-                                                                   [render-forms forms]
-                                                                   (text :t.administration/no-forms))]
-               [inline-info-field (text :t.administration/licenses) (if (seq licenses)
-                                                                      [render-licenses licenses]
-                                                                      (text :t.administration/no-licenses))]]}]))
-
-(defn- anonymize-handling-fields []
-  (when (get-in @(rf/subscribe [::workflow]) [:workflow :anonymize-handling])
-    [collapsible/component
-     {:id "workflow-anonymize-handling-fields"
-      :title (text :t.administration/anonymize-handling)
-      :always [:<>
-               [:div.alert.alert-info (text :t.administration/workflow-anonymize-handling-explanation)]
-               [inline-info-field (text :t.administration/anonymize-handling) [readonly-checkbox {:value true}]]]}]))
+      :always [:div
+               (when anonymize-handling
+                 [:p (text :t.administration/workflow-anonymize-handling-explanation)])
+               [:div.fields
+                [inline-info-field (text :t.administration/organization) organization-long]
+                [inline-info-field (text :t.administration/title) title]
+                [inline-info-field (text :t.administration/type) (localize-workflow workflow-type)]
+                (when anonymize-handling
+                  [inline-info-field (text :t.administration/anonymize-handling) [readonly-checkbox {:value true}]])
+                [inline-info-field (text :t.administration/active) [readonly-checkbox {:value active?}]]
+                [inline-info-field (text :t.create-workflow/handlers) (str/join ", " (map :display handlers))]
+                [inline-info-field (text :t.administration/forms) (if (seq forms)
+                                                                    [render-forms forms]
+                                                                    (text :t.administration/no-forms))]
+                [inline-info-field (text :t.administration/licenses) (if (seq licenses)
+                                                                       [render-licenses licenses]
+                                                                       (text :t.administration/no-licenses))]]]}]))
 
 (defn- voting-fields []
   (when-let [voting (get-in @(rf/subscribe [::workflow]) [:workflow :voting])]
     [collapsible/component
      {:id "workflow-voting-fields"
       :title (text :t.administration/voting)
-      :always [:<>
-               [:div.alert.alert-info (text :t.create-workflow/voting-explanation)]
+      :always [:div
+               [:p (text :t.create-workflow/voting-explanation)]
                [inline-info-field
                 (text :t.administration/voting)
                 (text (keyword (str "t" ".administration") (:type voting)))]]}]))
@@ -187,8 +184,8 @@
     [collapsible/component
      {:id "workflow-disable-commands-fields"
       :title (text :t.administration/disabled-commands)
-      :always [:<>
-               [:div.alert.alert-info (text :t.administration/workflow-disabled-commands-explanation)]
+      :always [:div.spaced-vertically-5
+               [:p (text :t.administration/workflow-disabled-commands-explanation)]
                [disable-commands-table]]}]))
 
 (defn- processing-states-fields []
@@ -196,8 +193,8 @@
     [collapsible/component
      {:id "workflow-processing-states-fields"
       :title (text :t.administration/processing-states)
-      :always [:<>
-               [:div.alert.alert-info (text :t.administration/workflow-processing-states-explanation)]
+      :always [:div.spaced-vertically-5
+               [:p (text :t.administration/workflow-processing-states-explanation)]
                [processing-states-table]]}]))
 
 (defn edit-workflow-action [workflow-id]
@@ -219,7 +216,6 @@
       :let [workflow @(rf/subscribe [::workflow])]
       [:<>
        [common-fields]
-       [anonymize-handling-fields]
        [voting-fields]
        [disable-commands-fields]
        [processing-states-fields]
