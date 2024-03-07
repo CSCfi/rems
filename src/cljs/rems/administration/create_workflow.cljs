@@ -235,25 +235,23 @@
 
        :let [all-forms @(rf/subscribe [::forms])
              selected-forms (map :form/id @(rf/subscribe [::workflow-forms]))]
-
        editing?
        [render-readonly-forms {:all-forms all-forms
                                :id id
                                :selected-forms selected-forms}]
-
+       ;; else creating
        [dropdown/dropdown
         {:id id
          :items (->> all-forms
                      (filter :enabled)
-                     (remove :archived))
+                     (remove :archived)
+                     (mapv (fn [form]
+                             (assoc form ::label (let [org-short (localized (get-in form [:organization :organization/short-name]))]
+                                                   (text-format :t.label/parens
+                                                                (:form/internal-name form)
+                                                                (text-format :t.label/default (text :t.administration/org) org-short)))))))
          :item-key :form/id
-         :item-label (fn [form]
-                       (let [organization-short (-> form
-                                                    (get-in [:organization :organization/short-name])
-                                                    localized)]
-                         (text-format :t.label/parens
-                                      (:form/internal-name form)
-                                      (text-format :t.label/default (text :t.administration/org) organization-short))))
+         :item-label ::label
          :item-selected? #(contains? (set selected-forms) (:form/id %))
          :multi? true ; TODO support ordering multiple forms
          :on-change #(rf/dispatch [::set-forms %])}])]))
@@ -288,20 +286,19 @@
        editing?
        [render-readonly-licenses id selected-licenses]
 
+       ;; else creating
        :let [selected-ids (set (map :id selected-licenses))]
-
        [dropdown/dropdown
         {:id id
-         :items @(rf/subscribe [::licenses])
+         :items (->> @(rf/subscribe [::licenses])
+                     (mapv (fn [license]
+                             (assoc license ::label (let [title (:title (localized (:localizations license)))
+                                                          org-short (localized (get-in license [:organization :organization/short-name]))]
+                                                      (text-format :t.label/parens
+                                                                   title
+                                                                   (text-format :t.label/default (text :t.administration/org) org-short)))))))
          :item-key :id
-         :item-label (fn [license]
-                       (let [license-title (:title (localized (:localizations license)))
-                             organization-short (-> license
-                                                    (get-in [:organization :organization/short-name])
-                                                    localized)]
-                         (text-format :t.label/parens
-                                      license-title
-                                      (text-format :t.label/default (text :t.administration/org) organization-short))))
+         :item-label ::label
          :item-selected? #(contains? selected-ids (:id %))
          :multi? true
          :on-change #(rf/dispatch [::set-licenses (sort-by :id %)])}])]))
