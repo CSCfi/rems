@@ -32,7 +32,7 @@
             [rems.actions.vote :refer [vote-action-button vote-form votes-summary]]
             [rems.application-list :as application-list]
             [rems.administration.duo :refer [duo-field duo-info-field]]
-            [rems.common.application-util :as application-util :refer [accepted-licenses? can-see-everything? form-fields-editable? get-member-name is-handler? is-handling-user?]]
+            [rems.common.application-util :refer [accepted-licenses? can-see-everything? form-fields-editable? get-member-name is-handler? is-handling-user?]]
             [rems.common.attachment-util :as attachment-util]
             [rems.atoms :as atoms :refer [external-link expander file-download info-field readonly-checkbox document-title success-symbol make-empty-symbol]]
             [rems.common.catalogue-util :refer [catalogue-item-more-info-url]]
