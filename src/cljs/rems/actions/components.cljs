@@ -80,13 +80,13 @@
                              (let [value (.. event -target -value)]
                                (rf/dispatch [::set-comment field-key value])))}]]))
 
-(rf/reg-sub ::comment-public (fn [db [_ field-key]] (get-in db [::comment-public field-key] false)))
-(rf/reg-event-db ::set-comment-public (fn [db [_ field-key value]] (assoc-in db [::comment-public field-key] value)))
+(rf/reg-sub ::event-public (fn [db [_ field-key]] (get-in db [::event-public field-key] false)))
+(rf/reg-event-db ::set-event-public (fn [db [_ field-key value]] (assoc-in db [::event-public field-key] value)))
 
-(defn comment-public-field [{:keys [field-key label]}]
-  (let [id (str "comment-public-" field-key)
-        selection @(rf/subscribe [::comment-public field-key])
-        on-change #(rf/dispatch [::set-comment-public field-key (not selection)])]
+(defn event-public-field [{:keys [field-key label]}]
+  (let [id (str "event-public-" field-key)
+        selection @(rf/subscribe [::event-public field-key])
+        on-change #(rf/dispatch [::set-event-public field-key (not selection)])]
     [:div.form-group
      [:div.form-check.form-check-inline.pointer
       [checkbox {:id id
@@ -94,7 +94,8 @@
                  :value selection
                  :on-change on-change}]
       [:label.form-check-label {:for id :on-click on-change}
-       label]]]))
+       (or label
+           (text :t.actions/show-to-applying-users))]]]))
 
 (rf/reg-sub ::name (fn [db [_ field-key]] (get-in db [::name field-key])))
 (rf/reg-event-db ::set-name (fn [db [_ field-key value]] (assoc-in db [::name field-key] value)))

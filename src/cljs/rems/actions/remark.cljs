@@ -1,6 +1,6 @@
 (ns rems.actions.remark
   (:require [re-frame.core :as rf]
-            [rems.actions.components :refer [action-attachment action-button action-form-view comment-field command! comment-public-field perform-action-button]]
+            [rems.actions.components :refer [action-attachment action-button action-form-view comment-field command! event-public-field perform-action-button]]
             [rems.text :refer [text]]))
 
 (def ^:private action-form-id "remark")
@@ -9,7 +9,7 @@
  ::open-form
  (fn [_ _]
    {:dispatch-n [[:rems.actions.components/set-comment action-form-id ""]
-                 [:rems.actions.components/set-comment-public action-form-id false]
+                 [:rems.actions.components/set-event-public action-form-id false]
                  [:rems.actions.components/set-attachments action-form-id []]]}))
 
 (rf/reg-event-fx
@@ -42,15 +42,14 @@
    [:div
     [comment-field {:field-key action-form-id
                     :label (text :t.form/add-remark)}]
-    [comment-public-field {:field-key action-form-id
-                           :label (text :t.actions/remark-public)}]
     [action-attachment {:field-key action-form-id
-                        :application-id application-id}]]])
+                        :application-id application-id}]
+    [event-public-field {:field-key action-form-id}]]])
 
 (defn remark-form [application-id on-finished]
   (let [attachments @(rf/subscribe [:rems.actions.components/attachments action-form-id])
         comment @(rf/subscribe [:rems.actions.components/comment action-form-id])
-        public @(rf/subscribe [:rems.actions.components/comment-public action-form-id])]
+        public @(rf/subscribe [:rems.actions.components/event-public action-form-id])]
     [remark-view {:application-id application-id
                   :disabled (and (empty? comment)
                                  (empty? attachments))

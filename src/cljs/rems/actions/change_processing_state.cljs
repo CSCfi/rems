@@ -1,7 +1,6 @@
 (ns rems.actions.change-processing-state
-  (:require [reagent.core :as r]
-            [re-frame.core :as rf]
-            [rems.actions.components :refer [action-attachment action-button action-form-view command! comment-field comment-public-field perform-action-button]]
+  (:require [re-frame.core :as rf]
+            [rems.actions.components :refer [action-attachment action-button action-form-view command! comment-field event-public-field perform-action-button]]
             [rems.dropdown :as dropdown]
             [rems.text :refer [localized text]]))
 
@@ -14,7 +13,7 @@
  ::open-form
  (fn [_ _]
    {:dispatch-n [[:rems.actions.components/set-comment action-form-id ""]
-                 [:rems.actions.components/set-comment-public action-form-id false]
+                 [:rems.actions.components/set-event-public action-form-id false]
                  [:rems.actions.components/set-attachments action-form-id []]
                  [::set-processing-state nil]]}))
 
@@ -22,11 +21,11 @@
  ::command
  :<- [:rems.actions.components/attachments-with-filenames action-form-id]
  :<- [:rems.actions.components/comment action-form-id]
- :<- [:rems.actions.components/comment-public action-form-id]
+ :<- [:rems.actions.components/event-public action-form-id]
  :<- [::processing-state]
  (fn [[form-attachments
        form-comment
-       form-comment-public
+       form-event-public
        form-processing-state]
       [_ application-id]]
    (when (and application-id
@@ -36,7 +35,7 @@
                      (select-keys att [:attachment/id]))
       :comment form-comment
       :processing-state form-processing-state
-      :public form-comment-public})))
+      :public form-event-public})))
 
 (rf/reg-event-fx
  ::send-command
@@ -48,34 +47,25 @@
               :on-finished on-finished})
    {}))
 
-(defn- render-text-or-hiccup [x]
-  (if (vector? x)
-    (r/as-element x)
-    x))
-
-(defn processing-state-field [{:keys [current-value on-change processing-states]}]
-  (let [id (str action-form-id "-dropdown")]
+(defn processing-state-field [{:keys [field-key label processing-states]}]
+  (let [id (str field-key "-dropdown")
+        current-value @(rf/subscribe [::processing-state])]
     [:div.processing-state.mb-3
-     [:label.sr-only {:for id} (text :t.actions/change-processing-state)]
+     [:label.sr-only {:for id} label]
      [dropdown/dropdown
       {:id id
-       :items (vec (for [{:keys [value title]} processing-states]
-                     {:value value
-                      :label (localized title)}))
-       :item-label #(render-text-or-hiccup (:label %))
-       :item-selected? #(= current-value (:value %))
-       :on-change #(on-change (:value %))}]]))
+       :items (->> processing-states
+                   (mapv #(assoc % ::label (localized (:processing-state/title %)))))
+       :item-label ::label
+       :item-selected? #(= current-value (:processing-state/value %))
+       :on-change #(rf/dispatch [::set-processing-state (:processing-state/value %)])}]]))
 
 (defn change-processing-state-action-button []
   [action-button {:id action-form-id
                   :text (text :t.actions/change-processing-state)
                   :on-click #(rf/dispatch [::open-form])}])
 
-(defn- change-processing-state-view [{:keys [application-id
-                                             on-change-processing-state
-                                             on-submit
-                                             value
-                                             workflow]}]
+(defn- change-processing-state-view [{:keys [application-id on-submit workflow]}]
   [action-form-view action-form-id
    (text :t.actions/change-processing-state)
    [[perform-action-button {:id action-form-id
@@ -84,22 +74,19 @@
                             :disabled (not on-submit)
                             :on-click on-submit}]]
    [:<>
-    [processing-state-field {:current-value value
-                             :on-change on-change-processing-state
+    [processing-state-field {:field-key action-form-id
+                             :label (text :t.actions/change-processing-state)
                              :processing-states (:workflow/processing-states workflow)}]
     [comment-field {:field-key action-form-id
                     :label (text :t.form/add-comment)}]
-    [comment-public-field {:field-key action-form-id
-                           :label (text :t.form/comment-public)}]
     [action-attachment {:field-key action-form-id
-                        :application-id application-id}]]])
+                        :application-id application-id}]
+    [event-public-field {:field-key action-form-id}]]])
 
 (defn change-processing-state-form [application-id application on-finished]
   (let [cmd @(rf/subscribe [::command application-id])]
     [change-processing-state-view
      {:application-id application-id
-      :on-change-processing-state #(rf/dispatch [::set-processing-state %])
       :on-submit (when cmd
                    #(rf/dispatch [::send-command cmd on-finished]))
-      :value (:processing-state cmd)
       :workflow (:application/workflow application)}]))

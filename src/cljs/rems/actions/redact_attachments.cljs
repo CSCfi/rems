@@ -1,6 +1,6 @@
 (ns rems.actions.redact-attachments
   (:require [re-frame.core :as rf]
-            [rems.actions.components :refer [action-attachment action-button action-form-view command! select-attachments-field comment-field comment-public-field perform-action-button]]
+            [rems.actions.components :refer [action-attachment action-button action-form-view command! select-attachments-field comment-field event-public-field perform-action-button]]
             [rems.text :refer [text]]))
 
 (def ^:private action-form-id "redact-attachments")
@@ -14,7 +14,7 @@
  (fn [{:keys [db]} [_ attachments]]
    {:db (assoc db ::attachments attachments)
     :dispatch-n [[:rems.actions.components/set-comment action-form-id ""]
-                 [:rems.actions.components/set-comment-public action-form-id false]
+                 [:rems.actions.components/set-event-public action-form-id false]
                  [:rems.actions.components/set-attachments action-form-id []]
                  [:rems.actions.components/set-selected-attachments action-form-id {}]]}))
 
@@ -33,12 +33,12 @@
  :<- [:rems.actions.components/selected-attachments action-form-id]
  :<- [:rems.actions.components/attachments-with-filenames action-form-id]
  :<- [:rems.actions.components/comment action-form-id]
- :<- [:rems.actions.components/comment-public action-form-id]
- (fn [[select-attachments attachments-with-filenames comment comment-public] _]
+ :<- [:rems.actions.components/event-public action-form-id]
+ (fn [[select-attachments attachments-with-filenames comment event-public] _]
    {:redact-attachments select-attachments
     :attachments attachments-with-filenames
     :comment comment
-    :public comment-public}))
+    :public event-public}))
 
 (defn redact-attachments-action-button [attachments]
   [action-button {:id action-form-id
@@ -65,8 +65,7 @@
                         :label (text :t.form/upload-replacement-attachment)}]
     [comment-field {:field-key action-form-id
                     :label (text :t.form/add-comment)}]
-    [comment-public-field {:field-key action-form-id
-                           :label (text :t.form/comment-public)}]]])
+    [event-public-field {:field-key action-form-id}]]])
 
 (defn- build-command [application-id {:keys [redact-attachments attachments comment public]}]
   (when (and (some? application-id)
