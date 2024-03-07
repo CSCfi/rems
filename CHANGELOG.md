@@ -11,7 +11,7 @@ Changes since v2.35.1
 ### Additions
 - (Experimental) Voting options are expanded to have types, i.e. reviewer and handler voting. Use `:enable-voting`. (#3257)
 - Email templates (`:t.email/...`) and event translations (`:t.applications.events/...`) now support named format parameters, and default english localizations have been updated for reference. While REMS moves towards fully supporting named parameters, all translations with index parameters should continue to work. Localizations with many parameters (like emails) have been burdensome to maintain with index parameters, so transitioning into named parameters is highly encouraged. (#3241)
-- Processing states have been added. Handler can change application's processing state when at least one has been configured in the application's workflow. Use `:enable-processing-states`. (#3259)
+- Processing states have been added. Now, in addition to the main states (draft, submitted, returned, approved, ...), the application tracks new "processing states" (i.e, "sub-states"). They can be added to facilitate for example standard bookkeeping of an application or technical integrations. The handler can change an application's processing state, when at least one has been configured in the application's workflow by the owner. Use `:enable-processing-states`. (#3259)
 
 ### Changes
 - Form fields in workflow admin pages are re-structured to show most often needed fields first.
