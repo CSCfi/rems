@@ -2465,7 +2465,9 @@
       (select-option "Organization" "nbn")
       (fill-form-field "Title" (btu/context-getx :workflow-title))
       (btu/scroll-and-click :type-decider)
-      (is (btu/eventually-visible? {:css ".alert" :fn/text "The handler does not have the authority to approve or reject, but only a separate decider has."}))
+      (is (btu/eventually-visible?
+           {:css ".workflow-type-description"
+            :fn/text "The handler does not have the authority to approve or reject, but only a separate decider has."}))
       (select-option "Handlers" "handler")
       (select-option "Handlers" "carl")
       (select-option "Forms" "Simple form")

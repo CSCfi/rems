@@ -173,10 +173,11 @@
                   (when (config/dev-environment?)
                     [{:value :workflow/master
                       :label (text :t.create-workflow/master-workflow)}]))}]
-      [:p (case @(rf/subscribe [::workflow-type])
-            :workflow/default (text :t.create-workflow/default-workflow-description)
-            :workflow/decider (text :t.create-workflow/decider-workflow-description)
-            :workflow/master (text :t.create-workflow/master-workflow-description))]]]))
+      [:p.workflow-type-description
+       (case @(rf/subscribe [::workflow-type])
+         :workflow/default (text :t.create-workflow/default-workflow-description)
+         :workflow/decider (text :t.create-workflow/decider-workflow-description)
+         :workflow/master (text :t.create-workflow/master-workflow-description))]]]))
 
 (rf/reg-sub ::workflow-handlers (fn [db _] (get-in db [::form :handlers])))
 (rf/reg-event-db ::set-handlers (fn [db [_ handlers]] (assoc-in db [::form :handlers] (sort-by :userid handlers))))
