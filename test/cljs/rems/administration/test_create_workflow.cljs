@@ -13,7 +13,7 @@
    :handlers [{:userid "bob"}]
    :licenses [{:id 1}]
    :organization {:organization/id "organization1"}
-   :processing-states [{:title {:en "In voting"} :value "in voting"}]
+   :processing-states [{:processing-state/value "in voting" :processing-state/title {:en "In voting"}}]
    :title "workflow form all fields"
    :type :workflow/default
    :voting :handlers-vote})
@@ -32,7 +32,7 @@
                 :handlers ["bob"]
                 :licenses [{:license/id 1}]
                 :organization {:organization/id "organization1"}
-                :processing-states [{:title {:en "In voting"} :value "in voting"}]
+                :processing-states [{:processing-state/value "in voting" :processing-state/title {:en "In voting"}}]
                 :title "workflow form all fields"
                 :type workflow
                 :voting :handlers-vote}
@@ -74,7 +74,8 @@
                                                                                         {:when/role [:applicant]}])))
             "invalid disable commands")
         (is (= nil
-               (build-create-request (assoc workflow-form-all-fields :processing-states [{:title "i should be localized" :value "in error"}])))
+               (build-create-request (assoc workflow-form-all-fields :processing-states [{:processing-state/value "in error"
+                                                                                          :processing-state/title "i should be localized"}])))
             "invalid processing states")))))
 
 (deftest build-edit-request-test
@@ -84,7 +85,7 @@
             :handlers ["bob"]
             :id 3
             :organization {:organization/id "organization1"}
-            :processing-states [{:title {:en "In voting"} :value "in voting"}]
+            :processing-states [{:processing-state/value "in voting" :processing-state/title {:en "In voting"}}]
             :title "workflow form all fields"
             :voting :handlers-vote}
            (build-edit-request 3 form-all-fields))))
@@ -119,5 +120,6 @@
                                                                            {:when/role [:applicant]}])))
         "invalid disable commands")
     (is (= nil
-           (build-edit-request 3 (assoc form-all-fields :processing-states [{:title "i should be localized" :value "in error"}])))
+           (build-edit-request 3 (assoc form-all-fields :processing-states [{:processing-state/value "in error"
+                                                                             :processing-state/title "i should be localized"}])))
         "invalid processing states")))

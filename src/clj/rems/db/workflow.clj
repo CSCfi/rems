@@ -17,7 +17,7 @@
    (s/optional-key :disable-commands) [schema-base/DisableCommandRule]
    (s/optional-key :voting) (s/maybe schema-base/WorkflowVoting)
    (s/optional-key :anonymize-handling) s/Bool
-   (s/optional-key :processing-states) [schema-base/WorkflowProcessingState]})
+   (s/optional-key :processing-states) [schema-base/ProcessingState]})
 
 (def ^:private coerce-workflow-body
   (coerce/coercer! WorkflowBody coerce/string-coercion-matcher))

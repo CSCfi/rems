@@ -73,8 +73,8 @@
    (not-blank (:title request))
    ;; optional (validated values)
    (every? :command (:disable-commands request))
-   (every? (comp not-blank :value) (:processing-states request))
-   (every? (comp at-least-one-localization :title) (:processing-states request))))
+   (every? (comp not-blank :processing-state/value) (:processing-states request))
+   (every? (comp at-least-one-localization :processing-state/title) (:processing-states request))))
 
 (defn build-create-request [form]
   (let [request (merge
@@ -102,8 +102,8 @@
    (not-blank (:title request))
    ;; optional (validated values)
    (every? :command (:disable-commands request))
-   (every? (comp not-blank :value) (:processing-states request))
-   (every? (comp at-least-one-localization :title) (:processing-states request))))
+   (every? (comp not-blank :processing-state/value) (:processing-states request))
+   (every? (comp at-least-one-localization :processing-state/title) (:processing-states request))))
 
 (defn build-edit-request [id form]
   (let [request {:anonymize-handling (:anonymize-handling form)

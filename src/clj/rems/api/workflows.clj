@@ -19,7 +19,7 @@
    (s/optional-key :disable-commands) [schema-base/DisableCommandRule]
    (s/optional-key :voting) (s/maybe schema-base/WorkflowVoting)
    (s/optional-key :anonymize-handling) (s/maybe s/Bool)
-   (s/optional-key :processing-states) [schema-base/WorkflowProcessingState]})
+   (s/optional-key :processing-states) [schema-base/ProcessingState]})
 
 (s/defschema EditWorkflowCommand
   {:id s/Int
@@ -30,7 +30,7 @@
    (s/optional-key :disable-commands) [schema-base/DisableCommandRule]
    (s/optional-key :voting) (s/maybe schema-base/WorkflowVoting)
    (s/optional-key :anonymize-handling) (s/maybe s/Bool)
-   (s/optional-key :processing-states) [schema-base/WorkflowProcessingState]})
+   (s/optional-key :processing-states) [schema-base/ProcessingState]})
 
 (s/defschema CreateWorkflowResponse
   {:success s/Bool

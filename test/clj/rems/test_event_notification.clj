@@ -77,10 +77,10 @@
             workflow-id (test-helpers/create-workflow! {:title "wf"
                                                         :handlers [handler]
                                                         :type :workflow/default
-                                                        :processing-states [{:title {:en "Distributed DAC EN"
-                                                                                     :fi "Distributed DAC FI"
-                                                                                     :sv "Distributed DAC SV"}
-                                                                             :value "distributed dac"}]})
+                                                        :processing-states [{:processing-state/value "distributed dac"
+                                                                             :processing-state/title {:en "Distributed DAC EN"
+                                                                                                      :fi "Distributed DAC FI"
+                                                                                                      :sv "Distributed DAC SV"}}]})
             ext-id "resres"
             res-id (test-helpers/create-resource! {:resource-ext-id ext-id})
             cat-id (test-helpers/create-catalogue-item! {:form-id form-id
@@ -242,18 +242,10 @@
                 (is (= (:event/id processing-state-event)
                        (:event/id (:data all-request))
                        (:event/id (:data no-app-request))))
-                (is (= {:application/processing-state {:processing-state/title {:en "Distributed DAC EN"
-                                                                                :fi "Distributed DAC FI"
-                                                                                :sv "Distributed DAC SV"}
-                                                       :processing-state/value "distributed dac"}}
-                       (-> all-request
-                           :data
-                           :event/application
-                           (select-keys [:application/processing-state]))))
-                (is (= {:application/processing-state {:processing-state/value "distributed dac"}}
-                       (-> no-app-request
-                           :data
-                           (select-keys [:application/processing-state]))))
+                (testing "processing state value is sent in all notifications"
+                  (is (= {:processing-state/value "distributed dac"}
+                         (:application/processing-state (:data all-request))
+                         (:application/processing-state (:data no-app-request)))))
                 (is (contains? (:data all-request) :event/application))
                 (is (not (contains? (:data no-app-request) :event/application)))))))))))
 

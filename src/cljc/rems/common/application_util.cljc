@@ -64,7 +64,7 @@
   "Returns true if current user is applying for `application`.
 
    See `rems.common.application-util/+applying-user-roles+`"
-  [{application-roles :application/roles :as application}]
+  [application]
   (let [roles (set (:application/roles application))
         applying-roles (clojure.set/intersection +applying-user-roles+ roles)]
     (some? (seq applying-roles))))
@@ -73,8 +73,8 @@
   "Returns true if current user is taking part in handling process of `application` .
 
    See `rems.common.application-util/+handling-user-roles+`"
-  [{application-roles :application/roles :as application}]
-  (let [roles (set application-roles)
+  [application]
+  (let [roles (set (:application/roles application))
         handling-roles (clojure.set/intersection +handling-user-roles+ roles)]
     (some? (seq handling-roles))))
 
