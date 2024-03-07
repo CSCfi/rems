@@ -289,14 +289,14 @@
                                                       :handlers handlers
                                                       :licenses [link text]
                                                       :voting {:type :handlers-vote}
-                                                      :processing-states [{:title {:en "In voting"
-                                                                                   :fi "Äänestyksessä"
-                                                                                   :sv "I omröstningen"}
-                                                                           :value "in voting"}
-                                                                          {:title {:en "Preliminarily approved"
-                                                                                   :fi "Alustavasti hyväksytty"
-                                                                                   :sv "Preliminärt godkänd"}
-                                                                           :value "preliminarily approved"}]})
+                                                      :processing-states [{:processing-state/title {:en "In voting"
+                                                                                                    :fi "Äänestyksessä"
+                                                                                                    :sv "I omröstningen"}
+                                                                           :processing-state/value "in voting"}
+                                                                          {:processing-state/title {:en "Preliminarily approved"
+                                                                                                    :fi "Alustavasti hyväksytty"
+                                                                                                    :sv "Preliminärt godkänd"}
+                                                                           :processing-state/value "preliminarily approved"}]})
         reviewers-vote (test-helpers/create-workflow! {:actor owner
                                                        :organization {:organization/id "nbn"}
                                                        :title "Reviewers vote workflow"
@@ -304,14 +304,14 @@
                                                        :handlers handlers
                                                        :licenses [link text]
                                                        :voting {:type :reviewers-vote}
-                                                       :processing-states [{:title {:en "In voting"
-                                                                                    :fi "Äänestyksessä"
-                                                                                    :sv "I omröstningen"}
-                                                                            :value "in voting"}
-                                                                           {:title {:en "Preliminarily approved"
-                                                                                    :fi "Alustavasti hyväksytty"
-                                                                                    :sv "Preliminärt godkänd"}
-                                                                            :value "preliminarily approved"}]})
+                                                       :processing-states [{:processing-state/title {:en "In voting"
+                                                                                                     :fi "Äänestyksessä"
+                                                                                                     :sv "I omröstningen"}
+                                                                            :processing-state/value "in voting"}
+                                                                           {:processing-state/title {:en "Preliminarily approved"
+                                                                                                     :fi "Alustavasti hyväksytty"
+                                                                                                     :sv "Preliminärt godkänd"}
+                                                                            :processing-state/value "preliminarily approved"}]})
         master (test-helpers/create-workflow! {:actor owner
                                                :organization {:organization/id "nbn"}
                                                :title "Master workflow"
