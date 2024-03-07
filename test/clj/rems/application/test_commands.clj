@@ -2066,6 +2066,14 @@
                         :expires-on (time/plus test-time (time/hours 1))}
                        (build-application-view [dummy-created-event]))))))
 
+(defn- add-processing-states [injections {:keys [workflow-id]}]
+  (-> injections
+      (assoc :get-config (constantly {:enable-processing-states true})
+             :get-workflow (update-in dummy-workflows
+                                      [workflow-id :workflow]
+                                      assoc :processing-states [{:processing-state/value "in voting" :processing-state/title {:en "In voting"}}
+                                                                {:processing-state/value "seal of approval" :processing-state/title {:en "Initially approved"}}]))))
+
 (deftest change-processing-state-command
   (testing "forbidden when config is disabled"
     (is (= {:errors [{:type :forbidden}]}
@@ -2077,9 +2085,8 @@
                          (build-application-view [dummy-created-event
                                                   dummy-submitted-event]
                                                  (-> application-injections
-                                                     (assoc :get-config (constantly {:enable-processing-states false}))
-                                                     (assoc-in [:get-workflow 1 :workflow :processing-states] [{:title {:en "In voting"}
-                                                                                                                :value "in voting"}])))))))
+                                                     (add-processing-states {:workflow-id 1})
+                                                     (assoc :get-config (constantly {:enable-processing-states false}))))))))
   (testing "forbidden when workflow does not contain any processing states"
     (is (= {:errors [{:type :forbidden}]}
            (fail-command {:type :application.command/change-processing-state
@@ -2090,8 +2097,8 @@
                          (build-application-view [dummy-created-event
                                                   dummy-submitted-event]
                                                  (-> application-injections
-                                                     (assoc :get-config (constantly {:enable-processing-states true}))
-                                                     (assoc-in [:get-workflow 1 :workflow :processing-states] [])))))))
+                                                     (add-processing-states {:workflow-id 1})
+                                                     (assoc :get-workflow dummy-workflows)))))))
   (testing "applicant or reviewer cannot change processing state"
     (is (= {:errors [{:type :forbidden}]}
            (fail-command {:type :application.command/change-processing-state
@@ -2102,9 +2109,7 @@
                          (build-application-view [dummy-created-event
                                                   dummy-submitted-event]
                                                  (-> application-injections
-                                                     (assoc :get-config (constantly {:enable-processing-states true}))
-                                                     (assoc-in [:get-workflow 1 :workflow :processing-states] [{:title {:en "In voting"}
-                                                                                                                :value "in voting"}]))))
+                                                     (add-processing-states {:workflow-id 1}))))
            (fail-command {:type :application.command/change-processing-state
                           :actor reviewer-user-id
                           :comment "allow me"
@@ -2114,9 +2119,7 @@
                                                   dummy-submitted-event
                                                   dummy-review-requested-event]
                                                  (-> application-injections
-                                                     (assoc :get-config (constantly {:enable-processing-states true}))
-                                                     (assoc-in [:get-workflow 1 :workflow :processing-states] [{:title {:en "In voting"}
-                                                                                                                :value "in voting"}])))))))
+                                                     (add-processing-states {:workflow-id 1})))))))
   (testing "cannot change draft processing state"
     (is (= {:errors [{:type :forbidden}]}
            (fail-command {:type :application.command/change-processing-state
@@ -2126,9 +2129,7 @@
                           :public true}
                          (build-application-view [dummy-created-event]
                                                  (-> application-injections
-                                                     (assoc :get-config (constantly {:enable-processing-states true}))
-                                                     (assoc-in [:get-workflow 1 :workflow :processing-states] [{:title {:en "In voting"}
-                                                                                                                :value "in voting"}])))))))
+                                                     (add-processing-states {:workflow-id 1})))))))
   (testing "handler can change processing state"
     (is (= {:event/type :application.event/processing-state-changed
             :event/time test-time
@@ -2147,9 +2148,7 @@
                        (build-application-view [dummy-created-event
                                                 dummy-submitted-event]
                                                (-> application-injections
-                                                   (assoc :get-config (constantly {:enable-processing-states true}))
-                                                   (assoc-in [:get-workflow 1 :workflow :processing-states] [{:title {:en "In voting"}
-                                                                                                              :value "in voting"}])))))))
+                                                   (add-processing-states {:workflow-id 1})))))))
   (testing "handler can change processing state many times"
     (is (= {:event/type :application.event/processing-state-changed
             :event/time test-time
@@ -2166,8 +2165,4 @@
                                                 dummy-processing-state-changed-event
                                                 dummy-remarked-event]
                                                (-> application-injections
-                                                   (assoc :get-config (constantly {:enable-processing-states true}))
-                                                   (assoc-in [:get-workflow 1 :workflow :processing-states] [{:title {:en "In voting"}
-                                                                                                              :value "in voting"}
-                                                                                                             {:title {:en "Initially approved"}
-                                                                                                              :value "seal of approval"}]))))))))
+                                                   (add-processing-states {:workflow-id 1}))))))))
