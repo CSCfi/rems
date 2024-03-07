@@ -139,6 +139,13 @@
     (is (number? (:id body)))
     (:id body)))
 
+(defn- api->edit-workflow-ok [user-id cmd]
+  (-> (request :put "/api/workflows/edit")
+      (authenticate +test-api-key+ user-id)
+      (json-body cmd)
+      handler
+      read-ok-body))
+
 ;;; tests
 
 (deftest test-application-api-session
@@ -3101,3 +3108,153 @@
              (:application/workflow (get-application-for-user app-id applicant))
              (:application/workflow (get-application-for-user app-id member)))
           "applicant and member do not see anonymize handling attributes in workflow"))))
+
+(deftest test-processing-states
+  (let [applicant "alice"
+        member "malice"
+        handler-id "handler"
+        handler-id2 "developer"
+        reviewer "carl"
+        owner "owner"
+        form-id (test-helpers/create-form! {})
+        workflow-id (test-helpers/create-workflow! {:type :workflow/default
+                                                    :handlers [handler-id handler-id2]})
+        cat-item-id (test-helpers/create-catalogue-item! {:workflow-id workflow-id
+                                                          :form-id form-id})
+        application-id (test-helpers/create-application! {:catalogue-item-ids [cat-item-id]
+                                                          :actor applicant})]
+
+    (testing "applicant submits"
+      (is (= {:success true} (send-command applicant {:type :application.command/submit
+                                                      :application-id application-id}))))
+
+    (testing "handler adds member"
+      (is (= {:success true} (send-command handler-id {:type :application.command/add-member
+                                                       :application-id application-id
+                                                       :member {:userid member}}))))
+
+    (testing "handler invites reviewer"
+      (is (= {:success true} (send-command handler-id {:type :application.command/request-review
+                                                       :application-id application-id
+                                                       :reviewers [reviewer]}))))
+
+    (testing "handler cannot change processing state when not enabled in workflow"
+      (is (= {:success false
+              :errors [{:type "forbidden"}]}
+             (send-command handler-id
+                           {:type :application.command/change-processing-state
+                            :application-id application-id
+                            :processing-state "waiting for documents"
+                            :public false}))))
+
+    (testing "enable processing states"
+      (is (= {:success true}
+             (api->edit-workflow-ok owner
+                                    {:id workflow-id
+                                     :organization {:organization/id "abc"}
+                                     :title "Workflow with voting"
+                                     :handlers [handler-id handler-id2]
+                                     :processing-states [{:processing-state/value "preliminarily approved" :processing-state/title {:en "Preliminarily approved" :fi "Alustavasti hyväksytty" :sv "Preliminärt godkänd"}}
+                                                         {:processing-state/value "due for processing" :processing-state/title {:en "Due for processing" :fi "Käsittelyssä" :sv "Ska behandlas"}}
+                                                         {:processing-state/value "waiting for documents" :processing-state/title {:en "Waiting for documents" :fi "Odottaa asiakirjoja" :sv "Väntar på dokument"}}]})))
+
+      (testing "handling users can see workflow processing states"
+        (doseq [userid [handler-id handler-id2 reviewer]]
+          (testing (str userid)
+            (is (= [{:processing-state/value "preliminarily approved" :processing-state/title {:en "Preliminarily approved" :fi "Alustavasti hyväksytty" :sv "Preliminärt godkänd"}}
+                    {:processing-state/value "due for processing" :processing-state/title {:en "Due for processing" :fi "Käsittelyssä" :sv "Ska behandlas"}}
+                    {:processing-state/value "waiting for documents" :processing-state/title {:en "Waiting for documents" :fi "Odottaa asiakirjoja" :sv "Väntar på dokument"}}]
+                   (-> (get-application-for-user application-id userid)
+                       :application/workflow
+                       :workflow/processing-states))))))
+
+      (testing "applying users cannot see workflow processing states"
+        (doseq [userid [applicant member]]
+          (testing (str userid)
+            (is (= nil
+                   (-> (get-application-for-user application-id userid)
+                       :application/workflow
+                       :workflow/processing-states)))))))
+
+    (testing "reviewer cannot change processing state"
+      (is (= {:success false
+              :errors [{:type "forbidden"}]}
+             (send-command reviewer
+                           {:type :application.command/change-processing-state
+                            :application-id application-id
+                            :processing-state "waiting for documents"
+                            :public false}))))
+
+    (testing "handler changes public processing state"
+      (is (= {:success true} (send-command handler-id {:type :application.command/change-processing-state
+                                                       :application-id application-id
+                                                       :processing-state "due for processing"
+                                                       :public true})))
+
+      (testing "handling users can see public processing state"
+        (doseq [userid [handler-id handler-id2 reviewer]]
+          (testing (str userid)
+            (is (= {:public {:processing-state/value "due for processing" :processing-state/title {:en "Due for processing" :fi "Käsittelyssä" :sv "Ska behandlas"}}}
+                   (-> (get-application-for-user application-id userid)
+                       :application/processing-state))))))
+
+      (testing "applying users can see public processing state"
+        (doseq [userid [applicant member]]
+          (testing (str userid)
+            (is (= {:public {:processing-state/value "due for processing" :processing-state/title {:en "Due for processing" :fi "Käsittelyssä" :sv "Ska behandlas"}}}
+                   (-> (get-application-for-user application-id userid)
+                       :application/processing-state)))))))
+
+    (testing "reviewer gives review"
+      (is (= {:success true} (send-command reviewer {:type :application.command/review
+                                                     :application-id application-id
+                                                     :comment "LGTM"}))))
+
+    (testing "handler changes private processing state"
+      (is (= {:success true} (send-command handler-id {:type :application.command/change-processing-state
+                                                       :application-id application-id
+                                                       :processing-state "preliminarily approved"
+                                                       :public false})))
+
+      (testing "handling users can see public and private processing states"
+        (doseq [userid [handler-id handler-id2 reviewer]]
+          (testing (str userid)
+            (is (= {:public {:processing-state/value "due for processing" :processing-state/title {:en "Due for processing" :fi "Käsittelyssä" :sv "Ska behandlas"}}
+                    :private {:processing-state/value "preliminarily approved" :processing-state/title {:en "Preliminarily approved" :fi "Alustavasti hyväksytty" :sv "Preliminärt godkänd"}}}
+                   (-> (get-application-for-user application-id userid)
+                       :application/processing-state))))))
+
+      (testing "applying users see only public processing state"
+        (doseq [userid [applicant member]]
+          (testing (str userid)
+            (is (= {:public {:processing-state/value "due for processing" :processing-state/title {:en "Due for processing" :fi "Käsittelyssä" :sv "Ska behandlas"}}}
+                   (-> (get-application-for-user application-id userid)
+                       :application/processing-state)))))))
+
+    (testing "handling users can see both public and private events"
+      (doseq [userid [handler-id handler-id2 reviewer]]
+        (testing (str userid)
+          (is (= [{:event/type "application.event/created" :event/actor applicant}
+                  {:event/type "application.event/submitted" :event/actor applicant}
+                  {:event/type "application.event/member-added" :event/actor handler-id}
+                  {:event/type "application.event/review-requested" :event/actor handler-id}
+                  {:event/type "application.event/processing-state-changed" :event/actor handler-id :event/public true :application/processing-state {:processing-state/value "due for processing" :processing-state/title {:en "Due for processing" :fi "Käsittelyssä" :sv "Ska behandlas"}}}
+                  {:event/type "application.event/reviewed" :event/actor reviewer}
+                  {:event/type "application.event/processing-state-changed" :event/actor handler-id :event/public false :application/processing-state {:processing-state/value "preliminarily approved" :processing-state/title {:en "Preliminarily approved" :fi "Alustavasti hyväksytty" :sv "Preliminärt godkänd"}}}]
+                 (->> (get-application-for-user application-id userid)
+                      :application/events
+                      (mapv #(select-keys % [:event/actor :event/type :event/public :application/processing-state]))))))))
+
+    (testing "applying users can see only public events"
+      (doseq [userid [applicant member]]
+        (testing (str userid)
+          (is (= [{:event/type "application.event/created" :event/actor applicant}
+                  {:event/type "application.event/submitted" :event/actor applicant}
+                  {:event/type "application.event/member-added" :event/actor handler-id}
+                  #_{:event/type "application.event/review-requested" :event/actor handler-id}
+                  {:event/type "application.event/processing-state-changed" :event/actor handler-id :application/processing-state {:processing-state/value "due for processing" :processing-state/title {:en "Due for processing" :fi "Käsittelyssä" :sv "Ska behandlas"}}}
+                  #_{:event/type "application.event/reviewed" :event/actor reviewer}
+                  #_{:event/type "application.event/processing-state-changed" :event/actor handler-id :application/processing-state {:processing-state/value "preliminarily approved" :processing-state/title {:en "Preliminarily approved" :fi "Alustavasti hyväksytty" :sv "Preliminärt godkänd"}}}]
+                 (->> (get-application-for-user application-id userid)
+                      :application/events
+                      (mapv #(select-keys % [:event/actor :event/type :event/public :application/processing-state]))))))))))
