@@ -537,7 +537,7 @@
           (fill-form-field "Conditional field" "Conditional")
           (select-option "Option list" "Second option")
           (btu/wait-predicate #(not (btu/field-visible? "Conditional field")))
-          (Thread/sleep 1000) ;; XXX: conditional field check sometimes fails due to rendering latency
+          (btu/wait-for-idle 1000) ; XXX: conditional field check sometimes fails due to rendering latency
           (when (btu/autosave-enabled?)
             (btu/wait-visible {:css ".alert-success" :fn/text "Application is saved."}))
           (select-option "Option list" "First option")
@@ -863,7 +863,6 @@
       (is (btu/eventually-visible? {:tag :h1 :fn/has-text "test-handling"})))
     (testing "handler should see the applicant info"
       (btu/scroll-and-click :applicant-info-collapse-more-link)
-      (Thread/sleep 500) ; XXX: figure out what to wait for
       (btu/screenshot "after-opening-applicant-info")
       (is (= {"Name" "Alice Applicant"
               "Accepted terms of use" true
@@ -2104,8 +2103,7 @@
         (btu/click-el (first (btu/query-all {:tag :button :fn/has-class :info-button})))
         (is (btu/eventually-visible? {:tag :div :fn/has-class :info-collapse}))
         (is (btu/visible? {:tag :div :fn/has-text "Info text (EN)"}))
-        ;; TODO: figure out what to wait for
-        (Thread/sleep 500)
+        (btu/wait-for-idle 500) ; XXX: figure out what to wait for
         (btu/click-el (first (btu/query-all {:tag :button :fn/has-class :info-button})))
         (btu/wait-invisible {:tag :div :fn/has-text "Info text (EN)"})
         (btu/wait-predicate #(not (btu/visible? {:tag :div :fn/has-text "Info text (EN)"})) {:timeout 30})
@@ -2446,7 +2444,7 @@
         (btu/check-box "z") ; x and z selected
         (is (btu/field-visible? "Email (EN)"))
         (btu/check-box "x") ; z selected
-        (Thread/sleep 500) ; Small wait to make sure the field really stays visible
+        (btu/wait-for-idle) ; Small wait to make sure the field really stays visible
         (is (btu/field-visible? "Email (EN)"))
         (btu/check-box "y") ; z and y selected
         (is (btu/field-visible? "Email (EN)"))
@@ -2947,8 +2945,8 @@
         (btu/scroll-and-click :delete)
         (btu/wait-has-alert)
         (btu/accept-alert)
+        (btu/wait-for-idle 500)
         (is (btu/eventually-visible? {:css "#flash-message-top"}))
-        (Thread/sleep 500) ;; wait for headless mode to catch up with re-rendering
 
         (is (= ["Delete: Failed"
                 "It is in use by:"
