@@ -1,13 +1,11 @@
 (ns rems.administration.change-catalogue-item-form
   (:require [re-frame.core :as rf]
             [rems.administration.administration :as administration]
-            [rems.administration.status-flags :as status-flags]
-            [rems.atoms :as atoms :refer [readonly-checkbox document-title]]
-            [rems.collapsible :as collapsible]
+            [rems.atoms :as atoms :refer [document-title]]
             [rems.dropdown :as dropdown]
             [rems.flash-message :as flash-message]
             [rems.table :as table]
-            [rems.text :refer [localize-time text get-localized-title]]
+            [rems.text :refer [text get-localized-title]]
             [rems.util :refer [navigate! fetch post!]]))
 
 (rf/reg-event-fx
