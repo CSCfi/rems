@@ -1,5 +1,6 @@
 (ns rems.application
-  (:require [clojure.string :as str]
+  (:require [better-cond.core :as b]
+            [clojure.string :as str]
             [clojure.set :refer [union]]
             [goog.string]
             [reagent.core :as r]
@@ -12,6 +13,7 @@
             [rems.actions.approve-reject :refer [approve-reject-action-button approve-reject-form]]
             [rems.actions.assign-external-id :refer [assign-external-id-button assign-external-id-form]]
             [rems.actions.change-applicant :refer [change-applicant-action-button change-applicant-form]]
+            [rems.actions.change-processing-state :refer [change-processing-state-action-button change-processing-state-form]]
             [rems.actions.change-resources :refer [change-resources-action-button change-resources-form]]
             [rems.actions.close :refer [close-action-button close-form]]
             [rems.actions.components :refer [perform-action-button]]
@@ -36,7 +38,7 @@
             [rems.common.catalogue-util :refer [catalogue-item-more-info-url]]
             [rems.collapsible :as collapsible]
             [rems.common.form :as form]
-            [rems.common.util :refer [build-index index-by parse-int]]
+            [rems.common.util :refer [build-index index-by not-blank parse-int]]
             [rems.common.duo :refer [duo-validation-summary unmatched-duos]]
             [rems.dropdown :as dropdown]
             [rems.fetcher :as fetcher]
@@ -46,7 +48,7 @@
             [rems.guide-util :refer [component-info example lipsum lipsum-paragraphs]]
             [rems.phase :refer [phases]]
             [rems.spinner :as spinner]
-            [rems.text :refer [localize-attachment localize-decision localize-event localized localize-state localize-time localize-time-with-seconds text text-format]]
+            [rems.text :refer [localize-attachment localize-decision localize-event localized localize-state localize-processing-states localize-time localize-time-with-seconds text text-format]]
             [rems.user :as user]
             [rems.util :refer [navigate! fetch post! focus-input-field focus-when-collapse-opened format-file-size]]))
 
@@ -666,15 +668,13 @@
     :visibility/public
     [:div.row.no-gutters.gap-1
      [:div.col-sm-auto
-      [:i.fas.fa-eye {:title (text :t.applications.event/shown-to-applicant)}
-       [:span.sr-only (text :t.applications.event/shown-to-applicant)]]]
+      [atoms/shown-to-applying-users-symbol]]
      [:b.col-sm (localize-event event)]]
 
     :visibility/handling-users
     [:div.row.no-gutters.gap-1
      [:div.col-sm-auto
-      [:i.fas.fa-eye-slash {:title (text :t.applications.event/not-shown-to-applicant)}
-       [:span.sr-only (text :t.applications.event/not-shown-to-applicant)]]]
+      [atoms/not-shown-to-applying-users-symbol]]
      [:b.col-sm (localize-event event)]]
 
     [:b (localize-event event)]))
@@ -724,12 +724,13 @@
       [event-attachments attachments redacted-attachments]]]))
 
 (defn- render-events [application events]
-  (let [attachments-by-event-id (group-by (comp :event/id :attachment/event) (:application/attachments application))
-        attachments-by-id (index-by [:attachment/id] (:application/attachments application))]
+  (let [attachments (:application/attachments application)
+        attachments-by-event-id (group-by (comp :event/id :attachment/event) attachments)
+        attachments-by-id (index-by [:attachment/id] attachments)]
     (for [event events]
       [event-view {:attachments (get attachments-by-event-id (:event/id event))
-                   :redacted-attachments (vec (for [redacted (:event/redacted-attachments event)]
-                                                (get attachments-by-id (:attachment/id redacted))))}
+                   :redacted-attachments (->> (:event/redacted-attachments event)
+                                              (mapv #(get attachments-by-id (:attachment/id %))))}
        event])))
 
 (defn- get-application-phases [state]
@@ -784,28 +785,52 @@
                                  [application-link new-app nil]))))
        ")"])))
 
+(defn- render-state [application]
+  (b/cond
+    :let [state (localize-state (:application/state application))
+          processing-states (:application/processing-state application)]
+
+    (empty? processing-states)
+    [:div#application-state state]
+
+    (not (is-handling-user? application))
+    [:div#application-state
+     (str/join ", " (remove nil? [state (localize-processing-states application)]))]
+
+    :let [public-state (some-> processing-states :public :processing-state/title localized)
+          private-state (some-> processing-states :private :processing-state/title localized)]
+    [:div#application-state
+     state
+     (when public-state
+       [:div.processing-state
+        [atoms/shown-to-applying-users-symbol]
+        [:span.ml-2 public-state]])
+     (when private-state
+       [:div.processing-state
+        [atoms/not-shown-to-applying-users-symbol]
+        [:span.ml-2 private-state]])]))
+
 (defn- application-state-details [application config]
   [:<>
    [:h3.mt-3 (text :t.applications/details)]
-   [info-field
-    (text :t.applications/application)
+
+   [info-field (text :t.applications/application)
     [:<>
      [:span#application-id
       (application-list/format-application-id config application)]
      [application-copy-notice application]]
     {:inline? true}]
-   (when-not (str/blank? (:application/description application))
-     [info-field
-      (text :t.applications/description)
-      (:application/description application)
+
+   (when-some [description (not-blank (:application/description application))]
+     [info-field (text :t.applications/description)
+      description
       {:inline? true}])
-   [info-field
-    (text :t.applications/state)
-    [:span#application-state
-     (localize-state (:application/state application))]
+
+   [info-field (text :t.applications/state)
+    [render-state application]
     {:inline? true}]
-   [info-field
-    (text :t.applications/latest-activity)
+
+   [info-field (text :t.applications/latest-activity)
     (localize-time (:application/last-activity application))
     {:inline? true}]])
 
@@ -1016,7 +1041,8 @@
                                :application.command/delete [delete-action-button]
                                :application.command/copy-as-new [copy-as-new-button]
                                :application.command/redact-attachments (when-some [attachments (seq (filter :attachment/can-redact (:application/attachments application)))]
-                                                                         [redact-attachments-action-button attachments])])]
+                                                                         [redact-attachments-action-button attachments])
+                               :application.command/change-processing-state [change-processing-state-action-button]])]
 
     (-> (for [[command action] (partition 2 commands-and-actions)
               :when (contains? (:application/permissions application) command)]
@@ -1058,7 +1084,8 @@
                   [approve-reject-form app-id reload]
                   [assign-external-id-form app-id reload]
                   [delete-form app-id go-to-applications]
-                  [vote-form app-id application reload]]]}])))
+                  [vote-form app-id application reload]
+                  [change-processing-state-form app-id application reload]]]}])))
 
 (defn- render-resource [resource language]
   (let [config @(rf/subscribe [:rems.config/config])
@@ -1247,22 +1274,22 @@
      [blacklist-warning application])
    (text :t.applications/intro)
    [:div.row
-    [:div.col-lg-8.application-content
+    [:div.col-lg-8.application-content.spaced-vertically-5
      [application-state {:application application
                          :config config
                          :userid userid}]
-     [:div.mt-3 [applicants-info application userid]]
+     [applicants-info application userid]
      (when (:show-resources-section config)
-       [:div.mt-3 [applied-resources application userid language]])
+       [applied-resources application userid language])
      (when (and (:enable-duo config)
                 (seq (get-resource-duos application)))
        (if @(rf/subscribe [::readonly?])
-         [:div.mt-3 [application-duo-codes]]
-         [:div.mt-3 [edit-application-duo-codes]]))
+         [application-duo-codes]
+         [edit-application-duo-codes]))
      (when (can-see-everything? application) ; XXX: should these be shown only to handling users?
-       [:div.mt-3 [previous-applications (get-in application [:application/applicant :userid])]])
-     [:div.my-3 [application-licenses application userid]]
-     [:div.mt-3 [application-fields application]]]
+       [previous-applications (get-in application [:application/applicant :userid])])
+     [application-licenses application userid]
+     [application-fields application]]
     [:div.col-lg-4.spaced-vertically-3
      [:div#actions
       [flash-message/component :actions]

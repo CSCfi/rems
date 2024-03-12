@@ -70,3 +70,5 @@
 
 (rf/reg-fx :rems.focus/scroll-into-view (fn [[selector opts]]
                                           (reagent/after-render #(scroll-into-view selector opts))))
+(rf/reg-event-fx :rems.focus/scroll-into-view (fn [_ [_ selector opts]]
+                                                {:rems.focus/scroll-into-view [selector opts]}))

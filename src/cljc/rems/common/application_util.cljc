@@ -4,6 +4,11 @@
             [medley.core :refer [find-first]]
             [rems.common.util :as util]))
 
+(def workflow-types
+  #{:workflow/default
+    :workflow/decider
+    :workflow/master})
+
 (def states
   #{:application.state/approved
     :application.state/closed

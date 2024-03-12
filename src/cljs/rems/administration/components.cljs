@@ -152,7 +152,7 @@
                       @(rf/subscribe [(:get-form-errors context)]))
         keys (if localizations-key
                [:localizations lang localizations-key]
-               (conj keys-prefix lang))
+               (conj (vec keys-prefix) lang))
         normalizer (or normalizer identity)
         on-change (or on-change (fn [_]))
         id (keys-to-id keys)
@@ -315,7 +315,7 @@
         form-errors (when (:get-form-errors context)
                       @(rf/subscribe [(:get-form-errors context)]))
         item-selected? #(= (:organization/id %) (:organization/id value))]
-    [:div.form-group
+    [:div.form-group.field
      [:label.administration-field-label {:for id} label]
      (if (or readonly disallowed)
        [fields/readonly-field {:id id
@@ -339,7 +339,7 @@
                       @(rf/subscribe [(:get-form-errors context)]))
         id (keys-to-id keys)]
     ;; TODO: format readonly value in user locale (give field-wrapper a formatted :value and :previous-value in opts)
-    [:div.form-group
+    [:div.form-group.field
      [:label.administration-field-label {:for id} label]
      [:input.form-control {:type "date"
                            :id id

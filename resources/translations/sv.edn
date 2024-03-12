@@ -21,6 +21,7 @@
             :cancel "Avbryt"
             :change-applicant "Gör till sökanden" ; TODO check
             :change-resources "Ändra resurser"
+            :change-processing-state "Ändra delstat" ; TODO: check
             :clear "Töm"
             :close "Stäng ansökan"
             :close-intro [:div.intro [:p "Notera, om ansökan är stängd kan den inte längre ändras eller skickas."]]
@@ -49,7 +50,6 @@
             :reject "Avslå"
             :remark "Gör anteckning"
             :remove-attachments "Radera bilagor"
-            :remark-public "Visa anteckning för sökande"
             :remove-member "Ta bort deltagare"
             :replace-attachments "Byta ut bilagor"
             :request-decision "Begär beslut"
@@ -69,6 +69,7 @@
             :return "Sänd tillbaka till sökande"
             :review "Granska"
             :revoke "Återkalla rättigheter"
+            :show-to-applying-users "Visa för sökande"
             :todo-applications "Aktiva ansökningar"
             :todo-applications-count "Det finns %:count% aktiva ansökningar."
             :vote "Rösta"}
@@ -149,6 +150,8 @@
                    :organizations "Organisationer"
                    :owners "Ägare"
                    :preview "Förhandsvisning"
+                   :processing-state "Ansökans delstad" ; TODO: check
+                   :processing-states "Ansökans delstater" ; TODO: check
                    :remove "Radera"
                    :reports "Rapporter"
                    :resource "Resurs"
@@ -159,6 +162,7 @@
                    :save "Spara"
                    :short-name "Förkortning"
                    :start "Början"
+                   :technical-value "Tekniskt värde"
                    :title "Namn"
                    :type "Typ"
                    :unarchive "Avarkivera"
@@ -170,7 +174,8 @@
                    :workflow "Arbetsflöde"
                    :workflows "Arbetsflöden"
                    :workflow-anonymize-handling-explanation "Detta arbetsflöde döljer handläggarens personligt identifierbar information (t.ex. namn och e-postaddress) för sökande."
-                   :workflow-disabled-commands-explanation [:p "Detta arbetsflöde avaktiverar funktioner för användarna när villkoren uppfylls. Funktioner, ansökningar statusar och användarroller hittas på " [:a {:href "https://github.com/CSCfi/rems/blob/master/docs/application-permissions.md" :target :_blank} "REMS Github-sidan."]]
+                   :workflow-disabled-commands-explanation "Detta arbetsflöde avaktiverar funktioner för användarna när villkoren uppfylls."
+                   :workflow-processing-states-explanation "Detta arbetsflöde tillåter handläggaren att uppdatera ett mer detaljerat applikationsdelstad." ; TODO: check
                    :workflow-type "Arbetsflödets typ"}
   :applicant-info {:applicant "Sökande"
                    :applicants "Sökande"
@@ -197,11 +202,9 @@
                  :duos {:validation {:missing-duo-codes "DUO koder anges i resurser, men de saknas från ansökan:"}}
                  :empty "Inga ansökningar."
                  :entitlement-end "Upphörandedatum för rättigheterna: %1."
-                 :event {:not-shown-to-applicant "Dold för sökande"
-                         :shown-to-applicant "Synlig för sökande"}
                  :events {:applicant-changed "%1 bytte sökande till %2." ; TODO check
                           :approved "%1 godkände ansökan."
-                          :attachments-redacted "%1 tog bort bilagor. %2"
+                          :attachments-redacted "%1 tog bort bilagor."
                           :closed "%1 stängde ansökan."
                           :copied-from "Den här ansökan är en kopia från en tidigare ansökan."
                           :copied-to "%1 kopierade ansökan som ny ansökan."
@@ -221,6 +224,7 @@
                           :member-joined "%1 blev deltagare."
                           :member-removed "%1 tog bort deltagare %2."
                           :member-uninvited "%1 tog bort deltagare %2."
+                          :processing-state-changed "%:event-actor% bytte ansökans delstad till \"%:state%\"." ; TODO: check
                           :rejected "%1 avslog ansökan."
                           :remarked "%1 gjorde en anteckning."
                           :resources-changed "%1 ändrade sökta resurser. Nya resurser: %2."
@@ -245,10 +249,12 @@
                  :last-activity "Ändrat"
                  :latest-activity "Senaste aktivitet"
                  :my-applications "Mina ansökningar"
+                 :not-shown-to-applying-users "Dold för sökande"
                  :redacted-attachments "Borttagna bilagor"
                  :redacted-attachments-replaced "Nya bilagor byts ut borttagna bilagor."
                  :replacing-attachments "Nya bilagor"
                  :resource "Resurs"
+                 :shown-to-applying-users "Synlig för sökande"
                  :state "Status"
                  :states {:approved "Godkänd"
                           :closed "Stängd"
@@ -303,6 +309,7 @@
              :approve "Godkänn"
              :assign-external-id "Ange externt id"
              :change-applicant "Gör till sökanden"
+             :change-processing-state "Ändra delstad" ; TODO: check
              :change-resources "Ändra resurser"
              :close "Stäng ansökan"
              :copy-as-new "Kopiera som nytt"
@@ -379,15 +386,19 @@
   :create-resource {:licenses-selection "Licenser"
                     :resid "Resurs-id"
                     :resid-placeholder "urn:test:fi:some-uuid"}
-  :create-workflow {:create-new-rule "Ny regel"
+  :create-workflow {:anonymize-handling-explanation "Du kan dölja handläggarens personligt identifierbar information (t.ex. namn och e-postaddress) för sökande."
+                    :create-new-processing-state "Ny delstat" ; TODO: check
+                    :create-new-rule "Ny regel"
                     :decider-workflow "Arbetsflöde för beslutsfattande"
                     :decider-workflow-description "Handläggaren har inte rätt att godkänna eller förkasta ansökan. Endast beslutsfattare kan göra detta."
                     :default-workflow "Standard"
                     :default-workflow-description "Ansökan kontrolleras helt av handläggaren. Handläggaren kan vid behov be andra att granska eller ta beslut om ansökan."
                     :disable-commands "Avaktivera funktioner"
+                    :disable-commands-explanation [:<> "Du kan avaktivera funktioner för användarna när villkoren uppfylls. Funktioner, ansökningar statusar och användarroller hittas på " [:a {:href "https://github.com/CSCfi/rems/blob/master/docs/application-permissions.md" :target :_blank} "REMS Github-sidan."]]
                     :handlers "Handläggare"
                     :master-workflow "Master-arbetsflöde"
                     :master-workflow-description "ENDAST FÖR TESTNING. Sammanslagning av alla möjliga arbetsflöden."
+                    :processing-states-explanation "Handläggaren kan uppdatera applikationens delstad med \"%:command%\" funktion. Ändringar av applikationsdelstad kan användas t.ex. för att skicka automatiska meddelanden till andra system." ; TODO: check
                     :rule "Regel"
                     :title "Arbetsflödets namn"
                     :voting-explanation "Hantering av ansökningar kan innehålla omröstning."}
@@ -474,10 +485,10 @@
   :footer "CSC – IT-centret för forskning"
   :form {:accepted-licenses "Licenserna har accepterats"
          :actions "Funktioner"
-         :add-comment "Kommentar (dold eller synlig för sökande)"
+         :add-comment "Kommentar"
          :add-comments-not-shown-to-applicant "Kommentar, dold för sökande"
          :add-comments-shown-to-applicant "Kommentar, synlig för sökande"
-         :add-remark "Anteckning (dold eller synlig för sökande)"
+         :add-remark "Anteckning"
          :add-row "Lägg till rad"
          :alert-blacklisted-users "Dessa användare har blockerats från någon av de ansökta resurserna"
          :alert-disabled-resources "Resurser som inte längre är tillgängliga:"
@@ -491,7 +502,6 @@
          :checkbox-checked "Ja"
          :checkbox-unchecked "Nej"
          :comment "Kommentar"
-         :comment-public "Visa komment för sökande"
          :copy-as-new "Kopiera som nytt"
          :current-value "Nuvarande"
          :diff-hide "Dölj ändringar"

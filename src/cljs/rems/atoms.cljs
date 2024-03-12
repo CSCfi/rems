@@ -68,6 +68,14 @@
   (let [symbol (or symbol (success-symbol))]
     [:span {:style {:opacity 0}} symbol]))
 
+(defn not-shown-to-applying-users-symbol []
+  [:i.fas.fa-eye-slash {:title (text :t.applications/not-shown-to-applying-users)}
+   [:span.sr-only (text :t.applications/not-shown-to-applying-users)]])
+
+(defn shown-to-applying-users-symbol []
+  [:i.fas.fa-eye {:title (text :t.applications/shown-to-applying-users)}
+   [:span.sr-only (text :t.applications/shown-to-applying-users)]])
+
 (defn textarea [attrs]
   [autosize/textarea (merge {:min-rows 5}
                             (update attrs :class #(str/trim (str "form-control " %))))])
@@ -312,27 +320,50 @@
 
 (defn action-button
   "Takes an `action` description and creates a button that triggers it."
-  [action]
-  [link {:id (:id action)
-         :label (:label action)
-         :href (:url action)
-         :on-click (:on-click action)
-         :class (str "btn btn-secondary " (:class action))}])
+  [{:keys [class id label on-click url]}]
+  [link {:id id
+         :label label
+         :href url
+         :on-click on-click
+         :class (str/trim (str "btn btn-secondary " class))}])
 
 (defn action-link
   "Takes an `action` description and creates a link that triggers it."
+  [{:keys [class id label on-click url]}]
+  [link {:id id
+         :label label
+         :href url
+         :on-click on-click
+         :class (str/trim (str "btn btn-link " class))}])
+
+(defn rate-limited-action-button
+  "Takes an `action` description and creates a button that triggers it.
+   Click events are rate limited."
+  [{:keys [class disabled id label on-click]}]
+  [rate-limited-button {:class (str/trim (str "btn-secondary " class))
+                        :disabled disabled
+                        :id id
+                        :on-click on-click
+                        :text label ; XXX: button and rate-limited-button could use label instead
+                        }])
+
+(defn cancel-action
+  "Standard cancel action helper, to use with e.g. `action-button` or `action-link`."
   [action]
-  [link {:id (:id action)
-         :label (:label action)
-         :href (:url action)
-         :on-click (:on-click action)
-         :class (str/trim (str "btn btn-link " (:class action)))}])
+  (assoc action
+         :label [text :t.administration/cancel]))
 
 (defn edit-action
-  "Standard edit action helper."
+  "Standard edit action helper, to use with e.g. `action-button` or `action-link`."
   [action]
   (assoc action
          :label [text :t.administration/edit]))
+
+(defn save-action
+  "Standard save action helper, to use with e.g. `action-button` or `action-link`."
+  [action]
+  (assoc action
+         :label [text :t.administration/save]))
 
 (defn commands
   "Creates a standard commands group with left alignment."
@@ -445,6 +476,18 @@
                 [action-link example-command])
        (component-info action-button)
        (example "example command as button" [action-button example-command])
+       (component-info rate-limited-action-button)
+       (example "example command as rate-limited button"
+
+                (defn- stateful-context [[c cmd]]
+                  (r/with-let [n (r/atom 0)
+                               on-click #(r/rswap! n inc)]
+                    [:<>
+                     [c (assoc cmd :on-click on-click)]
+                     [:span.ml-2 "Count: " @n]]))
+
+                [stateful-context
+                 [rate-limited-action-button example-command]])
 
        (component-info commands)
        (example "empty commands" [commands])

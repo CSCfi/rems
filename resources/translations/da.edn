@@ -21,6 +21,7 @@
             :cancel "Afbryd"
             :change-applicant "Gør til ansøger"
             :change-resources "Rediger ressourcer"
+            :change-processing-state nil
             :clear "Ryd"
             :close "Luk ansøgning"
             :close-intro [:div.intro [:p "NB: Hvis ansøgningen er lukket, kan den ikke ændres eller indsendes længere."]]
@@ -50,7 +51,6 @@
             :redact-attachments "Fjern bilag"
             :reject "Afvis"
             :remark "Bemærkning"
-            :remark-public "Vis til ansøger"
             :remove-attachments "Fjern bilag"
             :remove-member "Fjern medlem"
             :replace-attachments "Udskift bilag"
@@ -71,6 +71,7 @@
             :return "Send tilbage til ansøger"
             :review "Gennemse"
             :revoke "Tilbagekald rettigheder"
+            :show-to-applying-users "Vis til ansøgere"
             :todo-applications "Aktive ansøgninger"
             :todo-applications-count "Der er %:count% aktive ansøgninger."
             :vote "Stem"}
@@ -152,6 +153,8 @@
                    :organizations "Organisationer"
                    :owners "Ejere"
                    :preview "Forhåndsvisning"
+                   :processing-state nil
+                   :processing-states nil
                    :remove "Slet"
                    :reports "Rapporter"
                    :resource "Ressource"
@@ -163,6 +166,7 @@
                    :save "Gem"
                    :short-name "Forkortelse"
                    :start "Begyndelse"
+                   :technical-value nil
                    :title "Navn"
                    :type "Type"
                    :unarchive "Dearkiver"
@@ -174,7 +178,8 @@
                    :workflow "Arbejdsgang"
                    :workflows "Arbejdsgange"
                    :workflow-anonymize-handling-explanation "Denne arbejdsgang skjuler brugers personhenførbare information (f.eks. navn og e-mail) for ansøgere."
-                   :workflow-disabled-commands-explanation [:p "Denne arbejdsgang deaktiverer funktioner for brugere når vilkår er opfyldt. Funktioner, ansøgningsstatus og brugerroller kan findes på " [:a {:href "https://github.com/CSCfi/rems/blob/master/docs/application-permissions.md" :target :_blank} "REMS Github-side."]]
+                   :workflow-disabled-commands-explanation "Denne arbejdsgang deaktiverer funktioner for brugere når vilkår er opfyldt."
+                   :workflow-processing-states-explanation nil
                    :workflow-type "Arbejdsgangstype"}
   :applicant-info {:applicant "Ansøger"
                    :applicants "Ansøgere"
@@ -204,13 +209,11 @@
                  :empty "Ingen ansøgninger."
                  ;; %1 - date
                  :entitlement-end "Udløbsdato for rettighederne: %1."
-                 :event {:not-shown-to-applicant "Skjult for ansøgere"
-                         :shown-to-applicant "Synlig for ansøgere"}
                  ;; Format parameters for all events:
                  ;; %1 - name of event actor
                  :events {:applicant-changed "%1 ændrede ansøger til %2."
                           :approved "%1 godkendte ansøgningen."
-                          :attachments-redacted "%1 redacted attachments. %2"
+                          :attachments-redacted nil
                           :closed "%1 lukkede ansøgningen."
                           :copied-from "Denne ansøgning er en kopi af en tidligere ansøgning."
                           :copied-to "%1 kopierede ansøgningen til en ny ansøgning."
@@ -234,6 +237,7 @@
                           :member-joined "%1 blev deltager."
                           :member-removed "%1 fjernede %2 fra ansøgningen."
                           :member-uninvited "%1 fjernede %2 fra ansøgningen."
+                          :processing-state-changed nil
                           :rejected "%1 afviste ansøgningen."
                           :remarked "%1 tilføjede en bemærkning."
                           ;; %2 - comma-separated list of catalogue item anems
@@ -261,10 +265,12 @@
                  :last-activity "Ændret"
                  :latest-activity "Seneste aktivitet"
                  :my-applications "Mine ansøgninger"
+                 :not-shown-to-applying-users "Skjult for ansøgere"
                  :redacted-attachments "Erstattede bilag"
                  :redacted-attachments-replaced "Nye bilag erstattede de gamle bilag."
                  :replacing-attachments "Nye bilag"
                  :resource "Ressource"
+                 :shown-to-applying-users "Synlig for ansøgere"
                  :state "Status"
                  :states {:approved "Godkendt"
                           :closed "Lukket"
@@ -324,6 +330,7 @@
              :approve "Godkend"
              :assign-external-id "Tildel ekstern id"
              :change-applicant "Gør til ansøger"
+             :change-processing-state nil
              :change-resources "Rediger ressourcer"
              :close "Luk ansøgning"
              :copy-as-new "Kopier som ny ansøgning"
@@ -404,15 +411,19 @@
   :create-resource {:licenses-selection "Vilkår"
                     :resid "Ressource id"
                     :resid-placeholder "urn:test:fi:some-uuid"}
-  :create-workflow {:create-new-rule "Ny regel"
+  :create-workflow {:anonymize-handling-explanation nil
+                    :create-new-processing-state nil
+                    :create-new-rule "Ny regel"
                     :decider-workflow "Arbejdsgang for beslutningstager"
                     :decider-workflow-description "Behandler kan ikke godkende eller afslå ansøgningen, kun beslutningstagere kan gøre dette."
                     :default-workflow "Standard arbejdsgang"
                     :default-workflow-description "Behandler er i fuld kontrol over ansøgningsprocessen, og kan bede om gennemsyn og afgørelser fra andre efter behov."
                     :disable-commands "Deaktiver funktioner"
+                    :disable-commands-explanation nil
                     :handlers "Behandlere"
                     :master-workflow "Master-workflow"
                     :master-workflow-description "KUN TIL TEST. Foreningsmængde af alle arbejdsgange."
+                    :processing-states-explanation nil
                     :rule "Regel"
                     :title "Arbejdsgangens navn"
                     :voting-explanation "Du kan påkræve en afstemning om ansøgningen."}
@@ -520,10 +531,10 @@
   :footer "CSC – IT Center for Science"
   :form {:accepted-licenses "Brugsvilkår blev accepteret"
          :actions "Funktioner"
-         :add-comment "Tilføj kommentar (synlig eller skjult for ansøger)"
+         :add-comment "Tilføj kommentar"
          :add-comments-not-shown-to-applicant "Tilføj kommentar (vises ikke for ansøger)"
          :add-comments-shown-to-applicant "Tilføj kommentar (vises for ansøger)"
-         :add-remark "Tilføj anmærkning (synlig eller skjult for ansøger)"
+         :add-remark "Tilføj anmærkning"
          :add-row "Tilføj række"
          :alert-blacklisted-users "Disse deltagere i ansøgningen er blokerede fra nogle af de anvendte ressourcer:"
          :alert-disabled-resources "Ansøgningen indeholder contains ressourcer der ikke længere er tilgængelige:"
@@ -537,7 +548,6 @@
          :checkbox-checked "Ja"
          :checkbox-unchecked "Nej"
          :comment "Kommentar"
-         :comment-public "Vis kommentar til ansøger"
          :copy-as-new "Kopier som en ny ansøgning"
          :current-value "Nuværende"
          :diff-hide "Skjul ændringer"

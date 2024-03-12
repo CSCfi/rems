@@ -126,3 +126,7 @@
 
 (s/defschema WorkflowVoting
   {:type (s/maybe (s/enum :handlers-vote :reviewers-vote))})
+
+(s/defschema ProcessingState
+  {:processing-state/value s/Str
+   (s/optional-key :processing-state/title) LocalizedString})

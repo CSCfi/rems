@@ -288,14 +288,30 @@
                                                       :type :workflow/default
                                                       :handlers handlers
                                                       :licenses [link text]
-                                                      :voting {:type :handlers-vote}})
+                                                      :voting {:type :handlers-vote}
+                                                      :processing-states [{:processing-state/title {:en "In voting"
+                                                                                                    :fi "Äänestyksessä"
+                                                                                                    :sv "I omröstningen"}
+                                                                           :processing-state/value "in voting"}
+                                                                          {:processing-state/title {:en "Preliminarily approved"
+                                                                                                    :fi "Alustavasti hyväksytty"
+                                                                                                    :sv "Preliminärt godkänd"}
+                                                                           :processing-state/value "preliminarily approved"}]})
         reviewers-vote (test-helpers/create-workflow! {:actor owner
                                                        :organization {:organization/id "nbn"}
                                                        :title "Reviewers vote workflow"
                                                        :type :workflow/default
                                                        :handlers handlers
                                                        :licenses [link text]
-                                                       :voting {:type :reviewers-vote}})
+                                                       :voting {:type :reviewers-vote}
+                                                       :processing-states [{:processing-state/title {:en "In voting"
+                                                                                                     :fi "Äänestyksessä"
+                                                                                                     :sv "I omröstningen"}
+                                                                            :processing-state/value "in voting"}
+                                                                           {:processing-state/title {:en "Preliminarily approved"
+                                                                                                     :fi "Alustavasti hyväksytty"
+                                                                                                     :sv "Preliminärt godkänd"}
+                                                                            :processing-state/value "preliminarily approved"}]})
         master (test-helpers/create-workflow! {:actor owner
                                                :organization {:organization/id "nbn"}
                                                :title "Master workflow"
@@ -779,7 +795,8 @@
                                                 :form/external-title {:en "Form"
                                                                       :fi "Lomake"
                                                                       :sv "Blankett"}
-                                                :form/fields [(merge text-field {:field/max-length 100
+                                                :form/fields [description-field
+                                                              (merge text-field {:field/max-length 100
                                                                                  :field/privacy :private})]})
 
         form-private-nbn (test-helpers/create-form! {:actor owner

@@ -2,7 +2,7 @@
   (:require [re-frame.core :as rf]
             [rems.administration.administration :as administration]
             [rems.administration.status-flags :as status-flags]
-            [rems.administration.workflow :as workflow]
+            [rems.administration.workflow :refer [edit-workflow-action]]
             [rems.atoms :as atoms :refer [readonly-checkbox document-title]]
             [rems.flash-message :as flash-message]
             [rems.common.roles :as roles]
@@ -74,7 +74,7 @@
    {:label (text :t.actions/modify)}
    (when (roles/can-modify-organization-item? workflow)
      (list
-      (workflow/edit-action (:id workflow))
+      (edit-workflow-action (:id workflow))
       (status-flags/enabled-toggle-action {:on-change #(rf/dispatch [::set-workflow-enabled %1 %2 [::fetch-workflows]])} workflow)
       (status-flags/archived-toggle-action {:on-change #(rf/dispatch [::set-workflow-archived %1 %2 [::fetch-workflows]])} workflow)))])
 

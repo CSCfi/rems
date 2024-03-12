@@ -8,7 +8,7 @@
             [rems.common.util :refer [getx build-index index-by]]
             [rems.config :refer [env]]
             [rems.context :as context]
-            [rems.text :refer [localized localize-decision localize-event localize-attachment localize-state localize-time text text-format with-language]])
+            [rems.text :refer [localized localize-decision localize-event localize-attachment localize-state localize-processing-states localize-time text text-format with-language]])
   (:import [java.io ByteArrayOutputStream]))
 
 (def heading-style {:spacing-before 20})
@@ -16,22 +16,24 @@
 (def field-style {:spacing-before 8})
 
 (defn- render-header [application]
-  (let [state (getx application :application/state)]
-    (list
-     [:heading heading-style
-      (str (text :t.applications/application)
-           " "
-           (get application :application/external-id
-                (getx application :application/id))
-           (when-let [description (get application :application/description)]
-             (str ": " description)))]
-     [:paragraph field-style
-      (text :t.pdf/generated)
-      " "
-      (localize-time (time/now))]
-     [:paragraph
-      (text :t.applications/state)
-      (when state [:phrase ": " (localize-state state)])])))
+  (list
+   [:heading heading-style
+    (str (text :t.applications/application)
+         " "
+         (get application :application/external-id
+              (getx application :application/id))
+         (when-let [description (get application :application/description)]
+           (str ": " description)))]
+   [:paragraph field-style
+    (text :t.pdf/generated)
+    " "
+    (localize-time (time/now))]
+   [:paragraph
+    (let [state (localize-state (getx application :application/state))
+          processing-states (localize-processing-states application)]
+      (text-format :t.label/default
+                   (text :t.applications/state)
+                   (str/join ", " (remove str/blank? [state processing-states]))))]))
 
 (defn- render-user [application user label]
   (let [userid (:userid user)

@@ -270,6 +270,13 @@
             [:application/votes (:event/actor event)]
             (:vote/value event)))
 
+(defmethod application-base-view :application.event/processing-state-changed
+  [application event]
+  (let [state (:application/processing-state event)]
+    (if (true? (:event/public event))
+      (assoc-in application [:application/processing-state :public] state)
+      (assoc-in application [:application/processing-state :private] state))))
+
 (deftest test-event-type-specific-application-view
   (testing "supports all event types"
     (is (= (set (keys events/event-schemas))
@@ -296,6 +303,7 @@
     {:permission :application.command/add-member}
     {:permission :application.command/assign-external-id}
     {:permission :application.command/change-applicant}
+    {:permission :application.command/change-processing-state}
     {:permission :application.command/change-resources}
     {:permission :application.command/close}
     {:permission :application.command/copy-as-new}
@@ -331,6 +339,7 @@
     {:permission :application.command/add-member}
     {:permission :application.command/assign-external-id}
     {:permission :application.command/change-applicant}
+    {:permission :application.command/change-processing-state}
     {:permission :application.command/change-resources}
     {:permission :application.command/close}
     {:permission :application.command/copy-as-new}
@@ -595,6 +604,7 @@
                         :application.event/member-joined
                         :application.event/member-removed
                         :application.event/member-uninvited
+                        :application.event/processing-state-changed
                         :application.event/rejected
                         :application.event/remarked
                         :application.event/resources-changed
@@ -608,17 +618,20 @@
                            (set/union public-events sensitive-events)))
         "seems like a new event has been added; is public or sensitive?")))
 
-(defn get-event-visibility [event]
-  (let [event-public (:event/public event)
-        event-type (:event/type event)]
-    (case event-public
-      true :visibility/public
-      false :visibility/handling-users
-      (cond
-        (contains? sensitive-events event-type)
-        :visibility/handling-users
+(defn- get-event-visibility [{event-public :event/public
+                              event-type :event/type}]
+  (cond
+    (true? event-public)
+    :visibility/public
 
-        :else :visibility/public))))
+    (false? event-public)
+    :visibility/handling-users
+
+    (contains? sensitive-events event-type)
+    :visibility/handling-users
+
+    :else
+    :visibility/public))
 
 (defn enrich-event [event get-user get-catalogue-item]
   (let [event-type (:event/type event)]
@@ -824,6 +837,42 @@
     (-> application
         (assoc-some-in [:application/workflow :workflow/anonymize-handling] anonymize-handling))))
 
+(defn- join-processing-state [x states]
+  (let [unknown-value {:processing-state/title {:en "Unknown value"}}
+        find-state-by-value #(let [value (:processing-state/value %)]
+                               (find-first (comp #{value} :processing-state/value) states))]
+    (cond
+      (contains? x :application/processing-state)
+      (update x :application/processing-state #(or (find-state-by-value %)
+                                                   (merge % unknown-value)))
+
+      (contains? x :processing-state/value)
+      (or (find-state-by-value x)
+          (merge x unknown-value))
+
+      :else x)))
+
+(defn- enrich-processing-states [application get-config get-workflow]
+  (let [workflow-id (get-in application [:application/workflow :workflow/id])
+        workflow (get-workflow workflow-id)
+        states (get-in workflow [:workflow :processing-states])]
+
+    (if (or (not (:enable-processing-states (get-config)))
+            (empty? states))
+      (permissions/blacklist application (permissions/compile-rules [{:permission :application.command/change-processing-state}]))
+      (-> application
+          (update-existing-in [:application/processing-state :public] join-processing-state states)
+          (update-existing-in [:application/processing-state :private] join-processing-state states)
+          (assoc-in [:application/workflow :workflow/processing-states] states)
+          ;; enrich-event is used elsewhere and does not have application, so this is just easier for now
+          (update :application/events (partial mapv #(join-processing-state % states)))))))
+
+(defn- enrich-invited-members [application]
+  (let [invitations (vals (:application/invitation-tokens application))
+        members (keep :application/member invitations)]
+    (-> application
+        (assoc :application/invited-members (set members)))))
+
 (defn enrich-with-injections
   [application {:keys [blacklisted?
                        get-form-template
@@ -856,7 +905,9 @@
       (enrich-super-users get-users-with-role)
       (enrich-workflow-disable-commands get-config get-workflow)
       (enrich-workflow-voting get-config get-workflow)
-      (enrich-attachments get-user)))
+      (enrich-attachments get-user)
+      (enrich-processing-states get-config get-workflow)
+      enrich-invited-members))
 
 (defn build-application-view [events injections]
   (-> (reduce application-view nil events)
@@ -938,20 +989,11 @@
       apply-workflow-anonymization
       (dissoc-in [:application/workflow :workflow.dynamic/handlers]
                  [:application/workflow :workflow/voting]
-                 [:application/workflow :workflow/anonymize-handling])
+                 [:application/workflow :workflow/anonymize-handling]
+                 [:application/workflow :workflow/processing-states]
+                 [:application/processing-state :private])
       (dissoc :application/votes)
       hide-extra-user-attributes))
-
-(defn- hide-invitation-tokens [application]
-  (-> application
-      ;; the keys of the invitation-tokens map are secret
-      (dissoc :application/invitation-tokens)
-      (assoc :application/invited-members (->> application
-                                               :application/invitation-tokens
-                                               vals
-                                               (keep :application/member)
-                                               set))
-      (update :application/events (partial mapv #(dissoc % :invitation/token)))))
 
 (defn- may-see-private-answers? [roles]
   (some #{:applicant :member :decider :past-decider :handler :reporter}
@@ -1007,10 +1049,10 @@
 
 (defn hide-non-public-information [application]
   (-> application
-      hide-invitation-tokens
-      ;; these are not used by the UI, so no need to expose them (especially the user IDs)
       (dissoc ::latest-review-request-by-user ::latest-decision-request-by-user)
       (dissoc :application/past-members)
+      (dissoc :application/invitation-tokens) ; the keys of the invitation-tokens map are secret
+      (update :application/events (partial mapv #(dissoc % :invitation/token)))
       (update :application/attachments (partial mapv #(dissoc % :attachment/redact-roles)))))
 
 (defn- personalize-todo [application userid]
@@ -1038,10 +1080,12 @@
         permissions (permissions/user-permissions application userid)
         see-application? (see-application? application userid)
         see-everything? (contains? permissions :see-everything)]
+
     (when see-application?
       (-> (if see-everything?
             application
             (hide-sensitive-information application))
+
           (personalize-todo userid)
           (apply-privacy-by-roles roles)
           (hide-non-accessible-attachments)
@@ -1049,4 +1093,5 @@
           (assoc :application/permissions permissions)
           (assoc :application/roles roles)
           (hide-non-public-information)
+
           (permissions/cleanup)))))

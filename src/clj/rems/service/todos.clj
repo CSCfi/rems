@@ -57,7 +57,8 @@
           :application.command/vote
           :application.command/remark
           :application.command/send-expiration-notifications
-          :application.command/redact-attachments}
+          :application.command/redact-attachments
+          :application.command/change-processing-state}
         all-commands (set (keys commands/command-schemas))]
 
     ;; This test is to make sure that as new commands are added,

@@ -21,6 +21,7 @@
             :cancel "Cancel"
             :change-applicant "Make applicant"
             :change-resources "Change resources"
+            :change-processing-state "Change state"
             :clear "Clear"
             :close "Close application"
             :close-intro [:div.intro [:p "Note that if the application is closed, it cannot be modified or submitted anymore."]]
@@ -50,7 +51,6 @@
             :redact-attachments "Redact attachments"
             :reject "Reject"
             :remark "Remark"
-            :remark-public "Show to applicant"
             :remove-attachments "Remove attachments"
             :remove-member "Remove member"
             :replace-attachments "Replace attachments"
@@ -71,6 +71,7 @@
             :return "Return to applicant"
             :review "Review"
             :revoke "Revoke entitlement"
+            :show-to-applying-users "Show to applicants"
             :todo-applications "Open applications"
             :todo-applications-count "There are %:count% open applications."
             :vote "Vote"}
@@ -152,6 +153,8 @@
                    :organizations "Organizations"
                    :owners "Owners"
                    :preview "Preview"
+                   :processing-state "Processing state"
+                   :processing-states "Processing states"
                    :remove "Remove"
                    :reports "Reports"
                    :resource "Resource"
@@ -163,6 +166,7 @@
                    :save "Save"
                    :short-name "Short name"
                    :start "Start"
+                   :technical-value "Technical value"
                    :title "Title"
                    :type "Type"
                    :unarchive "Unarchive"
@@ -174,7 +178,8 @@
                    :workflow "Workflow"
                    :workflows "Workflows"
                    :workflow-anonymize-handling-explanation "This workflow hides handling users personally identifiable information (e.g. name and email) from applying users."
-                   :workflow-disabled-commands-explanation [:p "This workflow disables actions for users when conditions apply. Actions, application states and user roles can be found on " [:a {:href "https://github.com/CSCfi/rems/blob/master/docs/application-permissions.md" :target :_blank} "REMS Github page."]]
+                   :workflow-disabled-commands-explanation "This workflow disables actions for users when conditions apply."
+                   :workflow-processing-states-explanation "This workflow allows handler to set and update application processing state."
                    :workflow-type "Workflow type"}
   :applicant-info {:applicant "Applicant"
                    :applicants "Applicants"
@@ -204,51 +209,75 @@
                  :empty "No applications."
                  ;; %1 - date
                  :entitlement-end "Access rights end %1."
-                 :event {:not-shown-to-applicant "Not shown to applicant"
-                         :shown-to-applicant "Shown to applicant"}
+
                  ;; Format parameters for all events:
-                 ;; %1 - name of event actor
-                 :events {:applicant-changed "%1 changed the applicant to %2."
-                          :approved "%1 approved the application."
-                          :attachments-redacted "%1 redacted attachments. %2"
-                          :closed "%1 closed the application."
+                 ;; %1 - %:event-actor% - name of event actor
+                 ;;
+                 ;; Vector parameters (%1, %2, ...) in extra translations are supported for backwards compatibility.
+                 ;; They cannot be mixed with named format parameters, and have fixed positions.
+                 :events {;; Extra parameters for applicant-changed:
+                          ;; %2 - %:new-applicant% - Name of the new applicant
+                          :applicant-changed "%:event-actor% changed the applicant to %:new-applicant%."
+                          :approved "%:event-actor% approved the application."
+                          :attachments-redacted "%:event-actor% redacted attachments."
+                          :closed "%:event-actor% closed the application."
                           :copied-from "This application is a copy of an old application."
-                          :copied-to "%1 copied the application to a new application."
-                          :created "%1 created application %2."
-                          :decided "%1 filed a decision for the application."
-                          ;; %2 - name & email of decider
-                          :decider-invited "%1 invited %2 to decide."
-                          :decider-joined "%1 accepted the invitation to decide."
-                          ;; %2 - name of decider
-                          :decision-requested "%1 requested a decision from %2."
-                          :deleted "%1 deleted the draft."
-                          :draft-saved "%1 updated the application."
-                          ;; %2 - external id
-                          :external-id-assigned "%1 assigned an external id %2."
-                          :expiration-notifications-sent "%1 sent expiration notification email."
-                          :licenses-accepted "%1 accepted the terms of use."
-                          :licenses-added "%1 added terms of use."
-                          ;; %2 - member name
-                          :member-added "%1 added %2 to the application."
-                          :member-invited "%1 invited %2 to the application."
-                          :member-joined "%1 joined to the application."
-                          :member-removed "%1 removed %2 from the application."
-                          :member-uninvited "%1 removed %2 from the application."
-                          :rejected "%1 rejected the application."
-                          :remarked "%1 added a remark."
-                          ;; %2 - comma-separated list of catalogue item anems
-                          :resources-changed "%1 changed the resources. New resources: %2."
-                          :returned "%1 requested changes to the application."
-                          ;; %2 - name of reviewer
-                          :review-requested "%1 requested a review from %2."
-                          :reviewed "%1 reviewed the application."
-                          ;; %2 - name & email of reviewer
-                          :reviewer-invited "%1 invited %2 to review the application."
-                          :reviewer-joined "%1 accepted the invitation to review."
-                          :revoked "%1 revoked the entitlement."
-                          :submitted "%1 submitted the application for review."
+                          :copied-to "%:event-actor% copied the application to a new application."
+                          ;; Extra parameters for created:
+                          ;; %2 - %:application-external-id% - External id of the new application
+                          :created "%:event-actor% created application %:application-external-id%."
+                          :decided "%:event-actor% filed a decision for the application."
+                          ;; Extra parameters for decider-invited:
+                          ;; %2 - %:invited-user% - Name & email of decider
+                          :decider-invited "%:event-actor% invited %:invited-user% to decide."
+                          :decider-joined "%:event-actor% accepted the invitation to decide."
+                          ;; Extra parameters for decision-requested:
+                          ;; %2 - %:requested-users% - Comma-separated list of requested deciders names
+                          :decision-requested "%:event-actor% requested a decision from %:requested-users%."
+                          :deleted "%:event-actor% deleted the draft."
+                          :draft-saved "%:event-actor% updated the application."
+                          ;; Extra parameters for external-id-assigned:
+                          ;; %2 - %:application-external-id% - External id of the application
+                          :external-id-assigned "%:event-actor% assigned an external id %:application-external-id%."
+                          :expiration-notifications-sent "%:event-actor% sent expiration notification email."
+                          :licenses-accepted "%:event-actor% accepted the terms of use."
+                          :licenses-added "%:event-actor% added terms of use."
+                          ;; Extra parameters for member-added:
+                          ;; %2 - %:added-user% - Name of the added member
+                          :member-added "%:event-actor% added %:added-user% to the application."
+                          ;; Extra parameters for member-invited:
+                          ;; %2 - %:invited-user% - Name of the invited member
+                          :member-invited "%:event-actor% invited %:invited-user% to the application."
+                          :member-joined "%:event-actor% joined to the application."
+                          ;; Extra parameters for member-removed:
+                          ;; %2 - %:removed-user% - Name of the removed member
+                          :member-removed "%:event-actor% removed %:removed-user% from the application."
+                          ;; Extra parameters for member-uninvited:
+                          ;; %2 - %:uninvited-user% - Name of the uninvited member
+                          :member-uninvited "%:event-actor% removed %:uninvited-user% from the application."
+                          ;; Extra parameters for processing-state-changed:
+                          ;; %2 - %:state% - Localized name of the new state
+                          :processing-state-changed "%:event-actor% changed application's processing state to \"%:state%\"."
+                          :rejected "%:event-actor% rejected the application."
+                          :remarked "%:event-actor% added a remark."
+                          ;; Extra parameters for resources-changed:
+                          ;; %2 - %:catalogue-items% - Comma-separated list of catalogue item anems
+                          :resources-changed "%:event-actor% changed the resources. New resources: %:catalogue-items%."
+                          :returned "%:event-actor% requested changes to the application."
+                          ;; Extra parameters for review-requested:
+                          ;; %2 - %:requested-users% - Comma-separated list of requested reviewers names
+                          :review-requested "%:event-actor% requested a review from %:requested-users%."
+                          :reviewed "%:event-actor% reviewed the application."
+                          ;; Extra parameters for reviewer-invited:
+                          ;; %2 - %:invited-user% - Name & email of the invited reviewer
+                          :reviewer-invited "%:event-actor% invited %:invited-user% to review the application."
+                          :reviewer-joined "%:event-actor% accepted the invitation to review."
+                          :revoked "%:event-actor% revoked the entitlement."
+                          :submitted "%:event-actor% submitted the application for review."
                           :unknown "Unknown"
-                          :voted "%1 voted %2."}
+                          ;; Extra parameters for voted:
+                          ;; %2 - %:vote% - Localized value of the vote
+                          :voted "%:event-actor% voted %:vote%."}
                  :export {:applicant "Applicant"
                           :external-id "External id"
                           :first-submitted "Submitted"
@@ -261,10 +290,12 @@
                  :last-activity "Last activity"
                  :latest-activity "Latest activity"
                  :my-applications "My Applications"
+                 :not-shown-to-applying-users "Not shown to applicants"
                  :redacted-attachments "Redacted attachments"
                  :redacted-attachments-replaced "New attachments replace the redacted attachments."
                  :replacing-attachments "New attachments"
                  :resource "Resource"
+                 :shown-to-applying-users "Shown to applicants"
                  :state "State"
                  :states {:approved "Approved"
                           :closed "Closed"
@@ -325,6 +356,7 @@
              :assign-external-id "Assign external id"
              :change-applicant "Make applicant"
              :change-resources "Change resources"
+             :change-processing-state "Change state"
              :close "Close application"
              :copy-as-new "Copy as a new application"
              ;; :create
@@ -404,15 +436,19 @@
   :create-resource {:licenses-selection "Licenses"
                     :resid "Resource identifier"
                     :resid-placeholder "urn:test:fi:some-uuid"}
-  :create-workflow {:create-new-rule "New rule"
+  :create-workflow {:anonymize-handling-explanation "You can hide handling users personally identifiable information (e.g. name and email) from applying users."
+                    :create-new-processing-state "New processing state"
+                    :create-new-rule "New rule"
                     :decider-workflow "Decider workflow"
                     :decider-workflow-description "The handler does not have the authority to approve or reject, but only a separate decider has."
                     :default-workflow "Default workflow"
                     :default-workflow-description "The handler is in full control of the application process. The handler may request reviews and decisions from others as needed."
                     :disable-commands "Disable actions"
+                    :disable-commands-explanation [:<> "You can disable actions for users when conditions apply. Actions, application states and user roles can be found on " [:a {:href "https://github.com/CSCfi/rems/blob/master/docs/application-permissions.md" :target :_blank} "REMS Github page."]]
                     :handlers "Handlers"
                     :master-workflow "Master workflow"
                     :master-workflow-description "ONLY FOR TESTING. Union of all possible workflows."
+                    :processing-states-explanation "Handlers can set and update application processing state using \"%:command%\" action. Changes to processing state can be used e.g. to send automatic notifications to other systems."
                     :rule "Rule"
                     :title "Title"
                     :voting-explanation "You can require a vote to decide on the application."}
@@ -550,10 +586,10 @@
   :footer "CSC – IT Center for Science"
   :form {:accepted-licenses "Accepted terms of use"
          :actions "Actions"
-         :add-comment "Add comment (shown or hidden to applicant)"
+         :add-comment "Add comment"
          :add-comments-not-shown-to-applicant "Add comment (not shown to applicant)"
          :add-comments-shown-to-applicant "Add comment (shown to applicant)"
-         :add-remark "Add remark (shown or hidden to applicant)"
+         :add-remark "Add remark"
          :add-row "Add row"
          :alert-blacklisted-users "These members of the application are blacklisted for some of the applied resources:"
          :alert-disabled-resources "Application contains disabled catalogue items:"
@@ -567,7 +603,6 @@
          :checkbox-checked "Yes"
          :checkbox-unchecked "No"
          :comment "Comment"
-         :comment-public "Show comment to applicant"
          :copy-as-new "Copy as a new application"
          :current-value "Current"
          :diff-hide "Hide changes"

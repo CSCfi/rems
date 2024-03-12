@@ -1,5 +1,6 @@
 (ns rems.administration.workflow
-  (:require [clojure.string :as str]
+  (:require [better-cond.core :as b]
+            [clojure.string :as str]
             [medley.core :refer [indexed]]
             [re-frame.core :as rf]
             [rems.administration.administration :as administration]
@@ -7,12 +8,11 @@
             [rems.administration.status-flags :as status-flags]
             [rems.atoms :as atoms :refer [document-title enrich-user readonly-checkbox]]
             [rems.collapsible :as collapsible]
-            [rems.common.util :refer [andstr]]
             [rems.flash-message :as flash-message]
             [rems.common.roles :as roles]
             [rems.spinner :as spinner]
             [rems.table :as table]
-            [rems.text :refer [localized localize-command localize-role localize-state text]]
+            [rems.text :refer [localized localize-command localize-role localize-state text text-format]]
             [rems.util :refer [fetch]]))
 
 (rf/reg-event-fx
@@ -21,12 +21,12 @@
    {:db (assoc db ::loading? true)
     ::fetch-workflow [workflow-id]}))
 
-(defn- fetch-workflow [workflow-id]
-  (fetch (str "/api/workflows/" workflow-id)
-         {:handler #(rf/dispatch [::fetch-workflow-result %])
-          :error-handler (flash-message/default-error-handler :top "Fetch workflow")}))
-
-(rf/reg-fx ::fetch-workflow (fn [[workflow-id]] (fetch-workflow workflow-id)))
+(rf/reg-fx
+ ::fetch-workflow
+ (fn [[workflow-id]]
+   (fetch (str "/api/workflows/" workflow-id)
+          {:handler #(rf/dispatch [::fetch-workflow-result %])
+           :error-handler (flash-message/default-error-handler :top "Fetch workflow")})))
 
 (rf/reg-event-db
  ::fetch-workflow-result
@@ -38,56 +38,36 @@
 (rf/reg-sub ::workflow (fn [db _] (::workflow db)))
 (rf/reg-sub ::loading? (fn [db _] (::loading? db)))
 
-(defn edit-action [workflow-id]
-  (atoms/edit-action
-   {:class "edit-workflow"
-    :url (str "/administration/workflows/edit/" workflow-id)}))
-
-(defn edit-button [workflow-id]
-  [atoms/action-button (edit-action workflow-id)])
-
-(def workflow-types
-  {:workflow/default :t.create-workflow/default-workflow
-   :workflow/decider :t.create-workflow/decider-workflow
-   :workflow/master :t.create-workflow/master-workflow})
-
-(defn- render-command [command]
-  [:div
-   (localize-command command)
-   [:code.color-pre " (" (name command) ")"]])
-
-(defn- render-user-roles [roles]
-  (for [role roles]
-    [:div
-     (if (some #{role} [:expirer :reporter])
-       (text :t.roles/technical-role)
-       (localize-role role))
-     [:code.color-pre " (" (name role) ")"]]))
-
-(defn- render-application-states [states]
-  (for [state states]
-    [:div
-     (localize-state state)
-     [:code.color-pre " (" (name state) ")"]]))
-
 (rf/reg-sub ::disable-commands
             :<- [::workflow]
-            #(get-in % [:workflow :disable-commands]))
+            (fn [workflow _]
+              (get-in workflow [:workflow :disable-commands])))
+
 (rf/reg-sub ::disable-commands-table-rows
             :<- [::disable-commands]
-            :<- [:language]
-            (fn [[disable-commands _language]]
-              (for [[rule-index rule] (indexed disable-commands)
-                    :let [command (:command rule)
-                          states (sort (:when/state rule))
-                          roles (sort (:when/role rule))]]
-                {:key (str "disable-command-" rule-index)
-                 :command {:display-value (render-command command)}
+            :<- [:language] ; re-renders when language changes
+            (fn [[disable-commands _language] _]
+              (for [[index value] (indexed disable-commands)
+                    :let [command (:command value)
+                          states (sort (:when/state value))
+                          roles (sort (:when/role value))]]
+                {:key (str "disable-command-" index)
+                 :command {:display-value [:div
+                                           (localize-command command)
+                                           [:code.color-pre " (" (name command) ")"]]}
                  :application-state {:display-value (if (seq states)
-                                                      (into [:<>] (render-application-states states))
+                                                      (into [:<>] (for [state states]
+                                                                    [:div
+                                                                     (localize-state state)
+                                                                     [:code.color-pre " (" (name state) ")"]]))
                                                       (text :t.dropdown/placeholder-any-selection))}
                  :user-role {:display-value (if (seq roles)
-                                              (into [:<>] (render-user-roles roles))
+                                              (into [:<>] (for [role roles]
+                                                            [:div
+                                                             (if (some #{role} [:expirer :reporter])
+                                                               (text :t.roles/technical-role)
+                                                               (localize-role role))
+                                                             [:code.color-pre " (" (name role) ")"]]))
                                               (text :t.dropdown/placeholder-any-selection))}})))
 
 (defn- disable-commands-table []
@@ -104,69 +84,145 @@
                 :rows [::disable-commands-table-rows]
                 :default-sort-column :command}])
 
-(defn workflow-view [workflow language]
-  [:div.spaced-vertically-3
-   [collapsible/component
-    {:id "workflow"
-     :title [:span (andstr (get-in workflow [:organization :organization/short-name language]) "/") (:title workflow)]
-     :always [:div
-              (when (get-in workflow [:workflow :anonymize-handling])
-                [:div.alert.alert-info (text :t.administration/workflow-anonymize-handling-explanation)])
-              [inline-info-field (text :t.administration/organization) (get-in workflow [:organization :organization/name language])]
-              [inline-info-field (text :t.administration/title) (:title workflow)]
-              [inline-info-field (text :t.administration/type) (text (get workflow-types
-                                                                          (get-in workflow [:workflow :type])
-                                                                          :t/missing))]
-              [inline-info-field (text :t.create-workflow/handlers) (->> (get-in workflow [:workflow :handlers])
-                                                                         (map enrich-user)
-                                                                         (map :display)
-                                                                         (str/join ", "))]
-              (when (get-in workflow [:workflow :anonymize-handling])
-                [inline-info-field (text :t.administration/anonymize-handling) [readonly-checkbox {:value true}]])
-              [inline-info-field (text :t.administration/active) [readonly-checkbox {:value (status-flags/active? workflow)}]]
-              [inline-info-field (text :t.administration/forms)
-               (if-some [forms (seq (for [form (get-in workflow [:workflow :forms])
-                                          :let [uri (str "/administration/forms/" (:form/id form))
-                                                title (:form/internal-name form)]]
-                                      [atoms/link nil uri title]))]
-                 (into [:<>] (interpose ", ") forms)
-                 (text :t.administration/no-forms))]
-              [inline-info-field (text :t.administration/licenses)
-               (if-some [licenses (seq (for [license (get-in workflow [:workflow :licenses])
-                                             :let [uri (str "/administration/licenses/" (:license/id license))
-                                                   title (:title (localized (:localizations license)))]]
-                                         [atoms/link nil uri title]))]
-                 (into [:<>] (interpose ", ") licenses)
-                 (text :t.administration/no-licenses))]
-              (when-let [voting (get-in workflow [:workflow :voting])]
-                [inline-info-field
-                 (text :t.administration/voting)
-                 (text (keyword (str "t" ".administration") (:type voting)))])]}]
-   (when (seq (get-in workflow [:workflow :disable-commands]))
-     [collapsible/component
-      {:id "workflow-disabled-commands"
-       :title (text :t.administration/disabled-commands)
-       :always [:div
-                [:div.alert.alert-info (text :t.administration/workflow-disabled-commands-explanation)]
-                [:div.mt-4 [disable-commands-table]]]}])
+(rf/reg-sub ::processing-states
+            :<- [::workflow]
+            (fn [workflow _]
+              (get-in workflow [:workflow :processing-states])))
 
-   (let [id (:id workflow)]
-     [:div.col.commands
-      [administration/back-button "/administration/workflows"]
-      [roles/show-when roles/+admin-write-roles+
-       [edit-button id]
-       [status-flags/enabled-toggle workflow #(rf/dispatch [:rems.administration.workflows/set-workflow-enabled %1 %2 [::enter-page id]])]
-       [status-flags/archived-toggle workflow #(rf/dispatch [:rems.administration.workflows/set-workflow-archived %1 %2 [::enter-page id]])]]])])
+(rf/reg-sub ::processing-states-table-rows
+            :<- [::processing-states]
+            :<- [:language]
+            (fn [[processing-states language] _]
+              (for [[index value] (indexed processing-states)]
+                {:key (str "processing-state-" index)
+                 :value {:display-value [:code.color-pre (:processing-state/value value)]}
+                 :title {:display-value (get-in value [:processing-state/title language])}})))
+
+(defn- processing-states-table []
+  [table/table {:id ::processing-states
+                :columns [{:key :title
+                           :title (text :t.administration/processing-state)
+                           :sortable? false}
+                          {:key :value
+                           :title (text :t.administration/technical-value)
+                           :sortable? false}]
+                :rows [::processing-states-table-rows]
+                :default-sort-column :value}])
+
+(defn- render-forms [forms]
+  (into [:<>]
+        (interpose ", ")
+        (for [form forms
+              :let [uri (str "/administration/forms/" (:form/id form))
+                    title (:form/internal-name form)]]
+          [atoms/link {} uri title])))
+
+(defn- render-licenses [licenses]
+  (into [:<>]
+        (interpose ", ")
+        (for [license licenses
+              :let [uri (str "/administration/licenses/" (:license/id license))
+                    title (:title (localized (:localizations license)))]]
+          [atoms/link {} uri title])))
+
+(defn- localize-workflow [workflow-type]
+  (let [wf-localization-key (case workflow-type
+                              :workflow/default :t.create-workflow/default-workflow
+                              :workflow/decider :t.create-workflow/decider-workflow
+                              :workflow/master :t.create-workflow/master-workflow
+                              nil)]
+    (text wf-localization-key)))
+
+(defn- common-fields []
+  (let [language @(rf/subscribe [:language])
+        workflow @(rf/subscribe [::workflow])
+        active? (status-flags/active? workflow)
+        organization (:organization workflow)
+        organization-long (get-in organization [:organization/name language])
+        organization-short (get-in organization [:organization/short-name language])
+        title (:title workflow)
+        workflow-type (get-in workflow [:workflow :type])
+        anonymize-handling (get-in workflow [:workflow :anonymize-handling])
+        handlers (for [handler (get-in workflow [:workflow :handlers])]
+                   (enrich-user handler))
+        forms (get-in workflow [:workflow :forms])
+        licenses (get-in workflow [:workflow :licenses])]
+    [collapsible/component
+     {:id "workflow-common-fields"
+      :title (text-format :t.label/default organization-short title)
+      :always [:div
+               (when anonymize-handling
+                 [:p (text :t.administration/workflow-anonymize-handling-explanation)])
+               [:div.fields
+                [inline-info-field (text :t.administration/organization) organization-long]
+                [inline-info-field (text :t.administration/title) title]
+                [inline-info-field (text :t.administration/type) (localize-workflow workflow-type)]
+                (when anonymize-handling
+                  [inline-info-field (text :t.administration/anonymize-handling) [readonly-checkbox {:value true}]])
+                [inline-info-field (text :t.administration/active) [readonly-checkbox {:value active?}]]
+                [inline-info-field (text :t.create-workflow/handlers) (str/join ", " (map :display handlers))]
+                [inline-info-field (text :t.administration/forms) (if (seq forms)
+                                                                    [render-forms forms]
+                                                                    (text :t.administration/no-forms))]
+                [inline-info-field (text :t.administration/licenses) (if (seq licenses)
+                                                                       [render-licenses licenses]
+                                                                       (text :t.administration/no-licenses))]]]}]))
+
+(defn- voting-fields []
+  (when-let [voting (get-in @(rf/subscribe [::workflow]) [:workflow :voting])]
+    [collapsible/component
+     {:id "workflow-voting-fields"
+      :title (text :t.administration/voting)
+      :always [:div
+               [:p (text :t.create-workflow/voting-explanation)]
+               [inline-info-field
+                (text :t.administration/voting)
+                (text (keyword (str "t" ".administration") (:type voting)))]]}]))
+
+(defn- disable-commands-fields []
+  (when (seq (get-in @(rf/subscribe [::workflow]) [:workflow :disable-commands]))
+    [collapsible/component
+     {:id "workflow-disable-commands-fields"
+      :title (text :t.administration/disabled-commands)
+      :always [:div.spaced-vertically-5
+               [:p (text :t.administration/workflow-disabled-commands-explanation)]
+               [disable-commands-table]]}]))
+
+(defn- processing-states-fields []
+  (when (seq (get-in @(rf/subscribe [::workflow]) [:workflow :processing-states]))
+    [collapsible/component
+     {:id "workflow-processing-states-fields"
+      :title (text :t.administration/processing-states)
+      :always [:div.spaced-vertically-5
+               [:p (text :t.administration/workflow-processing-states-explanation)]
+               [processing-states-table]]}]))
+
+(defn edit-workflow-action [workflow-id]
+  (atoms/edit-action
+   {:class "edit-workflow"
+    :url (str "/administration/workflows/edit/" workflow-id)}))
 
 (defn workflow-page []
-  (let [workflow (rf/subscribe [::workflow])
-        language (rf/subscribe [:language])
-        loading? (rf/subscribe [::loading?])]
-    (fn []
-      [:div
-       [administration/navigator]
-       [document-title (text :t.administration/workflow)]
-       [flash-message/component :top]
-       (if @loading?
-         [spinner/big]
-         [workflow-view @workflow @language])])))
+  [:div
+   [administration/navigator]
+   [document-title (text :t.administration/workflow)]
+   [flash-message/component :top]
+
+   [:div#workflow-view.spaced-vertically-4
+    (b/cond
+      @(rf/subscribe [::loading?])
+      [spinner/big]
+
+      :let [workflow @(rf/subscribe [::workflow])]
+      [:<>
+       [common-fields]
+       [voting-fields]
+       [disable-commands-fields]
+       [processing-states-fields]
+
+       [:div.col.commands
+        [administration/back-button "/administration/workflows"]
+        [roles/show-when roles/+admin-write-roles+
+         [atoms/action-button (edit-workflow-action (:id workflow))]
+         [status-flags/enabled-toggle workflow #(rf/dispatch [:rems.administration.workflows/set-workflow-enabled %1 %2 [::enter-page (:id workflow)]])]
+         [status-flags/archived-toggle workflow #(rf/dispatch [:rems.administration.workflows/set-workflow-archived %1 %2 [::enter-page (:id workflow)]])]]]])]])

@@ -537,7 +537,7 @@
           (fill-form-field "Conditional field" "Conditional")
           (select-option "Option list" "Second option")
           (btu/wait-predicate #(not (btu/field-visible? "Conditional field")))
-          (Thread/sleep 1000) ;; XXX: conditional field check sometimes fails due to rendering latency
+          (btu/wait-for-idle 1000) ; XXX: conditional field check sometimes fails due to rendering latency
           (when (btu/autosave-enabled?)
             (btu/wait-visible {:css ".alert-success" :fn/text "Application is saved."}))
           (select-option "Option list" "First option")
@@ -863,7 +863,6 @@
       (is (btu/eventually-visible? {:tag :h1 :fn/has-text "test-handling"})))
     (testing "handler should see the applicant info"
       (btu/scroll-and-click :applicant-info-collapse-more-link)
-      (Thread/sleep 500) ; XXX: figure out what to wait for
       (btu/screenshot "after-opening-applicant-info")
       (is (= {"Name" "Alice Applicant"
               "Accepted terms of use" true
@@ -973,7 +972,6 @@
       (btu/wait-visible {:fn/text (str "There are " (count (btu/context-getx :todos)) " processed applications.")})
       (btu/screenshot "processed-applications-closed")
       (btu/scroll-and-click [:handled-applications-collapse {:fn/text "Show more"}])
-      (btu/wait-for-animation)
       (btu/wait-visible {:fn/text "Showing the first 50 rows only."})
       (btu/screenshot "processed-applications-opened")
       (btu/scroll-and-click [:handled-applications-collapse {:fn/text "Show all rows"}])
@@ -985,7 +983,6 @@
       (click-navigation-menu "Catalogue")
       (click-navigation-menu "Actions")
       (btu/scroll-and-click [:handled-applications-collapse {:fn/text "Show more"}])
-      (btu/wait-for-animation)
       (btu/screenshot "processed-applications-paged-opened-page-1")
       (testing "first page has newest rows"
         (is (= (for [i (range 100 90 -1)]
@@ -1005,7 +1002,6 @@
         (click-navigation-menu "Catalogue")
         (click-navigation-menu "Actions")
         (btu/scroll-and-click [:handled-applications-collapse {:fn/text "Show more"}])
-        (btu/wait-for-animation)
         (btu/screenshot "processed-applications-paged-revisit")
         (testing "first page still has newest rows"
           (is (= (for [i (range 100 90 -1)]
@@ -1014,7 +1010,6 @@
 
       (testing "load all rows to visit 10th page"
         (btu/scroll-and-click [:handled-applications-collapse {:fn/text "Show all rows"}])
-        (btu/wait-for-animation)
         (btu/scroll-and-click [:handled-applications-paging-pages {:fn/text "10"}])
         (btu/wait-visible {:fn/text "test-processed-applications-10"}) ; wait for at least one to appear before checking all
         (is (= (for [i (range 10 0 -1)]
@@ -1134,7 +1129,8 @@
         (btu/wait-page-loaded)
         ;; NB: this differs a bit from `login-as` and we should keep them the same
         (is (btu/eventually-visible? {:tag :div :fn/has-text "Successfully joined workflow handling."}))
-        (is (btu/eventually-visible? [:workflow {:fn/has-text (btu/context-getx :workflow-title)}]))
+        (is (btu/eventually-visible? [:workflow-common-fields
+                                      {:fn/has-text (btu/context-getx :workflow-title)}]))
         (is (= {"Organization" "The Default Organization"
                 "Title" (btu/context-getx :workflow-title)
                 "Type" "Master workflow"
@@ -1142,7 +1138,7 @@
                 "Active" true
                 "Forms" "No forms"
                 "Licenses" "No licenses"}
-               (slurp-fields :workflow)))))))
+               (slurp-fields :workflow-common-fields)))))))
 
 (deftest test-invite-reviewer
   (testing "create test data"
@@ -1448,7 +1444,7 @@
               "Forms" "No forms"
               "Licenses" "No licenses"
               "Active" true}
-             (slurp-fields :workflow)))
+             (slurp-fields :workflow-common-fields)))
       (go-to-admin "Workflows")
       (is (some #(= (btu/context-getx :workflow-name) (get % "title"))
                 (slurp-rows :workflows))))))
@@ -2107,8 +2103,7 @@
         (btu/click-el (first (btu/query-all {:tag :button :fn/has-class :info-button})))
         (is (btu/eventually-visible? {:tag :div :fn/has-class :info-collapse}))
         (is (btu/visible? {:tag :div :fn/has-text "Info text (EN)"}))
-        ;; TODO: figure out what to wait for
-        (Thread/sleep 500)
+        (btu/wait-for-idle 500) ; XXX: figure out what to wait for
         (btu/click-el (first (btu/query-all {:tag :button :fn/has-class :info-button})))
         (btu/wait-invisible {:tag :div :fn/has-text "Info text (EN)"})
         (btu/wait-predicate #(not (btu/visible? {:tag :div :fn/has-text "Info text (EN)"})) {:timeout 30})
@@ -2449,7 +2444,7 @@
         (btu/check-box "z") ; x and z selected
         (is (btu/field-visible? "Email (EN)"))
         (btu/check-box "x") ; z selected
-        (Thread/sleep 500) ; Small wait to make sure the field really stays visible
+        (btu/wait-for-idle) ; Small wait to make sure the field really stays visible
         (is (btu/field-visible? "Email (EN)"))
         (btu/check-box "y") ; z and y selected
         (is (btu/field-visible? "Email (EN)"))
@@ -2468,7 +2463,9 @@
       (select-option "Organization" "nbn")
       (fill-form-field "Title" (btu/context-getx :workflow-title))
       (btu/scroll-and-click :type-decider)
-      (is (btu/eventually-visible? {:css ".alert" :fn/text "The handler does not have the authority to approve or reject, but only a separate decider has."}))
+      (is (btu/eventually-visible?
+           {:css ".workflow-type-description"
+            :fn/text "The handler does not have the authority to approve or reject, but only a separate decider has."}))
       (select-option "Handlers" "handler")
       (select-option "Handlers" "carl")
       (select-option "Forms" "Simple form")
@@ -2487,7 +2484,7 @@
               "Forms" "Simple form"
               "Licenses" "General Terms of Use"
               "Active" true}
-             (slurp-fields :workflow))))
+             (slurp-fields :workflow-common-fields))))
     (testing "edit workflow"
       (btu/scroll-and-click {:css ".edit-workflow"})
       (is (btu/eventually-visible? {:tag :h1 :fn/text "Edit workflow"}))
@@ -2514,7 +2511,7 @@
               "Forms" "Simple form"
               "Licenses" "General Terms of Use"
               "Active" true}
-             (slurp-fields :workflow)))
+             (slurp-fields :workflow-common-fields)))
       (is (btu/visible? {:tag :a :fn/text "Simple form"})))))
 
 (deftest test-blacklist
@@ -2948,8 +2945,8 @@
         (btu/scroll-and-click :delete)
         (btu/wait-has-alert)
         (btu/accept-alert)
+        (btu/wait-for-idle 500)
         (is (btu/eventually-visible? {:css "#flash-message-top"}))
-        (Thread/sleep 500) ;; wait for headless mode to catch up with re-rendering
 
         (is (= ["Delete: Failed"
                 "It is in use by:"

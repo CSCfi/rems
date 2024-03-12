@@ -1188,6 +1188,7 @@
           :application/members #{}
           :application/past-members #{}
           :application/invitation-tokens {}
+          :application/invited-members #{}
           :application/blacklist [{:blacklist/user {:userid "applicant"
                                                     :email "applicant@example.com"
                                                     :name "Applicant"
@@ -1701,7 +1702,8 @@
                                  :application/reviewer {:name "new-reviewer"
                                                         :email "reviewer@example.com"}}}
                  (:application/invitation-tokens enriched)))
-          (is (= nil
+          (is (= #{{:name "member"
+                    :email "member@example.com"}}
                  (:application/invited-members enriched))))
         (doseq [user-id ["applicant" "handler"]]
           (testing (str "- as user " user-id)

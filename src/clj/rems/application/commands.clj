@@ -51,6 +51,10 @@
 (s/defschema AssignExternalIdCommand
   (assoc CommandBase
          :external-id s/Str))
+(s/defschema ChangeProcessingStateCommand
+  (assoc CommandWithComment
+         :processing-state s/Str
+         :public s/Bool))
 (s/defschema ChangeResourcesCommand
   (assoc CommandWithComment
          :catalogue-item-ids [s/Int]))
@@ -132,6 +136,7 @@
    :application.command/approve ApproveCommand
    :application.command/assign-external-id AssignExternalIdCommand
    :application.command/change-applicant ChangeApplicantCommand
+   :application.command/change-processing-state ChangeProcessingStateCommand
    :application.command/change-resources ChangeResourcesCommand
    :application.command/close CloseCommand
    :application.command/copy-as-new CopyAsNewCommand
@@ -699,6 +704,13 @@
   (add-comment-and-attachments cmd application injections
                                {:event/type :application.event/voted
                                 :vote/value (:vote cmd)}))
+
+(defmethod command-handler :application.command/change-processing-state
+  [cmd application injections]
+  (add-comment-and-attachments cmd application injections
+                               {:event/type :application.event/processing-state-changed
+                                :event/public (:public cmd)
+                                :application/processing-state {:processing-state/value (:processing-state cmd)}}))
 
 (defn- forbidden-error [application cmd]
   (let [permissions (if application

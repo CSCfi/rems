@@ -712,3 +712,8 @@
   (let [filters (or filters {})]
     (filter #(contains-all-kv-pairs? % filters) coll)))
 
+(defn not-blank
+  "Like `clojure.core/not-empty`, but for strings. Checks string emptiness with `clojure.string/blank?`"
+  [s]
+  (when-not (str/blank? s)
+    s))
