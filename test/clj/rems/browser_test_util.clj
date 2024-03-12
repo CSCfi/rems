@@ -284,6 +284,22 @@
 
 ;;; etaoin exported
 
+(defn wait-for-idle
+  "Use requestIdleCallback API to wait until browser has idle period. This may sometimes
+   work more reliably than waiting for an arbitrary amount of time."
+  ([]
+   (wait-for-idle (get-driver) 200))
+
+  ([timeout]
+   (wait-for-idle (get-driver) timeout))
+
+  ([driver timeout]
+   (et/js-async driver
+                (format
+                 "var args = arguments;
+                  var callback = args[args.length - 1];
+                  window.requestIdleCallback(callback, { timeout: %d });" timeout))))
+
 (defn- get-file-base
   "Get the base name for the util generated files."
   []
@@ -293,8 +309,10 @@
 
 (defn screenshot [filename]
   (let [driver (get-driver)
+        _ (wait-for-idle driver 500)
         full-filename (str (get-file-base) filename ".png")
         file (io/file (:reporting-dir @test-context) full-filename)
+
         window-size (et/get-window-size driver)
         empty-space (parse-int (et/get-element-attr driver :empty-space "clientHeight"))
 
@@ -388,15 +406,6 @@
 ;; TODO add more of etaoin here
 
 ;;; etaoin extensions
-
-(defn wait-for-idle
-  "Use requestIdleCallback API to wait until browser has idle period. This may sometimes
-   work more reliably than waiting for an arbitrary amount of time."
-  [& [{:keys [timeout] :or {timeout 200}}]]
-  (js-async (format
-             "var args = arguments;
-              var callback = args[args.length - 1];
-              window.requestIdleCallback(callback, { timeout: %d });" timeout)))
 
 ;; exceptions make for ugly test failures: here are some wrappers that
 ;; are better adapted for (is ...) assertions
