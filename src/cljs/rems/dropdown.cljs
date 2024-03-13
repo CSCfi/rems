@@ -39,7 +39,7 @@
               :isDisabled disabled?
               :isOptionDisabled #(item-disabled? %)
               :maxMenuHeight 200
-              :noOptionsMessage #(text :t.dropdown/no-results)
+              :noOptionsMessage (constantly (text :t.dropdown/no-results))
               :hideSelectedOptions hide-selected?
               :options (into-array items)
               :value (into-array (filter item-selected? items))
@@ -78,7 +78,7 @@
                        :isDisabled disabled?
                        :isOptionDisabled #(item-disabled? (js->clj % :keywordize-keys true))
                        :maxMenuHeight 200
-                       :noOptionsMessage #(text :t.dropdown/no-results)
+                       :noOptionsMessage (constantly (text :t.dropdown/no-results))
                        :hideSelectedOptions hide-selected?
                        :onChange #(let [items (js->clj % :keywordize-keys true)]
                                     (on-change (if (array? items) (array-seq items) items)))
@@ -86,7 +86,7 @@
                        :loadOptions (fn [query-string callback]
                                       (on-load-options {:query-string query-string
                                                         :on-data #(callback (clj->js %))}))
-                       :loadingMessage #(text :t.dropdown/loading)}
+                       :loadingMessage (constantly (text :t.dropdown/loading))}
                       (assoc-some :value (when (seq items) (into-array items))))])
 
 (defn guide

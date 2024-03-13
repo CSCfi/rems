@@ -2,7 +2,6 @@
   (:require [better-cond.core :as b]
             [clojure.string :as str]
             [clojure.set :refer [union]]
-            [goog.string]
             [reagent.core :as r]
             [re-frame.core :as rf]
             [medley.core :refer [find-first update-existing]]
@@ -1187,12 +1186,12 @@
                 [:label.administration-field-label {:for "duos-dropdown"} (text :t.duo/title)]
                 [dropdown/dropdown
                  {:id "duos-dropdown"
-                  :items @(rf/subscribe [::duo-codes])
+                  :items (->> @(rf/subscribe [::duo-codes])
+                              (mapv #(assoc % ::label (text-format :t.label/dash
+                                                                   (or (not-blank (:shorthand %)) (:id %))
+                                                                   (localized (:label %))))))
                   :item-key :id
-                  :item-label (fn [{:keys [id shorthand label]}]
-                                (if-not (str/blank? shorthand)
-                                  (str shorthand " – " (localized label))
-                                  (str id " – " (localized label))))
+                  :item-label ::label
                   :item-selected? (fn [duo] (some #(= (:id duo) (:id %)) selected-duos))
                   :multi? true
                   :on-change #(do (fields/always-on-change %) (rf/dispatch [::set-duo-codes %]))}]]

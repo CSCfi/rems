@@ -118,10 +118,11 @@
          [:label.administration-field-label {:for "mondos-dropdown"} restriction-label]
          [dropdown/async-dropdown
           {:id "mondos-dropdown"
+           :items (->> mondos
+                       (mapv #(assoc % ::label (text-format :t.label/dash (:id %) (:label %)))))
            :item-key :id
-           :item-label #(text-format :t.label/dash (:id %) (:label %))
+           :item-label ::label
            :multi? true
-           :items mondos
            :on-change #(let [new-value %]
                          (rf/dispatch [(:update-form context) update-path new-value])
                          (when on-change

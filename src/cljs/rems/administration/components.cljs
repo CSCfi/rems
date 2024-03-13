@@ -322,9 +322,10 @@
                                :value (get-in value [:organization/name language])}]
        [dropdown/dropdown
         {:id id
-         :items valid-organizations
+         :items (->> valid-organizations
+                     (mapv #(assoc % ::label (get-in % [:organization/name language]))))
          :item-key :organization/id
-         :item-label (comp language :organization/name)
+         :item-label ::label
          :item-selected? item-selected?
          :on-change wrapped-on-change}])
      [field-validation-message (get-in form-errors keys) label]]))

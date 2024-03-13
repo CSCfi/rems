@@ -94,10 +94,11 @@
       (str (text :t.administration/category-children) " " (text :t.administration/optional))]
      [dropdown/dropdown
       {:id categories-dropdown-id
-       :items categories
+       :items (->> categories
+                   (mapv #(assoc % ::label (localized (:category/title %)))))
        :multi? true
        :item-key :category/id
-       :item-label #(localized (:category/title %))
+       :item-label ::label
        :item-selected? item-selected?
        :clearable? true
        :on-change #(rf/dispatch [::set-selected-categories %])}]]))

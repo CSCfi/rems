@@ -183,9 +183,8 @@
         org-owner? (->> @(rf/subscribe [:owned-organizations])
                         (some (comp #{organization-id} :organization/id)))]
     [:div.form-group
-     [:label.administration-field-label
-      {:for owners-dropdown-id}
-      (str (text :t.administration/owners) " " (text :t.administration/optional))]
+     [:label.administration-field-label {:for owners-dropdown-id}
+      (text-format :t.label/optional (text :t.administration/owners))]
      [dropdown/dropdown
       {:id owners-dropdown-id
        :items all-owners

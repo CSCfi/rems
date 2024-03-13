@@ -103,10 +103,11 @@
          [:label {:for dropdown-id} (text :t.actions/resources-selection)]
          [dropdown/dropdown
           {:id dropdown-id
-           :items sorted-selected-catalogue
+           :items (->> sorted-selected-catalogue
+                       (mapv #(assoc % ::label (get-localized-title % language))))
            :item-disabled? #(not (compatible-item? % original-workflow-id))
            :item-key :id
-           :item-label #(get-localized-title % language)
+           :item-label ::label
            :item-selected? #(contains? (set selected-resources) (% :id))
            :multi? (:enable-cart config)
            :on-change #(on-set-resources (flatten (list %)))}]] ; single resource or list
