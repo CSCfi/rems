@@ -1,9 +1,8 @@
 (ns rems.actions.vote
   (:require [clojure.string :as str]
-            [goog.string]
-            [goog.string.format]
             [re-frame.core :as rf]
             [reagent.core :as rc]
+            [reagent.format :refer [format]]
             [rems.actions.components :refer [action-attachment action-button comment-field action-form-view command! perform-action-button]]
             [rems.common.application-util :as application-util]
             [rems.common.util :refer [build-index]]
@@ -142,9 +141,9 @@
                                                  (str/join ", "))]]
                       [:div.form-group.row
                        [:label.col-sm-3.col-form-label (text (keyword (str "t" ".applications.voting.votes") vote))]
-                       [:div.col-sm-9.form-control (goog.string/format "%.2f%% (%s)"
-                                                                       n-pct
-                                                                       voters-text)]]))
+                       [:div.col-sm-9.form-control (format "%.2f%% (%s)"
+                                                           n-pct
+                                                           voters-text)]]))
 
         (let [n (- (count voters) (count votes))
               n-pct (* 100 (/ n (count voters)))
@@ -156,6 +155,6 @@
             ^{:key "not-voted"}
             [:div.form-group.row
              [:label.col-sm-3.col-form-label (text :t.applications.voting.votes/not-voted)]
-             [:div.col-sm-9.form-control (goog.string/format "%.2f%% (%s)"
-                                                             n-pct
-                                                             voters-text)]]))]])))
+             [:div.col-sm-9.form-control (format "%.2f%% (%s)"
+                                                 n-pct
+                                                 voters-text)]]))]])))

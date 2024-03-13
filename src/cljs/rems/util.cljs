@@ -3,8 +3,8 @@
             [ajax.core :refer [GET PUT POST]]
             [clojure.string :as str]
             [clojure.test :refer [deftest are testing]]
-            [goog.string :refer [format]]
-            [re-frame.core :as rf]))
+            [re-frame.core :as rf]
+            [reagent.format :refer [format]]))
 
 (defn replace-url!
   "Navigates to the given URL without adding a browser history entry."
