@@ -171,13 +171,12 @@
      (for [info (:duo/more-infos opts)]
        ^{:key (str (:id duo) (:resource/id info))}
        [duo-more-info info]))
-   (for [restriction (:restrictions duo)]
-     ^{:key (key restriction)}
-     [duo-restriction-field {:duo/id (:id duo)
-                             :context (:context opts)
-                             :on-change (:on-change opts)
-                             :duo/restriction {:type (key restriction)
-                                               :values (val restriction)}}])
+   (into [:<>] (for [restriction (:restrictions duo)]
+                 [duo-restriction-field {:duo/id (:id duo)
+                                         :context (:context opts)
+                                         :on-change (:on-change opts)
+                                         :duo/restriction {:type (key restriction)
+                                                           :values (val restriction)}}]))
    (into [:<>] (for [error (:duo/errors opts)]
                  [duo-error error]))])
 

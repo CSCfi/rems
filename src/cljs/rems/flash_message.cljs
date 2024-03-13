@@ -1,9 +1,9 @@
 (ns rems.flash-message
   (:require [clojure.test :refer [deftest is]]
-            [reagent.core :as reagent]
+            [clojure.walk]
+            [reagent.core :as r]
             [re-frame.core :as rf]
             [rems.administration.status-flags :as status-flags]
-            [rems.atoms :as atoms]
             [rems.focus :as focus]
             [rems.text :refer [text text-format]]))
 
@@ -92,22 +92,14 @@
                  {:focus? focus?}))
 
 (defn component [location]
-  (reagent/create-class
-   {:display-name "rems.flash-message/component"
-
-    :component-will-unmount
-    (fn [_this]
-      ;; XXX: this expiration check keeps component rendered after page transition,
-      ;; for example navigation
-      (when (expired? @(rf/subscribe [::message location]))
-        (rf/dispatch [::reset location])))
-
-    :reagent-render
-    (fn []
-      (when-some [message @(rf/subscribe [::message location])]
-        [atoms/flash-message {:id (location-to-id location)
-                              :status (:status message)
-                              :content (:content message)}]))}))
+  (r/with-let [message (rf/subscribe [::message location])]
+    (when @message
+      [:div.flash-message.alert {:id (str "flash-message-" (name location))
+                                 :class (str "alert-" (name (:status @message)))}
+       (:content @message)])
+    (finally
+      (when (expired? @message)
+        (rf/dispatch [::reset location])))))
 
 (defn format-errors [errors]
   ;; TODO: copied as-is from status-modal; consider refactoring

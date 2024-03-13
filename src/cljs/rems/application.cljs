@@ -1177,11 +1177,11 @@
                (when-let [missing-duos (seq (unmatched-duos application-duo-matches))]
                  [:div.alert.alert-warning
                   [:p (text :t.applications.duos.validation/missing-duo-codes)]
-                  [:ul (for [duo missing-duos
-                             :let [label (localized (:duo/label duo))]]
-                         ^{:key (:duo/id duo)}
-                         [:li (text-format :t.label/dash
-                                           (:duo/shorthand duo) label)])]])
+                  (into [:ul]
+                        (for [duo missing-duos]
+                          [:li (text-format :t.label/dash
+                                            (:duo/shorthand duo)
+                                            (localized (:duo/label duo)))]))])
                [:div.mb-3
                 [:label.administration-field-label {:for "duos-dropdown"} (text :t.duo/title)]
                 [dropdown/dropdown
@@ -1194,18 +1194,20 @@
                   :item-label ::label
                   :item-selected? (fn [duo] (some #(= (:id duo) (:id %)) selected-duos))
                   :multi? true
-                  :on-change #(do (fields/always-on-change %) (rf/dispatch [::set-duo-codes %]))}]]
-               (doall
-                (for [edit-duo (sort-by :id selected-duos)
-                      :let [duo-matches (->> application-duo-matches
-                                             (filter (fn [match] (= (:id edit-duo) (:duo/id match)))))]]
-                  ^{:key (:id edit-duo)}
-                  [:div.form-field
-                   [duo-field edit-duo {:context duo-context
-                                        :on-change fields/always-on-change
-                                        :duo/statuses (map (comp :validity :duo/validation) duo-matches)
-                                        :duo/errors (mapcat (comp :errors :duo/validation) duo-matches)
-                                        :duo/more-infos (find-duo-more-info edit-duo)}]]))]}]))
+                  :on-change (fn [items]
+                               (let [duos (mapv #(dissoc % ::label) items)]
+                                 (fields/always-on-change duos)
+                                 (rf/dispatch [::set-duo-codes duos])))}]]
+               (into [:<>]
+                     (for [edit-duo (sort-by :id selected-duos)
+                           :let [duo-matches (->> application-duo-matches
+                                                  (filter (fn [match] (= (:id edit-duo) (:duo/id match)))))]]
+                       [:div.form-field
+                        [duo-field edit-duo {:context duo-context
+                                             :on-change fields/always-on-change
+                                             :duo/statuses (map (comp :validity :duo/validation) duo-matches)
+                                             :duo/errors (mapcat (comp :errors :duo/validation) duo-matches)
+                                             :duo/more-infos (find-duo-more-info edit-duo)}]]))]}]))
 
 (defn- group-duos-by-matches [matches duos]
   (->> matches
