@@ -359,6 +359,7 @@
       (spit file (json/generate-string-pretty content)))))
 
 (defn wait-predicate [pred & [explainer]]
+  (wait-for-idle)
   (try (et/wait-predicate pred) ; does not need driver
        (catch clojure.lang.ExceptionInfo ex
          (throw (ex-info "timed out in wait-predicate"
@@ -463,7 +464,6 @@
 
 (defn wait-visible-el [el & [opt]]
   (let [message (format "Wait for %s element is visible" el)]
-    (wait-for-idle)
     (wait-predicate #(visible-el? el)
                     (assoc opt :message message))))
 
@@ -488,15 +488,17 @@
   (wait-for-idle)
   (wait-visible q opt)
   (scroll-query q {"block" "center"})
-  (assert (not (get-element-attr q "disabled")))
+  (wait-predicate #(not (get-element-attr q "disabled")))
   (click q))
 
 (defn scroll-and-click-el
   "Wait a button to become visible, scroll it to middle
   (to make sure it's not hidden under navigation) and click."
   [el & [opt]]
+  (wait-for-idle)
   (wait-visible-el el opt)
   (scroll-query-el el {"block" "center"})
+  (wait-predicate #(not (get-element-attr-el el "disabled")))
   (click-el el))
 
 (defn wait-page-loaded []
