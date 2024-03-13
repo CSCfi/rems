@@ -6,7 +6,9 @@ have notable changes.
 
 ## Unreleased
 
-Changes since v2.35.1
+Changes since v2.36
+
+## v2.36 "Laivapojankuja" 2024-03-13
 
 ### Additions
 - (Experimental) Voting options are expanded to have types, i.e. reviewer and handler voting. Use `:enable-voting`. (#3257)
