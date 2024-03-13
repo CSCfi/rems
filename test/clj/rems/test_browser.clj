@@ -78,7 +78,7 @@
 (defn wait-page-title
   "Waits until main header is visible with given text, and document title has the same value."
   [title-text]
-  (is (btu/eventually-visible? {:tag :h1 :fn/text title-text}))
+  (btu/wait-visible {:tag :h1 :fn/text title-text})
   (is (= title-text (btu/get-title))))
 
 (defn go-to-catalogue []
@@ -287,6 +287,7 @@
     (set-date id date)))
 
 (defn select-option [label option]
+  (btu/wait-for-idle)
   (let [id (btu/get-element-attr {:tag :label :fn/has-text label} :for)]
     (btu/wait-visible {:id id})
     (btu/fill {:id id} option etaoin.keys/enter))) ; XXX: react-select does not accept new value without pressing enter
@@ -2446,6 +2447,7 @@
         (is (not (btu/field-visible? "Text (EN)")))
         (select-option "Option (EN)" "Yes")
         (is (btu/eventually-visible? {:fn/has-text "Text (EN)"}))
+        (Thread/sleep 1000) ; XXX: arbitrary wait, dropdown renders so slow that browser can execute idle callback before dropdown is usable again?
         (select-option "Option (EN)" "No")
         (is (btu/eventually-invisible? {:fn/has-text "Text (EN)"})))
 
