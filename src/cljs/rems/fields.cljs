@@ -275,7 +275,9 @@
      (into [:select.form-control {:id (field-name opts)
                                   :name (field-name opts)
                                   :class (when validation "is-invalid")
-                                  :value value
+                                  :value (if (nil? value)
+                                           ""
+                                           value)
                                   :required (not optional)
                                   :aria-required (not optional)
                                   :aria-invalid (when validation true)

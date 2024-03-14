@@ -433,7 +433,7 @@
 ;; probably due to the lack of a _minimum_ delay between keypresses.
 ;; This is a reimplementation.
 (def +character-delay+ 0.01)
-(def +max-extra-delay+ 0.2)
+(def +max-extra-delay+ 0.1)
 (def +typo-probability+ 0.05)
 
 (defn fill-human [q text]
