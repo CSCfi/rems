@@ -244,6 +244,32 @@
                               :form/external-title external-title
                               :form/fields all-field-types-example}))
 
+(defn create-big-performance-test-form! []
+  (test-helpers/create-form!
+   {:actor "owner"
+    :organization {:organization/id "default"}
+    :form/internal-name "Performance test form 201"
+    :form/external-title {:en "Performance test form 201"
+                          :fi "Suorituskykytestilomake 201"
+                          :sv "Blankett för prestand 201"}
+    :form/fields (->> (concat [description-field
+                               label-field
+                               header-field]
+                              (take 200 (cycle (list text-field
+                                                     texta-field
+                                                     date-field
+                                                     email-field
+                                                     attachment-field
+                                                     multiselect-field
+                                                     table-field
+                                                     phone-number-field
+                                                     ip-address-field))))
+                      (map-indexed (fn [idx item]
+                                     (-> item ; index in title makes it easier to track fields in long form list
+                                         (update-in [:field/title :en] str " " (inc idx))
+                                         (update-in [:field/title :fi] str " " (inc idx))
+                                         (update-in [:field/title :sv] str " " (inc idx))))))}))
+
 (defn- create-workflows! [users]
   (let [approver1 (users :approver1)
         approver2 (users :approver2)

@@ -1153,6 +1153,7 @@
 (rf/reg-sub ::duo-form
             :<- [::edit-application]
             (fn [edit-application] (:duo-codes edit-application)))
+(rf/reg-sub ::get-duo-field :<- [::duo-form] (fn [form [_ key-path]] (get-in form key-path)))
 (rf/reg-event-db ::set-duo-form-code
                  (fn [db [_ keys value]] (assoc-in db (concat [::edit-application :duo-codes] keys) value)))
 
@@ -1165,6 +1166,7 @@
 
 (def ^:private duo-context
   {:get-form ::duo-form
+   :get-form-field ::get-duo-field
    :update-form ::set-duo-form-code})
 
 (defn- edit-application-duo-codes []

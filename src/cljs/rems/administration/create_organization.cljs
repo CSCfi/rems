@@ -33,6 +33,7 @@
 ;;; form state
 
 (rf/reg-sub ::form (fn [db _] (::form db)))
+(rf/reg-sub ::get-field :<- [::form] (fn [form [_ key-path]] (get-in form key-path)))
 (rf/reg-event-db ::set-form-field (fn [db [_ keys value]] (assoc-in db (concat [::form] keys) value)))
 
 (rf/reg-event-db
@@ -133,6 +134,7 @@
 
 (def ^:private context
   {:get-form ::form
+   :get-form-field ::get-field
    :update-form ::set-form-field})
 
 (def ^:private owners-dropdown-id "owners-dropdown")
