@@ -154,10 +154,10 @@
                                                   (js/setTimeout #(on-data example-items) 500))}])
      (r/with-let [async-example-items (r/atom (take 2 example-items))]
        (example "async dropdown menu, multi-choice, several values selected"
-              [async-dropdown {:item-key :id
-                               :item-label :name
-                               :items @async-example-items
-                               :multi? true
-                               :on-change (comp on-change #(reset! async-example-items %))
-                               :on-load-options (fn [{:keys [_ on-data]}]
-                                                  (js/setTimeout #(on-data example-items) 500))}]))]))
+                [async-dropdown {:item-key :id
+                                 :item-label :name
+                                 :items @async-example-items
+                                 :multi? true
+                                 :on-change (comp on-change #(reset! async-example-items %))
+                                 :on-load-options (fn [{:keys [_ on-data]}]
+                                                    (js/setTimeout #(on-data example-items) 500))}]))]))
