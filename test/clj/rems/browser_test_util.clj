@@ -10,6 +10,7 @@
             [clojure.tools.logging :as log]
             [com.rpl.specter :refer [ALL select]]
             [etaoin.api :as et]
+            [etaoin.keys]
             [medley.core :refer [assoc-some]]
             [rems.api.testing :refer [standalone-fixture]]
             [rems.common.util :refer [conj-vec getx parse-int]]
@@ -433,7 +434,6 @@
 ;; probably due to the lack of a _minimum_ delay between keypresses.
 ;; This is a reimplementation.
 (def +character-delay+ 0.01)
-(def +max-extra-delay+ 0.1)
 (def +typo-probability+ 0.05)
 
 (defn fill-human [q text]
@@ -441,12 +441,11 @@
   (wait-visible q)
 
   (doseq [c text]
-    (et/wait (* +max-extra-delay+ (Math/pow (rand) 5)))
     (when (< (rand) +typo-probability+)
       (et/wait +character-delay+)
       (et/fill (get-driver) q (char (inc (int c))))
       (et/wait +character-delay+)
-      (et/fill (get-driver) q \backspace))
+      (et/fill (get-driver) q etaoin.keys/backspace))
     (et/wait +character-delay+)
     (et/fill (get-driver) q c))
   (et/wait +character-delay+)

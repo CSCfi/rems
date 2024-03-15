@@ -83,9 +83,7 @@
                                    :class (when @error "is-invalid")
                                    :value @value
                                    :on-change #(let [new-value (normalizer (.. % -target -value))]
-                                                 (rf/dispatch [(:update-form context)
-                                                               keys
-                                                               new-value])
+                                                 (rf/dispatch-sync [(:update-form context) keys new-value])
                                                  (on-change new-value))}
                                   (select-keys opts [:min :max]))]
       [field-validation-message @error label]]]))
@@ -124,9 +122,7 @@
                 :value @value
                 :class (when @error "is-invalid")
                 :on-change #(let [new-value (normalizer (.. % -target -value))]
-                              (rf/dispatch [(:update-form context)
-                                            keys
-                                            new-value])
+                              (rf/dispatch-sync [(:update-form context) keys new-value])
                               (on-change new-value))}]
      [field-validation-message @error label]]))
 
@@ -159,9 +155,7 @@
                          :value @value
                          :class (when @error "is-invalid")
                          :on-change #(let [new-value (normalizer (.. % -target -value))]
-                                       (rf/dispatch [(:update-form context)
-                                                     keys
-                                                     new-value])
+                                       (rf/dispatch-sync [(:update-form context) keys new-value])
                                        (on-change new-value))}]
               [field-validation-message @error label]]]))))
 
@@ -183,9 +177,7 @@
                  :value @value
                  :class (when @error "is-invalid")
                  :on-change #(let [new-value (normalizer (.. % -target -value))]
-                               (rf/dispatch [(:update-form context)
-                                             keys
-                                             new-value])
+                               (rf/dispatch-sync [(:update-form context) keys new-value])
                                (on-change new-value))}]
       [field-validation-message @error label]]]))
 
@@ -234,9 +226,7 @@
                                 :type "checkbox"
                                 :checked (val-fn @value)
                                 :on-change #(let [new-value (val-fn (.. % -target -checked))]
-                                              (rf/dispatch [(:update-form context)
-                                                            keys
-                                                            new-value])
+                                              (rf/dispatch-sync [(:update-form context) keys new-value])
                                               (on-change new-value))}]
       [:label.form-check-label {:for id}
        label]]]))
@@ -258,7 +248,7 @@
                                :value value
                                :checked (= value @form-value)
                                :on-change #(when (.. % -target -checked)
-                                             (rf/dispatch [(:update-form context) keys value])
+                                             (rf/dispatch-sync [(:update-form context) keys value])
                                              (on-change value))}]
      [:label.form-check-label {:for id}
       label]]))
@@ -313,7 +303,7 @@
         language @(rf/subscribe [:language])
         on-change (or on-change (fn [_]))
         wrapped-on-change #(let [new-value %]
-                             (rf/dispatch [(:update-form context) keys new-value])
+                             (rf/dispatch-sync [(:update-form context) keys new-value])
                              (on-change new-value))
 
         ;; if item was copied then this org could be something old
@@ -366,9 +356,7 @@
                            :min min
                            :max max
                            :on-change #(let [new-value (normalizer (.. % -target -value))]
-                                         (rf/dispatch [(:update-form context)
-                                                       keys
-                                                       new-value])
+                                         (rf/dispatch-sync [(:update-form context) keys new-value])
                                          (on-change new-value))}]
      [field-validation-message @error label]]))
 

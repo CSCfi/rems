@@ -118,10 +118,11 @@
          [:label.administration-field-label {:for "mondos-dropdown"} restriction-label]
          [dropdown/async-dropdown
           {:id "mondos-dropdown"
-           :items (->> mondos
-                       (mapv #(assoc % ::label (text-format :t.label/dash (:id %) (:label %)))))
+           :items mondos
            :item-key :id
-           :item-label ::label
+           ;; due to async loading, item label cannot be set ahead of time, but label function also cannot use subscriptions because lifecycle is unknown
+           ;; TODO: investigate solutions
+           :item-label #(str (:id %) " – " (:label %))
            :multi? true
            :on-change #(let [new-value %]
                          (rf/dispatch [(:update-form context) update-path new-value])

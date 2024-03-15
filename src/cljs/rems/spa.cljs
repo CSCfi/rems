@@ -201,7 +201,7 @@
 (rf/reg-sub
  ::grab-focus?
  (fn [db _]
-   (::grab-focus? db)))
+   (::grab-focus? db true)))
 
 (rf/reg-event-fx
  :after-translations-are-loaded
@@ -349,44 +349,48 @@
     (when (config/dev-environment?)
       [dev-reload-button])]])
 
-(defn main-content [_page-id _grab-focus?]
-  (let [on-update (fn [this]
-                    (let [[_ _page-id grab-focus?] (r/argv this)]
-                      (when grab-focus?
-                        (when-let [element (or (.querySelector js/document "h1")
-                                               (.querySelector js/document "#main-content"))]
-                          (focus/focus element)
-                          (rf/dispatch [::focus-grabbed])))))]
-    (r/create-class
-     {:component-did-mount on-update
-      :component-did-update on-update
-      :display-name "main-content"
-      :reagent-render (fn [page-id _grab-focus?]
-                        [:main.container-fluid
-                         {:class (str "page-" (name page-id))
-                          :id "main-content"}
-                         (if-let [content (pages page-id)]
-                           [:<>
-                            [missing-email-warning]
-                            [content]]
-                           (do ; implementation error
-                             (println "Unknown page-id" page-id)
-                             (rf/dispatch [:set-active-page :not-found])
-                             nil))])})))
+(defn main-content [page-id]
+  [:main#main-content.container-fluid {:class (str "page-" (name page-id))}
+   (if-let [content (get pages page-id)]
+     [:<>
+      [missing-email-warning]
+      [content]]
+     (do ; implementation error
+       (println "Unknown page-id" page-id)
+       (rf/dispatch-sync [:set-active-page :not-found])
+       nil))])
 
 (defn- lazy-load-data!
-  "Loads datasets that are not required for immediate render or e.g. require login."
+  "Hook-like helper that loads datasets that are not required for immediate render or e.g. require login.
+   Use together with reagent.core/track, otherwise every re-render creates a new reaction."
   []
-  (when @(rf/subscribe [:user])
-    (when (empty? @(rf/subscribe [:organizations]))
-      (config/fetch-organizations!))))
+  @(r/reaction
+    (let [user @(rf/subscribe [:user])
+          organizations @(rf/subscribe [:organizations])]
+      (when (and user (empty? organizations))
+        (config/fetch-organizations!)))))
+
+(defn- grab-focus!
+  "Hook-like helper that sets focus on prominent header element when user navigates to new page.
+   Use together with reagent.core/track, otherwise every re-render creates a new reaction."
+  []
+  @(r/reaction
+    (let [grab-focus? @(rf/subscribe [::grab-focus?])
+          page-id @(rf/subscribe [:page])]
+      (when (and grab-focus? page-id)
+        (r/after-render
+         #(when-let [element (or (.querySelector js/document "h1")
+                                 (.querySelector js/document "#main-content"))]
+            (focus/focus element)
+            (rf/dispatch-sync [::focus-grabbed])))))))
 
 (defn page []
+  @(r/track lazy-load-data!)
+  @(r/track grab-focus!)
+
   (let [page-id @(rf/subscribe [:page])
-        grab-focus? @(rf/subscribe [::grab-focus?])
         theme @(rf/subscribe [:theme])
         lang @(rf/subscribe [:language])]
-    (lazy-load-data!)
     [:div
      [nav/navigation-widget]
      (when (or (= page-id :home)
@@ -395,7 +399,7 @@
                     (not (:navbar-logo-name theme))))
        [logo])
      (when page-id
-       [main-content page-id grab-focus?])
+       [main-content page-id])
      [:div#empty-space]
      [footer]]))
 

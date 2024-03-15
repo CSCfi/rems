@@ -3,6 +3,7 @@
             ["react-select/async" :default AsyncSelect]
             [clojure.string :as str]
             [medley.core :refer [assoc-some]]
+            [reagent.core :as r]
             [rems.guide-util :refer [component-info example]]
             [rems.text :refer [text]]))
 
@@ -151,11 +152,12 @@
                                :on-change on-change
                                :on-load-options (fn [{:keys [_ on-data]}]
                                                   (js/setTimeout #(on-data example-items) 500))}])
-     (example "async dropdown menu, multi-choice, several values selected"
+     (r/with-let [async-example-items (r/atom (take 2 example-items))]
+       (example "async dropdown menu, multi-choice, several values selected"
               [async-dropdown {:item-key :id
                                :item-label :name
-                               :items (take 2 example-items)
+                               :items @async-example-items
                                :multi? true
-                               :on-change on-change
+                               :on-change (comp on-change #(reset! async-example-items %))
                                :on-load-options (fn [{:keys [_ on-data]}]
-                                                  (js/setTimeout #(on-data example-items) 500))}])]))
+                                                  (js/setTimeout #(on-data example-items) 500))}]))]))

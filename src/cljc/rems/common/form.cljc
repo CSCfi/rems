@@ -2,11 +2,12 @@
   "Common form utilities shared between UI and API.
 
   Includes functions for both forms and form templates."
-  (:require  [clojure.string :as str]
-             [clojure.test :refer [deftest is testing]]
-             [com.rpl.specter :refer [ALL transform]]
-             [medley.core :refer [assoc-some find-first]]
-             [rems.common.util :refer [build-index parse-int remove-empty-keys]]))
+  (:require [clojure.set]
+            [clojure.string :as str]
+            [clojure.test :refer [deftest is testing]]
+            [com.rpl.specter :refer [ALL transform]]
+            [medley.core :refer [assoc-some find-first]]
+            [rems.common.util :refer [build-index parse-int remove-empty-keys]]))
 
 ;;; Field values
 
@@ -149,14 +150,15 @@
 
 (defn field-visible? [field field-values]
   (let [visibility (:field/visibility field)
-        values (->> (field-depends-on-field field)
-                    (get field-values)
-                    ;; NB! by happy coincidence unparse-multiselect-values also for option fields
-                    parse-multiselect-values)]
-    (or (nil? visibility)
-        (= :always (:visibility/type visibility))
-        (and (= :only-if (:visibility/type visibility))
-             (some? (some (set (:visibility/values visibility)) values))))))
+        visibility-type (:visibility/type visibility)]
+    (cond
+      (nil? visibility) true
+      (= :always visibility-type) true
+      (= :only-if visibility-type) (let [visibility-values (:visibility/values visibility)
+                                         depended-field (get field-values (field-depends-on-field field))]
+                                     (some? (seq (clojure.set/intersection (set visibility-values)
+                                                                           (parse-multiselect-values depended-field)))))
+      :else false)))
 
 (deftest test-field-visible?
   (is (true? (field-visible? nil nil)))

@@ -164,8 +164,7 @@
 
 (defn- catalogue-item-infourl-field []
   [localized-text-field context {:keys [:infourl]
-                                 :label (str (text :t.administration/more-info) " "
-                                             (text :t.administration/optional))}])
+                                 :label (text-format :t.label/optional (text :t.administration/more-info))}])
 
 (defn- localize-org-short [x]
   (when-let [org-short (get-in x [:organization :organization/short-name])]
@@ -235,8 +234,7 @@
         item-selected? #(= (:form/id %) (:form/id selected-form))]
     [:div.form-group
      [:label.administration-field-label {:for form-dropdown-id}
-      (cond->> (text :t.administration/form)
-        (not editing?) (text-format :t.label/optional))]
+      (text-format :t.label/optional (text :t.administration/form))]
      (if editing?
        (let [form (item-by-id forms :form/id (:form/id selected-form))]
          [fields/readonly-field {:id form-dropdown-id
@@ -261,6 +259,7 @@
         config @(rf/subscribe [:rems.config/config])]
     [:div.form-group
      [:label.administration-field-label {:for categories-dropdown-id}
+      ;; XXX: :enable-catalogue-tree should be checked in backend as well
       (cond->> (text :t.administration/categories)
         (not (:enable-catalogue-tree config)) (text-format :t.label/optional))]
      [dropdown/dropdown
