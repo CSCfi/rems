@@ -27,22 +27,9 @@
             [ring.middleware.defaults :refer [site-defaults wrap-defaults]]
             [ring.util.http-response :refer [unauthorized]]
             [ring.util.response :refer [bad-request redirect header]])
-  (:import [javax.servlet ServletContext]
-           [rems.auth ForbiddenException UnauthorizedException]))
+  (:import [rems.auth ForbiddenException UnauthorizedException]))
 
 (def nano-id (nano-id/custom "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz" 8))
-
-(defn calculate-root-path [request]
-  (if-let [context (:servlet-context request)]
-    ;; If we're not inside a servlet environment
-    ;; (for example when using mock requests), then
-    ;; .getContextPath might not exist
-    (try (.getContextPath ^ServletContext context)
-         (catch IllegalArgumentException _ context))
-    ;; if the context is not specified in the request
-    ;; we check if one has been specified in the environment
-    ;; instead
-    (:app-context env)))
 
 (defn- csrf-error-handler
   "CSRF error is typical when the user session is timed out
@@ -70,7 +57,7 @@
 (defn wrap-context [handler]
   (fn [request]
     (binding [context/*request* (assoc request :request-id (random-uuid))
-              context/*root-path* (calculate-root-path request)
+              context/*root-path* (:app-context env)
               context/*roles* (set/union
                                (when context/*user*
                                  (set/union (roles/get-roles (getx-user-id))
@@ -299,16 +286,14 @@
       (when response
         (header response "Cache-Control" (str "max-age=" (* 60 60 23)))))))
 
+;; NB: some of these have become defaults over time, but it's still good to pay attention when updating ring-defaults.
+;; e.g. (-> site-defaults :session :cookie-attrs :same-site) should be :lax, otherwise OIDC logins could stop working.
 (defn wrap-defaults-settings []
   (-> site-defaults
-      (dissoc :static) ;; we handle serving static resources in rems.handler
+      (dissoc :static) ; we handle serving static resources in rems.handler
       (assoc-in [:security :anti-forgery] false)
       (assoc-in [:session :store] session-store)
-      (assoc-in [:session :flash] true)
-      (assoc-in [:params :multipart] {:store (rems.multipart/size-limiting-temp-file-store {:max-size (:attachment-max-size env) :expires-in 3600})})
-      ;; ring-defaults sets the cookies with strict same-site limits, but this breaks OpenID Connect logins.
-      ;; Different options for using lax cookies are described in the authentication ADR.
-      (assoc-in [:session :cookie-attrs] {:http-only true, :same-site :lax})))
+      (assoc-in [:params :multipart] {:store (rems.multipart/size-limiting-temp-file-store {:max-size (:attachment-max-size env) :expires-in 3600})})))
 
 (defn wrap-base [handler]
   (-> handler
