@@ -482,7 +482,7 @@
                               :subject "Katselmointia odottavat hakemukset"}
           :workflow-handler-invitation {:message "Hyvä %1,\n\n%2 on kutsunut sinut käsittelemään työvuon %3 hakemuksia.\n\nVoit tarkastella työvuota osoitteessa %4"
                                         :subject "Kutsu käsittelemään hakemuksia"}}
-  :footer "CSC – Tieteen tietotekniikan keskus"
+  :footer "CSC – Tieteen tietotekniikan keskus" ; "–" (En Dash U+2013) is different from "-" (Hyphen Minus U+002D)
   :form {:accepted-licenses "Käyttöehdot hyväksytty"
          :actions "Toiminnot"
          :add-comment "Kommentoi"
@@ -545,9 +545,9 @@
   :item-lists {:move-down "Siirrä alas"
                :move-up "Siirrä ylös"
                :remove "Poista"}
-  :label {:dash "%1 – %2"
+  :label {:dash "%1 – %2" ; "–" (En Dash U+2013) is different from "-" (Hyphen Minus U+002D)
           :default "%1: %2"
-          :long "%1: %2 – %3"
+          :long "%1: %2 – %3" ; "–" (En Dash U+2013) is different from "-" (Hyphen Minus U+002D)
           :optional "%1 (valinnainen)"
           :parens "%1 (%2)"}
   :link {:download-file "Lataa tiedosto"

@@ -10,6 +10,7 @@
             [clojure.tools.logging :as log]
             [com.rpl.specter :refer [ALL select]]
             [etaoin.api :as et]
+            [etaoin.keys]
             [medley.core :refer [assoc-some]]
             [rems.api.testing :refer [standalone-fixture]]
             [rems.common.util :refer [conj-vec getx parse-int]]
@@ -359,6 +360,7 @@
       (spit file (json/generate-string-pretty content)))))
 
 (defn wait-predicate [pred & [explainer]]
+  (wait-for-idle)
   (try (et/wait-predicate pred) ; does not need driver
        (catch clojure.lang.ExceptionInfo ex
          (throw (ex-info "timed out in wait-predicate"
@@ -403,6 +405,7 @@
 (def wait-has-alert (wrap-etaoin et/wait-has-alert))
 (def accept-alert (wrap-etaoin et/accept-alert))
 (def reload (wrap-etaoin et/reload))
+(def get-title (wrap-etaoin et/get-title))
 ;; TODO add more of etaoin here
 
 ;;; etaoin extensions
@@ -431,7 +434,6 @@
 ;; probably due to the lack of a _minimum_ delay between keypresses.
 ;; This is a reimplementation.
 (def +character-delay+ 0.01)
-(def +max-extra-delay+ 0.2)
 (def +typo-probability+ 0.05)
 
 (defn fill-human [q text]
@@ -439,12 +441,11 @@
   (wait-visible q)
 
   (doseq [c text]
-    (et/wait (* +max-extra-delay+ (Math/pow (rand) 5)))
     (when (< (rand) +typo-probability+)
       (et/wait +character-delay+)
       (et/fill (get-driver) q (char (inc (int c))))
       (et/wait +character-delay+)
-      (et/fill (get-driver) q \backspace))
+      (et/fill (get-driver) q etaoin.keys/backspace))
     (et/wait +character-delay+)
     (et/fill (get-driver) q c))
   (et/wait +character-delay+)
@@ -462,7 +463,6 @@
 
 (defn wait-visible-el [el & [opt]]
   (let [message (format "Wait for %s element is visible" el)]
-    (wait-for-idle)
     (wait-predicate #(visible-el? el)
                     (assoc opt :message message))))
 
@@ -487,15 +487,17 @@
   (wait-for-idle)
   (wait-visible q opt)
   (scroll-query q {"block" "center"})
-  (assert (not (get-element-attr q "disabled")))
+  (wait-predicate #(not (get-element-attr q "disabled")))
   (click q))
 
 (defn scroll-and-click-el
   "Wait a button to become visible, scroll it to middle
   (to make sure it's not hidden under navigation) and click."
   [el & [opt]]
+  (wait-for-idle)
   (wait-visible-el el opt)
   (scroll-query-el el {"block" "center"})
+  (wait-predicate #(not (get-element-attr-el el "disabled")))
   (click-el el))
 
 (defn wait-page-loaded []

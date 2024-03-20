@@ -17,6 +17,7 @@
    {:db (dissoc db ::form)}))
 
 (rf/reg-sub ::form (fn [db _] (::form db)))
+(rf/reg-sub ::get-field :<- [::form] (fn [form [_ key-path]] (get-in form key-path)))
 
 (rf/reg-event-db
  ::set-form-field
@@ -105,6 +106,7 @@
 ;;;; UI
 
 (def ^:private context {:get-form ::form
+                        :get-form-field ::get-field
                         :update-form ::set-form-field})
 
 (defn- license-organization-field []

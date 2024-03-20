@@ -22,6 +22,7 @@
 (fetcher/reg-fetcher ::categories "/api/categories")
 
 (rf/reg-sub ::form (fn [db _] (::form db)))
+(rf/reg-sub ::get-field :<- [::form] (fn [form [_ key-path]] (get-in form key-path)))
 (rf/reg-event-db ::set-form-field (fn [db [_ keys value]] (assoc-in db (concat [::form] keys) value)))
 
 (rf/reg-sub ::selected-categories (fn [db _] (get-in db [::form :categories])))
@@ -67,6 +68,7 @@
 
 (def ^:private context
   {:get-form ::form
+   :get-form-field ::get-field
    :update-form ::set-form-field})
 
 (def ^:private categories-dropdown-id "categories-dropdown")
@@ -94,10 +96,11 @@
       (str (text :t.administration/category-children) " " (text :t.administration/optional))]
      [dropdown/dropdown
       {:id categories-dropdown-id
-       :items categories
+       :items (->> categories
+                   (mapv #(assoc % ::label (localized (:category/title %)))))
        :multi? true
        :item-key :category/id
-       :item-label #(localized (:category/title %))
+       :item-label ::label
        :item-selected? item-selected?
        :clearable? true
        :on-change #(rf/dispatch [::set-selected-categories %])}]]))

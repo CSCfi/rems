@@ -33,6 +33,7 @@
 ;;; form state
 
 (rf/reg-sub ::form (fn [db _] (::form db)))
+(rf/reg-sub ::get-field :<- [::form] (fn [form [_ key-path]] (get-in form key-path)))
 (rf/reg-event-db ::set-form-field (fn [db [_ keys value]] (assoc-in db (concat [::form] keys) value)))
 
 (rf/reg-event-db
@@ -133,6 +134,7 @@
 
 (def ^:private context
   {:get-form ::form
+   :get-form-field ::get-field
    :update-form ::set-form-field})
 
 (def ^:private owners-dropdown-id "owners-dropdown")
@@ -183,9 +185,8 @@
         org-owner? (->> @(rf/subscribe [:owned-organizations])
                         (some (comp #{organization-id} :organization/id)))]
     [:div.form-group
-     [:label.administration-field-label
-      {:for owners-dropdown-id}
-      (str (text :t.administration/owners) " " (text :t.administration/optional))]
+     [:label.administration-field-label {:for owners-dropdown-id}
+      (text-format :t.label/optional (text :t.administration/owners))]
      [dropdown/dropdown
       {:id owners-dropdown-id
        :items all-owners

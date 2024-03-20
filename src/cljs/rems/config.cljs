@@ -54,11 +54,12 @@
  (fn [db _]
    (let [roles (get-in db [:identity :roles])
          userid (get-in db [:identity :user :userid])]
-     (for [org (vals (:organization-by-id db))
-           :let [owners (set (map :userid (:organization/owners org)))]
-           :when (or (contains? roles :owner)
-                     (contains? owners userid))]
-       org))))
+     (doall
+      (for [org (vals (:organization-by-id db))
+            :let [owners (set (map :userid (:organization/owners org)))]
+            :when (or (contains? roles :owner)
+                      (contains? owners userid))]
+        org)))))
 
 (rf/reg-event-db
  :loaded-organizations

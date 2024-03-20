@@ -528,7 +528,7 @@
                               :subject "Ansøgninger der afventer gennemsyn"}
           :workflow-handler-invitation {:message "Kære %1,\n\n%2 har inviteret dig til at blive behandler på ansøgninger i arbejdsgang %3.\n\nDu kan se arbejdsgangen på %4"
                                         :subject "Invitation til behandling af ansøgninger"}}
-  :footer "CSC – IT Center for Science"
+  :footer "CSC – IT Center for Science" ; "–" (En Dash U+2013) is different from "-" (Hyphen Minus U+002D)
   :form {:accepted-licenses "Brugsvilkår blev accepteret"
          :actions "Funktioner"
          :add-comment "Tilføj kommentar"
@@ -593,9 +593,9 @@
   :item-lists {:move-down "Flyt ned"
                :move-up "Flyt op"
                :remove "Fjern"}
-  :label {:dash "%1 – %2"
+  :label {:dash "%1 – %2" ; "–" (En Dash U+2013) is different from "-" (Hyphen Minus U+002D)
           :default "%1: %2"
-          :long "%1: %2 – %3"
+          :long "%1: %2 – %3" ; "–" (En Dash U+2013) is different from "-" (Hyphen Minus U+002D)
           :optional "%1 (valgfrit)"
           :parens "%1 (%2)"}
   :link {:download-file "Download fil"
