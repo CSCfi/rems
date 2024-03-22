@@ -89,13 +89,13 @@
    "/administration/catalogue-items/create"
    (text :t.administration/create-catalogue-item)])
 
-(defn- change-form-button [items]
+(defn- update-catalogue-item-button [items]
   [:button.btn.btn-primary
    {:disabled (when (empty? items) :disabled)
     :on-click (fn []
-                (rf/dispatch [:rems.administration.change-catalogue-item-form/enter-page items])
-                (navigate! "/administration/catalogue-items/change-form"))}
-   (text :t.administration/change-form)])
+                (rf/dispatch [:rems.administration.update-catalogue-item/enter-page items])
+                (navigate! "/administration/catalogue-items/update-catalogue-item"))}
+   (text :t.administration/update-catalogue-item)])
 
 (defn- categories-button []
   [atoms/link {:class "btn btn-primary" :id :manage-categories}
@@ -196,7 +196,7 @@
             [atoms/commands
              [create-catalogue-item-button]
              [categories-button]
-             [change-form-button @(rf/subscribe [::selected-catalogue-items])]]
+             [update-catalogue-item-button @(rf/subscribe [::selected-catalogue-items])]]
             [status-flags/status-flags-intro #(do (rf/dispatch [::fetch-catalogue])
                                                   (rf/dispatch [:rems.table/set-selected-rows {:id ::catalogue} nil]))]]
            [administration/own-organization-selection]

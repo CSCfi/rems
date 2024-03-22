@@ -84,14 +84,12 @@
                    :archive "Arkiver"
                    :back "Tilbage"
                    :blacklist "Sortliste"
-                   :change-form "Rediger blanket"
                    :cancel "Afbryd"
                    :catalogue-item "Katalogpost"
                    :catalogue-items "Katalogposter"
                    :categories "Kategorier"
                    :category "Kategori"
                    :category-children "Underkategorier"
-                   :change "Rediger"
                    :comment "Kommentar"
                    :copy-as-new "Kopier som ny"
                    :create-catalogue-item "Ny katalogpost"
@@ -113,6 +111,8 @@
                    :display-order "Visningsrækkefølge"
                    :display-own-organization-only-explanation nil
                    :display-own-organization-only nil
+                   :do-not-change-form nil
+                   :do-not-change-workflow nil
                    :edit "Rediger"
                    :edit-catalogue-item "Rediger katalogpost"
                    :edit-category "Rediger kategori"
@@ -170,6 +170,7 @@
                    :title "Navn"
                    :type "Type"
                    :unarchive "Dearkiver"
+                   :update-catalogue-item nil
                    :user "Bruger"
                    :userid "Brugernavn"
                    :user-role "Brugerrolle"
@@ -321,8 +322,9 @@
              :show "Vis"
              :show-less "Vis mindre"
              :show-more "Vis mere"}
-  :change-form {:change-form-intro "Du er ved at ændre blanketten for nedenstående ressourcer. Ændringerne foretages en ad gangen, så hver gammel ressource tages væk og en ny kopi vil benytte den valgte blanket."
-                :form-selection "Blanket"}
+  :update-catalogue-item {:update-catalogue-item-intro "Du er ved at opdatera nedenstående ressourcer. Ændringerne foretages en ad gangen, så hver gammel ressource tages væk og en ny kopi vil benytte den valgte blanket og arbejdsgang."
+                          :form-selection "Blanket"
+                          :workflow-selection "Arbejdsgang"}
   :commands {:accept-invitation "Accepter invitation"
              :accept-licenses "Accepter brugsvilkår"
              :add-licenses "Tilføj brugsvilkår"
