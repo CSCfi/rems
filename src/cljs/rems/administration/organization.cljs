@@ -57,10 +57,10 @@
     [inline-info-field (text :t.administration/review-emails)] ; looks good when empty
     [:div.mb-2
      [:label (text :t.administration/review-emails)]
-     [:div.solid-group
-      (->> review-emails
-           (map display-localized-review-email)
-           (interpose [:br]))]]))
+     (into [:div.solid-group]
+           (->> review-emails
+                (map display-localized-review-email)
+                (interpose [:br])))]))
 
 (defn organization-view [organization language]
   [:div.spaced-vertically-3
