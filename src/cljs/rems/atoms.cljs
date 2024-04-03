@@ -80,18 +80,6 @@
   [autosize/textarea (merge {:min-rows 5}
                             (update attrs :class #(str/trim (str "form-control " %))))])
 
-(defn flash-message
-  "Displays a notification (aka flash) message.
-
-   :id      - HTML element ID
-   :status  - one of the alert types from Bootstrap i.e. :success, :info, :warning or :danger
-   :content - content to show inside the notification"
-  [{:keys [id status content]}]
-  (when status
-    [:div.flash-message.alert {:class (str "alert-" (name status))
-                               :id id}
-     content]))
-
 (defn checkbox
   "Displays a checkbox."
   [{:keys [id class value on-change]}]
@@ -404,15 +392,6 @@
        (component-info failure-symbol)
        (example "failure symbol"
                 [failure-symbol])
-
-       (component-info flash-message)
-       (example "flash-message with info"
-                [flash-message {:status :info
-                                :content "Hello world"}])
-
-       (example "flash-message with error"
-                [flash-message {:status :danger
-                                :content "You fail"}])
 
        (component-info readonly-checkbox)
        (example "readonly-checkbox unchecked"
