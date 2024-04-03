@@ -6,7 +6,7 @@
             [reagent.impl.util]
             [rems.common.util :refer [escape-element-id]]
             [rems.guide-util :refer [component-info example]]
-            [rems.text :refer [text localized localize-attachment]]
+            [rems.text :refer [text text-format localized localize-attachment]]
             [rems.util :refer [focus-when-collapse-opened]]))
 
 (defn external-link []
@@ -230,24 +230,17 @@
                          (str (localized (:name email))
                               " <" (:email email) ">")]))
 
-(defn set-document-title! [title]
-  (set! (.-title js/document)
-        (str title
-             (when-not (str/blank? title)
-               " - ")
-             (text :t.header/title))))
+(defn- set-document-title! [s]
+  (r/with-let [title (r/reaction ; changes when text and text-format change
+                      (if-not (str/blank? s)
+                        (text-format :t.label/dash s (text :t.header/title))
+                        (text :t.header/title)))]
+    (set! (.-title js/document) @title)))
 
-(defn document-title [_title & [{:keys [heading?] :or {heading? true}}]]
-  (let [on-update (fn [this]
-                    (let [[_ title] (r/argv this)]
-                      (set-document-title! title)))]
-    (r/create-class
-     {:component-did-mount on-update
-      :component-did-update on-update
-      :display-name "document-title"
-      :reagent-render (fn [title]
-                        (when heading?
-                          [:h1 title]))})))
+(defn document-title [title & [{:keys [heading?] :or {heading? true}}]]
+  (let [the-title @(r/track set-document-title! title)]
+    (when heading?
+      [:h1 the-title])))
 
 (defn logo []
   [:div {:class "logo"}
