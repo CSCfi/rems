@@ -118,10 +118,12 @@
          [:label.administration-field-label {:for "mondos-dropdown"} restriction-label]
          [dropdown/async-dropdown
           {:id "mondos-dropdown"
-           :item-key :id
-           :item-label #(text-format :t.label/dash (:id %) (:label %))
-           :multi? true
            :items mondos
+           :item-key :id
+           ;; due to async loading, item label cannot be set ahead of time, but label function also cannot use subscriptions.
+           ;; TODO: investigate solutions
+           :item-label #(str (:id %) " – " (:label %))
+           :multi? true
            :on-change #(let [new-value %]
                          (rf/dispatch [(:update-form context) update-path new-value])
                          (when on-change
@@ -167,16 +169,17 @@
      [textarea-autosize (:context opts)
       {:keys [(:id duo) :more-info]
        :label [:div (text :t.duo.fields/more-info)]}]
-     (for [info (:duo/more-infos opts)]
-       ^{:key (str (:id duo) (:resource/id info))}
-       [duo-more-info info]))
-   (for [restriction (:restrictions duo)]
-     ^{:key (key restriction)}
-     [duo-restriction-field {:duo/id (:id duo)
-                             :context (:context opts)
-                             :on-change (:on-change opts)
-                             :duo/restriction {:type (key restriction)
-                                               :values (val restriction)}}])
-   (into [:<>] (for [error (:duo/errors opts)]
-                 [duo-error error]))])
+     (into [:<>]
+           (for [info (:duo/more-infos opts)]
+             [duo-more-info info])))
+   (into [:<>]
+         (for [restriction (:restrictions duo)]
+           [duo-restriction-field {:duo/id (:id duo)
+                                   :context (:context opts)
+                                   :on-change (:on-change opts)
+                                   :duo/restriction {:type (key restriction)
+                                                     :values (val restriction)}}]))
+   (into [:<>]
+         (for [error (:duo/errors opts)]
+           [duo-error error]))])
 

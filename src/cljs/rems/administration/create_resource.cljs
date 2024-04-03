@@ -106,6 +106,12 @@
                        :label (text :t.create-resource/resid)
                        :placeholder (text :t.create-resource/resid-placeholder)}])
 
+(defn- localize-org-short [x]
+  (when-let [org-short (get-in x [:organization :organization/short-name])]
+    (text-format :t.label/default
+                 (text :t.administration/org)
+                 (localized org-short))))
+
 (defn- resource-licenses-field []
   (let [licenses @(rf/subscribe [::licenses])
         selected-licenses @(rf/subscribe [::selected-licenses])
@@ -114,12 +120,13 @@
      [:label.administration-field-label {:for licenses-dropdown-id} (text :t.create-resource/licenses-selection)]
      [dropdown/dropdown
       {:id licenses-dropdown-id
-       :items licenses
+       :items (vec (for [license licenses
+                         :let [title (get-localized-title license language)
+                               org-short (localize-org-short license)]]
+                     (assoc license
+                            ::label (text-format :t.label/default title org-short))))
        :item-key :id
-       :item-label #(str (get-localized-title % language)
-                         " (" (text :t.administration/org) ": "
-                         (get-in % [:organization :organization/short-name language])
-                         ")")
+       :item-label ::label
        :item-selected? #(contains? (set selected-licenses) %)
        :multi? true
        :on-change #(rf/dispatch [::set-licenses %])}]]))
@@ -130,9 +137,13 @@
      [:label.administration-field-label {:for "duos-dropdown"} (text :t.duo/title)]
      [dropdown/dropdown
       {:id "duos-dropdown"
-       :items @(rf/subscribe [::duo-codes])
+       :items (vec (for [duo @(rf/subscribe [::duo-codes])
+                         :let [shorthand (:shorthand duo)
+                               label (localized (:label duo))]]
+                     (assoc duo
+                            ::label (text-format :t.label/dash shorthand label))))
        :item-key :id
-       :item-label #(text-format :t.label/dash (:shorthand %) (localized (:label %)))
+       :item-label ::label
        :item-selected? #(some? (get selected-duos (:id %)))
        :multi? true
        :on-change #(rf/dispatch [::set-duo-codes %])}]
