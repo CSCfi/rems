@@ -64,6 +64,8 @@
    (str "/application?items=" (:id item))
    (text :t.cart/apply)])
 
+;; NB: does not need to be a raw subscription, because components that use localization functions are rendered into DOM
+;; and their lifecycle is managed. creating subscriptions inside subscription function will cause problems however.
 (rf/reg-sub
  ::catalogue-table-rows
  (fn [_ _]
@@ -73,19 +75,19 @@
     (rf/subscribe [:rems.cart/cart])
     (rf/subscribe [:rems.config/config])])
  (fn [[catalogue language logged-in? cart config] _]
-   (let [cart-item-ids (set (map :id cart))]
-     (map (fn [item]
-            {:key (:id item)
-             :name {:value (get-localized-title item language)}
-             :commands {:display-value [:div.commands.flex-nowrap.justify-content-end
-                                        [catalogue-item-more-info item language config]
-                                        (when logged-in?
-                                          (if (:enable-cart config)
-                                            (if (contains? cart-item-ids (:id item))
-                                              [cart/remove-from-cart-button item language]
-                                              [cart/add-to-cart-button item language])
-                                            (apply-button item language)))]}})
-          catalogue))))
+   (let [cart-item-ids (set (mapv :id cart))]
+     (mapv (fn [item]
+             {:key (:id item)
+              :name {:value (get-localized-title item language)}
+              :commands {:display-value [:div.commands.flex-nowrap.justify-content-end
+                                         [catalogue-item-more-info item language config]
+                                         (when logged-in?
+                                           (if (:enable-cart config)
+                                             (if (contains? cart-item-ids (:id item))
+                                               [cart/remove-from-cart-button item language]
+                                               [cart/add-to-cart-button item language])
+                                             (apply-button item language)))]}})
+           catalogue))))
 
 (defn draft-application-list []
   (let [applications ::draft-applications]

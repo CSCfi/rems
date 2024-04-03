@@ -76,27 +76,29 @@
                   (all-items-have-the-form-already? items form))}
    (text :t.administration/change)])
 
+;; NB: does not need to be a raw subscription, because components that use localization functions are rendered into DOM
+;; and their lifecycle is managed. creating subscriptions inside subscription function will cause problems however.
 (rf/reg-sub
  ::catalogue-items-table-rows
  (fn [_ _]
    [(rf/subscribe [::catalogue-items])
     (rf/subscribe [:language])])
  (fn [[catalogue language] _]
-   (map (fn [item]
-          {:key (:id item)
-           :name (let [title (get-localized-title item language)]
-                   {:value title
-                    :display-value [atoms/link nil
-                                    (str "/administration/catalogue-items/" (:id item))
-                                    title]})
-           :form (let [value (:form-name item)]
-                   {:value value
-                    :display-value (if value
-                                     [atoms/link nil
-                                      (str "/administration/forms/" (:formid item))
-                                      value]
-                                     [text :t.administration/no-form])})})
-        catalogue)))
+   (mapv (fn [item]
+           {:key (:id item)
+            :name (let [title (get-localized-title item language)]
+                    {:value title
+                     :display-value [atoms/link nil
+                                     (str "/administration/catalogue-items/" (:id item))
+                                     title]})
+            :form (let [value (:form-name item)]
+                    {:value value
+                     :display-value (if value
+                                      [atoms/link nil
+                                       (str "/administration/forms/" (:formid item))
+                                       value]
+                                      [text :t.administration/no-form])})})
+         catalogue)))
 
 (defn catalogue-items-table []
   [:div
