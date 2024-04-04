@@ -230,14 +230,6 @@
     (when heading?
       [:h1 the-title])))
 
-(defn logo []
-  [:div {:class "logo"}
-   [:div.img]])
-
-(defn logo-navigation []
-  [:div {:class "navbar-brand logo-menu"}
-   [:div.img]])
-
 (defn expander
   "Displays an expandable block of content with animated chevron.
 

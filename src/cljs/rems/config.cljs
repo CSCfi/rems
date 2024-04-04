@@ -27,7 +27,7 @@
 
 (defn dev-environment? []
   (let [config @(rf/subscribe [::config])]
-    (boolean (:dev config))))
+    (true? (:dev config))))
 
 (defn ^:export set-config! [js-config]
   (when (dev-environment?)
