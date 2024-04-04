@@ -29,7 +29,7 @@
     [:div.col-md-6.color-title hex]]])
 
 (defn color-boxes []
-  (let [theme @(rf/subscribe [:theme])]
+  (let [theme @(rf/subscribe [:rems.theme/theme])]
     [:div.row
      [color-box "color-1" (:color1 theme)]
      [color-box "color-2" (:color2 theme)]
