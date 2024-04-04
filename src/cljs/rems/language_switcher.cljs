@@ -21,9 +21,7 @@
                 [:form.inline
                  [:button {:type :button
                            :class (lang-link-classes current-language language)
-                           :on-click (fn []
-                                       (rf/dispatch [:rems.user-settings/set-language language])
-                                       (rf/dispatch [:rems.spa/user-triggered-navigation]))
+                           :on-click #(rf/dispatch [:rems.user-settings/set-language language])
                            :aria-label (text-format :t.navigation/change-language lang-str)
                            :data-toggle "collapse"
                            :data-target ".navbar-collapse.show"}
