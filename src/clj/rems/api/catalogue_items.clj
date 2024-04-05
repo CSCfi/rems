@@ -59,8 +59,8 @@
    (s/optional-key :errors) [s/Any]})
 
 (s/defschema UpdateCatalogueItemCommand
-  {:form (describe (s/maybe s/Int) "new form id")
-   :workflow (describe (s/maybe s/Int) "new workflow id")})
+  {(s/optional-key :form) (describe (s/maybe s/Int) "new form id")
+   (s/optional-key :workflow) (describe (s/maybe s/Int) "new workflow id")})
 
 (s/defschema UpdateCatalogueItemResponse
   {:success s/Bool
@@ -90,7 +90,7 @@
                                                      :archived archived}))))
 
     (POST "/:item-id/change-form" request
-      :summary "Change catalogue item form. Creates a copy and ends the old."
+      :summary "Change catalogue item form. Creates a copy and ends the old. DEPRECATED, will disappear, use /update instead"
       :roles +admin-write-roles+
       :path-params [item-id :- (describe s/Int "catalogue item")]
       :body [command ChangeFormCommand]
@@ -110,8 +110,11 @@
                   404 {:schema s/Any :description "Not found"}}
       (extended-logging request)
       (if-let [it (catalogue/get-localized-catalogue-item item-id)]
-        (ok (catalogue/update! it {:form-id (:form command)
-                                   :workflow-id (:workflow command)}))
+        (ok (catalogue/update! it
+                               (merge (when (contains? command :form)
+                                        {:form-id (:form command)})
+                                      (when (contains? command :workflow)
+                                        {:workflow-id (:workflow command)}))))
         (not-found-json-response)))
 
     (GET "/:item-id" []

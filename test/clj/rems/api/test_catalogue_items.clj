@@ -278,7 +278,7 @@
                handler
                (read-body))))))
 
-(deftest change-form-test
+(deftest change-form-test ; XXX: deprecated
   (let [resource-id (test-helpers/create-resource! {:organization {:organization/id "organization1"}})
         old-form-id (test-helpers/create-form! {:form/internal-name "old form"
                                                 :organization {:organization/id "organization1"}})
@@ -374,6 +374,181 @@
       (let [response (-> (request :post (str "/api/catalogue-items/" old-catalogue-item-id "/change-form"))
                          (authenticate +test-api-key+ "organization-owner2")
                          (json-body {:form new-form-id})
+                         handler)]
+        (is (response-is-forbidden? response))
+        (is (= "no access to organization \"organization1\"" (read-body response)))))))
+
+(deftest update-catalogue-item-test
+  (let [resource-id (test-helpers/create-resource! {:organization {:organization/id "organization1"}})
+        old-form-id (test-helpers/create-form! {:form/internal-name "old form"
+                                                :organization {:organization/id "organization1"}})
+        new-form-id (test-helpers/create-form! {:form/internal-name "new form"
+                                                :organization {:organization/id "organization1"}})
+
+        old-workflow-id (test-helpers/create-workflow! {:title "old workflow"
+                                                        :organization {:organization/id "organization1"}})
+        new-workflow-id (test-helpers/create-workflow! {:title "new workflow"
+                                                        :organization {:organization/id "organization1"}})
+        category {:category/id (test-helpers/create-category! {})}
+        old-catalogue-item-id (test-helpers/create-catalogue-item!
+                               {:organization {:organization/id "organization1"}
+                                :title {:en "change-form-test catalogue item en"
+                                        :fi "change-form-test catalogue item fi"}
+                                :resource-id resource-id
+                                :form-id old-form-id
+                                :wfid old-workflow-id
+                                :categories [category]})]
+
+    (testing "after update a new catalogue item is created"
+      (let [new-catalogue-item-id (-> (request :post (str "/api/catalogue-items/" old-catalogue-item-id "/update"))
+                                      (authenticate +test-api-key+ "owner")
+                                      (json-body {:form new-form-id
+                                                  :workflow new-workflow-id})
+                                      handler
+                                      read-ok-body
+                                      :catalogue-item-id)
+            new-catalogue-item (-> (request :get (str "/api/catalogue-items/" new-catalogue-item-id))
+                                   (authenticate +test-api-key+ "owner")
+                                   handler
+                                   read-ok-body)
+            old-catalogue-item (-> (request :get (str "/api/catalogue-items/" old-catalogue-item-id))
+                                   (authenticate +test-api-key+ "owner")
+                                   handler
+                                   read-ok-body)]
+        (testing "the new item"
+          (is (:enabled new-catalogue-item))
+          (is (= new-form-id (:formid new-catalogue-item)) "has the new changed form id")
+          (is (= "new form" (:form-name new-catalogue-item)) "has the new changed form name")
+          (is (= new-workflow-id (:wfid new-catalogue-item)) "has the new changed workflow id")
+          (is (= "new workflow" (:workflow-name new-catalogue-item)) "has the new changed workflow name"))
+
+        (testing "the old item"
+          (is (:archived old-catalogue-item))
+          (is (not (:enabled old-catalogue-item))))
+
+        (testing "the rest is the same"
+          (let [same-keys [:resid :resource-id :resource-name :categories]]
+            (is (= (select-keys old-catalogue-item same-keys)
+                   (select-keys new-catalogue-item same-keys)))))
+
+        (testing "also localizations are transfered"
+          (doseq [langcode (into (keys (:localizations old-catalogue-item))
+                                 (keys (:localizations new-catalogue-item)))]
+            (is (= (dissoc (get-in old-catalogue-item [:localizations langcode]) :id)
+                   (dissoc (get-in new-catalogue-item [:localizations langcode]) :id)))))
+
+        (testing "and if we are done already, we get the same item"
+          (let [new-catalogue-item-id2 (-> (request :post (str "/api/catalogue-items/" new-catalogue-item-id "/update"))
+                                           (authenticate +test-api-key+ "owner")
+                                           (json-body {:form new-form-id
+                                                       :workflow new-workflow-id})
+                                           handler
+                                           read-ok-body
+                                           :catalogue-item-id)]
+            (is (= new-catalogue-item-id new-catalogue-item-id2))))))
+
+    (testing "when the form is updated a new catalogue item is created"
+      (let [new-catalogue-item-id (-> (request :post (str "/api/catalogue-items/" old-catalogue-item-id "/update"))
+                                      (authenticate +test-api-key+ "owner")
+                                      (json-body {:form new-form-id})
+                                      handler
+                                      read-ok-body
+                                      :catalogue-item-id)
+            new-catalogue-item (-> (request :get (str "/api/catalogue-items/" new-catalogue-item-id))
+                                   (authenticate +test-api-key+ "owner")
+                                   handler
+                                   read-ok-body)
+            old-catalogue-item (-> (request :get (str "/api/catalogue-items/" old-catalogue-item-id))
+                                   (authenticate +test-api-key+ "owner")
+                                   handler
+                                   read-ok-body)]
+        (testing "the new item"
+          (is (= new-form-id (:formid new-catalogue-item)) "has the new changed form id")
+          (is (= "new form" (:form-name new-catalogue-item)) "has the new changed form name"))
+
+        (testing "the rest is the same"
+          (let [same-keys [:wfid :workflow-name :resid :resource-id :resource-name :categories]]
+            (is (= (select-keys old-catalogue-item same-keys)
+                   (select-keys new-catalogue-item same-keys)))))))
+
+    (testing "when the workflow is updated a new catalogue item is created"
+      (let [new-catalogue-item-id (-> (request :post (str "/api/catalogue-items/" old-catalogue-item-id "/update"))
+                                      (authenticate +test-api-key+ "owner")
+                                      (json-body {:workflow new-workflow-id})
+                                      handler
+                                      read-ok-body
+                                      :catalogue-item-id)
+            new-catalogue-item (-> (request :get (str "/api/catalogue-items/" new-catalogue-item-id))
+                                   (authenticate +test-api-key+ "owner")
+                                   handler
+                                   read-ok-body)
+            old-catalogue-item (-> (request :get (str "/api/catalogue-items/" old-catalogue-item-id))
+                                   (authenticate +test-api-key+ "owner")
+                                   handler
+                                   read-ok-body)]
+        (testing "the new item"
+          (is (= new-workflow-id (:wfid new-catalogue-item)) "has the new changed workflow id")
+          (is (= "new workflow" (:workflow-name new-catalogue-item)) "has the new changed workflow name"))
+
+        (testing "the rest is the same"
+          (let [same-keys [:formid :form-name :resid :resource-id :resource-name :categories]]
+            (is (= (select-keys old-catalogue-item same-keys)
+                   (select-keys new-catalogue-item same-keys)))))))
+
+    (testing "can update with items that are in another organization"
+      (let [form-id (test-helpers/create-form! {:form/internal-name "wrong organization"
+                                                :organization {:organization/id "organization2"}})
+            workflow-id (test-helpers/create-workflow! {:title "wrong organization"
+                                                        :organization {:organization/id "organization2"}})
+            response (-> (request :post (str "/api/catalogue-items/" old-catalogue-item-id "/update"))
+                         (authenticate +test-api-key+ "owner")
+                         (json-body {:form form-id
+                                     :workflow workflow-id})
+                         handler
+                         read-ok-body)]
+        (is (true? (:success response)))))
+
+    (testing "can update to nil form"
+      (let [response (api-call :post (str "/api/catalogue-items/" old-catalogue-item-id "/update")
+                               {:form nil}
+                               +test-api-key+ "owner")
+            new-catalogue-item-id (:catalogue-item-id response)]
+        (is (true? (:success response)))
+        (is (= {:id new-catalogue-item-id
+                :resource-id resource-id
+                :formid nil
+                :form-name nil}
+               (-> (api-call :get (str "/api/catalogue-items/" new-catalogue-item-id) nil
+                             +test-api-key+ "owner")
+                   (select-keys [:formid :form-name :id :resource-id]))))
+        (testing "and back"
+          (let [response (api-call :post (str "/api/catalogue-items/" new-catalogue-item-id "/update")
+                                   {:form new-form-id}
+                                   +test-api-key+ "owner")
+                new-new-catalogue-item-id (:catalogue-item-id response)]
+            (is (true? (:success response)))
+            (is (= {:id new-new-catalogue-item-id
+                    :resource-id resource-id
+                    :formid new-form-id
+                    :form-name "new form"}
+                   (-> (api-call :get (str "/api/catalogue-items/" new-new-catalogue-item-id) nil
+                                 +test-api-key+ "owner")
+                       (select-keys [:formid :form-name :id :resource-id]))))))))
+
+    (testing "can update as organization owner"
+      (is (true? (-> (request :post (str "/api/catalogue-items/" old-catalogue-item-id "/update"))
+                     (authenticate +test-api-key+ "organization-owner1")
+                     (json-body {:form new-form-id
+                                 :workflow new-workflow-id})
+                     handler
+                     read-ok-body
+                     :success))))
+
+    (testing "can't update as owner of different organization"
+      (let [response (-> (request :post (str "/api/catalogue-items/" old-catalogue-item-id "/update"))
+                         (authenticate +test-api-key+ "organization-owner2")
+                         (json-body {:form new-form-id
+                                     :workflow new-workflow-id})
                          handler)]
         (is (response-is-forbidden? response))
         (is (= "no access to organization \"organization1\"" (read-body response)))))))
