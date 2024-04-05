@@ -1675,6 +1675,62 @@
                 "Active" true}
                (dissoc (slurp-fields :catalogue-item) "Start")))))))
 
+(deftest test-update-catalogue-item
+  (btu/with-postmortem
+    (btu/context-assoc! :organization-id (str "organization " (btu/get-seed)))
+    (btu/context-assoc! :organization-name (str "Organization " (btu/get-seed)))
+    (btu/context-assoc! :organization (test-helpers/create-organization! {:organization/id (btu/context-getx :organization-id)
+                                                                          :organization/short-name {:en "ORGen" :fi "ORGfi" :sv "ORGsv"}
+                                                                          :organization/name {:en (str (btu/context-getx :organization-name) " en")
+                                                                                              :fi (str (btu/context-getx :organization-name) " fi")
+                                                                                              :sv (str (btu/context-getx :organization-name) " sv")}}))
+    (btu/context-assoc! :workflow (test-helpers/create-workflow! {:title "test-update-catalogue-item workflow"
+                                                                  :type :workflow/default
+                                                                  :organization {:organization/id (btu/context-getx :organization-id)}
+                                                                  :handlers ["handler"]}))
+    (btu/context-assoc! :resource (test-helpers/create-resource! {:resource-ext-id "test-update-catalogue-item resource"
+                                                                  :organization {:organization/id (btu/context-getx :organization-id)}}))
+    (btu/context-assoc! :form (test-helpers/create-form! {:form/internal-name "test-update-catalogue-item form"
+                                                          :form/external-title {:en "Test Update Catalogue Item Form EN"
+                                                                                :fi "Test Update Catalogue Item Form FI"
+                                                                                :sv "Test Update Catalogue Item Form SV"}
+                                                          :form/fields []
+                                                          :form/organization {:organization/id (btu/context-getx :organization-id)}}))
+    (btu/context-assoc! :catalogue-item (test-helpers/create-catalogue-item! {:title {:en "test-update-catalogue-item EN"
+                                                                                      :fi "test-update-catalogue-item FI"
+                                                                                      :sv "test-update-catalogue-item SV"}
+                                                                              :resource-id (btu/context-getx :resource)
+                                                                              :form-id (btu/context-getx :form)
+                                                                              :workflow-id (btu/context-getx :workflow)
+                                                                              :organization {:organization/id (btu/context-getx :organization-id)}}))
+    (login-as "owner")
+    (go-to-admin "Catalogue items")
+    (btu/wait-page-loaded)
+    (testing "update is disabled without selection"
+      (is (btu/eventually-visible? {:css "td.name" :fn/has-text "test-update-catalogue-item EN"}))
+      (is (btu/disabled? {:tag :button :fn/text "Update catalogue item"})))
+
+    (testing "select to go to update"
+      (btu/scroll-and-click {:css "td.name" :fn/has-text "test-update-catalogue-item EN"})
+      (is (btu/enabled? {:tag :button :fn/text "Update catalogue item"}))
+      (btu/scroll-and-click {:fn/text "Update catalogue item"})
+      (is (btu/eventually-visible? {:tag :h1 :fn/text "Update catalogue item"})))
+
+    (testing "initial state"
+      (is (btu/disabled? {:tag :button :fn/text "Update catalogue item"})))
+
+    (testing "can set form to empty"
+      (select-option "Form" "No form")
+      (is (btu/enabled? {:tag :button :fn/text "Update catalogue item"}))
+      (btu/scroll-and-click {:tag :button :fn/text "Update catalogue item"})
+      (is (btu/eventually-visible? {:css ".alert-success"}))
+      (is (= [{"name" "test-update-catalogue-item EN"
+               "form" "No form"
+               "workflow" "test-update-catalogue-item workflow"}]
+             (slurp-rows :catalogue)))
+      (is (btu/disabled? {:tag :button :fn/text "Update catalogue item"})
+          "nothing to do anymore"))))
+
 (defn create-context-field!
   "Utility function that keeps track of created form fields in
    context object. Stores form field in stack with `id`, that can

@@ -398,6 +398,7 @@
 (def has-class? (wrap-etaoin et/has-class?))
 (def has-class-el? (wrap-etaoin et/has-class-el?))
 (def disabled? (wrap-etaoin et/disabled?))
+(def enabled? (wrap-etaoin et/enabled?))
 (def clear (wrap-etaoin et/clear))
 (def clear-el (wrap-etaoin et/clear-el))
 (def wait-has-alert (wrap-etaoin et/wait-has-alert))
