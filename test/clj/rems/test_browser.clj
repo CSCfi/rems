@@ -1696,29 +1696,32 @@
     (go-to-admin "Catalogue items")
     (btu/wait-page-loaded)
     (testing "update is disabled without selection"
+      (btu/screenshot "test-update-catalogue-item-1")
       (is (btu/eventually-visible? {:css "td.name" :fn/has-text "test-update-catalogue-item EN"}))
-      (is (btu/disabled? {:tag :button :fn/text "Update catalogue item"})))
+      (btu/wait-disabled {:tag :button :fn/text "Update catalogue item"}))
 
     (testing "select to go to update"
       (btu/scroll-and-click {:css "td.name" :fn/has-text "test-update-catalogue-item EN"})
-      (is (btu/enabled? {:tag :button :fn/text "Update catalogue item"}))
+      (btu/wait-enabled {:tag :button :fn/text "Update catalogue item"})
       (btu/scroll-and-click {:fn/text "Update catalogue item"})
       (is (btu/eventually-visible? {:tag :h1 :fn/text "Update catalogue item"})))
 
     (testing "initial state"
-      (is (btu/disabled? {:tag :button :fn/text "Update catalogue item"})))
+      (btu/screenshot "test-update-catalogue-item-initial-state")
+      (btu/wait-disabled {:tag :button :fn/text "Update catalogue item"}))
 
     (testing "can set form to empty"
       (select-option "Form" "No form")
-      (is (btu/enabled? {:tag :button :fn/text "Update catalogue item"}))
+      (btu/wait-enabled {:tag :button :fn/text "Update catalogue item"})
+      (btu/screenshot "test-update-catalogue-item-before-update")
       (btu/scroll-and-click {:tag :button :fn/text "Update catalogue item"})
       (is (btu/eventually-visible? {:css ".alert-success"}))
       (is (= [{"name" "test-update-catalogue-item EN"
                "form" "No form"
                "workflow" "test-update-catalogue-item workflow"}]
              (slurp-rows :catalogue)))
-      (is (btu/disabled? {:tag :button :fn/text "Update catalogue item"})
-          "nothing to do anymore"))))
+      (btu/screenshot "test-update-catalogue-item-done")
+      (btu/wait-disabled {:tag :button :fn/text "Update catalogue item"}))))
 
 (defn create-context-field!
   "Utility function that keeps track of created form fields in
