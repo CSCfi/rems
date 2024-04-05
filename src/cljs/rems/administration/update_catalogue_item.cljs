@@ -18,28 +18,44 @@
     ::fetch-forms nil
     ::fetch-workflows nil}))
 
+;;; Form selection
+
 (defn- fetch-forms []
   (fetch "/api/forms"
          {:handler #(rf/dispatch [::fetch-forms-result %])
           :error-handler (flash-message/default-error-handler :top "Fetch forms")}))
+
+(rf/reg-fx ::fetch-forms fetch-forms)
+(rf/reg-event-db ::fetch-forms-result (fn [db [_ forms]] (assoc db ::forms forms)))
+(rf/reg-sub ::forms (fn [db _] (::forms db)))
+(rf/reg-sub ::forms-items
+            :<- [::forms]
+            (fn [forms]
+              (concat [{:form/id :do-not-change-form
+                        :form/internal-name (text :t.administration/do-not-change-form)}
+                       {:form/id nil
+                        :form/internal-name (text :t.administration/no-form)}]
+                      forms)))
+
+;;; Workflow selection
 
 (defn- fetch-workflows []
   (fetch "/api/workflows"
          {:handler #(rf/dispatch [::fetch-workflows-result %])
           :error-handler (flash-message/default-error-handler :top "Fetch workflows")}))
 
-(rf/reg-fx ::fetch-forms fetch-forms)
 (rf/reg-fx ::fetch-workflows fetch-workflows)
-(rf/reg-event-db ::fetch-forms-result (fn [db [_ forms]] (assoc db ::forms forms)))
-(rf/reg-sub ::forms (fn [db _] (::forms db)))
 (rf/reg-event-db ::fetch-workflows-result (fn [db [_ workflows]] (assoc db ::workflows workflows)))
 (rf/reg-sub ::workflows (fn [db _] (::workflows db)))
+(rf/reg-sub ::workflows-items
+            :<- [::workflows]
+            (fn [workflows]
+              (concat [{:id :do-not-change-workflow
+                        :title (text :t.administration/do-not-change-workflow)}]
+                      workflows)))
 
+;;; Catalogue items
 (rf/reg-sub ::catalogue-items (fn [db _] (::catalogue-items db)))
-(rf/reg-sub ::form (fn [db _] (::form db)))
-(rf/reg-event-db ::set-form (fn [db [_ form]] (assoc-in db [::form] form)))
-(rf/reg-sub ::workflow (fn [db _] (::workflow db)))
-(rf/reg-event-db ::set-workflow (fn [db [_ workflow]] (assoc-in db [::workflow] workflow)))
 
 (rf/reg-event-db
  ::replace-catalogue-item
@@ -47,63 +63,95 @@
    (update db ::catalogue-items (fn [items]
                                   (for [item items]
                                     (if (= (:id item) old-catalogue-item-id)
-                                      (assoc item
+                                      (assoc item ; update the item with new data
                                              :id new-catalogue-item-id
-                                             :formid (:form/id new-form) :form-name (:form/internal-name new-form)
-                                             :wfid (:wfid new-workflow)
+                                             :formid (:form/id new-form)
+                                             :form-name (:form/internal-name new-form)
+                                             :wfid (:id new-workflow)
                                              :workflow-name (:title new-workflow))
                                       item))))))
 
 
 (rf/reg-event-fx
  ::update-catalogue-item
- (fn [_ [_ {:keys [catalogue-item-id form workflow] :as params} on-success]]
-   (post! (str "/api/catalogue-items/" catalogue-item-id "/update")
-          {:params {:form (:form/id form)
-                    :workflow (:id workflow)}
-           :handler (fn [result]
-                      (rf/dispatch [::replace-catalogue-item {:old-catalogue-item-id catalogue-item-id
-                                                              :new-catalogue-item-id (:catalogue-item-id result)
-                                                              :new-form form
-                                                              :new-workflow workflow}])
-                      (rf/dispatch [:rems.table/toggle-row-selection {:id :rems.administration.catalogue-items/catalogue} catalogue-item-id])
-                      (rf/dispatch [:rems.table/toggle-row-selection {:id :rems.administration.catalogue-items/catalogue} (:catalogue-item-id result)])
-                      (on-success))
-           :error-handler (flash-message/default-error-handler :top [text :t.administration/update-catalogue-item])})
+ (fn [_ [_ {:keys [catalogue-item new-form new-workflow old-form old-workflow]} on-success]]
+   (let [old-catalogue-item-id (:id catalogue-item)]
+     (post! (str "/api/catalogue-items/" old-catalogue-item-id "/update")
+            {:params (merge (when-not (= :do-not-change-form (:form/id new-form))
+                              {:form (:form/id new-form)})
+                            (when-not (= :do-not-change-workflow (:id new-workflow))
+                              {:workflow (:id new-workflow)}))
+             :handler (fn [result]
+                        (let [new-catalogue-item-id (:catalogue-item-id result)]
+                          (when-not (= old-catalogue-item-id new-catalogue-item-id)
+                            (rf/dispatch [::replace-catalogue-item {:old-catalogue-item-id old-catalogue-item-id
+                                                                    :new-catalogue-item-id new-catalogue-item-id
+                                                                    :new-form (if (= :do-not-change-form (:form/id new-form)) old-form new-form)
+                                                                    :new-workflow (if (= :do-not-change-workflow (:id new-workflow)) old-workflow new-workflow)}])
+                            (rf/dispatch [:rems.table/toggle-row-selection {:id :rems.administration.catalogue-items/catalogue} old-catalogue-item-id])
+                            (rf/dispatch [:rems.table/toggle-row-selection {:id :rems.administration.catalogue-items/catalogue} new-catalogue-item-id]))
+                          (on-success)))
+             :error-handler (flash-message/default-error-handler :top [text :t.administration/update-catalogue-item])}))
    {}))
+
+
+;;; Chosen update parameters
+
+(rf/reg-sub ::form (fn [db _] (::form db)))
+(rf/reg-event-db ::set-form (fn [db [_ form]] (assoc-in db [::form] form)))
+(rf/reg-sub ::workflow (fn [db _] (::workflow db)))
+(rf/reg-event-db ::set-workflow (fn [db [_ workflow]] (assoc-in db [::workflow] workflow)))
+
+
+
+
+
+
+;;; Logic
 
 (defn- item-update-loop [items form workflow]
   (let [item (first items)]
     (cond (empty? items)
           (flash-message/show-default-success! :top [text :t.administration/update-catalogue-item])
 
-          (or (not= (:formid item) (:form/id form))
+          (or (not= :do-not-change-form (:form/id form))
+              (not= :do-not-change-workflow (:id workflow))
+              (not= (:formid item) (:form/id form))
               (not= (:wfid item) (:id workflow)))
           (rf/dispatch [::update-catalogue-item
-                        {:catalogue-item-id (:id item)
-                         :form form
-                         :workflow workflow}
+                        {:catalogue-item item
+                         :new-form form
+                         :new-workflow workflow
+                         :old-form {:form/id (:formid item)
+                                    :form/internal-name (:form-name item)}
+                         :old-workflow {:id (:wfid item)
+                                        :title (:workflow-name item)}}
                         #(item-update-loop (rest items) form workflow)])
 
           :else (recur (rest items) form workflow))))
 
 (defn- all-items-have-the-form-and-workflow-already? [items form workflow]
-  (every? #(and (= (:form/id form) (:formid %))
-                (= (:id workflow) (:wfid %)))
+  (every? (fn [item]
+            ;; TODO: unify the different attributes (:formid -> :form/id etc.)
+            (and (or (= :do-not-change-form (:form/id form))
+                     (= (:form/id form) (:formid item)))
+                 (or (= :do-not-change-workflow (:id workflow))
+                     (= (:id workflow) (:wfid item)))))
           items))
 
-(defn- no-change-selected? [form workflow]
-  (and (= (:form/id form) :do-not-change-form)
-       (= (:id workflow) :do-not-change-workflow)))
-
 (defn- update-catalogue-item-button [items {:keys [form workflow]}]
-  [:button.btn.btn-primary
-   {:type :button
-    :on-click (fn [] (item-update-loop items form workflow))
-    :disabled (or (empty? items)
-                  (all-items-have-the-form-and-workflow-already? items form workflow)
-                  (no-change-selected? form workflow))}
-   (text :t.administration/update-catalogue-item)])
+[:button.btn.btn-primary
+ {:type :button
+  :on-click (fn [] (item-update-loop items form workflow))
+  :disabled (or (empty? items)
+                (all-items-have-the-form-and-workflow-already? items form workflow))}
+ (text :t.administration/update-catalogue-item)])
+
+
+
+
+
+;;; Input and result table
 
 (rf/reg-sub
  ::catalogue-items-table-rows
@@ -150,11 +198,7 @@
     [:div.form-group
      [:label {:for :form-dropdown} (text :t.update-catalogue-item/form-selection)]
      [dropdown/dropdown {:id :form-dropdown
-                         :items (concat [{:form/id :do-not-change-form
-                                          :form/internal-name (text :t.administration/do-not-change-form)}
-                                         {:form/id nil
-                                          :form/internal-name (text :t.administration/no-form)}]
-                                        @(rf/subscribe [::forms]))
+                         :items @(rf/subscribe [::forms-items])
                          :item-key :form/id
                          :item-label :form/internal-name
                          :item-selected? #(= (:form/id %) (:form/id form))
@@ -166,9 +210,7 @@
     [:div.form-group
      [:label {:for :workflow-dropdown} (text :t.update-catalogue-item/workflow-selection)]
      [dropdown/dropdown {:id :workflow-dropdown
-                         :items (concat [{:id :do-not-change-workflow
-                                          :title (text :t.administration/do-not-change-workflow)}]
-                                        @(rf/subscribe [::workflows]))
+                         :items @(rf/subscribe [::workflows-items])
                          :item-key :id
                          :item-label :title
                          :item-selected? #(= (:id %) (:id workflow))
