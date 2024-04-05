@@ -187,13 +187,20 @@
        (into {})
        (merge (slurp-localized-fields selector))))
 
-(defn slurp-table [& selectors]
-  (for [row (btu/query-all (vec (concat selectors [{:css "tr"}])))]
-    (->> (for [td (btu/children row {:css "td"})
+(defn slurp-tds
+  "Slurp the td-elements from elements found with `selectors` into a map."
+  [& selectors]
+  (for [row-el (btu/query-all (vec selectors))]
+    (->> (for [td (btu/children row-el {:css "td"})
                :let [k (str/trim (btu/get-element-attr-el td "class"))
                      v (btu/first-value-of-el td)]]
            [k v])
          (into {}))))
+
+(defn slurp-table
+  "Slurp the table element found with `selectors` into a map."
+  [& selectors]
+  (slurp-tds (vec (concat selectors [{:css "tr"}]))))
 
 (defn slurp-rows
   "Like `slurp-table` but assumes a header row needs to be skipped."
