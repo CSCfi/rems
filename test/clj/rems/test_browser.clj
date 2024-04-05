@@ -288,9 +288,13 @@
   (let [id (get-form-field-id label)]
     (set-date id date)))
 
+(defn clear-option [label]
+  (let [id (btu/get-element-attr {:tag :label :fn/has-text label} :for)]
+    (btu/clear {:id id})))
+
 (defn select-option [label option]
   (let [id (btu/get-element-attr {:tag :label :fn/has-text label} :for)]
-    (btu/wait-visible {:id id})
+    (btu/wait-enabled {:id id})
     (btu/fill {:id id} option etaoin.keys/enter))) ; XXX: react-select does not accept new value without pressing enter
 
 (defn remove-option [label option & [opts]]
