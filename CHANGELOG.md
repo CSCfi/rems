@@ -8,6 +8,9 @@ have notable changes.
 
 Changes since v2.36
 
+### Additions
+- The "Change Form" function in administration has been expanded to be able to change both forms and workflows. From now on it is called "Update catalogue item". The old `change-form` API still exists but has been deprecated. (#3271)
+
 ## v2.36 "Laivapojankuja" 2024-03-13
 
 ### Additions
