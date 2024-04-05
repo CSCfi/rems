@@ -1677,32 +1677,21 @@
 
 (deftest test-update-catalogue-item
   (btu/with-postmortem
-    (btu/context-assoc! :organization-id (str "organization " (btu/get-seed)))
-    (btu/context-assoc! :organization-name (str "Organization " (btu/get-seed)))
-    (btu/context-assoc! :organization (test-helpers/create-organization! {:organization/id (btu/context-getx :organization-id)
-                                                                          :organization/short-name {:en "ORGen" :fi "ORGfi" :sv "ORGsv"}
-                                                                          :organization/name {:en (str (btu/context-getx :organization-name) " en")
-                                                                                              :fi (str (btu/context-getx :organization-name) " fi")
-                                                                                              :sv (str (btu/context-getx :organization-name) " sv")}}))
     (btu/context-assoc! :workflow (test-helpers/create-workflow! {:title "test-update-catalogue-item workflow"
                                                                   :type :workflow/default
-                                                                  :organization {:organization/id (btu/context-getx :organization-id)}
                                                                   :handlers ["handler"]}))
-    (btu/context-assoc! :resource (test-helpers/create-resource! {:resource-ext-id "test-update-catalogue-item resource"
-                                                                  :organization {:organization/id (btu/context-getx :organization-id)}}))
+    (btu/context-assoc! :resource (test-helpers/create-resource! {:resource-ext-id "test-update-catalogue-item resource"}))
     (btu/context-assoc! :form (test-helpers/create-form! {:form/internal-name "test-update-catalogue-item form"
                                                           :form/external-title {:en "Test Update Catalogue Item Form EN"
                                                                                 :fi "Test Update Catalogue Item Form FI"
                                                                                 :sv "Test Update Catalogue Item Form SV"}
-                                                          :form/fields []
-                                                          :form/organization {:organization/id (btu/context-getx :organization-id)}}))
+                                                          :form/fields []}))
     (btu/context-assoc! :catalogue-item (test-helpers/create-catalogue-item! {:title {:en "test-update-catalogue-item EN"
                                                                                       :fi "test-update-catalogue-item FI"
                                                                                       :sv "test-update-catalogue-item SV"}
                                                                               :resource-id (btu/context-getx :resource)
                                                                               :form-id (btu/context-getx :form)
-                                                                              :workflow-id (btu/context-getx :workflow)
-                                                                              :organization {:organization/id (btu/context-getx :organization-id)}}))
+                                                                              :workflow-id (btu/context-getx :workflow)}))
     (login-as "owner")
     (go-to-admin "Catalogue items")
     (btu/wait-page-loaded)
