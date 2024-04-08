@@ -64,8 +64,6 @@
    (str "/application?items=" (:id item))
    (text :t.cart/apply)])
 
-;; NB: does not need to be a raw subscription, because components that use localization functions are rendered into DOM
-;; and their lifecycle is managed. creating subscriptions inside subscription function will cause problems however.
 (rf/reg-sub
  ::catalogue-table-rows
  (fn [_ _]

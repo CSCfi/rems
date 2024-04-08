@@ -51,8 +51,6 @@
    (str "/administration/categories/" category-id)
    (text :t.administration/view)])
 
-;; NB: does not need to be a raw subscription, because components that use localization functions are rendered into DOM
-;; and their lifecycle is managed. creating subscriptions inside subscription function will cause problems however.
 (rf/reg-sub
  ::categories-table-rows
  (fn [_ _]

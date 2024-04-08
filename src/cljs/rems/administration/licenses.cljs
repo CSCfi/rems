@@ -77,8 +77,6 @@
       (status-flags/enabled-toggle-action {:on-change  #(rf/dispatch [::set-license-enabled %1 %2 [::fetch-licenses]])} license)
       (status-flags/archived-toggle-action {:on-change #(rf/dispatch [::set-license-archived %1 %2 [::fetch-licenses]])} license)))])
 
-;; NB: does not need to be a raw subscription, because components that use localization functions are rendered into DOM
-;; and their lifecycle is managed. creating subscriptions inside subscription function will cause problems however.
 (rf/reg-sub
  ::licenses-table-rows
  (fn [_ _]

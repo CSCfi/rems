@@ -93,8 +93,6 @@
       (status-flags/enabled-toggle-action {:on-change #(rf/dispatch [::set-form-enabled %1 %2 [::fetch-forms]])} form)
       (status-flags/archived-toggle-action {:on-change #(rf/dispatch [::set-form-archived %1 %2 [::fetch-forms]])} form)))])
 
-;; NB: does not need to be a raw subscription, because components that use localization functions are rendered into DOM
-;; and their lifecycle is managed. creating subscriptions inside subscription function will cause problems however.
 (rf/reg-sub
  ::forms-table-rows
  (fn [_ _]

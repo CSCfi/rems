@@ -76,8 +76,6 @@
       (status-flags/enabled-toggle-action {:on-change #(rf/dispatch [::set-resource-enabled %1 %2 [::fetch-resources]])} resource)
       (status-flags/archived-toggle-action {:on-change #(rf/dispatch [::set-resource-archived %1 %2 [::fetch-resources]])} resource)))])
 
-;; NB: does not need to be a raw subscription, because components that use localization functions are rendered into DOM
-;; and their lifecycle is managed. creating subscriptions inside subscription function will cause problems however.
 (rf/reg-sub
  ::resources-table-rows
  (fn [_ _]

@@ -92,8 +92,6 @@
         (status-flags/enabled-toggle-action {:on-change #(rf/dispatch [::set-organization-enabled %1 %2 [::fetch-organizations]])} organization)
         (status-flags/archived-toggle-action {:on-change #(rf/dispatch [::set-organization-archived %1 %2 [::fetch-organizations]])} organization)))]))
 
-;; NB: does not need to be a raw subscription, because components that use localization functions are rendered into DOM
-;; and their lifecycle is managed. creating subscriptions inside subscription function will cause problems however.
 (rf/reg-sub
  ::organizations-table-rows
  (fn [_ _]

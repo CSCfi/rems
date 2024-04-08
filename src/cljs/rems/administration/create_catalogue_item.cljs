@@ -195,10 +195,12 @@
          :on-change #(rf/dispatch [::set-selected-workflow (dissoc % ::label)])}])]))
 
 (defn- localize-licenses [resource language]
-  (let [licenses (->> (:licenses resource)
-                      (map #(get-in % [:localizations language :title])))]
-    (when (seq licenses)
-      (text-format :t.label/default (text :t.administration/licenses) (str/join ", " licenses)))))
+  (when-some [licenses (->> (:licenses resource)
+                            (map #(get-in % [:localizations language :title]))
+                            seq)]
+    (text-format :t.label/default
+                 (text :t.administration/licenses)
+                 (str/join ", " licenses))))
 
 (defn- catalogue-item-resource-field []
   (let [resources @(rf/subscribe [::resources])

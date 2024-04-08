@@ -78,8 +78,6 @@
       (status-flags/enabled-toggle-action {:on-change #(rf/dispatch [::set-workflow-enabled %1 %2 [::fetch-workflows]])} workflow)
       (status-flags/archived-toggle-action {:on-change #(rf/dispatch [::set-workflow-archived %1 %2 [::fetch-workflows]])} workflow)))])
 
-;; NB: does not need to be a raw subscription, because components that use localization functions are rendered into DOM
-;; and their lifecycle is managed. creating subscriptions inside subscription function will cause problems however.
 (rf/reg-sub
  ::workflows-table-rows
  (fn [_ _]
