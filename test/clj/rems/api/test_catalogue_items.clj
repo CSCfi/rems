@@ -417,6 +417,7 @@
                                    read-ok-body)]
         (testing "the new item"
           (is (:enabled new-catalogue-item))
+          (is (not (:archived new-catalogue-item)))
           (is (= new-form-id (:formid new-catalogue-item)) "has the new changed form id")
           (is (= "new form" (:form-name new-catalogue-item)) "has the new changed form name")
           (is (= new-workflow-id (:wfid new-catalogue-item)) "has the new changed workflow id")
