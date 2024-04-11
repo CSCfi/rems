@@ -140,12 +140,13 @@
           items))
 
 (defn- update-catalogue-item-button [items {:keys [form workflow]}]
-  [:button.btn.btn-primary
-   {:type :button
+  [atoms/rate-limited-action-button
+   {:id :update-catalogue-item
+    :class "btn-primary"
     :on-click (fn [] (item-update-loop items form workflow))
     :disabled (or (empty? items)
-                  (all-items-have-the-form-and-workflow-already? items form workflow))}
-   (text :t.administration/update-catalogue-item)])
+                  (all-items-have-the-form-and-workflow-already? items form workflow))
+    :label [text :t.administration/update-catalogue-item]}])
 
 
 

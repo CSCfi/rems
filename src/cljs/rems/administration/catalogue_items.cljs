@@ -84,12 +84,14 @@
    (text :t.administration/create-catalogue-item)])
 
 (defn- update-catalogue-item-button [items]
-  [:button.btn.btn-primary
-   {:disabled (when (empty? items) :disabled)
+  [atoms/rate-limited-action-button
+   {:id :update-catalogue-item
+    :class "btn-primary"
+    :disabled (when (empty? items) :disabled)
     :on-click (fn []
                 (rf/dispatch [:rems.administration.update-catalogue-item/enter-page items])
-                (navigate! "/administration/catalogue-items/update-catalogue-item"))}
-   (text :t.administration/update-catalogue-item)])
+                (navigate! "/administration/catalogue-items/update-catalogue-item"))
+    :label [text :t.administration/update-catalogue-item]}])
 
 (defn- categories-button []
   [atoms/link {:class "btn btn-primary" :id :manage-categories}
