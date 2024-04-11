@@ -166,7 +166,7 @@
                    :title "Namn"
                    :type "Typ"
                    :unarchive "Avarkivera"
-                   :update-catalogue-item "Uppdatera resursen"
+                   :update-catalogue-item "Uppdatera katalogposten"
                    :user "Användare"
                    :userid "Användarnamn"
                    :user-role "Användarensroll"
@@ -301,7 +301,7 @@
              :show "Visa"
              :show-less "Visa mindre"
              :show-more "Visa mer"}
-  :update-catalogue-item {:update-catalogue-item-intro "Du uppdaterar resurserna nedan. Förändringarna görs en åt gången genom att den gamla resursen tas ur bruk och ersätts av en kopia som använder blanketten och arbetsflöden du väljer nedan."
+  :update-catalogue-item {:update-catalogue-item-intro "Du uppdaterar katalogposterna nedan. Förändringarna görs en åt gången genom att den gamla katalogposten tas ur bruk och ersätts av en kopia som använder blanketten och arbetsflöden du väljer nedan."
                           :form-selection "Blankett"
                           :workflow-selection "Arbetsflöde"}
   :commands {:accept-invitation "Acceptera inbjudan"
