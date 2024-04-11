@@ -150,6 +150,57 @@
 
       {:success true :catalogue-item-id (:id new-item)})))
 
+(defn update!
+  "Updates the catalogue item `item`.
+
+  Changes the form and/or workflow.
+
+  Since we don't want to modify the old item we must create
+  a new item that is the copy of the old item except for the changed details."
+  [item {:keys [form-id workflow-id] :or {form-id :do-not-change-form workflow-id :do-not-change-workflow}}]
+  (util/check-allowed-organization! (:organization item))
+  ;; are we done already? could be retry
+  (if (and (or (= :do-not-change-form form-id)
+               (= (:formid item) form-id))
+           (or (= :do-not-change-workflow workflow-id)
+               (= (:wfid item) workflow-id)))
+    {:success true :catalogue-item-id (:id item)}
+
+    ;; create a new item with the new form
+    (let [form (case form-id
+                 :do-not-change-form (:formid item) ; preserve old
+                 nil nil ; form is optional and can be unset
+                 form-id)
+          wfid (case workflow-id
+                 :do-not-change-workflow (:wfid item) ; preserve old
+                 workflow-id)
+          new-item (db/create-catalogue-item! {:enabled true
+                                               :archived false
+                                               :form form
+                                               :organization (get-in item [:organization :organization/id])
+                                               :resid (:resource-id item)
+                                               :wfid wfid
+                                               :catalogueitemdata (catalogue/catalogueitemdata->json item)})]
+
+      ;; copy localizations
+      (doseq [[langcode localization] (:localizations item)]
+        (db/upsert-catalogue-item-localization! {:id (:id new-item)
+                                                 :langcode (name langcode)
+                                                 :title (:title localization)
+                                                 :infourl (:infourl localization)}))
+
+      ;; reset cache so that next call to get localizations will get these ones
+      (catalogue/reset-cache!)
+
+      ;; hide the old catalogue item
+      (db/set-catalogue-item-enabled! {:id (:id item) :enabled false})
+      (db/set-catalogue-item-archived! {:id (:id item) :archived true})
+
+      ;; new dependencies introduced
+      (dependencies/reset-cache!)
+
+      {:success true :catalogue-item-id (:id new-item)})))
+
 (defn get-catalogue-table [opts]
   (get-localized-catalogue-items (merge {:archived false}
                                         opts)))

@@ -187,13 +187,20 @@
        (into {})
        (merge (slurp-localized-fields selector))))
 
-(defn slurp-table [& selectors]
-  (for [row (btu/query-all (vec (concat selectors [{:css "tr"}])))]
-    (->> (for [td (btu/children row {:css "td"})
+(defn slurp-tds
+  "Slurp the td-elements from elements found with `selectors` into a map."
+  [& selectors]
+  (for [row-el (btu/query-all (vec selectors))]
+    (->> (for [td (btu/children row-el {:css "td"})
                :let [k (str/trim (btu/get-element-attr-el td "class"))
                      v (btu/first-value-of-el td)]]
            [k v])
          (into {}))))
+
+(defn slurp-table
+  "Slurp the table element found with `selectors` into a map."
+  [& selectors]
+  (slurp-tds (vec (concat selectors [{:css "tr"}]))))
 
 (defn slurp-rows
   "Like `slurp-table` but assumes a header row needs to be skipped."
@@ -281,9 +288,13 @@
   (let [id (get-form-field-id label)]
     (set-date id date)))
 
+(defn clear-option [label]
+  (let [id (btu/get-element-attr {:tag :label :fn/has-text label} :for)]
+    (btu/clear {:id id})))
+
 (defn select-option [label option]
   (let [id (btu/get-element-attr {:tag :label :fn/has-text label} :for)]
-    (btu/wait-visible {:id id})
+    (btu/wait-enabled {:id id})
     (btu/fill {:id id} option etaoin.keys/enter))) ; XXX: react-select does not accept new value without pressing enter
 
 (defn remove-option [label option & [opts]]
@@ -1674,6 +1685,116 @@
                 "End" ""
                 "Active" true}
                (dissoc (slurp-fields :catalogue-item) "Start")))))))
+
+(deftest test-update-catalogue-item
+  (btu/with-postmortem
+    (btu/context-assoc! :workflow1 (test-helpers/create-workflow! {:title "test-update-catalogue-item workflow 1"}))
+    (btu/context-assoc! :workflow2 (test-helpers/create-workflow! {:title "test-update-catalogue-item workflow 2"}))
+    (btu/context-assoc! :workflow3 (test-helpers/create-workflow! {:title "test-update-catalogue-item workflow 3"}))
+    (btu/context-assoc! :form1 (test-helpers/create-form! {:form/internal-name "test-update-catalogue-item form 1"
+                                                           :form/title {:en "test-update-catalogue-item form 1 EN"
+                                                                        :fi "test-update-catalogue-item form 1 FI"
+                                                                        :sv "test-update-catalogue-item form 1 SV"}}))
+    (btu/context-assoc! :form2 (test-helpers/create-form! {:form/internal-name "test-update-catalogue-item form 2"}))
+    (btu/context-assoc! :catalogue-item1 (test-helpers/create-catalogue-item! {:title {:en "test-update-catalogue-item 1 EN"
+                                                                                       :fi "test-update-catalogue-item 1 FI"
+                                                                                       :sv "test-update-catalogue-item 1 SV"}
+                                                                               :form-id (btu/context-getx :form1)
+                                                                               :workflow-id (btu/context-getx :workflow1)}))
+    (btu/context-assoc! :catalogue-item2 (test-helpers/create-catalogue-item! {:title {:en "test-update-catalogue-item 2 EN"
+                                                                                       :fi "test-update-catalogue-item 2 FI"
+                                                                                       :sv "test-update-catalogue-item 2 SV"}
+                                                                               :form-id (btu/context-getx :form1)
+                                                                               :workflow-id (btu/context-getx :workflow2)}))
+    (btu/context-assoc! :catalogue-item3 (test-helpers/create-catalogue-item! {:title {:en "test-update-catalogue-item 3 EN"
+                                                                                       :fi "test-update-catalogue-item 3 FI"
+                                                                                       :sv "test-update-catalogue-item 3 SV"}
+                                                                               :form-id (btu/context-getx :form2)
+                                                                               :workflow-id (btu/context-getx :workflow2)}))
+    (login-as "owner")
+    (go-to-admin "Catalogue items")
+    (btu/wait-page-loaded)
+    (testing "update is disabled without selection"
+      (btu/screenshot "test-update-catalogue-item-1")
+      (is (btu/eventually-visible? {:fn/text "test-update-catalogue-item 1 EN"}))
+      (is (btu/eventually-visible? {:fn/text "test-update-catalogue-item 2 EN"}))
+      (is (btu/eventually-visible? {:fn/text "test-update-catalogue-item 3 EN"}))
+      (btu/wait-disabled {:tag :button :fn/text "Update catalogue item"}))
+
+    (testing "select to go to update"
+      (btu/scroll-and-click {:fn/text "test-update-catalogue-item 1 EN"})
+      (btu/scroll-and-click {:fn/text "test-update-catalogue-item 2 EN"})
+      (btu/scroll-and-click {:fn/text "test-update-catalogue-item 3 EN"})
+      (btu/wait-enabled {:tag :button :fn/text "Update catalogue item"})
+      (btu/scroll-and-click {:fn/text "Update catalogue item"})
+      (is (btu/eventually-visible? {:tag :h1 :fn/text "Update catalogue item"})))
+
+    (testing "initial state"
+      (btu/screenshot "test-update-catalogue-item-initial-state")
+      (btu/wait-disabled {:tag :button :fn/text "Update catalogue item"}))
+
+    (testing "can set form to empty"
+      (select-option "Form" "No form")
+      (btu/wait-enabled {:tag :button :fn/text "Update catalogue item"})
+      (btu/screenshot "test-update-catalogue-item-before-update-1")
+      (btu/scroll-and-click {:tag :button :fn/text "Update catalogue item"})
+      (is (btu/eventually-visible? {:css ".alert-success"}))
+      (btu/wait-disabled {:tag :button :fn/text "Update catalogue item"})
+      (is (= [{"name" "test-update-catalogue-item 1 EN"
+               "form" "No form"
+               "workflow" "test-update-catalogue-item workflow 1"}
+              {"name" "test-update-catalogue-item 2 EN"
+               "form" "No form"
+               "workflow" "test-update-catalogue-item workflow 2"}
+              {"name" "test-update-catalogue-item 3 EN"
+               "form" "No form"
+               "workflow" "test-update-catalogue-item workflow 2"}]
+             (slurp-rows :catalogue)))
+      (btu/screenshot "test-update-catalogue-item-done-1"))
+
+    (testing "can change form and workflow"
+      (select-option "Form" "test-update-catalogue-item form 1")
+      (select-option "Workflow" "test-update-catalogue-item workflow 3")
+      (btu/wait-enabled {:tag :button :fn/text "Update catalogue item"})
+      (btu/screenshot "test-update-catalogue-item-before-update-2")
+      (btu/scroll-and-click {:tag :button :fn/text "Update catalogue item"})
+      (is (btu/eventually-visible? {:css ".alert-success"}))
+      (btu/wait-disabled {:tag :button :fn/text "Update catalogue item"})
+      (is (= [{"name" "test-update-catalogue-item 1 EN"
+               "form" "test-update-catalogue-item form 1"
+               "workflow" "test-update-catalogue-item workflow 3"}
+              {"name" "test-update-catalogue-item 2 EN"
+               "form" "test-update-catalogue-item form 1"
+               "workflow" "test-update-catalogue-item workflow 3"}
+              {"name" "test-update-catalogue-item 3 EN"
+               "form" "test-update-catalogue-item form 1"
+               "workflow" "test-update-catalogue-item workflow 3"}]
+             (slurp-rows :catalogue)))
+      (btu/screenshot "test-update-catalogue-item-done-2"))
+
+    (testing "selection is kept on catalogue items page"
+      (btu/scroll-and-click {:fn/text "Back"})
+      (btu/screenshot "test-update-catalogue-item-back")
+      (is (= [{"form" "test-update-catalogue-item form 1"
+               "name" "test-update-catalogue-item 3 EN"
+               "workflow" "test-update-catalogue-item workflow 3"
+               "selection" true
+               "active" true
+               "organization" "Default"}
+              {"form" "test-update-catalogue-item form 1"
+               "name" "test-update-catalogue-item 2 EN"
+               "workflow" "test-update-catalogue-item workflow 3"
+               "selection" true
+               "active" true
+               "organization" "Default"}
+              {"form" "test-update-catalogue-item form 1"
+               "name" "test-update-catalogue-item 1 EN"
+               "workflow" "test-update-catalogue-item workflow 3"
+               "selection" true
+               "active" true
+               "organization" "Default"}]
+             (->> (slurp-tds [:catalogue {:css "tr:has(td.selection *[aria-checked=true])"}])
+                  (mapv #(dissoc % "resource" "created" "commands"))))))))
 
 (defn create-context-field!
   "Utility function that keeps track of created form fields in
