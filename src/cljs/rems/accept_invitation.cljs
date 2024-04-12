@@ -31,12 +31,9 @@
                                 :workflow (navigate! (str "/administration/workflows/" (get-in response [:invitation/workflow :workflow/id])))))
 
                             (= :already-member (:type error))
-                            (do
-                              (flash-message/show-success! :top [text (case type
-                                                                        :workflow :t.accept-invitation.errors.already-member/workflow)])
-                              (case type
-                                :workflow
-                                (navigate! (str "/administration/workflows/" (get-in response [:invitation/workflow :workflow/id])))))
+                            (case type
+                              :workflow
+                              (navigate! (str "/administration/workflows/" (:workflow/id error))))
 
                             (= :t.actions.errors/invalid-token (:type error))
                             (do
