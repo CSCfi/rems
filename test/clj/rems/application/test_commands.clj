@@ -1298,7 +1298,7 @@
                                                   dummy-member-invited-event])))))
 
     (testing "can't join if they are already a member"
-      (is (= {:errors [{:type :t.actions.errors/already-member :userid "somebody" :application-id app-id}]}
+      (is (= {:errors [{:type :already-member :userid "somebody" :application-id app-id}]}
              (fail-command {:type :application.command/accept-invitation
                             :actor "somebody"
                             :token "very-secure"}

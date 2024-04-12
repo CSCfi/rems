@@ -109,5 +109,5 @@
                             response (invitation/accept-invitation! {:userid "new-handler"
                                                                      :token token})]
                         (is (= {:success false
-                                :errors [{:key :t.accept-invitation.errors.already-member/workflow}]}
+                                :errors [{:type :already-member :workflow/id workflow-id}]}
                                response))))))))))))))

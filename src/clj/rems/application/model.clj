@@ -90,7 +90,7 @@
   [application event]
   (-> application
       (update :application/members conj {:userid (:event/actor event)})
-      (update :application/invitation-tokens dissoc (:invitation/token event))))
+      (assoc-in [:application/invitation-tokens (:invitation/token event) :token/used?] true)))
 
 (defmethod application-base-view :application.event/member-added
   [application event]
@@ -132,14 +132,14 @@
 (defmethod application-base-view :application.event/decider-joined
   [application event]
   (-> application
-      (update :application/invitation-tokens dissoc (:invitation/token event))
+      (assoc-in [:application/invitation-tokens (:invitation/token event) :token/used?] true)
       (assoc-in [::latest-decision-request-by-user (:event/actor event)] (:application/request-id event))
       (update-todo-for-requests)))
 
 (defmethod application-base-view :application.event/reviewer-joined
   [application event]
   (-> application
-      (update :application/invitation-tokens dissoc (:invitation/token event))
+      (assoc-in [:application/invitation-tokens (:invitation/token event) :token/used?] true)
       (assoc-in [::latest-review-request-by-user (:event/actor event)] (:application/request-id event))
       (update-todo-for-requests)))
 

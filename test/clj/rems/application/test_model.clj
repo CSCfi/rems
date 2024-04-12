@@ -1012,7 +1012,10 @@
                                           {:application/last-activity (DateTime. 5000)
                                            :application/events events
                                            :application/members #{{:userid "member"}}
-                                           :application/invitation-tokens {}})]
+                                           :application/invitation-tokens {token
+                                                                           {:event/actor "applicant"
+                                                                            :application/member {:name "Mr. Member" :email "member@example.com"}
+                                                                            :token/used? true}}})]
           (is (= expected-application (recreate expected-application)))))))
 
   (testing "> member added"
@@ -1128,7 +1131,9 @@
               expected-application (merge expected-application
                                           {:application/last-activity (DateTime. 5000)
                                            :application/events events
-                                           :application/invitation-tokens {}
+                                           :application/invitation-tokens {token {:event/actor "handler"
+                                                                                  :application/reviewer {:name "Mr. Reviewer" :email "reviewer@example.com"}
+                                                                                  :token/used? true}}
                                            :application/todo :waiting-for-review
                                            :rems.application.model/latest-review-request-by-user {"new-reviewer" review-request-id}})]
           (is (= expected-application (recreate expected-application)))))))
@@ -1161,7 +1166,9 @@
               expected-application (merge expected-application
                                           {:application/last-activity (DateTime. 5000)
                                            :application/events events
-                                           :application/invitation-tokens {}
+                                           :application/invitation-tokens {token {:event/actor "handler"
+                                                                                  :application/decider {:name "Mr. Decider" :email "decider@example.com"}
+                                                                                  :token/used? true}}
                                            :application/todo :waiting-for-decision
                                            :rems.application.model/latest-decision-request-by-user {"new-decider" review-request-id}})]
           (is (= expected-application (recreate expected-application))))))))
