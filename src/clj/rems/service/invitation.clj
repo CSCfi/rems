@@ -74,7 +74,7 @@
             handlers (set (map :userid (get-in workflow [:workflow :handlers])))]
         (cond (contains? handlers userid)
               {:success false
-               :errors [{:type :already-member :workflow/id workflow-id}]}
+               :errors [{:type :already-joined :workflow/id workflow-id}]}
 
               (not (:invitation/accepted invitation))
               (do

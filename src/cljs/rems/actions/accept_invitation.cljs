@@ -28,9 +28,6 @@
                               (flash-message/show-success! :top [text :t.actions/accept-invitation-success])
                               (navigate! (str "/application/" (:application-id response))))
 
-                            (= :already-member (:type error))
-                            (navigate! (str "/application/" (:application-id error)))
-
                             (= :already-joined (:type error))
                             (navigate! (str "/application/" (:application-id error)))
 

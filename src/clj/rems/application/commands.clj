@@ -295,10 +295,6 @@
   (contains? (:application/user-roles application)
              userid))
 
-(defn already-member-error [application userid]
-  (when (member? userid application)
-    {:errors [{:type :already-member :userid userid :application-id (:application/id application)}]}))
-
 (defn already-joined-error [application userid]
   (when (role-in-application? userid application)
     {:errors [{:type :already-joined :userid userid :application-id (:application/id application)}]}))
@@ -578,7 +574,7 @@
 (defmethod command-handler :application.command/add-member
   [cmd application injections]
   (or (invalid-user-error (:userid (:member cmd)) injections)
-      (already-member-error application (:userid (:member cmd)))
+      (already-joined-error application (:userid (:member cmd)))
       (ok {:event/type :application.event/member-added
            :application/member (:member cmd)})))
 
@@ -608,7 +604,7 @@
         invitation (get-in application [:application/invitation-tokens token])]
     (cond
       (:application/member invitation)
-      (or (already-member-error application (:actor cmd))
+      (or (already-joined-error application (:actor cmd))
           (token-used-error invitation token)
           (ok-with-data {:application-id (:application-id cmd)}
                         [{:event/type :application.event/member-joined

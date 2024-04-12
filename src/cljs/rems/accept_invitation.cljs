@@ -30,7 +30,7 @@
                               (case type
                                 :workflow (navigate! (str "/administration/workflows/" (get-in response [:invitation/workflow :workflow/id])))))
 
-                            (= :already-member (:type error))
+                            (= :already-joined (:type error))
                             (case type
                               :workflow
                               (navigate! (str "/administration/workflows/" (:workflow/id error))))
