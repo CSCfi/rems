@@ -2,12 +2,10 @@
  {:accept-invitation {:header "Hyväksy kutsu"
                       :title "Hyväksy kutsu"
                       :success {:workflow "Liittyminen työvuon käsittelijäksi onnistui."}
-                      :errors {:already-member {:workflow "Olet jo työvuon käsittelijä."}
-                               :invalid-invitation-type "Hyväksyminen epäonnistui."
+                      :errors {:invalid-invitation-type "Hyväksyminen epäonnistui."
                                :invalid-token [:div [:p "Hyväksyminen epäonnistui."] [:p "Tarkista kutsukoodi " [:code "%1"]]]
                                :invalid-workflow "Hyväksyminen epäonnistui."}}
   :actions {:accept-invitation "Hyväksy kutsu"
-            :accept-invitation-already-member "Olet jo jäsen."
             :accept-invitation-success "Hakemukseen liittyminen onnistui."
             :accept-licenses "Hyväksy käyttöehdot"
             :add-licenses "Lisää käyttöehto"
@@ -29,8 +27,7 @@
             :decide "Päätä"
             :delete "Poista luonnos"
             :delete-intro [:div.intro [:p "Haluatko pysyvästi poistaa tämän hakemusluonnoksen?"]]
-            :errors {:already-member "Käyttäjä on jo tämän hakemuksen jäsen"
-                     :duplicate-id "Tunnus on jo käytössä."
+            :errors {:duplicate-id "Tunnus on jo käytössä."
                      :invalid-token [:div [:p "Hakemukseen liittyminen epäonnistui."] [:p "Tarkista kutsukoodi " [:code "%1"]]]
                      :licenses-not-accepted "Käyttöehtoja ei ole hyväksytty."
                      :organization-does-not-exist "Organisaatiota \"%1\" ei ole olemassa"

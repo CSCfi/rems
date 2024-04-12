@@ -2,12 +2,10 @@
  {:accept-invitation {:header "Acceptera inbjudan"
                       :title "Acceptera inbjudan"
                       :success {:workflow "Du är nu handläggaren."}
-                      :errors {:already-member {:workflow "Du är redan handläggaren."}
-                               :invalid-invitation-type "Acceptering misslyckades."
+                      :errors {:invalid-invitation-type "Acceptering misslyckades."
                                :invalid-token [:div [:p "Acceptering misslyckades."] [:p "Vänligen kontrollera koden för inbjudan " [:code "%1"]]]
                                :invalid-workflow "Acceptering misslyckades."}}
   :actions {:accept-invitation "Acceptera inbjudan"
-            :accept-invitation-already-member "Du deltar redan."
             :accept-invitation-success "Du deltar nu i ansökan."
             :accept-licenses "Acceptera licenserna"
             :add-licenses "Lägg till en licens"
@@ -29,8 +27,7 @@
             :decide "Avgör"
             :delete "Radera utkast"
             :delete-intro [:div.intro [:p "Radera detta utkast permanent?"]]
-            :errors {:already-member "Användare är deltar redan."
-                     :duplicate-id "Id:et är redan upptaget."
+            :errors {:duplicate-id "Id:et är redan upptaget."
                      :invalid-token [:div [:p "Det gick inte att ansluta till ansökningen."] [:p "Vänligen kontrollera koden för inbjudan." [:code "%1"]]]
                      :licenses-not-accepted "Du har inte godkänt användarvillkoren."
                      :organization-does-not-exist "Organisationen \"%1\" hittades inte."
