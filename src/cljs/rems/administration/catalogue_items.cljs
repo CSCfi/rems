@@ -91,7 +91,7 @@
     :on-click (fn []
                 (rf/dispatch [:rems.administration.update-catalogue-item/enter-page items])
                 (navigate! "/administration/catalogue-items/update-catalogue-item"))
-    :label [text :t.administration/update-catalogue-item]}])
+    :label [text (str "Update catalogue items ("(count items)")")]}])
 
 (defn- categories-button []
   [atoms/link {:class "btn btn-primary" :id :manage-categories}
