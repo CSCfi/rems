@@ -717,7 +717,10 @@
                                                                             :field/type :description}]}))
     (btu/context-assoc! :license-id (test-helpers/create-license! {:license/title {:en "License title EN"
                                                                                    :fi "License title EN"
-                                                                                   :sv "License title EN"}}))
+                                                                                   :sv "License title EN"}
+                                                                   :license/text {:en "License text EN"
+                                                                                  :fi "License text FI"
+                                                                                  :sv "License text SV"}}))
     (btu/context-assoc! :resource-id (test-helpers/create-resource! {:license-ids [(btu/context-getx :license-id)]}))
     (btu/context-assoc! :catalogue-id (test-helpers/create-catalogue-item! {:form-id (btu/context-getx :form-id)
                                                                             :resource-id (btu/context-getx :resource-id)}))
