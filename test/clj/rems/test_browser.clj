@@ -79,7 +79,8 @@
   "Waits until main header is visible with given text, and document title has the same value."
   [title-text]
   (btu/wait-visible {:tag :h1 :fn/text title-text})
-  (is (= title-text (btu/get-title))))
+  (btu/wait-predicate #(= title-text (btu/get-title))
+                      #(do {:document-title (btu/get-title)})))
 
 (defn go-to-catalogue []
   (click-navigation-menu "Catalogue")
