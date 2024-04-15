@@ -39,34 +39,33 @@
 (rf/reg-sub ::workflow (fn [db _] (::workflow db)))
 (rf/reg-sub ::loading? (fn [db _] (::loading? db)))
 
-;; NB! raw subscription instead of regular subscription, due to rems.text functions which implicitly use subscriptions.
-(rf/reg-sub-raw
- ::disable-commands-table-rows
- (fn [db-sub]
-   (r/reaction
-    (doall
-     (for [[index value] (indexed (get-in @db-sub [::workflow :workflow :disable-commands]))
-           :let [command (:command value)
-                 states (sort (:when/state value))
-                 roles (sort (:when/role value))]]
-       {:key (str "disable-command-" index)
-        :command {:display-value [:div
-                                  (localize-command command)
-                                  [:code.color-pre " (" (name command) ")"]]}
-        :application-state {:display-value (if (seq states)
-                                             (into [:<>] (for [state states]
-                                                           [:div
-                                                            (localize-state state)
-                                                            [:code.color-pre " (" (name state) ")"]]))
-                                             (text :t.dropdown/placeholder-any-selection))}
-        :user-role {:display-value (if (seq roles)
-                                     (into [:<>] (for [role roles]
-                                                   [:div
-                                                    (if (some #{role} [:expirer :reporter])
-                                                      (text :t.roles/technical-role)
-                                                      (localize-role role))
-                                                    [:code.color-pre " (" (name role) ")"]]))
-                                     (text :t.dropdown/placeholder-any-selection))}})))))
+(rf/reg-sub ::disable-commands-table-rows
+            :<- [::disable-commands]
+            :<- [:language] ; re-renders when language changes
+            (fn [[disable-commands _language] _]
+              (doall
+               (for [[index value] (indexed disable-commands)
+                     :let [command (:command value)
+                           states (sort (:when/state value))
+                           roles (sort (:when/role value))]]
+                 {:key (str "disable-command-" index)
+                  :command {:display-value [:div
+                                            (localize-command command)
+                                            [:code.color-pre " (" (name command) ")"]]}
+                  :application-state {:display-value (if (seq states)
+                                                       (into [:<>] (for [state states]
+                                                                     [:div
+                                                                      (localize-state state)
+                                                                      [:code.color-pre " (" (name state) ")"]]))
+                                                       (text :t.dropdown/placeholder-any-selection))}
+                  :user-role {:display-value (if (seq roles)
+                                               (into [:<>] (for [role roles]
+                                                             [:div
+                                                              (if (some #{role} [:expirer :reporter])
+                                                                (text :t.roles/technical-role)
+                                                                (localize-role role))
+                                                              [:code.color-pre " (" (name role) ")"]]))
+                                               (text :t.dropdown/placeholder-any-selection))}}))))
 
 (defn- disable-commands-table []
   [table/table {:id ::disable-commands
@@ -82,16 +81,20 @@
                 :rows [::disable-commands-table-rows]
                 :default-sort-column :command}])
 
-;; NB! raw subscription instead of regular subscription, due to rems.text functions which implicitly use subscriptions.
-(rf/reg-sub-raw
- ::processing-states-table-rows
- (fn [db-sub]
-   (r/reaction
-    (doall
-     (for [[index value] (indexed (get-in @db-sub [::workflow :workflow :processing-states]))]
-       {:key (str "processing-state-" index)
-        :value {:display-value [:code.color-pre (:processing-state/value value)]}
-        :title {:display-value (localized (:processing-state/title value))}})))))
+(rf/reg-sub ::processing-states
+            :<- [::workflow]
+            (fn [workflow _]
+              (get-in workflow [:workflow :processing-states])))
+
+(rf/reg-sub ::processing-states-table-rows
+            :<- [::processing-states]
+            :<- [:language]
+            (fn [[processing-states language] _]
+              (doall
+               (for [[index value] (indexed processing-states)]
+                 {:key (str "processing-state-" index)
+                  :value {:display-value [:code.color-pre (:processing-state/value value)]}
+                  :title {:display-value (get-in value [:processing-state/title language])}}))))
 
 (defn- processing-states-table []
   [table/table {:id ::processing-states
