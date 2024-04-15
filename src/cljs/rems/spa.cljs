@@ -357,9 +357,10 @@
      [missing-email-warning]
      [content]]
 
-    (do ; implementation error
-      (println "Unknown page-id" page-id)
-      (rf/dispatch-sync [:set-active-page :not-found]))
+    ;; implementation error
+    :do (println "Unknown page-id" page-id)
+    :do (rf/dispatch-sync [:set-active-page :not-found])
+    :else
     [:main#main-content.container-fluid.unknown-page]))
 
 (defn page []
