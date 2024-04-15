@@ -259,7 +259,6 @@
         config @(rf/subscribe [:rems.config/config])]
     [:div.form-group
      [:label.administration-field-label {:for categories-dropdown-id}
-      ;; XXX: :enable-catalogue-tree should be checked in backend as well
       (cond->> (text :t.administration/categories)
         (not (:enable-catalogue-tree config)) (text-format :t.label/optional))]
      [dropdown/dropdown
