@@ -2,12 +2,10 @@
  {:accept-invitation {:header "Acceptera inbjudan"
                       :title "Acceptera inbjudan"
                       :success {:workflow "Du är nu handläggaren."}
-                      :errors {:already-member {:workflow "Du är redan handläggaren."}
-                               :invalid-invitation-type "Acceptering misslyckades."
+                      :errors {:invalid-invitation-type "Acceptering misslyckades."
                                :invalid-token [:div [:p "Acceptering misslyckades."] [:p "Vänligen kontrollera koden för inbjudan " [:code "%1"]]]
                                :invalid-workflow "Acceptering misslyckades."}}
   :actions {:accept-invitation "Acceptera inbjudan"
-            :accept-invitation-already-member "Du deltar redan."
             :accept-invitation-success "Du deltar nu i ansökan."
             :accept-licenses "Acceptera licenserna"
             :add-licenses "Lägg till en licens"
@@ -29,8 +27,7 @@
             :decide "Avgör"
             :delete "Radera utkast"
             :delete-intro [:div.intro [:p "Radera detta utkast permanent?"]]
-            :errors {:already-member "Användare är deltar redan."
-                     :duplicate-id "Id:et är redan upptaget."
+            :errors {:duplicate-id "Id:et är redan upptaget."
                      :invalid-token [:div [:p "Det gick inte att ansluta till ansökningen."] [:p "Vänligen kontrollera koden för inbjudan." [:code "%1"]]]
                      :licenses-not-accepted "Du har inte godkänt användarvillkoren."
                      :organization-does-not-exist "Organisationen \"%1\" hittades inte."
@@ -82,14 +79,12 @@
                    :archive "Arkivera"
                    :back "Tillbaka"
                    :blacklist "Svartlista"
-                   :change-form "Ändra blankett"
                    :cancel "Avbryt"
                    :catalogue-item "Katalogpost"
                    :catalogue-items "Katalogposter"
                    :categories "Kategorier"
                    :category "Kategori"
                    :category-children "Underkategorier"
-                   :change "Ändra"
                    :comment "Kommentar"
                    :copy-as-new "Kopiera som ny"
                    :create-catalogue-item "Ny katalogpost"
@@ -111,6 +106,8 @@
                    :display-order "Visningsordning"
                    :display-own-organization-only-explanation "Visa endast egen organisation?"
                    :display-own-organization-only "Endast egen organisation"
+                   :do-not-change-form "Ändra inte blanketten"
+                   :do-not-change-workflow "Ändra inte arbetsflöden"
                    :edit "Ändra"
                    :edit-catalogue-item "Ändra katalogpost"
                    :edit-category "Ändra kategori"
@@ -166,6 +163,7 @@
                    :title "Namn"
                    :type "Typ"
                    :unarchive "Avarkivera"
+                   :update-catalogue-item "Uppdatera katalogposten"
                    :user "Användare"
                    :userid "Användarnamn"
                    :user-role "Användarensroll"
@@ -300,8 +298,9 @@
              :show "Visa"
              :show-less "Visa mindre"
              :show-more "Visa mer"}
-  :change-form {:change-form-intro "Du ändrar blanketten för resurserna nedan. Förändringarna görs en åt gången genom att den gamla resursen tas ur bruk och ersätts av en kopia som använder blanketten du väljer nedan."
-                :form-selection "Blankett"}
+  :update-catalogue-item {:update-catalogue-item-intro "Du uppdaterar katalogposterna nedan. Förändringarna görs en åt gången genom att den gamla katalogposten tas ur bruk och ersätts av en kopia som använder blanketten och arbetsflöden du väljer nedan."
+                          :form-selection "Blankett"
+                          :workflow-selection "Arbetsflöde"}
   :commands {:accept-invitation "Acceptera inbjudan"
              :accept-licenses "Acceptera licenserna"
              :add-licenses "Lägg till en licens"

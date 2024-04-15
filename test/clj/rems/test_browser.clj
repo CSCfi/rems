@@ -192,13 +192,20 @@
        (into {})
        (merge (slurp-localized-fields selector))))
 
-(defn slurp-table [& selectors]
-  (for [row (btu/query-all (vec (concat selectors [{:css "tr"}])))]
-    (->> (for [td (btu/children row {:css "td"})
+(defn slurp-tds
+  "Slurp the td-elements from elements found with `selectors` into a map."
+  [& selectors]
+  (for [row-el (btu/query-all (vec selectors))]
+    (->> (for [td (btu/children row-el {:css "td"})
                :let [k (str/trim (btu/get-element-attr-el td "class"))
                      v (btu/first-value-of-el td)]]
            [k v])
          (into {}))))
+
+(defn slurp-table
+  "Slurp the table element found with `selectors` into a map."
+  [& selectors]
+  (slurp-tds (vec (concat selectors [{:css "tr"}]))))
 
 (defn slurp-rows
   "Like `slurp-table` but assumes a header row needs to be skipped."
@@ -286,10 +293,14 @@
   (let [id (get-form-field-id label)]
     (set-date id date)))
 
+(defn clear-option [label]
+  (let [id (btu/get-element-attr {:tag :label :fn/has-text label} :for)]
+    (btu/clear {:id id})))
+
 (defn select-option [label option]
   (btu/wait-for-idle)
   (let [id (btu/get-element-attr {:tag :label :fn/has-text label} :for)]
-    (btu/wait-visible {:id id})
+    (btu/wait-enabled {:id id})
     (btu/fill {:id id} option etaoin.keys/enter))) ; XXX: react-select does not accept new value without pressing enter
 
 (defn remove-option [label option & [opts]]
@@ -714,13 +725,22 @@
     (btu/context-assoc! :form-id (test-helpers/create-form! {:form/fields [{:field/title {:en "description" :fi "kuvaus" :sv "rubrik"}
                                                                             :field/optional false
                                                                             :field/type :description}]}))
-    (btu/context-assoc! :catalogue-id (test-helpers/create-catalogue-item! {:form-id (btu/context-getx :form-id)}))
+    (btu/context-assoc! :license-id (test-helpers/create-license! {:license/title {:en "License title EN"
+                                                                                   :fi "License title EN"
+                                                                                   :sv "License title EN"}
+                                                                   :license/text {:en "License text EN"
+                                                                                  :fi "License text FI"
+                                                                                  :sv "License text SV"}}))
+    (btu/context-assoc! :resource-id (test-helpers/create-resource! {:license-ids [(btu/context-getx :license-id)]}))
+    (btu/context-assoc! :catalogue-id (test-helpers/create-catalogue-item! {:form-id (btu/context-getx :form-id)
+                                                                            :resource-id (btu/context-getx :resource-id)}))
     (btu/context-assoc! :application-id (test-helpers/create-draft! "alice"
                                                                     [(btu/context-getx :catalogue-id)]
                                                                     "test-applicant-member-invite-action"))
     (btu/context-assoc! :external-id (-> (btu/context-getx :application-id)
                                          (get-application-from-api "alice")
                                          :application/external-id)))
+
   (btu/with-postmortem
     (login-as "alice")
     (go-to-application (btu/context-getx :application-id))
@@ -766,7 +786,8 @@
       (is (btu/eventually-visible? :actions-invite0-operations-remove))
       (btu/fill-human :comment-invite0-operations-remove-comment "sorry but no")
       (btu/scroll-and-click :invite0-operations-remove-submit)
-      (is (btu/eventually-visible? [{:css ".alert-success" :fn/has-text "Remove member: Success"}]))
+      (is (btu/eventually-visible? [{:fn/has-string "Remove member: Success"}]))
+      (btu/get-element-text :status-success)
       (btu/wait-invisible :actions-invite0-operations-remove)
       (btu/wait-invisible :invite0-info)
 
@@ -774,7 +795,89 @@
                       applications/get-application-internal
                       :application/invitation-tokens)))
       (is (btu/visible? {:css "div.event-description" :fn/text "Alice Applicant removed John Smith from the application."}))
-      (is (btu/visible? {:css "div.event-comment" :fn/text "sorry but no"})))))
+      (is (btu/visible? {:css "div.event-comment" :fn/text "sorry but no"})))
+
+    (testing "invite another member"
+      (is (not (btu/visible? [:actions-invite-member {:fn/has-text "Invite member"}])))
+      (btu/scroll-and-click :invite-member-action-button)
+      (is (btu/eventually-visible? [:actions-invite-member {:fn/has-text "Invite member"}]))
+      (btu/fill-human [:actions-invite-member :name-invite-member] "Jane Smith")
+      (btu/fill-human [:actions-invite-member :email-invite-member] "jane.smith@generic.name")
+      (btu/scroll-and-click :invite-member)
+      (is (btu/eventually-visible? {:fn/has-string "Invite member: Success"})))
+
+    (testing "submit application"
+      (btu/scroll-and-click :submit)
+      (is (btu/eventually-visible? {:fn/has-string "Send application: Success"})))
+
+    (logout)
+
+    (testing "get invite token"
+      (let [[token invitation] (-> (btu/context-getx :application-id)
+                                   applications/get-application-internal
+                                   :application/invitation-tokens
+                                   first)]
+        (is (string? token))
+        (is (= {:application/member {:name "Jane Smith" :email "jane.smith@generic.name"}
+                :event/actor "alice"}
+               invitation))
+        (btu/context-assoc! :token token)))
+
+    (testing "accept invitation"
+      (btu/go (str (btu/get-server-url) "application/accept-invitation/" (btu/context-getx :token)))
+      (is (btu/eventually-visible? {:css ".login-btn"}))
+      (btu/scroll-and-click {:css ".login-btn"})
+      (is (btu/eventually-visible? [{:css ".users"} {:tag :a :fn/text "frank"}]))
+      (btu/scroll-and-click [{:css ".users"} {:tag :a :fn/text "frank"}])
+      (btu/wait-page-loaded)
+      ;; NB: this differs a bit from `login-as` and we should keep them the same
+      (btu/wait-visible :logout)
+      (is (btu/eventually-visible? {:tag :h1 :fn/has-text "test-applicant-member-invite-action"}))
+      (btu/screenshot "member-joined"))
+
+    (testing "check member-joined event"
+      (is (= {:event/type :application.event/member-joined
+              :event/actor "frank"}
+             (-> (btu/context-getx :application-id)
+                 applications/get-application-internal
+                 :application/events
+                 last
+                 (select-keys [:event/actor :event/type])))))
+
+    (testing "accept licenses"
+      (btu/scroll-and-click :accept-licenses-button)
+      (is (btu/eventually-visible? {:fn/has-string "Accept the terms of use: Success"}))
+      (btu/screenshot "accepted-licenses"))
+
+    (logout)
+
+    (testing "member can use the link again"
+      (btu/go (str (btu/get-server-url) "application/accept-invitation/" (btu/context-getx :token)))
+      (is (btu/eventually-visible? {:css ".login-btn"}))
+      (btu/scroll-and-click {:css ".login-btn"})
+      (is (btu/eventually-visible? [{:css ".users"} {:tag :a :fn/text "frank"}]))
+      (btu/scroll-and-click [{:css ".users"} {:tag :a :fn/text "frank"}])
+      (btu/wait-page-loaded)
+      ;; NB: this differs a bit from `login-as` and we should keep them the same
+      (btu/wait-visible :logout)
+      (is (btu/eventually-visible? {:tag :h1 :fn/has-text "test-applicant-member-invite-action"})
+          "gets back to the application")
+      (btu/screenshot "member-joined-again"))
+
+    (logout)
+
+    (testing "another user can't use the invitation"
+      (btu/go (str (btu/get-server-url) "accept-invitation?token=" (btu/context-getx :token)))
+      (is (btu/eventually-visible? {:css ".login-btn"}))
+      (btu/scroll-and-click {:css ".login-btn"})
+      (is (btu/eventually-visible? [{:css ".users"} {:tag :a :fn/text "elsa"}]))
+      (btu/scroll-and-click [{:css ".users"} {:tag :a :fn/text "elsa"}])
+      (btu/wait-page-loaded)
+      ;; NB: this differs a bit from `login-as` and we should keep them the same
+      (is (btu/eventually-visible? {:tag :h1 :fn/has-text "Catalogue"})
+          "was redirected to catalogue")
+      (is (btu/eventually-visible? {:fn/has-text "Joining the application failed."}))
+      (btu/screenshot "someone-else-cannot-use-the-link"))))
 
 (deftest test-applicant-member-remove-action
   (testing "submit test data with API"
@@ -823,7 +926,7 @@
       (is (btu/eventually-visible? :actions-member1-operations-remove))
       (btu/fill-human :comment-member1-operations-remove-comment "not in research group anymore")
       (btu/scroll-and-click :member1-operations-remove-submit)
-      (is (btu/eventually-visible? [{:css ".alert-success" :fn/has-text "Remove member: Success"}]))
+      (is (btu/eventually-visible? [{:fn/has-string "Remove member: Success"}]))
       (btu/wait-invisible :actions-member1-operations-remove)
       (btu/wait-invisible :member2-info) ; last element is removed from DOM, remaining updated
       (btu/scroll-and-click :header-collapse-more-link) ; show events
@@ -1055,6 +1158,7 @@
     (test-helpers/submit-application {:application-id (btu/context-getx :application-id)
                                       :actor "alice"})
     (test-helpers/create-user! {:userid "new-decider" :name "New Decider" :email "new-decider@example.com"}))
+
   (btu/with-postmortem
     (testing "handler invites decider"
       (login-as "developer")
@@ -1070,8 +1174,10 @@
       (btu/fill-human :email-invite-decider "user@example.com")
       (btu/scroll-and-click :invite-decider)
       (is (btu/eventually-visible? {:css ".alert-success"}))
-      (btu/screenshot "decider-invited")
-      (logout))
+      (btu/screenshot "decider-invited"))
+
+    (logout)
+
     (testing "get invite token"
       (let [[token invitation] (-> (btu/context-getx :application-id)
                                    applications/get-application-internal
@@ -1082,6 +1188,7 @@
                 :event/actor "developer"}
                invitation))
         (btu/context-assoc! :token token)))
+
     (testing "accept invitation"
       (with-fake-login-users {"new-decider" {:sub "new-decider" :name "New Decider" :email "new-decider@example.com"}}
         (btu/go (str (btu/get-server-url) "application/accept-invitation/" (btu/context-getx :token)))
@@ -1094,6 +1201,7 @@
         (btu/wait-visible :logout)
         (wait-page-title (format "Application %s: test-invite-decider – REMS" (btu/context-getx :external-id)))
         (btu/screenshot "decider-joined")))
+
     (testing "check decider-joined event"
       (is (= {:event/type :application.event/decider-joined
               :event/actor "new-decider"}
@@ -1102,6 +1210,7 @@
                  :application/events
                  last
                  (select-keys [:event/actor :event/type])))))
+
     (testing "submit decision"
       (btu/scroll-and-click :decide-action-button)
       (is (btu/eventually-visible? :comment-decide))
@@ -1111,6 +1220,7 @@
       (btu/wait-page-loaded)
       (is (btu/eventually-visible? {:css ".alert-success"}))
       (btu/screenshot "decided"))
+
     (testing "check decision event"
       ;; checking has sometimes failed because
       ;; the comment was typoed so let's not compare it
@@ -1121,7 +1231,39 @@
                  applications/get-application-internal
                  :application/events
                  last
-                 (select-keys [:application/decision :event/actor :event/type])))))))
+                 (select-keys [:application/decision :event/actor :event/type])))))
+
+    (logout)
+
+    (testing "decider can use the link again"
+      (with-fake-login-users {"new-decider" {:sub "new-decider" :name "New Decider" :email "new-decider@example.com"}}
+        (btu/go (str (btu/get-server-url) "application/accept-invitation/" (btu/context-getx :token)))
+        (is (btu/eventually-visible? {:css ".login-btn"}))
+        (btu/scroll-and-click {:css ".login-btn"})
+        (is (btu/eventually-visible? [{:css ".users"} {:tag :a :fn/text "new-decider"}]))
+        (btu/scroll-and-click [{:css ".users"} {:tag :a :fn/text "new-decider"}])
+        (btu/wait-page-loaded)
+        ;; NB: this differs a bit from `login-as` and we should keep them the same
+        (btu/wait-visible :logout)
+        (is (btu/eventually-visible? {:tag :h1 :fn/has-text "test-invite-decider"})
+            "gets back to the application")
+        (btu/screenshot "decider-joined-again")))
+
+    (logout)
+
+    (testing "another user can't use the invitation"
+      (with-fake-login-users {"someone-else-id" {:sub "someone-else-id" :name "Someone Else" :email "someone@else.com"}}
+        (btu/go (str (btu/get-server-url) "accept-invitation?token=" (btu/context-getx :token)))
+        (is (btu/eventually-visible? {:css ".login-btn"}))
+        (btu/scroll-and-click {:css ".login-btn"})
+        (is (btu/eventually-visible? [{:css ".users"} {:tag :a :fn/text "someone-else-id"}]))
+        (btu/scroll-and-click [{:css ".users"} {:tag :a :fn/text "someone-else-id"}])
+        (btu/wait-page-loaded)
+        ;; NB: this differs a bit from `login-as` and we should keep them the same
+        (is (btu/eventually-visible? {:tag :h1 :fn/has-text "Catalogue"})
+            "was redirected to catalogue")
+        (is (btu/eventually-visible? {:fn/has-text "Joining the application failed."}))
+        (btu/screenshot "someone-else-cannot-use-the-link")))))
 
 (deftest test-invite-handler
   (testing "create test data"
@@ -1146,7 +1288,8 @@
         (btu/context-assoc! :token token)))
 
     (testing "accept invitation"
-      (with-fake-login-users {"invited-person-id" {:sub "invited-person-id" :name "Invited Person Name" :email "invite-person-id@example.com"}}
+      (with-fake-login-users {"invited-person-id" {:sub "invited-person-id" :name "Invited Person Name" :email "invite-person-id@example.com"}
+                              "someone-else-id" {:sub "someone-else-id" :name "Someone Else" :email "someone@else.com"}}
         (btu/go (str (btu/get-server-url) "accept-invitation?token=" (btu/context-getx :token)))
         (is (btu/eventually-visible? {:css ".login-btn"}))
         (btu/scroll-and-click {:css ".login-btn"})
@@ -1164,7 +1307,38 @@
                 "Active" true
                 "Forms" "No forms"
                 "Licenses" "No licenses"}
-               (slurp-fields :workflow-common-fields)))))))
+               (slurp-fields :workflow-common-fields)))
+        (btu/screenshot "handler-joined-by-link")
+
+        (logout)
+
+        (testing "handler can use the link again"
+          (btu/go (str (btu/get-server-url) "accept-invitation?token=" (btu/context-getx :token)))
+          (is (btu/eventually-visible? {:css ".login-btn"}))
+          (btu/scroll-and-click {:css ".login-btn"})
+          (is (btu/eventually-visible? [{:css ".users"} {:tag :a :fn/text "invited-person-id"}]))
+          (btu/scroll-and-click [{:css ".users"} {:tag :a :fn/text "invited-person-id"}])
+          (btu/wait-page-loaded)
+          ;; NB: this differs a bit from `login-as` and we should keep them the same
+          (is (btu/eventually-visible? [:workflow-common-fields
+                                        {:fn/has-text (btu/context-getx :workflow-title)}])
+              "gets back to the workflow")
+          (btu/screenshot "handler-joined-by-link-again"))
+
+        (logout)
+
+        (testing "another user can't use the invitation"
+          (btu/go (str (btu/get-server-url) "accept-invitation?token=" (btu/context-getx :token)))
+          (is (btu/eventually-visible? {:css ".login-btn"}))
+          (btu/scroll-and-click {:css ".login-btn"})
+          (is (btu/eventually-visible? [{:css ".users"} {:tag :a :fn/text "someone-else-id"}]))
+          (btu/scroll-and-click [{:css ".users"} {:tag :a :fn/text "someone-else-id"}])
+          (btu/wait-page-loaded)
+          ;; NB: this differs a bit from `login-as` and we should keep them the same
+          (is (btu/eventually-visible? {:tag :h1 :fn/has-text "Catalogue"})
+              "was redirected to catalogue")
+          (is (btu/eventually-visible? {:fn/has-text "Accepting the invitation failed"}))
+          (btu/screenshot "someone-else-cannot-use-the-link"))))))
 
 (deftest test-invite-reviewer
   (testing "create test data"
@@ -1190,7 +1364,7 @@
     (test-helpers/submit-application {:application-id (btu/context-getx :application-id)
                                       :actor "alice"}))
   (btu/with-postmortem
-    (testing "handler invites reviewer"
+    (testing "handler adds existing reviewer"
       (login-as "developer")
       (go-to-application (btu/context-getx :application-id))
       (wait-page-title (format "Application %s: test-invite-reviewer – REMS" (btu/context-getx :external-id)))
@@ -1210,6 +1384,7 @@
       (btu/scroll-and-click :request-review-button)
       (is (btu/eventually-visible? {:css ".alert-success"}))
       (logout))
+
     (testing "reviewer should see applicant non-private form answers"
       (login-as "carl")
       (go-to-application (btu/context-getx :application-id))
@@ -1217,7 +1392,81 @@
       (is (= (count (btu/query-all {:css ".fields"}))
              1))
       (is (= {"description" "test-invite-reviewer"}
-             (slurp-fields {:css ".fields"}))))))
+             (slurp-fields {:css ".fields"}))))
+
+    (logout)
+
+    (testing "handler invites reviewer by email"
+      (login-as "developer")
+      (go-to-application (btu/context-getx :application-id))
+      (is (btu/eventually-visible? {:tag :h1 :fn/has-text "test-invite-reviewer"}))
+
+      (btu/scroll-and-click :request-review-dropdown)
+      (is (btu/eventually-visible? :invite-reviewer-action-button))
+      (btu/scroll-and-click :invite-reviewer-action-button)
+
+      (is (btu/eventually-visible? :actions-invite-reviewer))
+      (btu/fill :name-invite-reviewer "Frank Invited Reviewer")
+      (btu/fill :email-invite-reviewer "frank@review.org")
+
+      (btu/scroll-and-click :invite-reviewer)
+      (is (btu/eventually-visible? {:css ".alert-success"}))
+      (btu/screenshot "reviewer-invited-by-email"))
+
+    (logout)
+
+    (testing "accept invitation"
+      (let [[token _] (-> (btu/context-getx :application-id)
+                          applications/get-application-internal
+                          :application/invitation-tokens
+                          first)]
+        (btu/go (str (btu/get-server-url) "application/accept-invitation/" token))
+        (is (btu/eventually-visible? {:css ".login-btn"}))
+        (btu/scroll-and-click {:css ".login-btn"})
+        (is (btu/eventually-visible? [{:css ".users"} {:tag :a :fn/text "frank"}]))
+        (btu/scroll-and-click [{:css ".users"} {:tag :a :fn/text "frank"}])
+        (btu/wait-page-loaded)
+        ;; NB: this differs a bit from `login-as` and we should keep them the same
+        (is (btu/eventually-visible? {:tag :h1 :fn/has-text "test-invite-reviewer"})
+            "gets to the application")
+        (btu/screenshot "reviewer-joined-by-link")))
+
+    (logout)
+
+    (testing "reviewer can use the link again"
+      (let [[token _] (-> (btu/context-getx :application-id)
+                          applications/get-application-internal
+                          :application/invitation-tokens
+                          first)]
+        (btu/go (str (btu/get-server-url) "application/accept-invitation/" token))
+        (is (btu/eventually-visible? {:css ".login-btn"}))
+        (btu/scroll-and-click {:css ".login-btn"})
+        (is (btu/eventually-visible? [{:css ".users"} {:tag :a :fn/text "frank"}]))
+        (btu/scroll-and-click [{:css ".users"} {:tag :a :fn/text "frank"}])
+        (btu/wait-page-loaded)
+        ;; NB: this differs a bit from `login-as` and we should keep them the same
+        (is (btu/eventually-visible? {:tag :h1 :fn/has-text "test-invite-reviewer"})
+            "gets back to the application")
+        (btu/screenshot "reviewer-joined-by-link-again")))
+
+    (logout)
+
+    (testing "another user can't use the invitation"
+      (let [[token _] (-> (btu/context-getx :application-id)
+                          applications/get-application-internal
+                          :application/invitation-tokens
+                          first)]
+        (btu/go (str (btu/get-server-url) "application/accept-invitation/" token))
+        (is (btu/eventually-visible? {:css ".login-btn"}))
+        (btu/scroll-and-click {:css ".login-btn"})
+        (is (btu/eventually-visible? [{:css ".users"} {:tag :a :fn/text "elsa"}]))
+        (btu/scroll-and-click [{:css ".users"} {:tag :a :fn/text "elsa"}])
+        (btu/wait-page-loaded)
+        ;; NB: this differs a bit from `login-as` and we should keep them the same
+        (is (btu/eventually-visible? {:tag :h1 :fn/has-text "Catalogue"})
+            "was redirected to catalogue")
+        (is (btu/eventually-visible? {:fn/has-text "Joining the application failed"}))
+        (btu/screenshot "someone-else-cannot-use-the-link")))))
 
 (deftest test-approve-with-end-date
   (testing "submit test data with API"
@@ -1708,6 +1957,116 @@
                 "End" ""
                 "Active" true}
                (dissoc (slurp-fields :catalogue-item) "Start")))))))
+
+(deftest test-update-catalogue-item
+  (btu/with-postmortem
+    (btu/context-assoc! :workflow1 (test-helpers/create-workflow! {:title "test-update-catalogue-item workflow 1"}))
+    (btu/context-assoc! :workflow2 (test-helpers/create-workflow! {:title "test-update-catalogue-item workflow 2"}))
+    (btu/context-assoc! :workflow3 (test-helpers/create-workflow! {:title "test-update-catalogue-item workflow 3"}))
+    (btu/context-assoc! :form1 (test-helpers/create-form! {:form/internal-name "test-update-catalogue-item form 1"
+                                                           :form/title {:en "test-update-catalogue-item form 1 EN"
+                                                                        :fi "test-update-catalogue-item form 1 FI"
+                                                                        :sv "test-update-catalogue-item form 1 SV"}}))
+    (btu/context-assoc! :form2 (test-helpers/create-form! {:form/internal-name "test-update-catalogue-item form 2"}))
+    (btu/context-assoc! :catalogue-item1 (test-helpers/create-catalogue-item! {:title {:en "test-update-catalogue-item 1 EN"
+                                                                                       :fi "test-update-catalogue-item 1 FI"
+                                                                                       :sv "test-update-catalogue-item 1 SV"}
+                                                                               :form-id (btu/context-getx :form1)
+                                                                               :workflow-id (btu/context-getx :workflow1)}))
+    (btu/context-assoc! :catalogue-item2 (test-helpers/create-catalogue-item! {:title {:en "test-update-catalogue-item 2 EN"
+                                                                                       :fi "test-update-catalogue-item 2 FI"
+                                                                                       :sv "test-update-catalogue-item 2 SV"}
+                                                                               :form-id (btu/context-getx :form1)
+                                                                               :workflow-id (btu/context-getx :workflow2)}))
+    (btu/context-assoc! :catalogue-item3 (test-helpers/create-catalogue-item! {:title {:en "test-update-catalogue-item 3 EN"
+                                                                                       :fi "test-update-catalogue-item 3 FI"
+                                                                                       :sv "test-update-catalogue-item 3 SV"}
+                                                                               :form-id (btu/context-getx :form2)
+                                                                               :workflow-id (btu/context-getx :workflow2)}))
+    (login-as "owner")
+    (go-to-admin "Catalogue items")
+    (btu/wait-page-loaded)
+    (testing "update is disabled without selection"
+      (btu/screenshot "test-update-catalogue-item-1")
+      (is (btu/eventually-visible? {:fn/text "test-update-catalogue-item 1 EN"}))
+      (is (btu/eventually-visible? {:fn/text "test-update-catalogue-item 2 EN"}))
+      (is (btu/eventually-visible? {:fn/text "test-update-catalogue-item 3 EN"}))
+      (btu/wait-disabled {:tag :button :fn/text "Update catalogue item"}))
+
+    (testing "select to go to update"
+      (btu/scroll-and-click {:fn/text "test-update-catalogue-item 1 EN"})
+      (btu/scroll-and-click {:fn/text "test-update-catalogue-item 2 EN"})
+      (btu/scroll-and-click {:fn/text "test-update-catalogue-item 3 EN"})
+      (btu/wait-enabled {:tag :button :fn/text "Update catalogue item"})
+      (btu/scroll-and-click {:fn/text "Update catalogue item"})
+      (is (btu/eventually-visible? {:tag :h1 :fn/text "Update catalogue item"})))
+
+    (testing "initial state"
+      (btu/screenshot "test-update-catalogue-item-initial-state")
+      (btu/wait-disabled {:tag :button :fn/text "Update catalogue item"}))
+
+    (testing "can set form to empty"
+      (select-option "Form" "No form")
+      (btu/wait-enabled {:tag :button :fn/text "Update catalogue item"})
+      (btu/screenshot "test-update-catalogue-item-before-update-1")
+      (btu/scroll-and-click {:tag :button :fn/text "Update catalogue item"})
+      (is (btu/eventually-visible? {:css ".alert-success"}))
+      (btu/wait-disabled {:tag :button :fn/text "Update catalogue item"})
+      (is (= [{"name" "test-update-catalogue-item 1 EN"
+               "form" "No form"
+               "workflow" "test-update-catalogue-item workflow 1"}
+              {"name" "test-update-catalogue-item 2 EN"
+               "form" "No form"
+               "workflow" "test-update-catalogue-item workflow 2"}
+              {"name" "test-update-catalogue-item 3 EN"
+               "form" "No form"
+               "workflow" "test-update-catalogue-item workflow 2"}]
+             (slurp-rows :catalogue)))
+      (btu/screenshot "test-update-catalogue-item-done-1"))
+
+    (testing "can change form and workflow"
+      (select-option "Form" "test-update-catalogue-item form 1")
+      (select-option "Workflow" "test-update-catalogue-item workflow 3")
+      (btu/wait-enabled {:tag :button :fn/text "Update catalogue item"})
+      (btu/screenshot "test-update-catalogue-item-before-update-2")
+      (btu/scroll-and-click {:tag :button :fn/text "Update catalogue item"})
+      (is (btu/eventually-visible? {:css ".alert-success"}))
+      (btu/wait-disabled {:tag :button :fn/text "Update catalogue item"})
+      (is (= [{"name" "test-update-catalogue-item 1 EN"
+               "form" "test-update-catalogue-item form 1"
+               "workflow" "test-update-catalogue-item workflow 3"}
+              {"name" "test-update-catalogue-item 2 EN"
+               "form" "test-update-catalogue-item form 1"
+               "workflow" "test-update-catalogue-item workflow 3"}
+              {"name" "test-update-catalogue-item 3 EN"
+               "form" "test-update-catalogue-item form 1"
+               "workflow" "test-update-catalogue-item workflow 3"}]
+             (slurp-rows :catalogue)))
+      (btu/screenshot "test-update-catalogue-item-done-2"))
+
+    (testing "selection is kept on catalogue items page"
+      (btu/scroll-and-click {:fn/text "Back"})
+      (btu/screenshot "test-update-catalogue-item-back")
+      (is (= [{"form" "test-update-catalogue-item form 1"
+               "name" "test-update-catalogue-item 3 EN"
+               "workflow" "test-update-catalogue-item workflow 3"
+               "selection" true
+               "active" true
+               "organization" "Default"}
+              {"form" "test-update-catalogue-item form 1"
+               "name" "test-update-catalogue-item 2 EN"
+               "workflow" "test-update-catalogue-item workflow 3"
+               "selection" true
+               "active" true
+               "organization" "Default"}
+              {"form" "test-update-catalogue-item form 1"
+               "name" "test-update-catalogue-item 1 EN"
+               "workflow" "test-update-catalogue-item workflow 3"
+               "selection" true
+               "active" true
+               "organization" "Default"}]
+             (->> (slurp-tds [:catalogue {:css "tr:has(td.selection *[aria-checked=true])"}])
+                  (mapv #(dissoc % "resource" "created" "commands"))))))))
 
 (defn create-context-field!
   "Utility function that keeps track of created form fields in

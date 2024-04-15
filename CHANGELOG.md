@@ -8,6 +8,12 @@ have notable changes.
 
 Changes since v2.36
 
+### Additions
+- The "Change Form" function in administration has been expanded to be able to change both forms and workflows. From now on it is called "Update catalogue item". The old `change-form` API still exists but has been deprecated. (#3271)
+
+### Changes
+    - Invitation links work multiple times. Previously, they were single-use. The invitation token is spent on the first use and it grants the rights then. However, the user may still use the link later for navigating into the application or workflow in question. (#3275)
+
 ## v2.36 "Laivapojankuja" 2024-03-13
 
 ### Additions

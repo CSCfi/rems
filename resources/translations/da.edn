@@ -2,12 +2,10 @@
  {:accept-invitation {:header "Accepter invitation"
                       :title "Accepter invitation"
                       :success {:workflow "Tilslutning til arbejdsgangshåndtering lykkedes."}
-                      :errors {:already-member {:workflow "Du håndterer allerede arbejdsgang."}
-                               :invalid-invitation-type "Accept af invitation mislykkedes."
+                      :errors {:invalid-invitation-type "Accept af invitation mislykkedes."
                                :invalid-token [:span "Accept af invitation mislykkedes. Tjek invitationstoken " [:code "%1"]]
                                :invalid-workflow "Accept af invitation mislykkedes."}}
   :actions {:accept-invitation "Accepter invitation"
-            :accept-invitation-already-member "Du er allerede medlem."
             :accept-invitation-success "Tilslutning til ansøgning lykkedes."
             :accept-licenses "Accepter brugsvilkårene"
             :add-licenses "Tilføj et brugsvilkår"
@@ -29,8 +27,7 @@
             :decide "Beslut"
             :delete "Slet kladde"
             :delete-intro [:div.intro [:p "Slet denne kladde permanent?"]]
-            :errors {:already-member "Bruger er allerede medlem af denne ansøgning"
-                     :duplicate-id "Id er allerede i brug."
+            :errors {:duplicate-id "Id er allerede i brug."
                      ;; %1 - invitation token
                      :invalid-token [:div [:p "Tilslutning til ansøgning mislykkedes."] [:p "Tjek invitationstoken " [:code "%1"]]]
                      :licenses-not-accepted "Brugsvilkår ikke accepteret."
@@ -84,14 +81,12 @@
                    :archive "Arkiver"
                    :back "Tilbage"
                    :blacklist "Sortliste"
-                   :change-form "Rediger blanket"
                    :cancel "Afbryd"
                    :catalogue-item "Katalogpost"
                    :catalogue-items "Katalogposter"
                    :categories "Kategorier"
                    :category "Kategori"
                    :category-children "Underkategorier"
-                   :change "Rediger"
                    :comment "Kommentar"
                    :copy-as-new "Kopier som ny"
                    :create-catalogue-item "Ny katalogpost"
@@ -113,6 +108,8 @@
                    :display-order "Visningsrækkefølge"
                    :display-own-organization-only-explanation nil
                    :display-own-organization-only nil
+                   :do-not-change-form nil
+                   :do-not-change-workflow nil
                    :edit "Rediger"
                    :edit-catalogue-item "Rediger katalogpost"
                    :edit-category "Rediger kategori"
@@ -170,6 +167,7 @@
                    :title "Navn"
                    :type "Type"
                    :unarchive "Dearkiver"
+                   :update-catalogue-item nil
                    :user "Bruger"
                    :userid "Brugernavn"
                    :user-role "Brugerrolle"
@@ -321,8 +319,9 @@
              :show "Vis"
              :show-less "Vis mindre"
              :show-more "Vis mere"}
-  :change-form {:change-form-intro "Du er ved at ændre blanketten for nedenstående ressourcer. Ændringerne foretages en ad gangen, så hver gammel ressource tages væk og en ny kopi vil benytte den valgte blanket."
-                :form-selection "Blanket"}
+  :update-catalogue-item {:update-catalogue-item-intro "Du er ved at opdatera nedenstående ressourcer. Ændringerne foretages en ad gangen, så hver gammel ressource tages væk og en ny kopi vil benytte den valgte blanket og arbejdsgang."
+                          :form-selection "Blanket"
+                          :workflow-selection "Arbejdsgang"}
   :commands {:accept-invitation "Accepter invitation"
              :accept-licenses "Accepter brugsvilkår"
              :add-licenses "Tilføj brugsvilkår"

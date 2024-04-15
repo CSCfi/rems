@@ -2,12 +2,10 @@
  {:accept-invitation {:header "Accept invitation"
                       :title "Accept invitation"
                       :success {:workflow "Successfully joined workflow handling."}
-                      :errors {:already-member {:workflow "You are already a handler."}
-                               :invalid-invitation-type "Accepting invitation failed."
+                      :errors {:invalid-invitation-type "Accepting invitation failed."
                                :invalid-token [:span "Accepting the invitation failed. Check the invitation token " [:code "%1"]]
                                :invalid-workflow "Accepting invitation failed."}}
   :actions {:accept-invitation "Accept invitation"
-            :accept-invitation-already-member "You are already a member."
             :accept-invitation-success "Successfully joined the application."
             :accept-licenses "Accept the terms of use"
             :add-licenses "Add terms of use"
@@ -29,8 +27,7 @@
             :decide "Decide"
             :delete "Delete draft"
             :delete-intro [:div.intro [:p "Permanently delete this draft?"]]
-            :errors {:already-member "User is already a member of this application"
-                     :duplicate-id "Id is already in use."
+            :errors {:duplicate-id "Id is already in use."
                      ;; %1 - invitation token
                      :invalid-token [:div [:p "Joining the application failed."] [:p "Check the invitation token " [:code "%1"]]]
                      :licenses-not-accepted "Terms of use not accepted."
@@ -84,14 +81,12 @@
                    :archive "Archive"
                    :back "Back"
                    :blacklist "Blacklist"
-                   :change-form "Change form"
                    :cancel "Cancel"
                    :catalogue-item "Catalogue item"
                    :catalogue-items "Catalogue items"
                    :categories "Categories"
                    :category "Category"
                    :category-children "Subcategories"
-                   :change "Change"
                    :comment "Comment"
                    :copy-as-new "Copy as new"
                    :create-catalogue-item "Create catalogue item"
@@ -113,6 +108,8 @@
                    :display-order "Display order"
                    :display-own-organization-only-explanation "Should only own organization items be shown?"
                    :display-own-organization-only "Own organization only"
+                   :do-not-change-form "Don't change form"
+                   :do-not-change-workflow "Don't change workflow"
                    :edit "Edit"
                    :edit-catalogue-item "Edit catalogue item"
                    :edit-category "Edit category"
@@ -170,6 +167,7 @@
                    :title "Title"
                    :type "Type"
                    :unarchive "Unarchive"
+                   :update-catalogue-item "Update catalogue item"
                    :user "User"
                    :userid "User id"
                    :user-role "User role"
@@ -346,8 +344,9 @@
              :show "Show"
              :show-less "Show less"
              :show-more "Show more"}
-  :change-form {:change-form-intro "You are about to change the form of the following catalogue items. The changes will be made one at a time, so that each old item is terminated and a new copy will use the chosen form."
-                :form-selection "Form"}
+  :update-catalogue-item {:update-catalogue-item-intro "You are about to update the following catalogue items. The changes will be made one at a time, so that each old item is terminated and a new copy will use the chosen form and workflow."
+                          :form-selection "Form"
+                          :workflow-selection "Workflow"}
   :commands {:accept-invitation "Accept invitation"
              :accept-licenses "Accept the terms of use"
              :add-licenses "Add terms of use"

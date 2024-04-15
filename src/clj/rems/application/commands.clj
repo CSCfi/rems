@@ -291,9 +291,17 @@
   (some #(= userid (:userid %))
         (application-util/applicant-and-members application)))
 
-(defn already-member-error [application userid]
-  (when (member? userid application)
-    {:errors [{:type :t.actions.errors/already-member :userid userid :application-id (:application/id application)}]}))
+(defn- role-in-application? [userid application]
+  (contains? (:application/user-roles application)
+             userid))
+
+(defn already-joined-error [application userid]
+  (when (role-in-application? userid application)
+    {:errors [{:type :already-joined :userid userid :application-id (:application/id application)}]}))
+
+(defn token-used-error [invitation token]
+  (when (:token/used? invitation)
+    {:errors [{:type :t.actions.errors/invalid-token :token token}]}))
 
 (defn- ok-with-data [data events]
   (assoc data :events events))
@@ -566,7 +574,7 @@
 (defmethod command-handler :application.command/add-member
   [cmd application injections]
   (or (invalid-user-error (:userid (:member cmd)) injections)
-      (already-member-error application (:userid (:member cmd)))
+      (already-joined-error application (:userid (:member cmd)))
       (ok {:event/type :application.event/member-added
            :application/member (:member cmd)})))
 
@@ -596,25 +604,30 @@
         invitation (get-in application [:application/invitation-tokens token])]
     (cond
       (:application/member invitation)
-      (or (already-member-error application (:actor cmd))
+      (or (already-joined-error application (:actor cmd))
+          (token-used-error invitation token)
           (ok-with-data {:application-id (:application-id cmd)}
                         [{:event/type :application.event/member-joined
                           :application/id (:application-id cmd)
                           :invitation/token (:token cmd)}]))
 
       (:application/reviewer invitation)
-      (ok-with-data {:application-id (:application-id cmd)}
-                    [{:event/type :application.event/reviewer-joined
-                      :application/id (:application-id cmd)
-                      :invitation/token (:token cmd)
-                      :application/request-id (UUID/randomUUID)}])
+      (or (already-joined-error application (:actor cmd))
+          (token-used-error invitation token)
+          (ok-with-data {:application-id (:application-id cmd)}
+                        [{:event/type :application.event/reviewer-joined
+                          :application/id (:application-id cmd)
+                          :invitation/token (:token cmd)
+                          :application/request-id (UUID/randomUUID)}]))
 
       (:application/decider invitation)
-      (ok-with-data {:application-id (:application-id cmd)}
-                    [{:event/type :application.event/decider-joined
-                      :application/id (:application-id cmd)
-                      :invitation/token (:token cmd)
-                      :application/request-id (UUID/randomUUID)}])
+      (or (already-joined-error application (:actor cmd))
+          (token-used-error invitation token)
+          (ok-with-data {:application-id (:application-id cmd)}
+                        [{:event/type :application.event/decider-joined
+                          :application/id (:application-id cmd)
+                          :invitation/token (:token cmd)
+                          :application/request-id (UUID/randomUUID)}]))
 
       :else
       {:errors [{:type :t.actions.errors/invalid-token :token token}]})))

@@ -1,6 +1,7 @@
 (ns rems.administration.catalogue-items
   (:require [cljs-time.coerce :as time-coerce]
             [reagent.core :as r]
+            [medley.core :refer [index-by]]
             [re-frame.core :as rf]
             [rems.administration.administration :as administration]
             [rems.administration.catalogue-item :as catalogue-item]
@@ -8,6 +9,7 @@
             [rems.atoms :as atoms :refer [readonly-checkbox document-title]]
             [rems.flash-message :as flash-message]
             [rems.common.roles :as roles]
+            [rems.common.util :refer [select-vals]]
             [rems.spinner :as spinner]
             [rems.table :as table]
             [rems.text :refer [localize-time text get-localized-title localized]]
@@ -16,7 +18,7 @@
 (rf/reg-event-fx
  ::enter-page
  (fn [{:keys [db]}]
-   {:db (assoc db ::selected-items-ids (or (::selected-items-ids db) #{}))
+   {:db db
     :dispatch-n [[::fetch-catalogue]
                  [:rems.table/reset]
                  [:rems.administration.administration/remember-current-page]]}))
@@ -64,39 +66,33 @@
           :error-handler (flash-message/default-error-handler :top description)})
    {}))
 
-(rf/reg-event-db
- ::set-selected-items-ids
- (fn [db [_ items]]
-   (assoc db ::selected-items-ids items)))
-
 (rf/reg-sub
- ::selected-items-ids
- (fn [db _]
-   (::selected-items-ids db)))
-
-(defn- items-by-ids [items ids]
-  (filter (comp ids :id) items))
+ ::catalogue-by-ids
+ :<- [::catalogue]
+ (fn [items]
+   (index-by :id items)))
 
 (rf/reg-sub
  ::selected-catalogue-items
- (fn [_ _]
-   [(rf/subscribe [::catalogue])
-    (rf/subscribe [::selected-items-ids])])
- (fn [[catalogue selected-item-ids] _]
-   (items-by-ids catalogue selected-item-ids)))
+ :<- [::catalogue-by-ids]
+ :<- [:rems.table/selected-rows {:id ::catalogue}]
+ (fn [[catalogue-by-ids selected-item-ids] _]
+   (select-vals catalogue-by-ids selected-item-ids)))
 
 (defn- create-catalogue-item-button []
   [atoms/link {:class "btn btn-primary" :id :create-catalogue-item}
    "/administration/catalogue-items/create"
    (text :t.administration/create-catalogue-item)])
 
-(defn- change-form-button [items]
-  [:button.btn.btn-primary
-   {:disabled (when (empty? items) :disabled)
+(defn- update-catalogue-item-button [items]
+  [atoms/rate-limited-action-button
+   {:id :update-catalogue-item
+    :class "btn-primary"
+    :disabled (when (empty? items) :disabled)
     :on-click (fn []
-                (rf/dispatch [:rems.administration.change-catalogue-item-form/enter-page items])
-                (navigate! "/administration/catalogue-items/change-form"))}
-   (text :t.administration/change-form)])
+                (rf/dispatch [:rems.administration.update-catalogue-item/enter-page items])
+                (navigate! "/administration/catalogue-items/update-catalogue-item"))
+    :label [text :t.administration/update-catalogue-item]}])
 
 (defn- categories-button []
   [atoms/link {:class "btn btn-primary" :id :manage-categories}
@@ -183,8 +179,7 @@
                    :rows [::catalogue-table-rows]
                    :default-sort-column :created
                    :default-sort-order :desc
-                   :selectable? true
-                   :on-select #(rf/dispatch [::set-selected-items-ids %])}])
+                   :selectable? true}])
 
 (defn catalogue-items-page []
   (into [:div
@@ -197,7 +192,7 @@
             [atoms/commands
              [create-catalogue-item-button]
              [categories-button]
-             [change-form-button @(rf/subscribe [::selected-catalogue-items])]]
+             [update-catalogue-item-button @(rf/subscribe [::selected-catalogue-items])]]
             [status-flags/status-flags-intro #(do (rf/dispatch [::fetch-catalogue])
                                                   (rf/dispatch [:rems.table/set-selected-rows {:id ::catalogue} nil]))]]
            [administration/own-organization-selection]
