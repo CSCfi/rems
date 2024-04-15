@@ -72,16 +72,22 @@
     (if-let [workflow-id (get-in invitation [:invitation/workflow :workflow/id])]
       (let [workflow (workflow/get-workflow workflow-id)
             handlers (set (map :userid (get-in workflow [:workflow :handlers])))]
-        (if (contains? handlers userid)
-          {:success false
-           :errors [{:key :t.accept-invitation.errors.already-member/workflow}]}
-          (do
-            (workflow/edit-workflow! {:id workflow-id
-                                      :handlers (conj handlers userid)})
-            (invitation/accept-invitation! userid token)
-            (applications/reload-cache!)
-            {:success true
-             :invitation/workflow {:workflow/id (:id workflow)}})))
+        (cond (contains? handlers userid)
+              {:success false
+               :errors [{:type :already-joined :workflow/id workflow-id}]}
+
+              (not (:invitation/accepted invitation))
+              (do
+                (workflow/edit-workflow! {:id workflow-id
+                                          :handlers (conj handlers userid)})
+                (invitation/accept-invitation! userid token)
+                (applications/reload-cache!)
+                {:success true
+                 :invitation/workflow {:workflow/id workflow-id}})
+
+              :else
+              {:success false
+               :errors [{:key :t.accept-invitation.errors/invalid-token :token token}]}))
       {:success false
        :errors [{:key :t.accept-invitation.errors/invalid-invitation-type}]})
     {:success false

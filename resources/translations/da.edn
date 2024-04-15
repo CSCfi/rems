@@ -2,12 +2,10 @@
  {:accept-invitation {:header "Accepter invitation"
                       :title "Accepter invitation"
                       :success {:workflow "Tilslutning til arbejdsgangshåndtering lykkedes."}
-                      :errors {:already-member {:workflow "Du håndterer allerede arbejdsgang."}
-                               :invalid-invitation-type "Accept af invitation mislykkedes."
+                      :errors {:invalid-invitation-type "Accept af invitation mislykkedes."
                                :invalid-token [:span "Accept af invitation mislykkedes. Tjek invitationstoken " [:code "%1"]]
                                :invalid-workflow "Accept af invitation mislykkedes."}}
   :actions {:accept-invitation "Accepter invitation"
-            :accept-invitation-already-member "Du er allerede medlem."
             :accept-invitation-success "Tilslutning til ansøgning lykkedes."
             :accept-licenses "Accepter brugsvilkårene"
             :add-licenses "Tilføj et brugsvilkår"
@@ -29,8 +27,7 @@
             :decide "Beslut"
             :delete "Slet kladde"
             :delete-intro [:div.intro [:p "Slet denne kladde permanent?"]]
-            :errors {:already-member "Bruger er allerede medlem af denne ansøgning"
-                     :duplicate-id "Id er allerede i brug."
+            :errors {:duplicate-id "Id er allerede i brug."
                      ;; %1 - invitation token
                      :invalid-token [:div [:p "Tilslutning til ansøgning mislykkedes."] [:p "Tjek invitationstoken " [:code "%1"]]]
                      :licenses-not-accepted "Brugsvilkår ikke accepteret."

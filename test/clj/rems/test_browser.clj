@@ -715,10 +715,19 @@
     (btu/context-assoc! :form-id (test-helpers/create-form! {:form/fields [{:field/title {:en "description" :fi "kuvaus" :sv "rubrik"}
                                                                             :field/optional false
                                                                             :field/type :description}]}))
-    (btu/context-assoc! :catalogue-id (test-helpers/create-catalogue-item! {:form-id (btu/context-getx :form-id)}))
+    (btu/context-assoc! :license-id (test-helpers/create-license! {:license/title {:en "License title EN"
+                                                                                   :fi "License title EN"
+                                                                                   :sv "License title EN"}
+                                                                   :license/text {:en "License text EN"
+                                                                                  :fi "License text FI"
+                                                                                  :sv "License text SV"}}))
+    (btu/context-assoc! :resource-id (test-helpers/create-resource! {:license-ids [(btu/context-getx :license-id)]}))
+    (btu/context-assoc! :catalogue-id (test-helpers/create-catalogue-item! {:form-id (btu/context-getx :form-id)
+                                                                            :resource-id (btu/context-getx :resource-id)}))
     (btu/context-assoc! :application-id (test-helpers/create-draft! "alice"
                                                                     [(btu/context-getx :catalogue-id)]
                                                                     "test-applicant-member-invite-action")))
+
   (btu/with-postmortem
     (login-as "alice")
     (go-to-application (btu/context-getx :application-id))
@@ -762,7 +771,8 @@
       (is (btu/eventually-visible? :actions-invite0-operations-remove))
       (btu/fill-human :comment-invite0-operations-remove-comment "sorry but no")
       (btu/scroll-and-click :invite0-operations-remove-submit)
-      (is (btu/eventually-visible? [{:css ".alert-success" :fn/has-text "Remove member: Success"}]))
+      (is (btu/eventually-visible? [{:fn/has-string "Remove member: Success"}]))
+      (btu/get-element-text :status-success)
       (btu/wait-invisible :actions-invite0-operations-remove)
       (btu/wait-invisible :invite0-info)
 
@@ -770,7 +780,89 @@
                       applications/get-application-internal
                       :application/invitation-tokens)))
       (is (btu/visible? {:css "div.event-description" :fn/text "Alice Applicant removed John Smith from the application."}))
-      (is (btu/visible? {:css "div.event-comment" :fn/text "sorry but no"})))))
+      (is (btu/visible? {:css "div.event-comment" :fn/text "sorry but no"})))
+
+    (testing "invite another member"
+      (is (not (btu/visible? [:actions-invite-member {:fn/has-text "Invite member"}])))
+      (btu/scroll-and-click :invite-member-action-button)
+      (is (btu/eventually-visible? [:actions-invite-member {:fn/has-text "Invite member"}]))
+      (btu/fill-human [:actions-invite-member :name-invite-member] "Jane Smith")
+      (btu/fill-human [:actions-invite-member :email-invite-member] "jane.smith@generic.name")
+      (btu/scroll-and-click :invite-member)
+      (is (btu/eventually-visible? {:fn/has-string "Invite member: Success"})))
+
+    (testing "submit application"
+      (btu/scroll-and-click :submit)
+      (is (btu/eventually-visible? {:fn/has-string "Send application: Success"})))
+
+    (logout)
+
+    (testing "get invite token"
+      (let [[token invitation] (-> (btu/context-getx :application-id)
+                                   applications/get-application-internal
+                                   :application/invitation-tokens
+                                   first)]
+        (is (string? token))
+        (is (= {:application/member {:name "Jane Smith" :email "jane.smith@generic.name"}
+                :event/actor "alice"}
+               invitation))
+        (btu/context-assoc! :token token)))
+
+    (testing "accept invitation"
+      (btu/go (str (btu/get-server-url) "application/accept-invitation/" (btu/context-getx :token)))
+      (is (btu/eventually-visible? {:css ".login-btn"}))
+      (btu/scroll-and-click {:css ".login-btn"})
+      (is (btu/eventually-visible? [{:css ".users"} {:tag :a :fn/text "frank"}]))
+      (btu/scroll-and-click [{:css ".users"} {:tag :a :fn/text "frank"}])
+      (btu/wait-page-loaded)
+      ;; NB: this differs a bit from `login-as` and we should keep them the same
+      (btu/wait-visible :logout)
+      (is (btu/eventually-visible? {:tag :h1 :fn/has-text "test-applicant-member-invite-action"}))
+      (btu/screenshot "member-joined"))
+
+    (testing "check member-joined event"
+      (is (= {:event/type :application.event/member-joined
+              :event/actor "frank"}
+             (-> (btu/context-getx :application-id)
+                 applications/get-application-internal
+                 :application/events
+                 last
+                 (select-keys [:event/actor :event/type])))))
+
+    (testing "accept licenses"
+      (btu/scroll-and-click :accept-licenses-button)
+      (is (btu/eventually-visible? {:fn/has-string "Accept the terms of use: Success"}))
+      (btu/screenshot "accepted-licenses"))
+
+    (logout)
+
+    (testing "member can use the link again"
+      (btu/go (str (btu/get-server-url) "application/accept-invitation/" (btu/context-getx :token)))
+      (is (btu/eventually-visible? {:css ".login-btn"}))
+      (btu/scroll-and-click {:css ".login-btn"})
+      (is (btu/eventually-visible? [{:css ".users"} {:tag :a :fn/text "frank"}]))
+      (btu/scroll-and-click [{:css ".users"} {:tag :a :fn/text "frank"}])
+      (btu/wait-page-loaded)
+      ;; NB: this differs a bit from `login-as` and we should keep them the same
+      (btu/wait-visible :logout)
+      (is (btu/eventually-visible? {:tag :h1 :fn/has-text "test-applicant-member-invite-action"})
+          "gets back to the application")
+      (btu/screenshot "member-joined-again"))
+
+    (logout)
+
+    (testing "another user can't use the invitation"
+      (btu/go (str (btu/get-server-url) "accept-invitation?token=" (btu/context-getx :token)))
+      (is (btu/eventually-visible? {:css ".login-btn"}))
+      (btu/scroll-and-click {:css ".login-btn"})
+      (is (btu/eventually-visible? [{:css ".users"} {:tag :a :fn/text "elsa"}]))
+      (btu/scroll-and-click [{:css ".users"} {:tag :a :fn/text "elsa"}])
+      (btu/wait-page-loaded)
+      ;; NB: this differs a bit from `login-as` and we should keep them the same
+      (is (btu/eventually-visible? {:tag :h1 :fn/has-text "Catalogue"})
+          "was redirected to catalogue")
+      (is (btu/eventually-visible? {:fn/has-text "Joining the application failed."}))
+      (btu/screenshot "someone-else-cannot-use-the-link"))))
 
 (deftest test-applicant-member-remove-action
   (testing "submit test data with API"
@@ -814,7 +906,7 @@
       (is (btu/eventually-visible? :actions-member1-operations-remove))
       (btu/fill-human :comment-member1-operations-remove-comment "not in research group anymore")
       (btu/scroll-and-click :member1-operations-remove-submit)
-      (is (btu/eventually-visible? [{:css ".alert-success" :fn/has-text "Remove member: Success"}]))
+      (is (btu/eventually-visible? [{:fn/has-string "Remove member: Success"}]))
       (btu/wait-invisible :actions-member1-operations-remove)
       (btu/wait-invisible :member2-info) ; last element is removed from DOM, remaining updated
       (btu/scroll-and-click :header-collapse-more-link) ; show events
@@ -1040,6 +1132,7 @@
     (test-helpers/submit-application {:application-id (btu/context-getx :application-id)
                                       :actor "alice"})
     (test-helpers/create-user! {:userid "new-decider" :name "New Decider" :email "new-decider@example.com"}))
+
   (btu/with-postmortem
     (testing "handler invites decider"
       (login-as "developer")
@@ -1055,8 +1148,10 @@
       (btu/fill-human :email-invite-decider "user@example.com")
       (btu/scroll-and-click :invite-decider)
       (is (btu/eventually-visible? {:css ".alert-success"}))
-      (btu/screenshot "decider-invited")
-      (logout))
+      (btu/screenshot "decider-invited"))
+
+    (logout)
+
     (testing "get invite token"
       (let [[token invitation] (-> (btu/context-getx :application-id)
                                    applications/get-application-internal
@@ -1067,6 +1162,7 @@
                 :event/actor "developer"}
                invitation))
         (btu/context-assoc! :token token)))
+
     (testing "accept invitation"
       (with-fake-login-users {"new-decider" {:sub "new-decider" :name "New Decider" :email "new-decider@example.com"}}
         (btu/go (str (btu/get-server-url) "application/accept-invitation/" (btu/context-getx :token)))
@@ -1079,6 +1175,7 @@
         (btu/wait-visible :logout)
         (is (btu/eventually-visible? {:tag :h1 :fn/has-text "test-invite-decider"}))
         (btu/screenshot "decider-joined")))
+
     (testing "check decider-joined event"
       (is (= {:event/type :application.event/decider-joined
               :event/actor "new-decider"}
@@ -1087,6 +1184,7 @@
                  :application/events
                  last
                  (select-keys [:event/actor :event/type])))))
+
     (testing "submit decision"
       (btu/scroll-and-click :decide-action-button)
       (is (btu/eventually-visible? :comment-decide))
@@ -1096,6 +1194,7 @@
       (btu/wait-page-loaded)
       (is (btu/eventually-visible? {:css ".alert-success"}))
       (btu/screenshot "decided"))
+
     (testing "check decision event"
       ;; checking has sometimes failed because
       ;; the comment was typoed so let's not compare it
@@ -1106,7 +1205,39 @@
                  applications/get-application-internal
                  :application/events
                  last
-                 (select-keys [:application/decision :event/actor :event/type])))))))
+                 (select-keys [:application/decision :event/actor :event/type])))))
+
+    (logout)
+
+    (testing "decider can use the link again"
+      (with-fake-login-users {"new-decider" {:sub "new-decider" :name "New Decider" :email "new-decider@example.com"}}
+        (btu/go (str (btu/get-server-url) "application/accept-invitation/" (btu/context-getx :token)))
+        (is (btu/eventually-visible? {:css ".login-btn"}))
+        (btu/scroll-and-click {:css ".login-btn"})
+        (is (btu/eventually-visible? [{:css ".users"} {:tag :a :fn/text "new-decider"}]))
+        (btu/scroll-and-click [{:css ".users"} {:tag :a :fn/text "new-decider"}])
+        (btu/wait-page-loaded)
+        ;; NB: this differs a bit from `login-as` and we should keep them the same
+        (btu/wait-visible :logout)
+        (is (btu/eventually-visible? {:tag :h1 :fn/has-text "test-invite-decider"})
+            "gets back to the application")
+        (btu/screenshot "decider-joined-again")))
+
+    (logout)
+
+    (testing "another user can't use the invitation"
+      (with-fake-login-users {"someone-else-id" {:sub "someone-else-id" :name "Someone Else" :email "someone@else.com"}}
+        (btu/go (str (btu/get-server-url) "accept-invitation?token=" (btu/context-getx :token)))
+        (is (btu/eventually-visible? {:css ".login-btn"}))
+        (btu/scroll-and-click {:css ".login-btn"})
+        (is (btu/eventually-visible? [{:css ".users"} {:tag :a :fn/text "someone-else-id"}]))
+        (btu/scroll-and-click [{:css ".users"} {:tag :a :fn/text "someone-else-id"}])
+        (btu/wait-page-loaded)
+        ;; NB: this differs a bit from `login-as` and we should keep them the same
+        (is (btu/eventually-visible? {:tag :h1 :fn/has-text "Catalogue"})
+            "was redirected to catalogue")
+        (is (btu/eventually-visible? {:fn/has-text "Joining the application failed."}))
+        (btu/screenshot "someone-else-cannot-use-the-link")))))
 
 (deftest test-invite-handler
   (testing "create test data"
@@ -1131,7 +1262,8 @@
         (btu/context-assoc! :token token)))
 
     (testing "accept invitation"
-      (with-fake-login-users {"invited-person-id" {:sub "invited-person-id" :name "Invited Person Name" :email "invite-person-id@example.com"}}
+      (with-fake-login-users {"invited-person-id" {:sub "invited-person-id" :name "Invited Person Name" :email "invite-person-id@example.com"}
+                              "someone-else-id" {:sub "someone-else-id" :name "Someone Else" :email "someone@else.com"}}
         (btu/go (str (btu/get-server-url) "accept-invitation?token=" (btu/context-getx :token)))
         (is (btu/eventually-visible? {:css ".login-btn"}))
         (btu/scroll-and-click {:css ".login-btn"})
@@ -1149,7 +1281,38 @@
                 "Active" true
                 "Forms" "No forms"
                 "Licenses" "No licenses"}
-               (slurp-fields :workflow-common-fields)))))))
+               (slurp-fields :workflow-common-fields)))
+        (btu/screenshot "handler-joined-by-link")
+
+        (logout)
+
+        (testing "handler can use the link again"
+          (btu/go (str (btu/get-server-url) "accept-invitation?token=" (btu/context-getx :token)))
+          (is (btu/eventually-visible? {:css ".login-btn"}))
+          (btu/scroll-and-click {:css ".login-btn"})
+          (is (btu/eventually-visible? [{:css ".users"} {:tag :a :fn/text "invited-person-id"}]))
+          (btu/scroll-and-click [{:css ".users"} {:tag :a :fn/text "invited-person-id"}])
+          (btu/wait-page-loaded)
+          ;; NB: this differs a bit from `login-as` and we should keep them the same
+          (is (btu/eventually-visible? [:workflow-common-fields
+                                        {:fn/has-text (btu/context-getx :workflow-title)}])
+              "gets back to the workflow")
+          (btu/screenshot "handler-joined-by-link-again"))
+
+        (logout)
+
+        (testing "another user can't use the invitation"
+          (btu/go (str (btu/get-server-url) "accept-invitation?token=" (btu/context-getx :token)))
+          (is (btu/eventually-visible? {:css ".login-btn"}))
+          (btu/scroll-and-click {:css ".login-btn"})
+          (is (btu/eventually-visible? [{:css ".users"} {:tag :a :fn/text "someone-else-id"}]))
+          (btu/scroll-and-click [{:css ".users"} {:tag :a :fn/text "someone-else-id"}])
+          (btu/wait-page-loaded)
+          ;; NB: this differs a bit from `login-as` and we should keep them the same
+          (is (btu/eventually-visible? {:tag :h1 :fn/has-text "Catalogue"})
+              "was redirected to catalogue")
+          (is (btu/eventually-visible? {:fn/has-text "Accepting the invitation failed"}))
+          (btu/screenshot "someone-else-cannot-use-the-link"))))))
 
 (deftest test-invite-reviewer
   (testing "create test data"
@@ -1172,7 +1335,7 @@
     (test-helpers/submit-application {:application-id (btu/context-getx :application-id)
                                       :actor "alice"}))
   (btu/with-postmortem
-    (testing "handler invites reviewer"
+    (testing "handler adds existing reviewer"
       (login-as "developer")
       (go-to-application (btu/context-getx :application-id))
       (is (btu/eventually-visible? {:tag :h1 :fn/has-text "test-invite-reviewer"}))
@@ -1192,13 +1355,88 @@
       (btu/scroll-and-click :request-review-button)
       (is (btu/eventually-visible? {:css ".alert-success"}))
       (logout))
+
     (testing "reviewer should see applicant non-private form answers"
       (login-as "carl")
       (go-to-application (btu/context-getx :application-id))
       (is (= (count (btu/query-all {:css ".fields"}))
              1))
       (is (= {"description" "test-invite-reviewer"}
-             (slurp-fields {:css ".fields"}))))))
+             (slurp-fields {:css ".fields"}))))
+
+    (logout)
+
+    (testing "handler invites reviewer by email"
+      (login-as "developer")
+      (go-to-application (btu/context-getx :application-id))
+      (is (btu/eventually-visible? {:tag :h1 :fn/has-text "test-invite-reviewer"}))
+
+      (btu/scroll-and-click :request-review-dropdown)
+      (is (btu/eventually-visible? :invite-reviewer-action-button))
+      (btu/scroll-and-click :invite-reviewer-action-button)
+
+      (is (btu/eventually-visible? :actions-invite-reviewer))
+      (btu/fill :name-invite-reviewer "Frank Invited Reviewer")
+      (btu/fill :email-invite-reviewer "frank@review.org")
+
+      (btu/scroll-and-click :invite-reviewer)
+      (is (btu/eventually-visible? {:css ".alert-success"}))
+      (btu/screenshot "reviewer-invited-by-email"))
+
+    (logout)
+
+    (testing "accept invitation"
+      (let [[token _] (-> (btu/context-getx :application-id)
+                          applications/get-application-internal
+                          :application/invitation-tokens
+                          first)]
+        (btu/go (str (btu/get-server-url) "application/accept-invitation/" token))
+        (is (btu/eventually-visible? {:css ".login-btn"}))
+        (btu/scroll-and-click {:css ".login-btn"})
+        (is (btu/eventually-visible? [{:css ".users"} {:tag :a :fn/text "frank"}]))
+        (btu/scroll-and-click [{:css ".users"} {:tag :a :fn/text "frank"}])
+        (btu/wait-page-loaded)
+        ;; NB: this differs a bit from `login-as` and we should keep them the same
+        (is (btu/eventually-visible? {:tag :h1 :fn/has-text "test-invite-reviewer"})
+            "gets to the application")
+        (btu/screenshot "reviewer-joined-by-link")))
+
+    (logout)
+
+    (testing "reviewer can use the link again"
+      (let [[token _] (-> (btu/context-getx :application-id)
+                          applications/get-application-internal
+                          :application/invitation-tokens
+                          first)]
+        (btu/go (str (btu/get-server-url) "application/accept-invitation/" token))
+        (is (btu/eventually-visible? {:css ".login-btn"}))
+        (btu/scroll-and-click {:css ".login-btn"})
+        (is (btu/eventually-visible? [{:css ".users"} {:tag :a :fn/text "frank"}]))
+        (btu/scroll-and-click [{:css ".users"} {:tag :a :fn/text "frank"}])
+        (btu/wait-page-loaded)
+        ;; NB: this differs a bit from `login-as` and we should keep them the same
+        (is (btu/eventually-visible? {:tag :h1 :fn/has-text "test-invite-reviewer"})
+            "gets back to the application")
+        (btu/screenshot "reviewer-joined-by-link-again")))
+
+    (logout)
+
+    (testing "another user can't use the invitation"
+      (let [[token _] (-> (btu/context-getx :application-id)
+                          applications/get-application-internal
+                          :application/invitation-tokens
+                          first)]
+        (btu/go (str (btu/get-server-url) "application/accept-invitation/" token))
+        (is (btu/eventually-visible? {:css ".login-btn"}))
+        (btu/scroll-and-click {:css ".login-btn"})
+        (is (btu/eventually-visible? [{:css ".users"} {:tag :a :fn/text "elsa"}]))
+        (btu/scroll-and-click [{:css ".users"} {:tag :a :fn/text "elsa"}])
+        (btu/wait-page-loaded)
+        ;; NB: this differs a bit from `login-as` and we should keep them the same
+        (is (btu/eventually-visible? {:tag :h1 :fn/has-text "Catalogue"})
+            "was redirected to catalogue")
+        (is (btu/eventually-visible? {:fn/has-text "Joining the application failed"}))
+        (btu/screenshot "someone-else-cannot-use-the-link")))))
 
 (deftest test-approve-with-end-date
   (testing "submit test data with API"
