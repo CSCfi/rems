@@ -579,9 +579,31 @@
   (let [resource-count 1000
         application-count 3000
         user-count 1000
-        handlers [(+fake-users+ :approver1)
-                  (+fake-users+ :approver2)]
+        handler-count 100
+
         owner (+fake-users+ :owner)
+
+        ;; create handlers
+        names (->> vocabulary
+                   (remove #(re-find #"[.,]+" %))
+                   (filter #(> (count %) 3))
+                   (mapv str/capitalize))
+        handlers-data (for [i (range handler-count)
+                            :let [first-name (rand-nth names)
+                                  last-name (rand-nth names)]]
+                        {:userid (str "perf-test-handler-" i)
+                         :name (str first-name " " last-name)
+                         :email (str (str/lower-case first-name) "." (str/lower-case last-name) "@perftester.org")})
+
+        _ (doseq [handler handlers-data]
+            (test-helpers/create-user! handler))
+
+        handlers (concat [(+fake-users+ :approver1)
+                          (+fake-users+ :approver2)]
+                         (for [i (range handler-count)]
+                           (str "perf-test-handler-" i)))
+
+        ;; create domain data
         _perf (organizations/add-organization! {:organization/id "perf"
                                                 :organization/name {:fi "Suorituskykytestiorganisaatio" :en "Performance Test Organization" :sv "Organisationen för utvärderingsprov"}
                                                 :organization/short-name {:fi "Suorituskyky" :en "Performance" :sv "Uvärderingsprov"}
