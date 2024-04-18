@@ -68,7 +68,19 @@
 (rf/reg-event-fx
  :rems.user-settings/loaded-user-settings
  (fn [{:keys [db]} [_ user-settings]]
-   (when (and (not (:user-settings db)) ; first time
-              (not (validate-lang (get-language-cookie)))) ; e.g. unsupported language in cookie
-     (save-user-language! (:language user-settings)))
+   (b/cond
+     :when (not (:user-settings db)) ; first time loading user settings
+     :let [cookie-lang (validate-lang (get-language-cookie))
+           lang (:language user-settings)]
+
+     ;; unsupported or invalid cookie language
+     (not cookie-lang)
+     (save-user-language! lang)
+
+     ;; user set language before login
+     (not= cookie-lang lang)
+     (save-user-language! cookie-lang)
+
+     :else nil)
+
    {:db (assoc db :user-settings user-settings)}))
