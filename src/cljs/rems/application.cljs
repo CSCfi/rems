@@ -1321,7 +1321,6 @@
        [spinner/big])
      (when application
        [render-application {:application application
-                            :config config
                             :userid userid}])
      ;; Located after the application to avoid re-rendering the application
      ;; when this element is added or removed from virtual DOM.
