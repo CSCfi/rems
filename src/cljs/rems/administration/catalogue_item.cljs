@@ -6,7 +6,6 @@
             [rems.administration.status-flags :as status-flags]
             [rems.atoms :as atoms :refer [document-title readonly-checkbox]]
             [rems.collapsible :as collapsible]
-            [rems.dropdown :as dropdown]
             [rems.flash-message :as flash-message]
             [rems.common.roles :as roles]
             [rems.spinner :as spinner]

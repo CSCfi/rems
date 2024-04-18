@@ -3,7 +3,6 @@
             [clojure.string :as str]
             [medley.core :refer [indexed]]
             [re-frame.core :as rf]
-            [reagent.core :as r]
             [rems.administration.administration :as administration]
             [rems.administration.components :refer [inline-info-field]]
             [rems.administration.status-flags :as status-flags]

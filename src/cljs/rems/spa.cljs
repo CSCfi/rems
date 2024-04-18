@@ -97,10 +97,6 @@
  (fn [db _]
    (or (:path db) "")))
 
-(rf/reg-sub
- :docs
- (fn [db _]
-   (:docs db)))
 
 (rf/reg-sub
  :error
@@ -121,12 +117,6 @@
  :set-path
  (fn [db [_ path]]
    (assoc db :path path)))
-
-;; XXX: unused event?
-(rf/reg-event-db
- :set-docs
- (fn [db [_ docs]]
-   (assoc db :docs docs)))
 
 (rf/reg-event-fx
  :unauthorized!

@@ -14,7 +14,7 @@
             [rems.flash-message :as flash-message]
             [rems.globals]
             [rems.spinner :as spinner]
-            [rems.text :refer [text text-format localized]]
+            [rems.text :refer [text text-format localized get-localized-title]]
             [rems.util :refer [navigate! post! put! trim-when-string]]))
 
 (defn- item-by-id [items id-key id]
