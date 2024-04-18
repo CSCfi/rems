@@ -114,14 +114,13 @@
 
 (defn- resource-licenses-field []
   (let [licenses @(rf/subscribe [::licenses])
-        selected-licenses @(rf/subscribe [::selected-licenses])
-        language @(rf/subscribe [:language])]
+        selected-licenses (set @(rf/subscribe [::selected-licenses]))]
     [:div.form-group
      [:label.administration-field-label {:for licenses-dropdown-id} (text :t.create-resource/licenses-selection)]
      [dropdown/dropdown
       {:id licenses-dropdown-id
        :items (vec (for [license licenses
-                         :let [title (get-localized-title license language)
+                         :let [title (get-localized-title license)
                                org-short (localize-org-short license)]]
                      (assoc license
                             ::label (text-format :t.label/default title org-short))))

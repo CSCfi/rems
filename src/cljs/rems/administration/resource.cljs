@@ -12,7 +12,7 @@
             [rems.flash-message :as flash-message]
             [rems.common.roles :as roles]
             [rems.spinner :as spinner]
-            [rems.text :refer [text]]
+            [rems.text :refer [localized text]]
             [rems.util :refer [fetch]]))
 
 (rf/reg-event-fx
@@ -62,17 +62,17 @@
                                                                 {:resource/id (:id resource)})))}])
               [:p (text :t.duo/no-duo-codes)])}])
 
-(defn resource-view [resource language]
+(defn resource-view [resource]
   (let [config @(rf/subscribe [:rems.config/config])]
     [:div.spaced-vertically-3
      [collapsible/component
       {:id "resource"
-       :title [:span (andstr (get-in resource [:organization :organization/short-name language]) "/") (:resid resource)]
+       :title [:span (andstr (localized (get-in resource [:organization :organization/short-name])) "/") (:resid resource)]
        :always [:div
-                [inline-info-field (text :t.administration/organization) (get-in resource [:organization :organization/name language])]
+                [inline-info-field (text :t.administration/organization) (localized (get-in resource [:organization :organization/name]))]
                 [inline-info-field (text :t.administration/resource) (:resid resource)]
                 [inline-info-field (text :t.administration/active) [readonly-checkbox {:value (status-flags/active? resource)}]]]}]
-     [licenses-view (:licenses resource) language]
+     [licenses-view (:licenses resource)]
      (when (:enable-duo config)
        [resource-duos resource])
      [resource-blacklist]
@@ -85,7 +85,6 @@
 
 (defn resource-page []
   (let [resource (rf/subscribe [::resource])
-        language (rf/subscribe [:language])
         loading? (rf/subscribe [::loading?])]
     [:div
      [administration/navigator]
@@ -93,4 +92,4 @@
      [flash-message/component :top]
      (if @loading?
        [spinner/big]
-       [resource-view @resource @language])]))
+       [resource-view @resource])]))

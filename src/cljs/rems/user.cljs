@@ -19,11 +19,10 @@
    `attributes`    - map, user attributes
    `invited-user?` - boolean, if user is invited, shows different email string"
   [attributes invited-user?]
-  (let [language @(rf/subscribe [:language])
-        organization-by-id @(rf/subscribe [:organization-by-id])
+  (let [organization-by-id @(rf/subscribe [:organization-by-id])
         organization-name-if-known (fn [organization]
                                      (if-let [known-organization (organization-by-id (:organization/id organization))] ; comes from idp, maybe unknown
-                                       (get-in known-organization [:organization/short-name language])
+                                       (localized (:organization/short-name known-organization))
                                        (:organization/id organization)))
         other-attributes (dissoc attributes :name :userid :email :organizations :notification-email :researcher-status-by)
         extra-attributes (index-by [:attribute] (:oidc-extra-attributes @(rf/subscribe [:rems.config/config])))]

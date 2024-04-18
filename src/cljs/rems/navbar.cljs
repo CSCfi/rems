@@ -5,6 +5,7 @@
             [rems.atoms :as atoms]
             [rems.common.util :refer [getx]]
             [rems.common.roles :as roles]
+            [rems.config]
             [rems.guide-util :refer [component-info example]]
             [rems.language-switcher :refer [language-switcher]]
             [rems.text :refer [text]]
@@ -56,22 +57,22 @@
        [:i.fa.fa-sign-out-alt.mr-1]
        [:span.icon-description (text :t.navigation/logout)]]]]))
 
-(defn- extra-page-link [page language]
-  (let [url (or (get-in page [:translations language :url])
+(defn- extra-page-link [page]
+  (let [lang @rems.config/language-or-default
+        url (or (get-in page [:translations lang :url])
                 (page :url)
                 (str "/extra-pages/" (page :id)))
-        text (get-in page [:translations language :title] (text :t/missing))]
+        text (get-in page [:translations lang :title] (text :t/missing))]
     [nav-link url text]))
 
 (defn- extra-pages-container [{:keys [context include?]}]
   (let [config @(rf/subscribe [:rems.config/config])
-        extra-pages (when config (config :extra-pages))
-        language @(rf/subscribe [:language])]
+        extra-pages (when config (config :extra-pages))]
     (when extra-pages
       (into [:<>]
             (for [page (filter include? extra-pages)]
               ^{:key (str context (getx page :id))}
-              [extra-page-link page language])))))
+              [extra-page-link page])))))
 
 (defn navbar-extra-pages []
   [extra-pages-container {:context "navbar-extra-pages" :include? #(:show-menu % true)}])

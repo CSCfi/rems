@@ -21,7 +21,8 @@
             [rems.fields :as fields]
             [rems.common.roles :as roles]
             [rems.common.util :refer [clamp parse-int]]
-            [rems.text :refer [text text-format]]))
+            [rems.config]
+            [rems.text :refer [localized text text-format]]))
 
 (defn- key-to-id [key]
   (if (number? key)
@@ -120,7 +121,7 @@
         on-change (or on-change (fn [_]))]
     (into [:div.form-group.localized-field
            [:label.administration-field-label label]]
-          (for [language @(rf/subscribe [:languages])
+          (for [language @rems.config/languages
                 :let [form @(rf/subscribe [(:get-form context)])
                       form-errors (when (:get-form-errors context)
                                     @(rf/subscribe [(:get-form-errors context)]))
@@ -179,7 +180,7 @@
   provided in opts, languages are mapped from `[:localizations lang localizations-key]`
   path."
   [context {:keys [keys label localizations-key collapse? normalizer on-change]}]
-  (let [languages @(rf/subscribe [:languages])
+  (let [languages @rems.config/languages
         id (keys-to-id (if (some? localizations-key) [localizations-key] keys))
         fields (into [:<>]
                      (for [lang languages]
@@ -278,7 +279,7 @@
   If :localizations-key is passed in opts, language to text is
   mapped from `[:localizations lang localizations-key]` instead."
   [m {:keys [label localizations-key]}]
-  (let [languages @(rf/subscribe [:languages])
+  (let [languages @rems.config/languages
         to-label #(str label " (" (str/upper-case (name %)) ")")]
     (into [:<>]
           (for [lang languages
@@ -293,7 +294,6 @@
         owned-organizations @(rf/subscribe [:owned-organizations])
         valid-organizations (->> owned-organizations (filter :enabled) (remove :archived))
         disallowed (roles/disallow-setting-organization? @(rf/subscribe [:roles]))
-        language @(rf/subscribe [:language])
         form @(rf/subscribe [(:get-form context)])
         potential-value (get-in form keys)
         on-change (or on-change (fn [_]))
@@ -319,7 +319,7 @@
      [:label.administration-field-label {:for id} label]
      (if (or readonly disallowed)
        [fields/readonly-field {:id id
-                               :value (get-in value [:organization/name language])}]
+                               :value (localized (:organization/name value))}]
        [dropdown/dropdown
         {:id id
          :items valid-organizations

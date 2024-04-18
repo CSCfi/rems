@@ -8,7 +8,7 @@
             [rems.common.roles :as roles]
             [rems.spinner :as spinner]
             [rems.table :as table]
-            [rems.text :refer [text]]
+            [rems.text :refer [localized text]]
             [rems.util :refer [put! fetch]]))
 
 (rf/reg-event-fx
@@ -82,14 +82,13 @@
  ::workflows-table-rows
  (fn [_ _]
    [(rf/subscribe [::workflows])
-    (rf/subscribe [:language])
     (rf/subscribe [:rems.administration.administration/displayed-organization-ids])])
- (fn [[workflows language displayed-organization-ids] _]
+ (fn [[workflows displayed-organization-ids] _]
    (->> workflows
         (administration/filter-by-displayed-organization displayed-organization-ids #(get-in % [:organization :organization/id]))
         (mapv (fn [workflow]
                 {:key (:id workflow)
-                 :organization {:value (get-in workflow [:organization :organization/short-name language])}
+                 :organization {:value (localized (get-in workflow [:organization :organization/short-name]))}
                  :title {:value (:title workflow)}
                  :active (let [checked? (status-flags/active? workflow)]
                            {:display-value [readonly-checkbox {:value checked?}]

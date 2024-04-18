@@ -4,15 +4,12 @@
             [rems.text :refer [text get-localized-title localized]]))
 
 ;; TODO this should be in some util namespace
-(defn- get-localized-title-for-anything
-  ([item]
-   (get-localized-title-for-anything item @(rf/subscribe [:language])))
-  ([item language]
-   (or (get-localized-title item language)
-       (:resid item)
-       (:form/internal-name item)
-       (:title item)
-       (localized (:organization/name item)))))
+(defn- get-localized-title-for-anything [item]
+  (or (get-localized-title item)
+      (:resid item)
+      (:form/internal-name item)
+      (:title item)
+      (localized (:organization/name item))))
 
 ;; XXX: consider rename to enabled-toggle-button
 (defn enabled-toggle
@@ -108,51 +105,50 @@
        (not (:archived item))))
 
 (defn- format-update-error [{:keys [type catalogue-items forms licenses resources workflows categories]}]
-  (let [language @(rf/subscribe [:language])]
-    [:<>
-     [:p (text type)]
-     (into [:ul]
-           (for [ci catalogue-items]
-             [:li
-              (text :t.administration/catalogue-item) ": "
-              [:a {:target :_blank
-                   :href (str "/administration/catalogue-items/" (:id ci))}
-               (get-localized-title-for-anything ci language)]]))
-     (into [:ul]
-           (for [f forms]
-             [:li
-              (text :t.administration/form) ": "
-              [:a {:target :_blank
-                   :href (str "/administration/forms/" (:id f))}
-               (get-localized-title-for-anything f language)]]))
-     (into [:ul]
-           (for [lic licenses]
-             [:li
-              (text :t.administration/license) ": "
-              [:a {:target :_blank
-                   :href (str "/administration/licenses/" (:id lic))}
-               (get-localized-title-for-anything lic language)]]))
-     (into [:ul]
-           (for [r resources]
-             [:li
-              (text :t.administration/resource) ": "
-              [:a {:target :_blank
-                   :href (str "/administration/resources/" (:id r))}
-               (get-localized-title-for-anything r language)]]))
-     (into [:ul]
-           (for [w workflows]
-             [:li
-              (text :t.administration/workflow) ": "
-              [:a {:target :_blank
-                   :href (str "/administration/workflows/" (:id w))}
-               (get-localized-title-for-anything w language)]]))
-     (into [:ul]
-           (for [cat categories]
-             [:li
-              (text :t.administration/category) ": "
-              [:a {:target :_blank
-                   :href (str "/administration/categories/" (:category/id cat))}
-               (localized (:category/title cat))]]))]))
+  [:<>
+   [:p (text type)]
+   (into [:ul]
+         (for [ci catalogue-items]
+           [:li
+            (text :t.administration/catalogue-item) ": "
+            [:a {:target :_blank
+                 :href (str "/administration/catalogue-items/" (:id ci))}
+             (get-localized-title-for-anything ci)]]))
+   (into [:ul]
+         (for [f forms]
+           [:li
+            (text :t.administration/form) ": "
+            [:a {:target :_blank
+                 :href (str "/administration/forms/" (:id f))}
+             (get-localized-title-for-anything f)]]))
+   (into [:ul]
+         (for [lic licenses]
+           [:li
+            (text :t.administration/license) ": "
+            [:a {:target :_blank
+                 :href (str "/administration/licenses/" (:id lic))}
+             (get-localized-title-for-anything lic)]]))
+   (into [:ul]
+         (for [r resources]
+           [:li
+            (text :t.administration/resource) ": "
+            [:a {:target :_blank
+                 :href (str "/administration/resources/" (:id r))}
+             (get-localized-title-for-anything r)]]))
+   (into [:ul]
+         (for [w workflows]
+           [:li
+            (text :t.administration/workflow) ": "
+            [:a {:target :_blank
+                 :href (str "/administration/workflows/" (:id w))}
+             (get-localized-title-for-anything w)]]))
+   (into [:ul]
+         (for [cat categories]
+           [:li
+            (text :t.administration/category) ": "
+            [:a {:target :_blank
+                 :href (str "/administration/categories/" (:category/id cat))}
+             (localized (:category/title cat))]]))])
 
 (defn format-update-failure [{:keys [errors]}]
   (into [:div]

@@ -28,6 +28,7 @@
             [reagent.core :as reagent]
             [re-frame.core :as rf]
             [rems.atoms :refer [checkbox sort-symbol]]
+            [rems.config]
             [rems.guide-util :refer [component-info example namespace-info]]
             [rems.paging :as paging]
             [rems.search :as search]
@@ -464,14 +465,13 @@
   [table]
   (s/validate Table table)
   (let [rows @(rf/subscribe [::paged-rows table])
-        language @(rf/subscribe [:language])
         columns @(rf/subscribe [::filtered-columns table])]
     [:div.table-border
      [:table.rems-table {:id (name (:id table))
                          :class (:id table)}
       [:thead
        [table-header table]]
-      [:tbody {:key language} ; performance optimization: rebuild instead of update existing components
+      [:tbody {:key @rems.config/language-or-default} ; performance optimization: rebuild instead of update existing components
        (for [row rows]
          ^{:key (:key row)} [table-row row table columns])]]]))
 

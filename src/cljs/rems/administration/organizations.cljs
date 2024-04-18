@@ -10,7 +10,7 @@
             [rems.config :as config]
             [rems.spinner :as spinner]
             [rems.table :as table]
-            [rems.text :refer [text]]
+            [rems.text :refer [localized text]]
             [rems.util :refer [put! fetch]]))
 
 (rf/reg-event-fx
@@ -96,15 +96,14 @@
  ::organizations-table-rows
  (fn [_ _]
    [(rf/subscribe [::organizations])
-    (rf/subscribe [:language])
     (rf/subscribe [:rems.administration.administration/displayed-organization-ids])])
- (fn [[organizations language displayed-organization-ids] _]
+ (fn [[organizations displayed-organization-ids] _]
    (->> organizations
         (administration/filter-by-displayed-organization displayed-organization-ids #(get-in % [:organization/id]))
         (mapv (fn [organization]
                 {:key (:organization/id organization)
-                 :short-name {:value (get-in organization [:organization/short-name language])}
-                 :name {:value (get-in organization [:organization/name language])}
+                 :short-name {:value (localized (:organization/short-name organization))}
+                 :name {:value (localized (:organization/name organization))}
                  :active (let [checked? (status-flags/active? organization)]
                            {:display-value [readonly-checkbox {:value checked?}]
                             :sort-value (if checked? 1 2)})

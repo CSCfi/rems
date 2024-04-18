@@ -39,6 +39,7 @@
             [rems.common.form :as form]
             [rems.common.util :refer [build-index index-by not-blank parse-int]]
             [rems.common.duo :refer [duo-validation-summary unmatched-duos]]
+            [rems.config]
             [rems.dropdown :as dropdown]
             [rems.fetcher :as fetcher]
             [rems.fields :as fields]
@@ -486,10 +487,9 @@
 
 (defn- attachment-license [application license]
   (let [title (localized (:license/title license))
-        language @(rf/subscribe [:language])
         link (str "/applications/" (:application/id application)
                   "/license-attachment/" (:license/id license)
-                  "/" (name language))]
+                  "/" (name @rems.config/language-or-default))]
     [:a.license-title {:href link :target :_blank}
      title " " [file-download]]))
 
@@ -604,7 +604,6 @@
                               :on-remove-attachment #(rf/dispatch [::remove-attachment form-id field-id %1])}))])))
 
 (defn- application-fields [application]
-  (let [language @(rf/subscribe [:language])]
     (into [:div]
           (for [form (:application/forms application)
                 :let [form-id (:form/id form)]
@@ -613,13 +612,13 @@
                            seq)]
             [collapsible/component
              {:class "mb-3"
-              :title (or (get-in form [:form/external-title language]) (text :t.form/application))
+            :title (or (localized (:form/external-title form)) (text :t.form/application))
               :always (into [:div.fields]
                             (for [field (:form/fields form)]
                               [field-container (merge field
                                                       {:form/id form-id
                                                        :readonly @(rf/subscribe [::readonly?])
-                                                       :app-id (:application/id application)})]))}]))))
+                                                     :app-id (:application/id application)})]))}])))
 
 (defn- application-licenses [application userid]
   (when-let [licenses (not-empty (:application/licenses application))]
@@ -1086,9 +1085,10 @@
                   [vote-form app-id application reload]
                   [change-processing-state-form app-id application reload]]]}])))
 
-(defn- render-resource [resource language]
+(defn- render-resource [resource]
   (let [config @(rf/subscribe [:rems.config/config])
         duos (get-in resource [:resource/duo :duo/codes])
+        language @rems.config/language-or-default
         resource-header [:p
                          (localized (:catalogue-item/title resource))
                          (when-let [url (catalogue-item-more-info-url resource language config)]
@@ -1115,7 +1115,7 @@
                                                 :duo/more-infos (when (:more-info duo)
                                                                   (list (select-keys duo [:more-info])))}])]}]}])]))
 
-(defn- applied-resources [application userid language]
+(defn- applied-resources [application userid]
   (let [application-id (:application/id application)
         permissions (:application/permissions application)
         applicant? (= (:userid (:application/applicant application)) userid)
@@ -1129,7 +1129,7 @@
                (into [:div.application-resources]
                      (for [resource (:application/resources application)]
                        ^{:key (:catalogue-item/id resource)}
-                       [render-resource resource language]))]
+                       [render-resource resource]))]
       :footer [:div
                [:div.commands
                 (when can-change-resources? [change-resources-action-button (:application/resources application)])]
@@ -1267,7 +1267,7 @@
            (for [resource resources]
              [:li (localized (:catalogue-item/title resource))]))]))
 
-(defn- render-application [{:keys [application config userid language]}]
+(defn- render-application [{:keys [application config userid]}]
   [:<>
    (when (can-see-everything? application) ; XXX: should these be shown only to handling users?
      [disabled-items-warning application])
@@ -1281,7 +1281,7 @@
                          :userid userid}]
      [applicants-info application userid]
      (when (:show-resources-section config)
-       [applied-resources application userid language])
+       [applied-resources application userid])
      (when (and (:enable-duo config)
                 (seq (get-resource-duos application)))
        (if @(rf/subscribe [::readonly?])
@@ -1326,8 +1326,7 @@
      (when application
        [render-application {:application application
                             :config config
-                            :userid userid
-                            :language language}])
+                            :userid userid}])
      ;; Located after the application to avoid re-rendering the application
      ;; when this element is added or removed from virtual DOM.
      (when reloading?

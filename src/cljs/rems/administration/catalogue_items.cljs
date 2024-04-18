@@ -116,16 +116,15 @@
  ::catalogue-table-rows
  (fn [_ _]
    [(rf/subscribe [::catalogue])
-    (rf/subscribe [:language])
     (rf/subscribe [:rems.administration.administration/displayed-organization-ids])])
- (fn [[catalogue language displayed-organization-ids] _]
+ (fn [[catalogue displayed-organization-ids] _]
    (->> catalogue
         (administration/filter-by-displayed-organization displayed-organization-ids #(get-in % [:organization :organization/id]))
         (mapv (fn [item]
                 {:key (:id item)
-                 :organization {:value (get-in item [:organization :organization/short-name language])}
-                 :name {:value (get-localized-title item language)
-                        :sort-value [(get-localized-title item language)
+                 :organization {:value (localized (get-in item [:organization :organization/short-name]))}
+                 :name {:value (get-localized-title item)
+                        :sort-value [(get-localized-title item)
                                      (- (time-coerce/to-long (:start item)))]} ; secondary sort by created, reverse
                  :resource (let [value (:resource-name item)]
                              {:value value

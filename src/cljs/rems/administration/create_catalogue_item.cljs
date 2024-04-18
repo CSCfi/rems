@@ -194,9 +194,9 @@
          :item-selected? item-selected?
          :on-change #(rf/dispatch [::set-selected-workflow (dissoc % ::label)])}])]))
 
-(defn- localize-licenses [resource language]
+(defn- localize-licenses [resource]
   (when-some [licenses (->> (:licenses resource)
-                            (map #(get-in % [:localizations language :title]))
+                            (map #(get-localized-title %))
                             seq)]
     (text-format :t.label/default
                  (text :t.administration/licenses)

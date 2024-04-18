@@ -157,12 +157,11 @@
 (rf/reg-sub
  ::catalogue-items-table-rows
  (fn [_ _]
-   [(rf/subscribe [::catalogue-items])
-    (rf/subscribe [:language])])
- (fn [[catalogue language] _]
+   [(rf/subscribe [::catalogue-items])])
+ (fn [[catalogue] _]
    (map (fn [item]
           {:key (:id item)
-           :name (let [title (get-localized-title item language)]
+           :name (let [title (get-localized-title item)]
                    {:value title
                     :display-value [atoms/link nil
                                     (str "/administration/catalogue-items/" (:id item))
