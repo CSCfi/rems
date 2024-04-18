@@ -6,6 +6,7 @@
             [rems.common.util :refer [getx]]
             [rems.common.roles :as roles]
             [rems.config]
+            [rems.globals]
             [rems.guide-util :refer [component-info example]]
             [rems.language-switcher :refer [language-switcher]]
             [rems.text :refer [text]]
@@ -42,8 +43,8 @@
        :active? active?
        :aria-label aria-label}])))
 
-(defn user-widget [user]
-  (when user
+(defn user-widget []
+  (when-some [user @rems.globals/user]
     [:div.user-widget.px-2.px-sm-0
      [nav-link {:path "/profile"
                 :title [:span
@@ -66,13 +67,11 @@
     [nav-link url text]))
 
 (defn- extra-pages-container [{:keys [context include?]}]
-  (let [config @(rf/subscribe [:rems.config/config])
-        extra-pages (when config (config :extra-pages))]
-    (when extra-pages
+  (when-let [extra-pages (:extra-pages @rems.globals/config)]
       (into [:<>]
             (for [page (filter include? extra-pages)]
               ^{:key (str context (getx page :id))}
-              [extra-page-link page])))))
+            [extra-page-link page]))))
 
 (defn navbar-extra-pages []
   [extra-pages-container {:context "navbar-extra-pages" :include? #(:show-menu % true)}])

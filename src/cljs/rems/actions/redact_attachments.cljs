@@ -1,6 +1,7 @@
 (ns rems.actions.redact-attachments
   (:require [re-frame.core :as rf]
             [rems.actions.components :refer [action-attachment action-button action-form-view command! select-attachments-field comment-field event-public-field perform-action-button]]
+            [rems.globals]
             [rems.text :refer [text]]))
 
 (def ^:private action-form-id "redact-attachments")
@@ -81,7 +82,7 @@
   (let [form-fields @(rf/subscribe [::form-fields])]
     [redact-attachments-view
      {:application-id application-id
-      :user (:userid @(rf/subscribe [:user]))
+      :user (:userid @rems.globals/user)
       :redactable-attachments @(rf/subscribe [::attachments])
       :new-attachments (:attachments form-fields)
       :on-submit (when-some [cmd (build-command application-id form-fields)]
