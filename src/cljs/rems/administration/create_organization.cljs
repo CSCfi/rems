@@ -14,7 +14,7 @@
             [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
             [rems.text :refer [text text-format]]
-            [rems.util :refer [navigate! post! put! trim-when-string]]))
+            [rems.util :refer [fetch navigate! post! put! trim-when-string]]))
 
 (rf/reg-event-fx
  ::enter-page
@@ -106,7 +106,7 @@
      (post! "/api/organizations/create"
             {:params request
              :handler (flash-message/default-success-handler
-                       :top description #(do (config/fetch-organizations!)
+                       :top description #(do (rems.config/fetch-organizations! {:error-handler (flash-message/default-error-handler :top "Fetch organizations")})
                                              (navigate! (str "/administration/organizations/" (:organization/id %)))))
              :error-handler (flash-message/default-error-handler :top description)}))
    {}))
@@ -118,7 +118,7 @@
      (put! "/api/organizations/edit"
            {:params request
             :handler (flash-message/default-success-handler
-                      :top description #(do (config/fetch-organizations!)
+                      :top description #(do (rems.config/fetch-organizations! {:error-handler (flash-message/default-error-handler :top "Fetch organizations")})
                                             (navigate! (str "/administration/organizations/" (:organization/id %)))))
             :error-handler (flash-message/default-error-handler :top description)}))
    {}))

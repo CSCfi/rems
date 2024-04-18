@@ -1,5 +1,6 @@
 (ns rems.testing
-  (:require [re-frame.core :as rf]))
+  (:require [re-frame.core :as rf]
+            [rems.globals]))
 
 (defn- clear-rf-state! []
   #_(rf/clear-cofx)
@@ -12,7 +13,9 @@
   (let [restore-fn (rf/make-restore-fn)]
     (try
       (clear-rf-state!)
-      (rf/dispatch-sync [:initialize-db])
+      (rems.globals/reset-all-globals! nil)
+      (reset! rems.globals/config {:default-language :en
+                                   :languages [:en]})
       (f)
       (finally
         (restore-fn)))))

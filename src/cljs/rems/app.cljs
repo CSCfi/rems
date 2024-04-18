@@ -2,9 +2,10 @@
   (:require [cognitect.transit]
             [re-frame.core :as rf]
             [rems.config]
-            [rems.identity]
+            [rems.globals]
             [rems.spa]
-            [rems.theme]))
+            [rems.theme]
+            [rems.user-settings]))
 
 (enable-console-print!)
 
@@ -12,18 +13,20 @@
   (cognitect.transit/read (cognitect.transit/reader :json) value))
 
 (defn ^:export setIdentity [user-and-roles]
-  (let [{:keys [roles] :as user-and-roles} (read-transit user-and-roles)]
-    (rf/dispatch-sync [:set-identity user-and-roles])
-    (rf/dispatch-sync [:set-roles roles])))
+  (let [parsed-values (read-transit user-and-roles)]
+    (reset! rems.globals/user (:user parsed-values))
+    (reset! rems.globals/roles (:roles parsed-values))
+    (reset! rems.globals/language (rems.user-settings/get-language-cookie))))
 
 (defn ^:export setConfig [config]
-  (rf/dispatch-sync [:rems.config/loaded-config (read-transit config)]))
+  (reset! rems.globals/config (read-transit config))
+  (rems.user-settings/fetch-user-settings!))
 
 (defn ^:export setTranslations [translations]
-  (rf/dispatch-sync [:loaded-translations (read-transit translations)]))
+  (reset! rems.globals/translations (read-transit translations)))
 
 (defn ^:export setTheme [theme]
-  (rf/dispatch-sync [:rems.theme/loaded-theme (read-transit theme)]))
+  (reset! rems.globals/theme (read-transit theme)))
 
 (defn ^:export setHandledOrganizations [organizations]
   (rf/dispatch-sync [:loaded-handled-organizations (read-transit organizations)]))

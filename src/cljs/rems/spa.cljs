@@ -49,6 +49,7 @@
             [rems.extra-pages :refer [extra-pages]]
             [rems.flash-message :as flash-message]
             [rems.focus :as focus]
+            [rems.globals]
             [rems.common.git :as git]
             [rems.guide-page :refer [guide-page]]
             [rems.hooks] ; for the empty hooks
@@ -66,45 +67,40 @@
 
 (defn- fetch-translations! []
   (fetch "/api/translations"
-         {:handler #(rf/dispatch-sync [:loaded-translations %])
+         {:handler #(reset! rems.globals/translations %)
           :error-handler (flash-message/default-error-handler :top "Fetch translations")}))
 
 (defn- fetch-theme! []
   (fetch "/api/theme"
-         {:handler #(rf/dispatch-sync [:rems.theme/loaded-theme %])
+         {:handler #(reset! rems.globals/theme %)
           :error-handler (flash-message/default-error-handler :top "Fetch theme")}))
+
+(defn- ^:export fetch-config! [& [callback]]
+  (fetch "/api/config"
+         {:handler #(do (reset! rems.globals/config %)
+                        (when callback (callback %)))
+          :error-handler (flash-message/default-error-handler :top "Fetch config")}))
+
+(defn- ^:export set-config! [js-config]
+  (when @config/dev-environment?
+    (r/rswap! rems.globals/config merge (js->clj js-config :keywordize-keys true))))
 
 ;;;; Global events & subscriptions
 
 (rf/reg-sub
  :page
  (fn [db _]
-   (:page db)))
+   (:page db :home)))
 
 (rf/reg-sub
  :path
  (fn [db _]
    (or (:path db) "")))
 
-;; TODO: possibly move translations out
-(rf/reg-sub
- :translations
- (fn [db _]
-   (:translations db)))
-
 (rf/reg-sub
  :error
  (fn [db _]
    (:error db)))
-
-(rf/reg-event-db
- :initialize-db
- (fn [_ _]
-   {:page :home
-    :languages [:en]
-    :default-language :en
-    :translations {}
-    :identity {:user nil :roles nil}}))
 
 (rf/reg-event-db
  :set-active-page
@@ -120,11 +116,6 @@
  :set-path
  (fn [db [_ path]]
    (assoc db :path path)))
-
-(rf/reg-event-db
- :loaded-translations
- (fn [db [_ translations]]
-   (assoc db :translations translations)))
 
 (rf/reg-event-fx
  :unauthorized!
@@ -156,8 +147,8 @@
  :landing-page-redirect!
  (fn [{:keys [db]}]
    ;; do we have the roles set by set-identity already?
-   (if (get-in db [:identity :roles])
-     (let [roles (get-in db [:identity :roles])]
+   (if-let [roles @rems.globals/roles]
+     (do
        (println "Selecting landing page based on roles" roles)
        (.removeItem js/sessionStorage "rems-redirect-url")
        (cond
@@ -187,7 +178,7 @@
 (rf/reg-event-fx
  :after-translations-are-loaded
  (fn [{:keys [db]} [_ on-loaded]]
-   (if (seq (:translations db))
+   (if (not-empty @rems.globals/translations)
      (on-loaded)
      (.setTimeout js/window #(rf/dispatch [:after-translations-are-loaded on-loaded]) 100))
    {}))
@@ -223,7 +214,7 @@
      (text :t.login/intro2)]]])
 
 (defn home-page []
-  (if @(rf/subscribe [:user])
+  (if @rems.globals/user
     (do
       ;; TODO: have a separate :init default page that does the navigation/redirect logic, instead of using :home as the default
       (when (= "/" js/window.location.pathname)
@@ -319,7 +310,7 @@
    [:button.btn.btn-secondary.btn-sm
     {:on-click #(do (fetch-translations!)
                     (fetch-theme!)
-                    (config/fetch-config!))}
+                    (fetch-config!))}
     [:i.fas.fa-redo]]])
 
 (defn- footer []
@@ -327,7 +318,7 @@
    [:div.container.d-flex.flex-row.justify-content-between.align-items-center
     [:div.d-flex.flex-row [nav/footer-extra-pages]]
     [:div.footer-text (text :t/footer)]
-    (when (config/dev-environment?)
+    (when @config/dev-environment?
       [dev-reload-button])]])
 
 (defn- logo [page-id]
@@ -613,10 +604,9 @@
 (defn- lazy-load-data!
   "Loads datasets that are not required for immediate render or e.g. require login."
   []
-  (let [user @(rf/subscribe [:user])
-        organizations @(rf/subscribe [:organizations])]
-    (when (and user (empty? organizations))
-      (config/fetch-organizations!))))
+  (when (and (empty? @(rf/subscribe [:organizations]))
+             @rems.globals/user)
+    (rems.config/fetch-organizations! {:error-handler (flash-message/default-error-handler :top "Fetch organizations")})))
 
 (defn- grab-focus!
   "Helper that sets focus on prominent header element when user navigates to new page."
@@ -632,7 +622,7 @@
 (defn- app []
   (r/with-let [tracked (mapv r/track! [lazy-load-data! grab-focus!])]
 
-    (if (config/dev-environment?)
+    (if @config/dev-environment?
       [react-strict-mode [page]]
       [page])
 
@@ -646,7 +636,6 @@
 
 (defn ^:export init []
   (version-info)
-  (rf/dispatch-sync [:initialize-db])
   (load-interceptors!)
   (keepalive/register-keepalive-listeners!)
   ;; see also: lazy-load-data! and dev-reload-button

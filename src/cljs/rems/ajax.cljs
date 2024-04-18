@@ -2,7 +2,7 @@
   (:require [ajax.core :as ajax]
             [ajax.protocols :refer [-get-response-header]]
             [clojure.string :as str]
-            [re-frame.core :as rf]))
+            [rems.globals]))
 
 (defn local-uri? [{:keys [uri]}]
   (not (re-find #"^\w+?://" uri)))
@@ -21,7 +21,7 @@
 
 (defn save-roles [response]
   (when-let [roles (-get-response-header response "x-rems-roles")]
-    (rf/dispatch [:set-roles (map keyword (split-words roles))]))
+    (reset! rems.globals/roles (set (map keyword (split-words roles)))))
   response)
 
 (defn load-interceptors! []
