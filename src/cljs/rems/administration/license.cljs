@@ -11,7 +11,7 @@
             [rems.flash-message :as flash-message]
             [rems.common.roles :as roles]
             [rems.spinner :as spinner]
-            [rems.text :refer [get-localized-title text text-format]]
+            [rems.text :refer [get-localized-title localized text text-format]]
             [rems.util :refer [fetch]]))
 
 (rf/reg-event-fx

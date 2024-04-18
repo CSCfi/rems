@@ -19,6 +19,7 @@
             [rems.collapsible :as collapsible]
             [rems.dropdown :as dropdown]
             [rems.fields :as fields]
+            [rems.globals]
             [rems.common.roles :as roles]
             [rems.common.util :refer [clamp parse-int]]
             [rems.config]
@@ -324,7 +325,7 @@
         {:id id
          :items valid-organizations
          :item-key :organization/id
-         :item-label (comp language :organization/name)
+         :item-label (comp localized :organization/name)
          :item-selected? item-selected?
          :on-change wrapped-on-change}])
      [field-validation-message (get-in form-errors keys) label]]))

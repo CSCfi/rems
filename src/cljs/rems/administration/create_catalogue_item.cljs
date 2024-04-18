@@ -215,8 +215,7 @@
                                :value (->> selected-resource
                                            (item-by-id resources :id)
                                            :resid)}]
-       (let [lang @(rf/subscribe [:language])
-             resid-counts (frequencies (map :resid resources))
+       (let [resid-counts (frequencies (map :resid resources))
              has-duplicate-resid? #(> (get resid-counts (:resid %)) 1)]
          [dropdown/dropdown
           {:id resource-dropdown-id
@@ -225,7 +224,7 @@
                        (remove :archived)
                        (mapv #(assoc % ::label (str (:resid %)
                                                     (andstr " (" (localize-org-short %) ")")
-                                                    (andstr " (" (when (has-duplicate-resid? %) (localize-licenses %)) ")"))))))
+                                                    (andstr " (" (when (has-duplicate-resid? %) (localize-licenses %)) ")")))))
            :item-key :id
            :item-label ::label
            :item-selected? #(= selected-resource (:id %))
@@ -259,8 +258,7 @@
 (defn- catalogue-item-categories-field []
   (let [categories @(rf/subscribe [::categories])
         selected-categories (set (mapv :category/id @(rf/subscribe [::selected-categories])))
-        item-selected? #(contains? selected-categories (:category/id %))
-        config @(rf/subscribe [:rems.config/config])]
+        item-selected? #(contains? selected-categories (:category/id %))]
     [:div.form-group
      [:label.administration-field-label {:for categories-dropdown-id}
       (cond->> (text :t.administration/categories)
