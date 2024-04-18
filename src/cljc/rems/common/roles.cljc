@@ -1,14 +1,14 @@
 (ns rems.common.roles
-  (:refer-clojure :exclude [when])
-  #?(:clj (:require [rems.context :as context])
-     :cljs (:require [re-frame.core :as rf])))
+  (:require #?@(:clj
+                [[rems.context :as context]]
+                :cljs
+                [[re-frame.core :as rf]
+                 [reagent.core :as r]
+                 [rems.globals]])))
 
 (def +admin-write-roles+ #{:organization-owner :owner})
 (def +admin-read-roles+ #{:owner :organization-owner :handler :reporter})
 (def +handling-roles+ #{:handler :reviewer :decider :past-reviewer :past-decider})
-
-(defn is-logged-in? [roles]
-  (some #{:logged-in} roles))
 
 (defn show-applications? [roles]
   (some #{:applicant :member :reporter} roles))
@@ -28,7 +28,10 @@
   #?(:clj (do
             (assert (bound? #'context/*roles*) "context/*roles* is not defined")
             (boolean (some (set roles) context/*roles*)))
-     :cljs (some (set roles) (:roles @(rf/subscribe [:identity])))))
+     :cljs (some (set roles) @rems.globals/roles)))
+
+#?(:cljs
+   (def logged-in? (r/track has-roles? :logged-in)))
 
 #?(:cljs
    (defn show-when [roles & body]

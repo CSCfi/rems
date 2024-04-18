@@ -1,38 +1,30 @@
 (ns rems.config
   (:require [re-frame.core :as rf]
+            [reagent.core :as r]
             [rems.common.util :refer [index-by]]
-            [rems.flash-message :as flash-message]
+            [rems.globals]
             [rems.util :refer [fetch]]))
 
 ;; config
 
-(rf/reg-event-db
- ::loaded-config
- (fn [db [_ config]]
-   (assoc db
-          :config config
-          :default-language (get config :default-language)
-          :languages (get config :languages))))
+(def language-or-default
+  "Current user language, or default language from config."
+  (r/reaction
+   (or @rems.globals/language
+       (:default-language @rems.globals/config))))
 
-(rf/reg-sub
- ::config
- (fn [db _]
-   (:config db)))
+(def dev-environment?
+  "True when using development mode configuration."
+  (r/reaction
+   (true? (:dev @rems.globals/config))))
 
-(defn ^:export fetch-config! [& [callback]]
-  (fetch "/api/config"
-         {:handler #(do (rf/dispatch-sync [::loaded-config %])
-                        (when callback (callback %)))
-          :error-handler (flash-message/default-error-handler :top "Fetch config")}))
-
-(defn dev-environment? []
-  (let [config @(rf/subscribe [::config])]
-    (true? (:dev config))))
-
-(defn ^:export set-config! [js-config]
-  (when (dev-environment?)
-    (rf/dispatch-sync [::loaded-config (merge @(rf/subscribe [::config])
-                                              (js->clj js-config :keywordize-keys true))])))
+(def languages
+  "List of available languages from configuration. Sorted by default language first."
+  (r/reaction
+   (let [default-lang (:default-language @rems.globals/config)
+         languages (:languages @rems.globals/config)]
+     (into [default-lang]
+           (sort (remove #{default-lang} languages))))))
 
 ;; organizations
 
@@ -43,17 +35,15 @@
 
 (rf/reg-sub
  :organizations
- (fn [_db _]
-   [(rf/subscribe [:organization-by-id])
-    (rf/subscribe [:language])])
- (fn [[organization-by-id language]]
-   (sort-by (comp language :organization/name) (vals organization-by-id))))
+ :<- [:organization-by-id]
+ (fn [organization-by-id]
+   (sort-by (comp @rems.config/language-or-default :organization/name) (vals organization-by-id))))
 
 (rf/reg-sub
  :owned-organizations
  (fn [db _]
-   (let [roles (get-in db [:identity :roles])
-         userid (get-in db [:identity :user :userid])]
+   (let [roles @rems.globals/roles
+         userid (:userid @rems.globals/user)]
      (doall
       (for [org (vals (:organization-by-id db))
             :let [owners (set (map :userid (:organization/owners org)))]
@@ -66,11 +56,11 @@
  (fn [db [_ organizations]]
    (assoc db :organization-by-id (index-by [:organization/id] organizations))))
 
-(defn fetch-organizations! []
+(defn fetch-organizations! [{on-error :error-handler}]
   (fetch "/api/organizations"
          {:params {:disabled true :archived true}
           :handler #(rf/dispatch-sync [:loaded-organizations %])
-          :error-handler (flash-message/default-error-handler :top "Fetch organizations")}))
+          :error-handler on-error}))
 
 (rf/reg-sub
  :handled-organizations
@@ -82,7 +72,7 @@
  (fn [db [_ organizations]]
    (assoc db :handled-organizations organizations)))
 
-(defn fetch-handled-organizations! []
+(defn fetch-handled-organizations! [{on-error :error-handler}]
   (fetch "/api/organizations/handled"
          {:handler #(rf/dispatch-sync [:loaded-handled-organizations %])
-          :error-handler (flash-message/default-error-handler :top "Fetch handled organizations")}))
+          :error-handler on-error}))
