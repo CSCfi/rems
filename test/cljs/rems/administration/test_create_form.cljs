@@ -3,7 +3,7 @@
             [re-frame.core :as rf]
             [rems.administration.create-form :refer [build-request build-request-field build-localized-string]]
             [rems.common.util :refer [getx-in]]
-            [rems.identity] ; XXX: initializes missing event handlers like :set-roles
+            [rems.globals]
             [rems.testing :refer [init-spa-fixture]]))
 
 (use-fixtures :each init-spa-fixture)
@@ -12,7 +12,7 @@
   (rf/dispatch-sync [:rems.administration.create-form/enter-page]))
 
 (deftest add-form-field-test
-  (rf/dispatch-sync [:set-roles [:owner]])
+  (reset! rems.globals/roles [:owner])
   (let [form (rf/subscribe [:rems.administration.create-form/form-data])]
     (testing "adds fields"
       (reset-form)
@@ -42,7 +42,7 @@
           "after"))))
 
 (deftest remove-form-field-test
-  (rf/dispatch-sync [:set-roles [:owner]])
+  (reset! rems.globals/roles [:owner])
   (let [form (rf/subscribe [:rems.administration.create-form/form-data])]
     (testing "removes fields"
       (reset-form)
@@ -79,7 +79,7 @@
           "after"))))
 
 (deftest move-form-field-up-test
-  (rf/dispatch-sync [:set-roles [:owner]])
+  (reset! rems.globals/roles [:owner])
   (let [form (rf/subscribe [:rems.administration.create-form/form-data])]
     (testing "moves fields up"
       (reset-form)
@@ -121,7 +121,7 @@
             "after move 3")))))
 
 (deftest move-form-field-down-test
-  (rf/dispatch-sync [:set-roles [:owner]])
+  (reset! rems.globals/roles [:owner])
   (let [form (rf/subscribe [:rems.administration.create-form/form-data])]
     (testing "moves fields down"
       (reset-form)
