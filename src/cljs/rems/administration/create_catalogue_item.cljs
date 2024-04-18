@@ -7,6 +7,7 @@
             [rems.atoms :as atoms :refer [document-title]]
             [rems.collapsible :as collapsible]
             [rems.common.util :refer [andstr]]
+            [rems.config]
             [rems.dropdown :as dropdown]
             [rems.fetcher :as fetcher]
             [rems.fields :as fields]
@@ -52,13 +53,13 @@
 (defn- valid-localization? [localization]
   (not (str/blank? (:title localization))))
 
-(defn- valid-request? [form request languages]
+(defn- valid-request? [request]
   (and (not (str/blank? (get-in request [:organization :organization/id])))
        (number? (:wfid request))
        (number? (:resid request))
        (or (nil? (:form request))
            (number? (:form request)))
-       (= (set languages)
+       (= (set @rems.config/languages)
           (set (keys (:localizations request))))
        (every? valid-localization? (vals (:localizations request)))))
 
@@ -66,19 +67,19 @@
   (when-not (str/blank? str)
     str))
 
-(defn build-request [form languages]
+(defn build-request [form]
   (let [request {:wfid (get-in form [:workflow :id])
                  :resid (get-in form [:resource :id])
                  :form (get-in form [:form :form/id])
                  :organization {:organization/id (get-in form [:organization :organization/id])}
                  :localizations (into {}
-                                      (for [lang languages]
+                                      (for [lang @rems.config/languages]
                                         [lang {:title (trim-when-string (get-in form [:title lang]))
                                                :infourl (-> (get-in form [:infourl lang])
                                                             empty-string-to-nil
                                                             trim-when-string)}]))
                  :categories (mapv #(select-keys % [:category/id]) (get-in form [:categories]))}]
-    (when (valid-request? form request languages)
+    (when (valid-request? request)
       request)))
 
 (defn- page-title [editing?]
@@ -224,7 +225,7 @@
                        (remove :archived)
                        (mapv #(assoc % ::label (str (:resid %)
                                                     (andstr " (" (localize-org-short %) ")")
-                                                    (andstr " (" (when (has-duplicate-resid? %) (localize-licenses % lang)) ")")))))
+                                                    (andstr " (" (when (has-duplicate-resid? %) (localize-licenses %)) ")"))))))
            :item-key :id
            :item-label ::label
            :item-selected? #(= selected-resource (:id %))
@@ -284,8 +285,8 @@
      "/administration/catalogue-items")
    (text :t.administration/cancel)])
 
-(defn- save-catalogue-item-button [form languages editing?]
-  (let [request (build-request form languages)]
+(defn- save-catalogue-item-button [form editing?]
+  (let [request (build-request form)]
     [:button.btn.btn-primary
      {:type :button
       :id :save
@@ -298,8 +299,7 @@
      (text :t.administration/save)]))
 
 (defn create-catalogue-item-page []
-  (let [languages @(rf/subscribe [:languages])
-        editing? @(rf/subscribe [::editing?])
+  (let [editing? @(rf/subscribe [::editing?])
         catalogue-item-id (when editing? @(rf/subscribe [::catalogue-item-id]))
         loading? (or @(rf/subscribe [::workflows :fetching?])
                      @(rf/subscribe [::resources :fetching?])
@@ -328,4 +328,4 @@
 
                    [:div.col.commands
                     [cancel-button catalogue-item-id]
-                    [save-catalogue-item-button form languages editing?]]])]}]]))
+                    [save-catalogue-item-button form editing?]]])]}]]))

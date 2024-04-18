@@ -413,8 +413,7 @@
           (:td (get (:columns-by-key row) (:key column))))))
 
 (defn tree [tree]
-  (let [rows @(rf/subscribe [::displayed-rows tree])
-        language @(rf/subscribe [:language])]
+  (let [rows @(rf/subscribe [::displayed-rows tree])]
     [:div.table-border ; TODO duplicate or generalize styles?
      [:table.rems-table {:id (name (:id tree))
                          :class (:id tree)}

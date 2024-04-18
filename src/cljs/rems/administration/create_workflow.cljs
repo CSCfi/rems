@@ -61,7 +61,7 @@
 (fetcher/reg-fetcher ::commands "/api/applications/commands")
 
 (defn- at-least-one-localization [value]
-  (->> @(rf/subscribe [:languages])
+  (->> @rems.config/languages
        (some (fn [lang]
                (not-blank (get value lang))))))
 
@@ -171,7 +171,7 @@
                     :label (text :t.create-workflow/default-workflow)}
                    {:value :workflow/decider
                     :label (text :t.create-workflow/decider-workflow)}]
-                  (when (config/dev-environment?)
+                  (when @config/dev-environment?
                     [{:value :workflow/master
                       :label (text :t.create-workflow/master-workflow)}]))}]
       [:p.workflow-type-description

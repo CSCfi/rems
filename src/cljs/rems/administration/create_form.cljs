@@ -21,6 +21,7 @@
             [rems.collapsible :as collapsible]
             [rems.common.form :refer [field-visible? generate-field-id validate-form-template] :as common-form]
             [rems.common.util :refer [parse-int]]
+            [rems.config :as config]
             [rems.dropdown :as dropdown]
             [rems.fetcher :as fetcher]
             [rems.fields :as fields]
@@ -203,8 +204,8 @@
  ::send-form
  (fn [{:keys [db]} [_]]
    (let [edit? (::edit-form? db)
-         request (build-request (get-in db [::form :data]) (:languages db))
-         form-errors (validate-form-template request (:languages db))
+         request (build-request (get-in db [::form :data]) @rems.config/languages)
+         form-errors (validate-form-template request @rems.config/languages)
          send-verb (if edit? put! post!)
          send-url (str "/api/forms/" (if edit?
                                        "edit"

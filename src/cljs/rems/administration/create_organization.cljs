@@ -153,7 +153,7 @@
 (defn- save-organization-button []
   (let [form @(rf/subscribe [::form])
         id @(rf/subscribe [::organization-id])
-        languages @(rf/subscribe [:languages])
+        languages @rems.config/languages
         request (if id
                   (build-edit-request id form languages)
                   (build-create-request form languages))]

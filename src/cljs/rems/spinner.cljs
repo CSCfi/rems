@@ -1,19 +1,18 @@
 (ns rems.spinner
-  (:require [re-frame.core :as rf]
+  (:require [rems.globals]
             [rems.guide-util :refer [component-info example]]
             [rems.text :refer [text]]))
 
 (defn big
   "Big spinner for indicating loading or in-progress state."
   []
-  (let [theme @(rf/subscribe [:rems.theme/theme])]
-    [:div.text-center
-     [:i {:style {:display :inline-block
-                  :color (:color2 theme :transparent)
-                  :margin "32px"
-                  :font-size "40px"}
-          :class "fas fa-spinner fa-spin"}
-      [:span.sr-only (text :t.form/please-wait)]]]))
+  [:div.text-center
+   [:i {:style {:display :inline-block
+                :color (:color2 @rems.globals/theme :transparent)
+                :margin "32px"
+                :font-size "40px"}
+        :class "fas fa-spinner fa-spin"}
+    [:span.sr-only (text :t.form/please-wait)]]])
 
 (defn small
   "Small spinner for indicating loading or in-progress state."

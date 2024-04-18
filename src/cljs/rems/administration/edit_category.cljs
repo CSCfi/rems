@@ -7,6 +7,7 @@
             [rems.atoms :as atoms :refer [document-title]]
             [rems.collapsible :as collapsible]
             [rems.common.util :refer [parse-int]]
+            [rems.config :as config]
             [rems.dropdown :as dropdown]
             [rems.fetcher :as fetcher]
             [rems.flash-message :as flash-message]
@@ -159,7 +160,7 @@
 (defn edit-category-page []
   (let [loading? @(rf/subscribe [::categories :fetching?])
         form @(rf/subscribe [::form])
-        languages @(rf/subscribe [:languages])]
+        languages @rems.config/languages]
     [:div
      [administration/navigator]
      [document-title (text :t.administration/edit-category)]

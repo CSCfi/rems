@@ -6,6 +6,7 @@
             [rems.administration.status-flags :as status-flags]
             [rems.atoms :as atoms :refer [license-attachment-link external-link readonly-checkbox document-title]]
             [rems.common.util :refer [andstr]]
+            [rems.config :as config]
             [rems.collapsible :as collapsible]
             [rems.flash-message :as flash-message]
             [rems.common.roles :as roles]
@@ -49,7 +50,7 @@
               (case (:licensetype license)
                 "link"
                 (into [:<>]
-                      (for [langcode @(rf/subscribe [:languages])
+                      (for [langcode @rems.config/languages
                             :let [textcontent (get-in license [:localizations langcode :textcontent])]]
                         [inline-info-field
                          (str (text :t.create-license/external-link)
@@ -61,7 +62,7 @@
                                                :label (text :t.create-license/license-text)}]
                 "attachment"
                 (into [:<>]
-                      (for [langcode @(rf/subscribe [:languages])
+                      (for [langcode @rems.config/languages
                             :let [attachment-id (get-in license [:localizations langcode :attachment-id])
                                   title (get-in license [:localizations langcode :title])]]
                         [inline-info-field

@@ -293,7 +293,7 @@
         label (text :t.administration/organization)
         owned-organizations @(rf/subscribe [:owned-organizations])
         valid-organizations (->> owned-organizations (filter :enabled) (remove :archived))
-        disallowed (roles/disallow-setting-organization? @(rf/subscribe [:roles]))
+        disallowed (roles/disallow-setting-organization? @rems.globals/roles)
         form @(rf/subscribe [(:get-form context)])
         potential-value (get-in form keys)
         on-change (or on-change (fn [_]))
