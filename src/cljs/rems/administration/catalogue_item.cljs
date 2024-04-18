@@ -6,7 +6,6 @@
             [rems.administration.status-flags :as status-flags]
             [rems.atoms :as atoms :refer [document-title readonly-checkbox]]
             [rems.collapsible :as collapsible]
-            [rems.dropdown :as dropdown]
             [rems.flash-message :as flash-message]
             [rems.common.roles :as roles]
             [rems.spinner :as spinner]
@@ -49,13 +48,13 @@
    "/administration/categories"
    (text :t.administration/manage-categories)])
 
-(defn catalogue-item-view [catalogue-item language]
+(defn catalogue-item-view [catalogue-item]
   [:div.spaced-vertically-3
    [collapsible/component
     {:id "catalogue-item"
-     :title [:span#title (get-localized-title catalogue-item language)]
+     :title [:span#title (get-localized-title catalogue-item)]
      :always (into [:div
-                    [inline-info-field (text :t.administration/organization) (get-in catalogue-item [:organization :organization/name language])]]
+                    [inline-info-field (text :t.administration/organization) (localized (get-in catalogue-item [:organization :organization/name]))]]
                    (concat
                     (for [[langcode localization] (:localizations catalogue-item)]
                       (let [suffix (str " (" (str/upper-case (name langcode)) ")")]
@@ -103,7 +102,6 @@
 
 (defn catalogue-item-page []
   (let [catalogue-item (rf/subscribe [::catalogue-item])
-        language (rf/subscribe [:language])
         loading? (rf/subscribe [::loading?])]
     (fn []
       [:div
@@ -112,4 +110,4 @@
        [flash-message/component :top]
        (if @loading?
          [spinner/big]
-         [catalogue-item-view @catalogue-item @language])])))
+         [catalogue-item-view @catalogue-item])])))

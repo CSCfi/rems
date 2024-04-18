@@ -8,6 +8,7 @@
             [rems.dropdown :as dropdown]
             [rems.flash-message :as flash-message]
             [rems.common.roles :as roles]
+            [rems.globals]
             [rems.spinner :as spinner]
             [rems.table :as table]
             [rems.text :refer [text localize-time]]
@@ -69,7 +70,7 @@
 (rf/reg-event-fx
  ::fetch-users
  (fn [{:keys [db]} _]
-   (when (some +blacklist-add-roles+ (get-in db [:identity :roles]))
+   (when (some +blacklist-add-roles+ @rems.globals/roles)
      (fetch "/api/blacklist/users"
             {:handler #(rf/dispatch [::fetch-users-result %])
              :error-handler (flash-message/default-error-handler :top "Fetch users")}))

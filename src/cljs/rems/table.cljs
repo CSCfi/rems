@@ -28,6 +28,8 @@
             [reagent.core :as reagent]
             [re-frame.core :as rf]
             [rems.atoms :refer [checkbox sort-symbol]]
+            [rems.config]
+            [rems.globals]
             [rems.guide-util :refer [component-info example namespace-info]]
             [rems.paging :as paging]
             [rems.search :as search]
@@ -205,13 +207,12 @@
 (rf/reg-sub
  ::paging
  (fn [[_ table] _]
-   [(rf/subscribe [::current-paging table])
-    (rf/subscribe [:rems.config/config])])
- (fn [[paging config] [_ table]]
+   [(rf/subscribe [::current-paging table])])
+ (fn [[paging] [_ table]]
    (merge {:page-size 50 ; defaults
            :current-page 0
            :paging? (:paging? table true)}
-          (get-in config [:tables (:id table)]) ; config overrides
+          (get-in @rems.globals/config [:tables (:id table)]) ; config overrides
           paging)))
 
 (rf/reg-sub
@@ -399,10 +400,9 @@
 (rf/reg-sub
  ::limited-rows
  (fn [[_ table] _]
-   [(rf/subscribe [::sorted-and-filtered-rows table])
-    (rf/subscribe [:rems.config/config])])
- (fn [[rows config] [_ table]]
-   (if-let [max-rows (or (get-in config [:tables (:id table) :max-rows]) ; only ever up to this maximum
+   [(rf/subscribe [::sorted-and-filtered-rows table])])
+ (fn [[rows] [_ table]]
+   (if-let [max-rows (or (get-in @rems.globals/config [:tables (:id table) :max-rows]) ; only ever up to this maximum
                          (:max-rows table))]
      (take max-rows rows)
      rows)))
@@ -464,14 +464,13 @@
   [table]
   (s/validate Table table)
   (let [rows @(rf/subscribe [::paged-rows table])
-        language @(rf/subscribe [:language])
         columns @(rf/subscribe [::filtered-columns table])]
     [:div.table-border
      [:table.rems-table {:id (name (:id table))
                          :class (:id table)}
       [:thead
        [table-header table]]
-      [:tbody {:key language} ; performance optimization: rebuild instead of update existing components
+      [:tbody {:key @rems.config/language-or-default} ; performance optimization: rebuild instead of update existing components
        (for [row rows]
          ^{:key (:key row)} [table-row row table columns])]]]))
 

@@ -1,18 +1,20 @@
 (ns rems.text
-  (:require [better-cond.core :as b]
-            [clojure.string :as str]
+  (:require [clojure.string :as str]
             [clojure.test :refer [deftest is]]
-            #?(:clj [clj-time.core :as time]
-               :cljs [cljs-time.core :as time])
-            #?(:clj [clj-time.format :as time-format]
-               :cljs [cljs-time.format :as time-format])
-            #?(:cljs [cljs-time.coerce :as time-coerce])
-            #?(:clj [rems.locales]
-               :cljs [re-frame.core :as rf])
             [rems.common.application-util :as application-util]
             [rems.common.util :refer [not-blank]]
-            #?(:clj [rems.context :as context])
-            [rems.tempura]))
+            [rems.tempura]
+            #?@(:clj
+                [[clj-time.core :as time]
+                 [clj-time.format :as time-format]
+                 [rems.locales]
+                 [rems.context :as context]]
+                :cljs
+                [[cljs-time.core :as time]
+                 [cljs-time.format :as time-format]
+                 [cljs-time.coerce :as time-coerce]
+                 [rems.config]
+                 [rems.globals]])))
 
 #?(:clj
    (defmacro with-language [lang & body]
@@ -36,8 +38,8 @@
                            context/*lang*
                            [k :t/missing]
                            args)
-     :cljs (rems.tempura/tr @(rf/subscribe [:translations])
-                            @(rf/subscribe [:language])
+     :cljs (rems.tempura/tr @rems.globals/translations
+                            @rems.config/language-or-default
                             [k :t/missing (failsafe-fallback k args)]
                             args)))
 
@@ -62,8 +64,8 @@
                            context/*lang*
                            ks)
      :cljs (try
-             (rems.tempura/tr @(rf/subscribe [:translations])
-                              @(rf/subscribe [:language])
+             (rems.tempura/tr @rems.globals/translations
+                              @rems.config/language-or-default
                               ks)
              (catch js/Object e
                ;; fail gracefully if the re-frame state is incomplete
@@ -80,8 +82,8 @@
      ;; NB: we can't call the text-no-fallback here as in CLJS
      ;; we can both call this as function or use as a React component
      :cljs (try
-             (rems.tempura/tr @(rf/subscribe [:translations])
-                              @(rf/subscribe [:language])
+             (rems.tempura/tr @rems.globals/translations
+                              @rems.config/language-or-default
                               (conj (vec ks) (text-format :t/missing (vec ks))))
              (catch js/Object e
                ;; fail gracefully if the re-frame state is incomplete
@@ -90,14 +92,16 @@
 
 (defn localized [m]
   (let [lang #?(:clj context/*lang*
-                :cljs @(rf/subscribe [:language]))]
+                :cljs @rems.config/language-or-default)]
     (or (get m lang)
         (first (vals m)))))
 
 ;; TODO: replace usages of `get-localized-title` with `localized`
-(defn get-localized-title [item language]
-  (or (get-in item [:localizations language :title])
-      (:title (first (vals (get item :localizations))))))
+(defn get-localized-title [item]
+  (let [lang #?(:clj context/*lang*
+                :cljs @rems.config/language-or-default)]
+    (or (get-in item [:localizations lang :title])
+        (:title (first (vals (get item :localizations)))))))
 
 (def ^:private states
   {:application.state/draft :t.applications.states/draft

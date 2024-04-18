@@ -6,6 +6,7 @@
             [re-frame.core :as rf]
             [rems.atoms :as atoms]
             [rems.common.application-util :as application-util]
+            [rems.globals]
             [rems.guide-util :refer [component-info example]]
             [rems.spinner :as spinner]
             [rems.table :as table]
@@ -17,16 +18,15 @@
        (map localized)
        (str/join ", ")))
 
-(defn format-application-id [config application]
-  (let [id-column (get config :application-id-column :id)]
+(defn format-application-id [application]
+  (let [id-column (get @rems.globals/config :application-id-column :id)]
     (case id-column
       (:external-id :generated-and-assigned-external-id) (:application/external-id application)
       :id (:application/id application)
       (:application/id application))))
 
 (defn- view-button [app]
-  (let [config @(rf/subscribe [:rems.config/config])
-        id (format-application-id config app)
+  (let [id (format-application-id app)
         description (:application/description app)]
     [atoms/link
      {:class "btn btn-primary"
@@ -76,64 +76,61 @@
 (rf/reg-sub
  ::table-rows
  (fn [[_ apps-sub] _]
-   [(rf/subscribe [apps-sub])
-    ;; This subscription calls the localization functions in rems.text
-    ;; and re-frame must be made aware of the language dependency.
-    (rf/subscribe [:language])])
- (fn [[apps _language] _]
-   (map (fn [app]
-          {:key (:application/id app)
-           :id {:value (:application/id app)}
-           :external-id {:value (:application/external-id app)
-                         :sort-value (application-util/parse-sortable-external-id (:application/external-id app))}
-           :generated-and-assigned-external-id {:display-value [:<>
-                                                                (when (:application/assigned-external-id app)
-                                                                  [:<>
-                                                                   [:span.text-nowrap (:application/assigned-external-id app)]
-                                                                   [:br]])
-                                                                [:span.text-nowrap (:application/generated-external-id app)]]
-                                                :sort-value [(application-util/parse-sortable-external-id (:application/assigned-external-id app))
-                                                             (:application/generated-external-id app)]}
-           :description {:value (:application/description app)
-                         :display-value (format-description app)}
-           :resource {:value (format-catalogue-items app)}
-           :applicant (let [applicant (application-util/get-applicant-name app)]
-                        {:value applicant
-                         :display-value (format-applicant applicant)})
-           :handlers (let [handlers (->> (get-in app [:application/workflow :workflow.dynamic/handlers])
-                                         (filter :handler/active?)
-                                         (map application-util/get-member-name)
-                                         (sort)
-                                         (str/join ", "))]
-                       {:value handlers})
-           :state (let [state (localize-state (:application/state app))
-                        processing-states (localize-processing-states app)]
-                    {:value state
-                     :td [:td.state
-                          {:class (when (application-util/form-fields-editable? app)
+   [(rf/subscribe [apps-sub])])
+ (fn [[apps] _]
+   (mapv (fn [app]
+           {:key (:application/id app)
+            :id {:value (:application/id app)}
+            :external-id {:value (:application/external-id app)
+                          :sort-value (application-util/parse-sortable-external-id (:application/external-id app))}
+            :generated-and-assigned-external-id {:display-value [:<>
+                                                                 (when (:application/assigned-external-id app)
+                                                                   [:<>
+                                                                    [:span.text-nowrap (:application/assigned-external-id app)]
+                                                                    [:br]])
+                                                                 [:span.text-nowrap (:application/generated-external-id app)]]
+                                                 :sort-value [(application-util/parse-sortable-external-id (:application/assigned-external-id app))
+                                                              (:application/generated-external-id app)]}
+            :description {:value (:application/description app)
+                          :display-value (format-description app)}
+            :resource {:value (format-catalogue-items app)}
+            :applicant (let [applicant (application-util/get-applicant-name app)]
+                         {:value applicant
+                          :display-value (format-applicant applicant)})
+            :handlers (let [handlers (->> (get-in app [:application/workflow :workflow.dynamic/handlers])
+                                          (filter :handler/active?)
+                                          (map application-util/get-member-name)
+                                          (sort)
+                                          (str/join ", "))]
+                        {:value handlers})
+            :state (let [state (localize-state (:application/state app))
+                         processing-states (localize-processing-states app)]
+                     {:value state
+                      :td [:td.state
+                           {:class (when (application-util/form-fields-editable? app)
+                                     "text-highlight")}
+                           (str/join ", " (remove str/blank? [state processing-states]))]})
+            :todo (let [value (localize-todo (:application/todo app))]
+                    {:value value
+                     :td [:td.todo
+                          {:class (when (current-user-needs-to-do-something? app)
                                     "text-highlight")}
-                          (str/join ", " (remove str/blank? [state processing-states]))]})
-           :todo (let [value (localize-todo (:application/todo app))]
-                   {:value value
-                    :td [:td.todo
-                         {:class (when (current-user-needs-to-do-something? app)
-                                   "text-highlight")}
-                         value]})
-           :created (let [value (:application/created app)]
-                      {:value value
-                       :display-value (localize-time value)})
-           :submitted (let [value (:application/first-submitted app)]
-                        {:value value
-                         :td [:td.submitted
-                              {:class (cond
-                                        (application-overdue? app) "alert-danger"
-                                        (application-almost-overdue? app) "alert-warning")}
-                              (localize-time value)]})
-           :last-activity (let [value (:application/last-activity app)]
-                            {:value value
-                             :display-value (localize-time value)})
-           :view {:display-value [:div.commands.justify-content-end [view-button app]]}})
-        apps)))
+                          value]})
+            :created (let [value (:application/created app)]
+                       {:value value
+                        :display-value (localize-time value)})
+            :submitted (let [value (:application/first-submitted app)]
+                         {:value value
+                          :td [:td.submitted
+                               {:class (cond
+                                         (application-overdue? app) "alert-danger"
+                                         (application-almost-overdue? app) "alert-warning")}
+                               (localize-time value)]})
+            :last-activity (let [value (:application/last-activity app)]
+                             {:value value
+                              :display-value (localize-time value)})
+            :view {:display-value [:div.commands.justify-content-end [view-button app]]}})
+         apps)))
 
 (defn list [{:keys [id applications visible-columns default-sort-column default-sort-order max-rows]
              :or {visible-columns (constantly true)}}]
@@ -176,10 +173,9 @@
      [table/paging application-table]]))
 
 (defn- application-list-defaults []
-  (let [config @(rf/subscribe [:rems.config/config])
-        id-column (get config :application-id-column :id)]
+  (let [id-column (get @rems.globals/config :application-id-column :id)]
     {:visible-columns (set/difference #{id-column :description :resource :applicant :handlers :state :todo :created :submitted :last-activity :view}
-                                      (set (get config :application-list-hidden-columns)))
+                                      (set (get @rems.globals/config :application-list-hidden-columns)))
      :default-sort-column :created
      :default-sort-order :desc}))
 

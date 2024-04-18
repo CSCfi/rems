@@ -3,7 +3,9 @@
             [medley.core :refer [find-first]]
             [re-frame.core :as rf]
             [rems.atoms :refer [document-title] :as atoms]
+            [rems.config]
             [rems.flash-message :as flash-message]
+            [rems.globals]
             [rems.spinner :as spinner]
             [rems.text :refer [text]]
             [rems.util :refer [fetch]]))
@@ -41,26 +43,16 @@
           (filter #(= page-id (:id %)))
           first))))
 
-(rf/reg-sub
- ::title
- (fn [_ _]
-   [(rf/subscribe [::page]) (rf/subscribe [:language])])
- (fn [[page language] _]
-   (->> page
-        :translations
-        language
-        :title)))
-
 ;;;; Entry point
 
 (defn extra-pages []
   (let [loading? @(rf/subscribe [::loading?])
         page-id @(rf/subscribe [::page-id])
-        title @(rf/subscribe [::title])
+        language @rems.config/language-or-default
+        title (get-in @(rf/subscribe [::page]) [:translations language :title])
         extra-page @(rf/subscribe [::content])
-        extra-pages (:extra-pages @(rf/subscribe [:rems.config/config]))
-        config-extra-page (find-first (comp #{page-id} :id) extra-pages)
-        language @(rf/subscribe [:language])]
+        extra-pages (:extra-pages @rems.globals/config)
+        config-extra-page (find-first (comp #{page-id} :id) extra-pages)]
     [:div
      [document-title title {:heading? (get config-extra-page :heading true)}]
      [flash-message/component :top]

@@ -5,6 +5,7 @@
             [re-frame.core :as rf]
             [rems.actions.components :refer [action-attachment action-button comment-field action-form-view command! perform-action-button]]
             [rems.atoms :as atoms]
+            [rems.globals]
             [rems.text :refer [text localize-utc-date]]))
 
 (def ^:private action-form-id "approve-reject")
@@ -17,7 +18,7 @@
 (rf/reg-event-fx
  ::open-form
  (fn [{:keys [db]} _]
-   {:db (assoc db ::entitlement-end (default-end (get-in db [:config :entitlement-default-length-days])))
+   {:db (assoc db ::entitlement-end (default-end (:entitlement-default-length-days @rems.globals/config)))
     :dispatch-n [[:rems.actions.components/set-comment action-form-id ""]
                  [:rems.actions.components/set-attachments action-form-id []]]}))
 

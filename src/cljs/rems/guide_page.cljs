@@ -1,6 +1,5 @@
 (ns rems.guide-page
-  (:require [re-frame.core :as rf]
-            [rems.actions.components]
+  (:require [rems.actions.components]
             [rems.administration.administration :as administration]
             [rems.application :as application]
             [rems.application-list :as application-list]
@@ -8,6 +7,7 @@
             [rems.auth.auth :as auth]
             [rems.cart :as cart]
             [rems.collapsible :as collapsible]
+            [rems.globals]
             [rems.dropdown :as dropdown]
             [rems.fields :as fields]
             [rems.flash-message :as flash-message]
@@ -29,12 +29,11 @@
     [:div.col-md-6.color-title hex]]])
 
 (defn color-boxes []
-  (let [theme @(rf/subscribe [:rems.theme/theme])]
-    [:div.row
-     [color-box "color-1" (:color1 theme)]
-     [color-box "color-2" (:color2 theme)]
-     [color-box "color-3" (:color3 theme)]
-     [color-box "color-4" (:color4 theme)]]))
+  [:div.row
+   [color-box "color-1" (:color1 @rems.globals/theme)]
+   [color-box "color-2" (:color2 @rems.globals/theme)]
+   [color-box "color-3" (:color3 @rems.globals/theme)]
+   [color-box "color-4" (:color4 @rems.globals/theme)]])
 
 (defn alerts []
   [:div

@@ -6,6 +6,8 @@
             [rems.atoms :as atoms :refer [failure-symbol file-download document-title]]
             [rems.collapsible :as collapsible]
             [rems.common.attachment-util :as attachment-util]
+            [rems.config]
+            [rems.globals]
             [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
             [rems.text :refer [text text-format]]
@@ -153,13 +155,12 @@
          [:label.administration-field-label
           (text :t.create-license/license-attachment)]
          (let [allowed-extensions (->> attachment-util/allowed-extensions-string
-                                       (text-format :t.form/upload-extensions))
-               config @(rf/subscribe [:rems.config/config])]
+                                       (text-format :t.form/upload-extensions))]
            [:div.mb-3
             [:p allowed-extensions]
-            [:p (->> (format-file-size (:attachment-max-size config))
+            [:p (->> (format-file-size (:attachment-max-size @rems.globals/config))
                      (text-format :t.form/attachment-max-size))]])]
-        (for [language @(rf/subscribe [:languages])
+        (for [language @rems.config/languages
               :let [form @(rf/subscribe [::form])
                     filename (get-in form [:localizations language :attachment-filename])
                     attachment-id (get-in form [:localizations language :attachment-id])
@@ -197,7 +198,7 @@
 
 (defn- save-license-button [on-click]
   (let [form @(rf/subscribe [::form])
-        languages @(rf/subscribe [:languages])
+        languages @rems.config/languages
         request (build-request form languages)]
     [:button#save.btn.btn-primary
      {:type :button

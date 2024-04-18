@@ -25,6 +25,7 @@
             [re-frame.core :as rf]
             [rems.atoms :refer [sort-symbol]]
             [rems.common.util :refer [conj-vec index-by]]
+            [rems.config]
             [rems.guide-util :refer [component-info example namespace-info]]
             [rems.search :as search]
             [schema.core :as s]))
@@ -412,14 +413,13 @@
           (:td (get (:columns-by-key row) (:key column))))))
 
 (defn tree [tree]
-  (let [rows @(rf/subscribe [::displayed-rows tree])
-        language @(rf/subscribe [:language])]
+  (let [rows @(rf/subscribe [::displayed-rows tree])]
     [:div.table-border ; TODO duplicate or generalize styles?
      [:table.rems-table {:id (name (:id tree))
                          :class (:id tree)}
       [:thead
        [tree-header tree]]
-      [:tbody {:key language} ; performance optimization: rebuild instead of update existing components
+      [:tbody {:key @rems.config/language-or-default} ; performance optimization: rebuild instead of update existing components
        (for [row rows]
          ^{:key (:react-key row)} ; row key can be duplicated because it's a DAG
          [tree-row row tree])]]]))

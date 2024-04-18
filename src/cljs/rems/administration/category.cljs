@@ -64,12 +64,11 @@
    (text :t.administration/delete)])
 
 (defn category-view []
-  (let [category (rf/subscribe [::category])
-        language (rf/subscribe [:language])]
+  (let [category (rf/subscribe [::category])]
     [:div.spaced-vertically-3
      [collapsible/component
       {:id "category"
-       :title [:span (get-in @category [:category/title @language])]
+       :title [:span (localized (:category/title @category))]
        :always [:div
                 [localized-info-field (:category/title @category) {:label (text :t.administration/title)}]
                 [localized-info-field (:category/description @category) {:label (text :t.administration/description)}]

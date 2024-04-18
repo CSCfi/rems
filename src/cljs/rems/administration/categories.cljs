@@ -6,7 +6,7 @@
             [rems.common.roles :as roles]
             [rems.spinner :as spinner]
             [rems.table :as table]
-            [rems.text :refer [text]]
+            [rems.text :refer [localized text]]
             [rems.util :refer [fetch]]))
 
 (rf/reg-event-fx
@@ -54,21 +54,20 @@
 (rf/reg-sub
  ::categories-table-rows
  (fn [_ _]
-   [(rf/subscribe [::categories])
-    (rf/subscribe [:language])])
- (fn [[categories language] _]
-   (map (fn [category]
-          {:key (:category/id category)
-           :display-order {:value (:category/display-order category)
-                           :sort-value [(:category/display-order category 2147483647)  ; can't use Java Integer/MAX_VALUE here but anything that is not set is last
-                                        (get-in category [:category/title language])]} ; secondary sort-key is the same in the catalogue
-           :title {:value (get-in category [:category/title language])}
-           :description {:value (get-in category [:category/description language])}
-           :commands {:display-value [:div.commands
-                                      [to-view-category (:category/id category)]
-                                      [roles/show-when roles/+admin-write-roles+
-                                       [to-edit-category (:category/id category)]]]}})
-        categories)))
+   [(rf/subscribe [::categories])])
+ (fn [[categories] _]
+   (mapv (fn [category]
+           {:key (:category/id category)
+            :display-order {:value (:category/display-order category)
+                            :sort-value [(:category/display-order category 2147483647)  ; can't use Java Integer/MAX_VALUE here but anything that is not set is last
+                                         (localized (:category/title category))]} ; secondary sort-key is the same in the catalogue
+            :title {:value (localized (:category/title category))}
+            :description {:value (localized (:category/description category))}
+            :commands {:display-value [:div.commands
+                                       [to-view-category (:category/id category)]
+                                       [roles/show-when roles/+admin-write-roles+
+                                        [to-edit-category (:category/id category)]]]}})
+         categories)))
 
 (defn- categories-list []
   (let [categories-table {:id ::categories

@@ -120,9 +120,7 @@
           {:id "mondos-dropdown"
            :items mondos
            :item-key :id
-           ;; due to async loading, item label cannot be set ahead of time, but label function also cannot use subscriptions.
-           ;; TODO: investigate solutions
-           :item-label #(str (:id %) " – " (:label %))
+           :item-label #(text-format :t.label/dash (:id %) (:label %))
            :multi? true
            :on-change #(let [new-value %]
                          (rf/dispatch [(:update-form context) update-path new-value])

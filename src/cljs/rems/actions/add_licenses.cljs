@@ -71,7 +71,7 @@
                   :on-click #(rf/dispatch [::open-form])}])
 
 (defn add-licenses-view
-  [{:keys [selected-licenses potential-licenses language on-set-licenses on-send]}]
+  [{:keys [selected-licenses potential-licenses on-set-licenses on-send]}]
   [action-form-view action-form-id
    (text :t.actions/add-licenses)
    [[perform-action-button {:id "add-licenses"
@@ -86,7 +86,7 @@
      [dropdown/dropdown
       {:id dropdown-id
        :items (->> potential-licenses
-                   (mapv #(assoc % ::label (get-localized-title % language))))
+                   (mapv #(assoc % ::label (get-localized-title %))))
        :item-key :id
        :item-label ::label
        :item-selected? #(contains? (set selected-licenses) %)
@@ -96,11 +96,9 @@
 (defn add-licenses-form [application-id on-finished]
   (let [selected-licenses @(rf/subscribe [::selected-licenses])
         potential-licenses @(rf/subscribe [::potential-licenses])
-        comment @(rf/subscribe [:rems.actions.components/comment action-form-id])
-        language @(rf/subscribe [:language])]
+        comment @(rf/subscribe [:rems.actions.components/comment action-form-id])]
     [add-licenses-view {:selected-licenses selected-licenses
                         :potential-licenses potential-licenses
-                        :language language
                         :on-set-licenses #(rf/dispatch [::set-selected-licenses %])
                         :on-send #(rf/dispatch [::send-add-licenses {:application-id application-id
                                                                      :licenses selected-licenses

@@ -10,6 +10,7 @@
             [rems.config :as config]
             [rems.common.application-util :as application-util]
             [rems.common.util :refer [andstr build-index conj-vec keep-keys not-blank replace-key]]
+            [rems.globals]
             [rems.dropdown :as dropdown]
             [rems.fetcher :as fetcher]
             [rems.fields :as fields]
@@ -60,7 +61,7 @@
 (fetcher/reg-fetcher ::commands "/api/applications/commands")
 
 (defn- at-least-one-localization [value]
-  (->> @(rf/subscribe [:languages])
+  (->> @rems.config/languages
        (some (fn [lang]
                (not-blank (get value lang))))))
 
@@ -170,7 +171,7 @@
                     :label (text :t.create-workflow/default-workflow)}
                    {:value :workflow/decider
                     :label (text :t.create-workflow/decider-workflow)}]
-                  (when (config/dev-environment?)
+                  (when @config/dev-environment?
                     [{:value :workflow/master
                       :label (text :t.create-workflow/master-workflow)}]))}]
       [:p.workflow-type-description
@@ -449,7 +450,7 @@
 (rf/reg-event-db ::remove-processing-state (fn [db [_ index]] (update-in db [::form :processing-states] #(vec (remove-nth index %)))))
 
 (defn- get-processing-state-title [{title :processing-state/title}]
-  (or (not-blank (get title @(rf/subscribe [:language])))
+  (or (not-blank (localized title))
       (text :t.administration/processing-state)))
 
 (defn- workflow-processing-states []
@@ -479,16 +480,15 @@
 
 ;;;; page component
 
-(defn- get-workflow-title [form language]
-  (b/when-some [organization-short (not-blank (get-in form [:organization :organization/short-name language]))
+(defn- get-workflow-title [form]
+  (b/when-some [organization-short (not-blank (localized (get-in form [:organization :organization/short-name])))
                 title (not-blank (:title form))]
     (text-format :t.label/default organization-short title)))
 
 (defn- common-fields []
   [collapsible/component
    {:id "workflow-common-fields"
-    :title (or (get-workflow-title @(rf/subscribe [::form])
-                                   @(rf/subscribe [:language]))
+    :title (or (get-workflow-title @(rf/subscribe [::form]))
                (text :t.administration/workflow))
     :always (if @(rf/subscribe [::workflow :fetching?])
               [spinner/big]
@@ -504,7 +504,7 @@
                 [workflow-licenses]]])}])
 
 (defn- voting-fields []
-  (when (:enable-voting @(rf/subscribe [:rems.config/config]))
+  (when (:enable-voting @rems.globals/config)
     (let [loading? @(rf/subscribe [::workflow :fetching?])]
       [collapsible/component
        {:id "workflow-voting-fields"
@@ -529,9 +529,8 @@
                  [workflow-disable-commands]])}]))
 
 (defn- processing-states-fields []
-  (let [config @(rf/subscribe [:rems.config/config])
-        loading? @(rf/subscribe [::workflow :fetching?])]
-    (when (:enable-processing-states config)
+  (let [loading? @(rf/subscribe [::workflow :fetching?])]
+    (when (:enable-processing-states @rems.globals/config)
       [collapsible/component
        {:id "workflow-processing-states-fields"
         :title (text :t.administration/processing-states)

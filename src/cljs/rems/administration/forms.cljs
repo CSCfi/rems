@@ -8,7 +8,7 @@
             [rems.common.roles :as roles]
             [rems.spinner :as spinner]
             [rems.table :as table]
-            [rems.text :refer [text]]
+            [rems.text :refer [localized text]]
             [rems.util :refer [fetch put!]]))
 
 (rf/reg-event-fx
@@ -97,16 +97,15 @@
  ::forms-table-rows
  (fn [_ _]
    [(rf/subscribe [::forms])
-    (rf/subscribe [:language])
     (rf/subscribe [:rems.administration.administration/displayed-organization-ids])])
- (fn [[forms language displayed-organization-ids] _]
+ (fn [[forms displayed-organization-ids] _]
    (->> forms
         (administration/filter-by-displayed-organization displayed-organization-ids #(get-in % [:organization :organization/id]))
         (mapv (fn [form]
                 {:key (:form/id form)
-                 :organization {:value (get-in form [:organization :organization/short-name language])}
+                 :organization {:value (localized (get-in form [:organization :organization/short-name]))}
                  :internal-name {:value (get-in form [:form/internal-name])}
-                 :external-title {:value (get-in form [:form/external-title language])}
+                 :external-title {:value (localized (:form/external-title form))}
                  :active (let [checked? (status-flags/active? form)]
                            {:display-value [readonly-checkbox {:value checked?}]
                             :sort-value (if checked? 1 2)})

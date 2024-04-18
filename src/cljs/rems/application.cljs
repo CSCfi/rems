@@ -39,6 +39,8 @@
             [rems.common.form :as form]
             [rems.common.util :refer [build-index index-by not-blank parse-int]]
             [rems.common.duo :refer [duo-validation-summary unmatched-duos]]
+            [rems.config]
+            [rems.globals]
             [rems.dropdown :as dropdown]
             [rems.fetcher :as fetcher]
             [rems.fields :as fields]
@@ -115,7 +117,7 @@
                     ::edit-application
                     ::duo-codes
                     ::autosaving))
-    :dispatch-n (if (-> db :config :enable-duo)
+    :dispatch-n (if (:enable-duo @rems.globals/config)
                   [[::fetch-application id true] [::duo-codes]]
                   [[::fetch-application id true]])}))
 
@@ -274,7 +276,7 @@
 (rf/reg-event-fx
  ::autosave-application
  (fn [{:keys [db]} [_]]
-   (if (-> db :config :enable-autosave)
+   (if (:enable-autosave @rems.globals/config)
      (let [application (-> db ::application :data)
            edit-application (::edit-application db)
            description [text :t.form/autosave]]
@@ -338,11 +340,10 @@
   (let [application-id (get-in db [::application :data :application/id])
         current-attachments (form/parse-attachment-ids (get-in db [::edit-application :field-values form-id field-id]))
         description [text :t.form/upload]
-        config @(rf/subscribe [:rems.config/config])
         file-size (.. file (get "file") -size)
         file-name (.. file (get "file") -name)]
     (rf/dispatch [::set-attachment-status form-id field-id :pending])
-    (if (some-> (:attachment-max-size config)
+    (if (some-> (:attachment-max-size @rems.globals/config)
                 (< file-size))
       (do
         (rf/dispatch [::set-attachment-status form-id field-id :error])
@@ -350,7 +351,7 @@
                                            [:div
                                             [:p [text :t.form/too-large-attachment]]
                                             [:p (str file-name " " (format-file-size file-size))]
-                                            [:p [text-format :t.form/attachment-max-size (format-file-size (:attachment-max-size config))]]]))
+                                            [:p [text-format :t.form/attachment-max-size (format-file-size (:attachment-max-size @rems.globals/config))]]]))
       (post! "/api/applications/add-attachment"
              {:url-params {:application-id application-id}
               :body file
@@ -362,7 +363,7 @@
                          ;; no race condition here: events are handled in a FIFO manner
                          (rf/dispatch [::set-field-value form-id field-id (form/unparse-attachment-ids
                                                                            (conj current-attachments (:id response)))])
-                         (if (:enable-autosave config)
+                         (if (:enable-autosave @rems.globals/config)
                            (do
                              (fields/always-on-change (:id response))
                              (rf/dispatch [::set-attachment-status form-id field-id :success]))
@@ -374,7 +375,7 @@
                                                                         [:div
                                                                          [:p [text :t.form/too-large-attachment]]
                                                                          [:p (str file-name " " (format-file-size file-size))]
-                                                                         [:p [text-format :t.form/attachment-max-size (format-file-size (:attachment-max-size config))]]])
+                                                                         [:p [text-format :t.form/attachment-max-size (format-file-size (:attachment-max-size @rems.globals/config))]]])
 
                                      (= 415 (:status response))
                                      (flash-message/show-default-error! :actions description
@@ -486,10 +487,9 @@
 
 (defn- attachment-license [application license]
   (let [title (localized (:license/title license))
-        language @(rf/subscribe [:language])
         link (str "/applications/" (:application/id application)
                   "/license-attachment/" (:license/id license)
-                  "/" (name language))]
+                  "/" (name @rems.config/language-or-default))]
     [:a.license-title {:href link :target :_blank}
      title " " [file-download]]))
 
@@ -604,7 +604,6 @@
                               :on-remove-attachment #(rf/dispatch [::remove-attachment form-id field-id %1])}))])))
 
 (defn- application-fields [application]
-  (let [language @(rf/subscribe [:language])]
     (into [:div]
           (for [form (:application/forms application)
                 :let [form-id (:form/id form)]
@@ -613,13 +612,13 @@
                            seq)]
             [collapsible/component
              {:class "mb-3"
-              :title (or (get-in form [:form/external-title language]) (text :t.form/application))
+            :title (or (localized (:form/external-title form)) (text :t.form/application))
               :always (into [:div.fields]
                             (for [field (:form/fields form)]
                               [field-container (merge field
                                                       {:form/id form-id
                                                        :readonly @(rf/subscribe [::readonly?])
-                                                       :app-id (:application/id application)})]))}]))))
+                                                     :app-id (:application/id application)})]))}])))
 
 (defn- application-licenses [application userid]
   (when-let [licenses (not-empty (:application/licenses application))]
@@ -656,11 +655,10 @@
               [accept-licenses-action-button application-id (mapv :license/id licenses) #(reload! application-id)]]))]}])))
 
 (defn- application-link [application prefix]
-  (let [config @(rf/subscribe [:rems.config/config])]
     [:a {:href (str "/application/" (:application/id application))}
      (when prefix
        (str prefix " "))
-     (application-list/format-application-id config application)]))
+   (application-list/format-application-id application)])
 
 (defn- event-description [event]
   (case (:event/visibility event)
@@ -809,14 +807,14 @@
         [atoms/not-shown-to-applying-users-symbol]
         [:span.ml-2 private-state]])]))
 
-(defn- application-state-details [application config]
+(defn- application-state-details [application]
   [:<>
    [:h3.mt-3 (text :t.applications/details)]
 
    [info-field (text :t.applications/application)
     [:<>
      [:span#application-id
-      (application-list/format-application-id config application)]
+      (application-list/format-application-id application)]
      [application-copy-notice application]]
     {:inline? true}]
 
@@ -839,7 +837,7 @@
            [:h3.mt-3 (text :t.form/events)]]
           (render-events application events))))
 
-(defn- application-state [{:keys [application config userid]}]
+(defn- application-state [{:keys [application userid]}]
   (let [state (:application/state application)
         events (sort-by :event/time > (:application/events application))]
     [collapsible/component (merge {:id "header"
@@ -850,7 +848,7 @@
                                         {:always [:div
                                                   [:div.mb-3
                                                    [phases state (get-application-phases state)]]
-                                                  [application-state-details application config]
+                                                  [application-state-details application]
                                                   [votes-summary application]
                                                   [application-events application (take 3 events)]]
                                          :collapse (into [:<>]
@@ -863,7 +861,7 @@
                                                            [votes-summary application]
                                                            [application-events application (take 1 events)]]
                                          :collapse [:div
-                                                    [application-state-details application config]
+                                                    [application-state-details application]
                                                     [votes-summary application]
                                                     [application-events application events]]}
 
@@ -874,7 +872,7 @@
                                                             (into [:div.my-3]
                                                                   (render-events application (take 1 events))))
                                          :collapse [:div
-                                                    [application-state-details application config]
+                                                    [application-state-details application]
                                                     [application-events application events]]}))]))
 
 (defn member-info
@@ -1017,9 +1015,9 @@
     [request-decision-action-link]
     [invite-decider-action-link]]])
 
-(defn- action-buttons [application config]
+(defn- action-buttons [application]
   (let [commands-and-actions (concat
-                              (when-not (:enable-autosave config)
+                              (when-not (:enable-autosave @rems.globals/config)
                                 ;; no explicit command for :application.command/save-draft when autosave
                                 [:application.command/save-draft [save-button]])
 
@@ -1038,7 +1036,7 @@
                                :application.command/reject [approve-reject-action-button]
                                :application.command/revoke [revoke-action-button]
                                :application.command/vote [vote-action-button]
-                               :application.command/assign-external-id (when (:enable-assign-external-id-ui @(rf/subscribe [:rems.config/config]))
+                               :application.command/assign-external-id (when (:enable-assign-external-id-ui @rems.globals/config)
                                                                          [assign-external-id-button (get application :application/assigned-external-id "")])
                                :application.command/close [close-action-button]
                                :application.command/delete [delete-action-button]
@@ -1051,16 +1049,16 @@
               :when (contains? (:application/permissions application) command)]
           action)
 
-        (concat [(when (:show-pdf-action config) [pdf-button (:application/id application)])
-                 (when (:show-attachment-zip-action config) [attachment-zip-button application])])
+        (concat [(when (:show-pdf-action @rems.globals/config) [pdf-button (:application/id application)])
+                 (when (:show-attachment-zip-action @rems.globals/config) [attachment-zip-button application])])
 
         (->> (remove nil?))
         distinct)))
 
-(defn- actions-form [application config]
+(defn- actions-form [application]
   (let [app-id (:application/id application)
         show-comment-field? (is-handling-user? application)
-        actions (action-buttons application config)
+        actions (action-buttons application)
         reload (r/partial reload! app-id)
         go-to-applications #(do (flash-message/show-default-success! :top [text :t.actions/delete])
                                 (navigate! "/applications"))]
@@ -1090,9 +1088,10 @@
                   [vote-form app-id application reload]
                   [change-processing-state-form app-id application reload]]]}])))
 
-(defn- render-resource [resource language]
-  (let [config @(rf/subscribe [:rems.config/config])
+(defn- render-resource [resource]
+  (let [config @rems.globals/config
         duos (get-in resource [:resource/duo :duo/codes])
+        language @rems.config/language-or-default
         resource-header [:p
                          (localized (:catalogue-item/title resource))
                          (when-let [url (catalogue-item-more-info-url resource language config)]
@@ -1101,7 +1100,7 @@
                             [:a {:href url :target :_blank}
                              (text :t.catalogue/more-info) " " [external-link]]])]]
     [:div.application-resource
-     (if-not (and (:enable-duo config) (seq duos))
+     (if-not (and (:enable-duo @rems.globals/config) (seq duos))
        resource-header
        [expander
         {:id (str "resource-" (:resource/id resource) "-duos-collapsible")
@@ -1119,7 +1118,7 @@
                                                 :duo/more-infos (when (:more-info duo)
                                                                   (list (select-keys duo [:more-info])))}])]}]}])]))
 
-(defn- applied-resources [application userid language]
+(defn- applied-resources [application userid]
   (let [application-id (:application/id application)
         permissions (:application/permissions application)
         applicant? (= (:userid (:application/applicant application)) userid)
@@ -1133,7 +1132,7 @@
                (into [:div.application-resources]
                      (for [resource (:application/resources application)]
                        ^{:key (:catalogue-item/id resource)}
-                       [render-resource resource language]))]
+                       [render-resource resource]))]
       :footer [:div
                [:div.commands
                 (when can-change-resources? [change-resources-action-button (:application/resources application)])]
@@ -1271,7 +1270,7 @@
            (for [resource resources]
              [:li (localized (:catalogue-item/title resource))]))]))
 
-(defn- render-application [{:keys [application config userid language]}]
+(defn- render-application [{:keys [application userid]}]
   [:<>
    (when (can-see-everything? application) ; XXX: should these be shown only to handling users?
      [disabled-items-warning application])
@@ -1281,12 +1280,11 @@
    [:div.row
     [:div.col-lg-8.application-content.spaced-vertically-5
      [application-state {:application application
-                         :config config
                          :userid userid}]
      [applicants-info application userid]
-     (when (:show-resources-section config)
-       [applied-resources application userid language])
-     (when (and (:enable-duo config)
+     (when (:show-resources-section @rems.globals/config)
+       [applied-resources application userid])
+     (when (and (:enable-duo @rems.globals/config)
                 (seq (get-resource-duos application)))
        (if @(rf/subscribe [::readonly?])
          [application-duo-codes]
@@ -1303,22 +1301,20 @@
         [:div.alert.alert-info
          [text :t.form/autosave-in-progress]
          [:span.ml-2 [spinner/small]]])
-      [actions-form application config]]]]])
+      [actions-form application]]]]])
 
 ;;;; Entrypoint
 
 (defn application-page []
-  (let [config @(rf/subscribe [:rems.config/config])
-        application-id @(rf/subscribe [::application-id])
+  (let [application-id @(rf/subscribe [::application-id])
         application @(rf/subscribe [::application])
         loading? @(rf/subscribe [::application :loading?])
         reloading? @(rf/subscribe [::application :reloading?])
-        userid (:userid @(rf/subscribe [:user]))
-        language @(rf/subscribe [:language])]
+        userid (:userid @rems.globals/user)]
     [:div.container-fluid
      [document-title (str (text :t.applications/application)
                           (when application
-                            (str " " (application-list/format-application-id config application)))
+                            (str " " (application-list/format-application-id application)))
                           (when-not (str/blank? (:application/description application))
                             (str ": " (:application/description application))))]
      ^{:key application-id} ; re-render to clear flash messages when navigating to another application
@@ -1329,9 +1325,7 @@
        [spinner/big])
      (when application
        [render-application {:application application
-                            :config config
-                            :userid userid
-                            :language language}])
+                            :userid userid}])
      ;; Located after the application to avoid re-rendering the application
      ;; when this element is added or removed from virtual DOM.
      (when reloading?
