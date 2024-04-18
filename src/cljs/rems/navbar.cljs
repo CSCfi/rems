@@ -68,9 +68,9 @@
 
 (defn- extra-pages-container [{:keys [context include?]}]
   (when-let [extra-pages (:extra-pages @rems.globals/config)]
-      (into [:<>]
-            (for [page (filter include? extra-pages)]
-              ^{:key (str context (getx page :id))}
+    (into [:<>]
+          (for [page (filter include? extra-pages)]
+            ^{:key (str context (getx page :id))}
             [extra-page-link page]))))
 
 (defn navbar-extra-pages []
@@ -79,25 +79,28 @@
 (defn footer-extra-pages []
   [extra-pages-container {:context "footer-extra-pages" :include? #(:show-footer % false)}])
 
-(defn navbar-items [e attrs identity]
-  (let [roles (:roles identity)
-        config @(rf/subscribe [:rems.config/config])
-        catalogue-is-public (:catalogue-is-public config)]
-    [e attrs [:div.navbar-nav.mr-auto
-              (when-not (:user identity)
-                [nav-link "/" (text :t.navigation/home) :exact])
-              (when (or (roles/is-logged-in? roles) catalogue-is-public)
-                [nav-link "/catalogue" (text :t.navigation/catalogue)])
-              (when (roles/show-applications? roles)
-                [nav-link "/applications" (text :t.navigation/applications)])
-              (when (some roles/+handling-roles+ roles)
-                [nav-link "/actions" (text :t.navigation/actions)])
-              (when (roles/show-admin-pages? roles)
-                [nav-link "/administration" (text :t.navigation/administration)])
-              [navbar-extra-pages]]
-     [language-switcher]]))
+(defn navbar-items []
+  (let [user-roles @rems.globals/roles]
+    [:div.navbar-nav.mr-auto
+     (when-not @rems.globals/user
+       [nav-link "/" (text :t.navigation/home) :exact])
 
-(defn navbar-normal [identity]
+     (when (or @roles/logged-in?
+               (:catalogue-is-public @rems.globals/config))
+       [nav-link "/catalogue" (text :t.navigation/catalogue)])
+
+     (when (roles/show-applications? user-roles)
+       [nav-link "/applications" (text :t.navigation/applications)])
+
+     (when (some roles/+handling-roles+ user-roles)
+       [nav-link "/actions" (text :t.navigation/actions)])
+
+     (when (roles/show-admin-pages? user-roles)
+       [nav-link "/administration" (text :t.navigation/administration)])
+
+     [navbar-extra-pages]]))
+
+(defn navbar-normal []
   [:nav.navbar-flex {:aria-label (text :t.navigation/navigation)}
    [:div.navbar.navbar-expand-sm.flex-fill
     [:button.navbar-toggler
@@ -106,11 +109,17 @@
     (when (rems.theme/use-navbar-logo?)
       [:div.navbar-brand.logo-menu
        [:div.img]])
-    [navbar-items :div#big-navbar.collapse.navbar-collapse.mr-3 {} identity]]
-   [:div.navbar [user-widget (:user identity)]]])
+    [:div#big-navbar {:class "collapse navbar-collapse mr-3"}
+     [navbar-items]
+     [language-switcher]]]
+   [:div.navbar
+    [user-widget (:user identity)]]])
 
-(defn navbar-small [user]
-  [navbar-items :nav#small-navbar.collapse.navbar-collapse.hidden-md-up {:aria-label (text :t.navigation/navigation-small)} user])
+(defn navbar-small []
+  [:nav#small-navbar {:class "collapse navbar-collapse hidden-md-up"
+                      :aria-label (text :t.navigation/navigation-small)}
+   [navbar-items]
+   [language-switcher]])
 
 (defn skip-navigation []
   [:a.skip-navigation
@@ -118,14 +127,13 @@
    (text :t.navigation/skip-navigation)])
 
 (defn navigation-widget []
-  (let [identity @(rf/subscribe [:identity])]
-    [:div.fixed-top
-     [skip-navigation]
-     [:div.navbar-top-bar [:div.navbar-top-left] [:div.navbar-top-right]]
-     [:div.navbar-wrapper.container-fluid
-      [navbar-normal identity]
-      [navbar-small identity]]
-     [:div.navbar-bottom-bar]]))
+  [:div.fixed-top
+   [skip-navigation]
+   [:div.navbar-top-bar [:div.navbar-top-left] [:div.navbar-top-right]]
+   [:div.navbar-wrapper.container-fluid
+    [navbar-normal]
+    [navbar-small]]
+   [:div.navbar-bottom-bar]])
 
 (defn guide []
   [:div
