@@ -2000,7 +2000,7 @@
       (btu/scroll-and-click {:fn/text "test-update-catalogue-item 3 EN"})
       (btu/wait-enabled {:tag :button :fn/text "Update catalogue item"})
       (btu/scroll-and-click {:fn/text "Update catalogue item"})
-      (is (btu/eventually-visible? {:tag :h1 :fn/text "Update catalogue item"})))
+      (wait-page-title "Update catalogue item – REMS"))
 
     (testing "initial state"
       (btu/screenshot "test-update-catalogue-item-initial-state")
