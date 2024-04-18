@@ -11,6 +11,7 @@
             [rems.fetcher :as fetcher]
             [rems.fields :as fields]
             [rems.flash-message :as flash-message]
+            [rems.globals]
             [rems.spinner :as spinner]
             [rems.text :refer [text text-format localized]]
             [rems.util :refer [navigate! post! put! trim-when-string]]))
@@ -262,7 +263,7 @@
     [:div.form-group
      [:label.administration-field-label {:for categories-dropdown-id}
       (cond->> (text :t.administration/categories)
-        (not (:enable-catalogue-tree config)) (text-format :t.label/optional))]
+        (not (:enable-catalogue-tree @rems.globals/config)) (text-format :t.label/optional))]
      [dropdown/dropdown
       {:id categories-dropdown-id
        :items (->> categories

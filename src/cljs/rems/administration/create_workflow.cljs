@@ -10,6 +10,7 @@
             [rems.config :as config]
             [rems.common.application-util :as application-util]
             [rems.common.util :refer [andstr build-index conj-vec keep-keys not-blank replace-key]]
+            [rems.globals]
             [rems.dropdown :as dropdown]
             [rems.fetcher :as fetcher]
             [rems.fields :as fields]
@@ -503,7 +504,7 @@
                 [workflow-licenses]]])}])
 
 (defn- voting-fields []
-  (when (:enable-voting @(rf/subscribe [:rems.config/config]))
+  (when (:enable-voting @rems.globals/config)
     (let [loading? @(rf/subscribe [::workflow :fetching?])]
       [collapsible/component
        {:id "workflow-voting-fields"
@@ -528,9 +529,8 @@
                  [workflow-disable-commands]])}]))
 
 (defn- processing-states-fields []
-  (let [config @(rf/subscribe [:rems.config/config])
-        loading? @(rf/subscribe [::workflow :fetching?])]
-    (when (:enable-processing-states config)
+  (let [loading? @(rf/subscribe [::workflow :fetching?])]
+    (when (:enable-processing-states @rems.globals/config)
       [collapsible/component
        {:id "workflow-processing-states-fields"
         :title (text :t.administration/processing-states)

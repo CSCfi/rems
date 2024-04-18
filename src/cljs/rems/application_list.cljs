@@ -4,9 +4,9 @@
             [clojure.set :as set]
             [clojure.string :as str]
             [re-frame.core :as rf]
-            [reagent.core :as r]
             [rems.atoms :as atoms]
             [rems.common.application-util :as application-util]
+            [rems.globals]
             [rems.guide-util :refer [component-info example]]
             [rems.spinner :as spinner]
             [rems.table :as table]
@@ -18,16 +18,15 @@
        (map localized)
        (str/join ", ")))
 
-(defn format-application-id [config application]
-  (let [id-column (get config :application-id-column :id)]
+(defn format-application-id [application]
+  (let [id-column (get @rems.globals/config :application-id-column :id)]
     (case id-column
       (:external-id :generated-and-assigned-external-id) (:application/external-id application)
       :id (:application/id application)
       (:application/id application))))
 
 (defn- view-button [app]
-  (let [config @(rf/subscribe [:rems.config/config])
-        id (format-application-id config app)
+  (let [id (format-application-id app)
         description (:application/description app)]
     [atoms/link
      {:class "btn btn-primary"
@@ -174,10 +173,9 @@
      [table/paging application-table]]))
 
 (defn- application-list-defaults []
-  (let [config @(rf/subscribe [:rems.config/config])
-        id-column (get config :application-id-column :id)]
+  (let [id-column (get @rems.globals/config :application-id-column :id)]
     {:visible-columns (set/difference #{id-column :description :resource :applicant :handlers :state :todo :created :submitted :last-activity :view}
-                                      (set (get config :application-list-hidden-columns)))
+                                      (set (get @rems.globals/config :application-list-hidden-columns)))
      :default-sort-column :created
      :default-sort-order :desc}))
 

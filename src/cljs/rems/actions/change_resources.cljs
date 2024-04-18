@@ -1,6 +1,7 @@
 (ns rems.actions.change-resources
   (:require [re-frame.core :as rf]
             [rems.actions.components :refer [action-button action-form-view comment-field collapse-action-form perform-action-button]]
+            [rems.globals]
             [rems.dropdown :as dropdown]
             [rems.flash-message :as flash-message]
             [medley.core :refer [distinct-by]]
@@ -80,7 +81,7 @@
         sorted-selected-catalogue (->> catalogue
                                        (sort-by #(get-localized-title %))
                                        (sort-by compatible-first-sort-fn))
-        config @(rf/subscribe [:rems.config/config])]
+        enable-cart? (:enable-cart @rems.globals/config)]
     [action-form-view action-form-id
      (text :t.actions/change-resources)
      [[perform-action-button {:id "change-resources"
@@ -109,9 +110,11 @@
            :item-key :id
            :item-label ::label
            :item-selected? #(contains? (set selected-resources) (% :id))
-           :multi? (:enable-cart config)
-           :on-change #(on-set-resources (flatten (list %)))}]] ; single resource or list
-        (when (:enable-cart config)
+           :multi? enable-cart?
+           :on-change (if enable-cart?
+                        (fn [items] (on-set-resources items))
+                        (fn [item] (on-set-resources [item])))}]]
+        (when enable-cart?
           (text :t.actions/bundling-intro))])]))
 
 (defn change-resources-form [application can-comment? on-finished]

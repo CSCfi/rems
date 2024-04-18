@@ -9,6 +9,7 @@
             [rems.common.attachment-util :as attachment-util]
             [rems.common.form :as common-form]
             [rems.common.util :refer [assoc-not-present build-index getx]]
+            [rems.globals]
             [rems.flash-message]
             [rems.guide-util :refer [component-info example lipsum-short lipsum-paragraphs]]
             [rems.spinner :as spinner]
@@ -330,8 +331,7 @@
 
 (defn- upload-button [id status on-upload]
   (let [upload-id (str id "-input")
-        info-id (str id "-info")
-        config @(rf/subscribe [:rems.config/config])]
+        info-id (str id "-info")]
     [:div.upload-file
      [:input {:style {:display "none"}
               :type "file"
@@ -363,7 +363,7 @@
        :content [:div
                  [:p [text-format :t.form/upload-extensions attachment-util/allowed-extensions-string]]
                  [:p (text-format :t.form/attachment-max-size
-                                  (format-file-size (:attachment-max-size config)))]]}]]))
+                                  (format-file-size (:attachment-max-size @rems.globals/config)))]]}]]))
 
 (defn multi-attachment-view [{:keys [id attachments status on-attach on-remove-attachment label]}]
   [:div.form-group

@@ -9,6 +9,7 @@
             [rems.flash-message :as flash-message]
             [rems.common.roles :as roles]
             [rems.config]
+            [rems.globals]
             [rems.spinner :as spinner]
             [rems.table :as table]
             [rems.tree :as tree]
@@ -19,10 +20,11 @@
  (fn [{:keys [db]} _]
    {:db (dissoc db ::catalogue ::draft-applications)
     :dispatch-n [[:rems.table/reset]
-                 (when (roles/is-logged-in? (get-in db [:identity :roles])) [::draft-applications])
-                 (when (:enable-catalogue-tree (:config db))
+                 (when @roles/logged-in?
+                   [::draft-applications])
+                 (when (:enable-catalogue-tree @rems.globals/config)
                    [::full-catalogue-tree])
-                 (when (:enable-catalogue-table (:config db))
+                 (when (:enable-catalogue-table @rems.globals/config)
                    [::full-catalogue])]}))
 
 (fetcher/reg-fetcher ::full-catalogue "/api/catalogue?join-organization=false")
@@ -44,8 +46,8 @@
 
 ;;;; UI
 
-(defn- catalogue-item-more-info [item config]
-  (let [link (catalogue-item-more-info-url item @rems.config/language-or-default config)]
+(defn- catalogue-item-more-info [item]
+  (let [link (catalogue-item-more-info-url item @rems.config/language-or-default @rems.globals/config)]
     (when link
       [:a.btn.btn-link
        {:href link
@@ -69,18 +71,16 @@
  ::catalogue-table-rows
  (fn [_ _]
    [(rf/subscribe [::catalogue])
-    (rf/subscribe [:logged-in])
-    (rf/subscribe [:rems.cart/cart])
-    (rf/subscribe [:rems.config/config])])
- (fn [[catalogue logged-in? cart config] _]
+    (rf/subscribe [:rems.cart/cart])])
+ (fn [[catalogue cart] _]
    (let [cart-item-ids (set (mapv :id cart))]
      (mapv (fn [item]
              {:key (:id item)
               :name {:value (get-localized-title item)}
               :commands {:display-value [:div.commands.flex-nowrap.justify-content-end
-                                         [catalogue-item-more-info item config]
-                                         (when logged-in?
-                                           (if (:enable-cart config)
+                                         [catalogue-item-more-info item]
+                                         (when @roles/logged-in?
+                                           (if (:enable-cart @rems.globals/config)
                                              (if (contains? cart-item-ids (:id item))
                                                [cart/remove-from-cart-button item]
                                                [cart/add-to-cart-button item])
@@ -113,7 +113,6 @@
 
 (defn- catalogue-tree []
   (let [language @rems.config/language-or-default
-        logged-in? @(rf/subscribe [:logged-in])
         cart @(rf/subscribe [:rems.cart/cart])
         cart-item-ids (set (map :id cart))
         catalogue {:id ::catalogue-tree
@@ -137,9 +136,9 @@
                              {:key :commands
                               :content #(when-not (:category/id %)
                                           [:div.commands.flex-nowrap.justify-content-end
-                                           [catalogue-item-more-info % config]
-                                           (when logged-in?
-                                             (if (:enable-cart config)
+                                           [catalogue-item-more-info %]
+                                           (when @roles/logged-in?
+                                             (if (:enable-cart @rems.globals/config)
                                                (if (contains? cart-item-ids (:id %))
                                                  [cart/remove-from-cart-button %]
                                                  [cart/add-to-cart-button %])
@@ -160,29 +159,28 @@
      [tree/tree catalogue]]))
 
 (defn catalogue-page []
-  (let [config @(rf/subscribe [:rems.config/config])]
-    [:div
-     [document-title (text :t.catalogue/catalogue)]
-     [flash-message/component :top]
-     (text :t.catalogue/intro)
-     [:div
-      (when @(rf/subscribe [:logged-in])
-        [:<>
-         [draft-application-list]
+  [:div
+   [document-title (text :t.catalogue/catalogue)]
+   [flash-message/component :top]
+   (text :t.catalogue/intro)
+   [:div
+    (when @roles/logged-in?
+      [:<>
+       [draft-application-list]
 
-         (when (:enable-cart config)
-           (when-not (or @(rf/subscribe [::full-catalogue :fetching?])
-                         @(rf/subscribe [::full-catalogue-tree :fetching?]))
-             [cart/cart-list-container]))
+       (when (:enable-cart @rems.globals/config)
+         (when-not (or @(rf/subscribe [::full-catalogue :fetching?])
+                       @(rf/subscribe [::full-catalogue-tree :fetching?]))
+           [cart/cart-list-container]))
 
-         [:h2 (text :t.catalogue/apply-resources)]])
+       [:h2 (text :t.catalogue/apply-resources)]])
 
-      (when (:enable-catalogue-tree config)
-        (if @(rf/subscribe [::full-catalogue :fetching?])
-          [spinner/big]
-          [catalogue-tree]))
+    (when (:enable-catalogue-tree @rems.globals/config)
+      (if @(rf/subscribe [::full-catalogue :fetching?])
+        [spinner/big]
+        [catalogue-tree]))
 
-      (when (:enable-catalogue-table config)
-        (if @(rf/subscribe [::full-catalogue-tree :fetching?])
-          [spinner/big]
-          [catalogue-table]))]]))
+    (when (:enable-catalogue-table @rems.globals/config)
+      (if @(rf/subscribe [::full-catalogue-tree :fetching?])
+        [spinner/big]
+        [catalogue-table]))]])

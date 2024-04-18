@@ -9,6 +9,7 @@
             [rems.atoms :as atoms :refer [readonly-checkbox document-title]]
             [rems.collapsible :as collapsible]
             [rems.common.util :refer [andstr]]
+            [rems.globals]
             [rems.flash-message :as flash-message]
             [rems.common.roles :as roles]
             [rems.spinner :as spinner]
@@ -63,7 +64,7 @@
               [:p (text :t.duo/no-duo-codes)])}])
 
 (defn resource-view [resource]
-  (let [config @(rf/subscribe [:rems.config/config])]
+  (let [config @rems.globals/config]
     [:div.spaced-vertically-3
      [collapsible/component
       {:id "resource"

@@ -4,6 +4,7 @@
             [rems.atoms :refer [info-field readonly-checkbox]]
             [rems.common.application-util :refer [get-member-name]]
             [rems.common.util :refer [index-by]]
+            [rems.globals]
             [rems.guide-util :refer [component-info example]]
             [rems.text :refer [text localized]]))
 
@@ -25,7 +26,7 @@
                                        (localized (:organization/short-name known-organization))
                                        (:organization/id organization)))
         other-attributes (dissoc attributes :name :userid :email :organizations :notification-email :researcher-status-by)
-        extra-attributes (index-by [:attribute] (:oidc-extra-attributes @(rf/subscribe [:rems.config/config])))]
+        extra-attributes (index-by [:attribute] (:oidc-extra-attributes @rems.globals/config))]
     (into [:div.user-attributes
            ;; basic, important attributes
            (when-let [user-id (:userid attributes)]
