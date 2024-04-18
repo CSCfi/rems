@@ -1,5 +1,6 @@
 (ns rems.extra-pages
-  (:require [markdown.core :as md]
+  (:require [better-cond.core :as b]
+            [markdown.core :as md]
             [medley.core :refer [find-first]]
             [re-frame.core :as rf]
             [rems.atoms :refer [document-title] :as atoms]
@@ -7,7 +8,6 @@
             [rems.flash-message :as flash-message]
             [rems.globals]
             [rems.spinner :as spinner]
-            [rems.text :refer [text]]
             [rems.util :refer [fetch]]))
 
 ;;;; State
@@ -29,46 +29,41 @@
        (assoc ::content extra-page)
        (dissoc ::loading?))))
 
-(rf/reg-sub ::page-id (fn [db _] (::page-id db)))
-(rf/reg-sub ::content (fn [db _] (::content db)))
-(rf/reg-sub ::loading? (fn [db _] (::loading? db)))
+(rf/reg-sub ::page-id (fn [db] (::page-id db)))
+(rf/reg-sub ::content (fn [db] (::content db)))
+(rf/reg-sub ::loading? (fn [db] (::loading? db)))
 
-(rf/reg-sub
- ::page
- (fn [db _]
-   (let [page-id (::page-id db)]
-     (->> db
-          :config
-          :extra-pages
-          (filter #(= page-id (:id %)))
-          first))))
+(rf/reg-sub ::page :<- [::page-id] (fn [page-id]
+                                     (->> (:extra-pages @rems.globals/config)
+                                          (find-first (comp #{page-id} :id)))))
 
 ;;;; Entry point
 
 (defn extra-pages []
-  (let [loading? @(rf/subscribe [::loading?])
-        page-id @(rf/subscribe [::page-id])
+  (let [page-config @(rf/subscribe [::page])
         language @rems.config/language-or-default
-        title (get-in @(rf/subscribe [::page]) [:translations language :title])
-        extra-page @(rf/subscribe [::content])
-        extra-pages (:extra-pages @rems.globals/config)
-        config-extra-page (find-first (comp #{page-id} :id) extra-pages)]
+        title (get-in page-config [:translations language :title])
+        heading? (get page-config :heading true)]
     [:div
-     [document-title title {:heading? (get config-extra-page :heading true)}]
+     [document-title title {:heading? heading?}]
      [flash-message/component :top]
-     (if loading?
+
+     (b/cond
+       @(rf/subscribe [::loading?])
        [spinner/big]
 
-       (if (= extra-page :not-found)
-         (rf/dispatch [:set-active-page :not-found])
+       :let [page @(rf/subscribe [::content])
+             page-content (get page language)
+             url (get-in page-config [:translations language :url] (:url page-config))]
 
-         (if-let [content (get extra-page language)]
-           [:div.document
-            (if content
-              {:dangerouslySetInnerHTML {:__html (md/md->html content)}}
-              (text :t/missing))]
+       (= page :not-found)
+       (rf/dispatch [:set-active-page :not-found])
 
-           ;; if no file content for this page exists, we can try URL
-           (if-let [url (get-in config-extra-page [:translations language :url] (:url config-extra-page))]
-             [:div.m-3 [atoms/link nil url url]]
-             (rf/dispatch [:set-active-page :not-found])))))]))
+       (some? page-content)
+       [:div.document {:dangerouslySetInnerHTML {:__html (md/md->html page-content)}}]
+
+       (some? url) ; if no file content for this page exists, we can try URL
+       [:div.m-3 [atoms/link nil url url]]
+
+       :else
+       (rf/dispatch [:set-active-page :not-found]))]))
