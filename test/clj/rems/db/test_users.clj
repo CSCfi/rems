@@ -22,6 +22,7 @@
 
   (testing "survives partial user settings"
     (db/update-user-settings! {:user "user1" :settings "{\"language\": \"fi\"}"}) ; missing notification-email
+    (user-settings/reload-user-settings-cache!)
 
     (is (= {:userid "user1"
             :name "What Ever"

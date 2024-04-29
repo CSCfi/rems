@@ -5,7 +5,8 @@
             [mount.core :as mount]
             [rems.service.todos :as todos]
             [rems.db.applications :as applications]
-            [rems.db.events :as events])
+            [rems.db.events :as events]
+            [rems.db.user-settings])
   (:import [java.util Locale]))
 
 (defn run-benchmark [benchmark]
@@ -53,10 +54,12 @@
         ;; developer can view much more applications than alice, so it takes longer to filter reviews from all apps
         test-get-todos #(doall (todos/get-todos "developer"))
         no-cache (fn []
-                   (mount/stop #'applications/all-applications-cache #'rems.db.events/low-level-events-cache))
+                   (mount/stop #'applications/all-applications-cache
+                               #'rems.db.events/low-level-events-cache
+                               #'rems.db.user-settings/low-level-user-settings-cache))
         cached (fn []
-                 (mount/stop #'applications/all-applications-cache #'rems.db.events/low-level-events-cache)
-                 (mount/start #'applications/all-applications-cache #'rems.db.events/low-level-events-cache)
+                 (mount/stop #'applications/all-applications-cache #'rems.db.events/low-level-events-cache #'rems.db.user-settings/low-level-user-settings-cache)
+                 (mount/start #'applications/all-applications-cache #'rems.db.events/low-level-events-cache #'rems.db.user-settings/low-level-user-settings-cache)
                  (test-get-all-unrestricted-applications))]
     (run-benchmarks [{:name "get-all-unrestricted-applications, no cache"
                       :benchmark test-get-all-unrestricted-applications
