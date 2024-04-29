@@ -670,7 +670,9 @@
                                                            :email (str user-id "@example.com")
                                                            :name (str "Performance Tester " n)})
                              user-id)))))]
-    (with-redefs [rems.config/env (assoc rems.config/env :enable-save-compaction false)] ; generate more events without compaction
+    (with-redefs [rems.config/env (assoc rems.config/env
+                                         :enable-save-compaction false  ; generate more events without compaction
+                                         :enable-handler-emails false)] ; don't bother with emails to speed up
       (in-parallel
        (for [n (range-1 application-count)]
          (fn []
