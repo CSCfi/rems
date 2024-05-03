@@ -585,7 +585,7 @@
 
         ;; create handlers
         names (->> vocabulary
-                   (remove #(re-find #"[.,]+" %))
+                   (remove #(re-find #"[.,;\n]+" %))
                    (filter #(> (count %) 3))
                    (mapv str/capitalize))
         handlers-data (for [i (range handler-count)
