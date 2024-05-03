@@ -156,9 +156,13 @@
     (log/debug (str "Emails due: " (count due-emails)))
     (doseq [email due-emails]
       (if-let [error (send-email! (:outbox/email email))]
-        (let [email (outbox/attempt-failed! email error)]
-          (when (not (:outbox/next-attempt email))
-            (log/warn "all attempts to send email " (:outbox/id email) "failed")))
+        (if (str/includes? error "javax.mail.internet.AddressException") ; e.g. illegal character in address
+          (let [email (outbox/attempt-failed-fatally! email error)]
+            (when (not (:outbox/next-attempt email))
+              (log/warn "all attempts to send email " (:outbox/id email) "failed")))
+          (let [email (outbox/attempt-failed! email error)]
+            (when (not (:outbox/next-attempt email))
+              (log/warn "all attempts to send email " (:outbox/id email) "failed"))))
         (outbox/attempt-succeeded! (:outbox/id email))))))
 
 (mount/defstate email-poller
