@@ -236,6 +236,25 @@
          (set (map :field/type all-field-types-example)))
       "a new field has been added to schema but not to this test data"))
 
+(defn generate-form-fields [n]
+  (->> (concat [description-field
+                label-field
+                header-field]
+               (take n (cycle (list text-field
+                                    texta-field
+                                    date-field
+                                    email-field
+                                    attachment-field
+                                    multiselect-field
+                                    table-field
+                                    phone-number-field
+                                    ip-address-field))))
+       (map-indexed (fn [idx item]
+                      (-> item ; index in title makes it easier to track fields in long form list
+                          (update-in [:field/title :en] str " " (inc idx))
+                          (update-in [:field/title :fi] str " " (inc idx))
+                          (update-in [:field/title :sv] str " " (inc idx)))))))
+
 (defn create-all-field-types-example-form!
   "Creates a multilingual form with all supported field types. Returns the form ID."
   [actor organization internal-name external-title]
@@ -859,6 +878,13 @@
                                                                       {:en "Owned by organization owner"
                                                                        :fi "Omistaja organization owner"
                                                                        :sv "Ägare organization owner"})
+        _performance-test-form (test-helpers/create-form! {:actor owner
+                                                           :organization {:organization/id "default"}
+                                                           :form/internal-name "Performance test form"
+                                                           :form/external-title {:en "Performance test form"
+                                                                                 :fi "Suorituskykytestilomake"
+                                                                                 :sv "Blankett för prestand"}
+                                                           :form/fields (generate-form-fields 200)})
 
         ;; Create categories
         ordinary-category {:category/id (test-helpers/create-category! {:actor owner

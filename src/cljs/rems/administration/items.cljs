@@ -31,36 +31,37 @@
         other (min last-index (inc index))]
     (swap items index other)))
 
-(defn remove-button [on-click]
+(defn remove-button [{:keys [on-click data-index]}]
   [:a.remove
    {:href "#"
+    :data-index data-index
     :on-click (fn [event]
                 (.preventDefault event)
-                (on-click))
+                (when on-click (on-click)))
     :aria-label (text :t.item-lists/remove)
     :title (text :t.item-lists/remove)}
    [:i.icon-link.fas.fa-times
     {:aria-hidden true}]])
 
-(defn move-up-button [{:keys [on-click class]}]
-  [:a
-   {:className (str "move-up " class)
-    :href "#"
+(defn move-up-button [{:keys [on-click data-index]}]
+  [:a.move-up
+   {:href "#"
+    :data-index data-index
     :on-click (fn [event]
                 (.preventDefault event)
-                (on-click))
+                (when on-click (on-click)))
     :aria-label (text :t.item-lists/move-up)
     :title (text :t.item-lists/move-up)}
    [:i.icon-link.fas.fa-chevron-up
     {:aria-hidden true}]])
 
-(defn move-down-button [{:keys [on-click class]}]
-  [:a
-   {:className (str "move-down " class)
-    :href "#"
+(defn move-down-button [{:keys [on-click data-index]}]
+  [:a.move-down
+   {:href "#"
+    :data-index data-index
     :on-click (fn [event]
                 (.preventDefault event)
-                (on-click))
+                (when on-click (on-click)))
     :aria-label (text :t.item-lists/move-down)
     :title (text :t.item-lists/move-down)}
    [:i.icon-link.fas.fa-chevron-down
