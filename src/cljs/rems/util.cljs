@@ -5,6 +5,7 @@
             [clojure.string :as str]
             [clojure.test :refer [deftest are testing]]
             [goog.string :refer [format]]
+            [medley.core :refer [assoc-some]]
             [re-frame.core :as rf]
             ["react" :as react]))
 
@@ -164,18 +165,6 @@
           :else
           (/ (.-bottom bounds) (.-height bounds)))))
 
-(defn focus-when-collapse-opened
-  "Focuses the given element when the (Bootstrap) collapse has opened.
-
-   Used typically with a `ref`."
-  [elem]
-  (when elem
-    (.on (js/$ elem)
-         "shown.bs.collapse"
-         (fn []
-           (.focus elem)
-           false))))
-
 (defn- strip-trailing-zeroes
   [s]
   (let [without-decimal-zeroes (str/replace s #"\.[0]*$" "")
@@ -235,3 +224,51 @@
 
 (defn read-transit [value]
   (cognitect.transit/read (cognitect.transit/reader :json) value))
+
+;; https://developer.mozilla.org/en-US/docs/Web/API/MutationRecord
+(defn- get-changed-elements [^js records]
+  (for [record records
+        :when (= "childList" (.-type record))
+        node (conj (vec (.-addedNodes record))
+                   (.-nextSibling record)
+                   (.-previousSibling record))
+        :when (= js/Node.ELEMENT_NODE
+                 (some-> node .-nodeType))]
+    node))
+
+(defn on-element-appear
+  "Waits for `selector` query to return when `target` receives DOM changes. 
+   `on-resolve` is called with found element, `on-reject` is called if query
+   does not resolve within `wait` milliseconds."
+  [{:keys [on-reject on-resolve selector target wait]
+    :or {on-reject identity
+         target js/document.body
+         wait 2000}}]
+  (or (.querySelector target selector)
+      (let [observer (atom nil)
+            timeout (js/setTimeout #(do (.disconnect @observer) (on-reject)) wait) ; make sure observer is eventually removed
+            element-or-child (fn [^js node]
+                               (if (.matches node selector)
+                                 node ; element could be part of subtree
+                                 (.querySelector node selector)))]
+        (-> observer
+            (reset! (js/MutationObserver. (fn [^js records]
+                                            (when-let [element (some element-or-child (get-changed-elements records))]
+                                              (js/clearTimeout timeout)
+                                              (.disconnect @observer)
+                                              (on-resolve element)))))
+            (doto (.observe target #js {:childList true :subtree true}))))))
+
+(defn on-element-appear-async
+  "Waits for `selector` query to return when `target` receives DOM changes. 
+   Returns promise that is resolved with found element, or rejected if query
+   does not resolve within `wait` milliseconds."
+  [{:keys [selector target wait]}]
+  (let [opts (assoc-some {}
+                         :selector selector
+                         :target target
+                         :wait wait)]
+    (js/Promise. (fn [resolve reject]
+                   (on-element-appear (assoc opts
+                                             :on-resolve resolve
+                                             :on-reject reject))))))

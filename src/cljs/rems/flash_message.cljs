@@ -5,7 +5,8 @@
             [re-frame.core :as rf]
             [rems.administration.status-flags :as status-flags]
             [rems.focus :as focus]
-            [rems.text :refer [text text-format]]))
+            [rems.text :refer [text text-format]]
+            [rems.util :refer [on-element-appear]]))
 
 (defn- location-to-id [location]
   (let [_ (assert (keyword? location))]
@@ -31,7 +32,8 @@
 (rf/reg-event-fx ::show-flash-message
                  (fn [{:keys [db]} [_ message {:keys [focus? timeout] :or {focus? true}}]]
                    (when focus?
-                     (focus/focus-element-async (str "#" (location-to-id (:location message)))))
+                     (on-element-appear {:selector (str "#" (location-to-id (:location message)))
+                                         :on-resolve focus/focus-and-ensure-visible}))
                    (when (some? timeout)
                      (js/setTimeout #(rf/dispatch [::reset (:location message)]) timeout))
                    ;; TODO: flash the message with CSS
