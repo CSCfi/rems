@@ -295,10 +295,8 @@
               :continue-existing-application "Jatka hakemusta"
               :continue-existing-application-intro ""
               :apply-resources "Hae uusia käyttöoikeuksia"}
-  :collapse {:hide "Piilota"
-             :show "Näytä"
-             :show-less "Näytä vähemmän"
-             :show-more "Näytä lisää"}
+  :collapse {:hide "Näytä vähemmän"
+             :show "Näytä lisää"}
   :update-catalogue-item {:update-catalogue-item-intro "Olet muuttamassa seuraavia aineistoja. Muutokset tehdään yksi kerrallaan siten, että vanha aineisto poistetaan käytöstä ja uusi kopio käyttää valitsemaasi lomaketta ja työvuota."
                           :form-selection "Lomake"
                           :workflow-selection "Workflow"}

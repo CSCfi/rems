@@ -295,10 +295,8 @@
               :continue-existing-application "Återuppta ansökan"
               :continue-existing-application-intro ""
               :apply-resources "Ansök om resurser"}
-  :collapse {:hide "Dölj"
-             :show "Visa"
-             :show-less "Visa mindre"
-             :show-more "Visa mer"}
+  :collapse {:hide "Visa mindre"
+             :show "Visa mer"}
   :update-catalogue-item {:update-catalogue-item-intro "Du uppdaterar katalogposterna nedan. Förändringarna görs en åt gången genom att den gamla katalogposten tas ur bruk och ersätts av en kopia som använder blanketten och arbetsflöden du väljer nedan."
                           :form-selection "Blankett"
                           :workflow-selection "Arbetsflöde"}
