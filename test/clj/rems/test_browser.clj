@@ -827,11 +827,10 @@
           (is (btu/eventually-visible? {:tag :h1 :fn/has-text "Catalogue"})
               "was redirected to catalogue")
           (is (btu/eventually-visible? {:fn/has-string "Accept invitation: Failed"}))
-          (is (btu/eventually-visible? {:fn/has-string "Cannot join unsubmitted application because you are already a handling user"}))
+          (is (btu/eventually-visible? {:fn/has-string "A handling user cannot join application as member"}))
           (btu/screenshot "handler-cannot-join-as-member"))))
 
     (logout)
-
 
     (testing "submit application"
       (login-as "alice")

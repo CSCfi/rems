@@ -27,7 +27,7 @@
             :decide "Päätä"
             :delete "Poista luonnos"
             :delete-intro [:div.intro [:p "Haluatko pysyvästi poistaa tämän hakemusluonnoksen?"]]
-            :errors {:cannot-join-draft-as-handling-user "Et voi liittyä luonnostilassa olevaan hakemukseen, koska osallistut jo sen käsittelyyn."
+            :errors {:handling-user-cannot-join "Hakemuksen käsittelyyn osallistuva ei voi liittyä hakemuksen jäseneksi."
                      :duplicate-id "Tunnus on jo käytössä."
                      :invalid-token [:div [:p "Hakemukseen liittyminen epäonnistui."] [:p "Tarkista kutsukoodi " [:code "%1"]]]
                      :licenses-not-accepted "Käyttöehtoja ei ole hyväksytty."
