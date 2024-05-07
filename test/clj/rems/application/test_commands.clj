@@ -1306,6 +1306,14 @@
                                                     dummy-member-invited-event
                                                     dummy-member-added-event])))))
 
+    (testing "handler can't join or get application id"
+      (is (= {:errors [{:type :t.actions.errors/handling-user-cannot-join :userid handler-user-id}]}
+             (fail-command {:type :application.command/accept-invitation
+                            :actor handler-user-id
+                            :token "very-secure"}
+                           (build-application-view [dummy-created-event
+                                                    dummy-member-invited-event])))))
+
     (testing "can't use invalid token"
       (is (= {:errors [{:type :t.actions.errors/invalid-token :token "wrong-token"}]}
              (fail-command {:type :application.command/accept-invitation
@@ -1335,6 +1343,15 @@
                          (build-application-view [dummy-created-event
                                                   dummy-member-invited-event
                                                   dummy-submitted-event])))))
+
+    (testing "handler can't join submitted but may see application id"
+      (is (= {:errors [{:type :handling-user-cannot-join :userid handler-user-id :application-id app-id}]}
+             (fail-command {:type :application.command/accept-invitation
+                            :actor handler-user-id
+                            :token "very-secure"}
+                           (build-application-view [dummy-created-event
+                                                    dummy-member-invited-event
+                                                    dummy-submitted-event])))))
 
     (testing "can't join a closed application"
       (is (= {:errors [{:type :forbidden}]}
