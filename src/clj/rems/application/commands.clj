@@ -297,11 +297,19 @@
 
 (defn already-joined-error [application userid]
   (when (role-in-application? userid application)
-    {:errors [{:type :already-joined :userid userid :application-id (:application/id application)}]}))
+    {:errors [{:type :already-joined
+               :userid userid
+               :application-id (:application/id application)}]}))
 
 (defn token-used-error [invitation token]
   (when (:token/used? invitation)
     {:errors [{:type :t.actions.errors/invalid-token :token token}]}))
+
+(defn cannot-join-draft-as-handling-user-error [application userid]
+  (when (and (application-util/draft? application)
+             (application-util/is-handling-user? application userid))
+    {:errors [{:type :t.actions.errors/cannot-join-draft-as-handling-user
+               :userid userid}]}))
 
 (defn- ok-with-data [data events]
   (assoc data :events events))
@@ -574,6 +582,7 @@
 (defmethod command-handler :application.command/add-member
   [cmd application injections]
   (or (invalid-user-error (:userid (:member cmd)) injections)
+      (cannot-join-draft-as-handling-user-error application (:userid (:member cmd)))
       (already-joined-error application (:userid (:member cmd)))
       (ok {:event/type :application.event/member-added
            :application/member (:member cmd)})))
@@ -604,7 +613,8 @@
         invitation (get-in application [:application/invitation-tokens token])]
     (cond
       (:application/member invitation)
-      (or (already-joined-error application (:actor cmd))
+      (or (cannot-join-draft-as-handling-user-error application (:actor cmd))
+          (already-joined-error application (:actor cmd))
           (token-used-error invitation token)
           (ok-with-data {:application-id (:application-id cmd)}
                         [{:event/type :application.event/member-joined

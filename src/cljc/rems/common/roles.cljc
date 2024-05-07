@@ -5,6 +5,7 @@
 
 (def +admin-write-roles+ #{:organization-owner :owner})
 (def +admin-read-roles+ #{:owner :organization-owner :handler :reporter})
+(def +applying-roles+ #{:applicant :member})
 (def +handling-roles+ #{:handler :reviewer :decider :past-reviewer :past-decider})
 
 (defn is-logged-in? [roles]

@@ -2,6 +2,7 @@
   (:require [clojure.set]
             [clojure.test :refer [deftest is testing]]
             [medley.core :refer [find-first]]
+            [rems.common.roles :refer [+applying-roles+ +handling-roles+]]
             [rems.common.util :as util]))
 
 (def workflow-types
@@ -52,31 +53,18 @@
   [application userid]
   (contains? (workflow-handlers application) userid))
 
-(def +applying-user-roles+ #{:applicant :member})
-(def +handling-user-roles+ #{:handler :reviewer :decider :past-reviewer :past-decider})
-
-;; TODO combine these functions
-(defn is-applying-userid? [application userid]
-  (contains? (set (map :userid (applicant-and-members application)))
-             userid))
+(defn- applying-role? [role] (contains? +applying-roles+ role))
+(defn- handling-role? [role] (contains? +handling-roles+ role))
 
 (defn is-applying-user?
-  "Returns true if current user is applying for `application`.
-
-   See `rems.common.application-util/+applying-user-roles+`"
-  [application]
-  (let [roles (set (:application/roles application))
-        applying-roles (clojure.set/intersection +applying-user-roles+ roles)]
-    (some? (seq applying-roles))))
+  "Returns true if `userid` or current user is applying for `application`."
+  ([application] (some applying-role? (:application/roles application)))
+  ([application userid] (some applying-role? (get-in application [:application/user-roles userid]))))
 
 (defn is-handling-user?
-  "Returns true if current user is taking part in handling process of `application` .
-
-   See `rems.common.application-util/+handling-user-roles+`"
-  [application]
-  (let [roles (set (:application/roles application))
-        handling-roles (clojure.set/intersection +handling-user-roles+ roles)]
-    (some? (seq handling-roles))))
+  "Returns true if `userid` or current user is taking part in handling process of `application`."
+  ([application] (some handling-role? (:application/roles application)))
+  ([application userid] (some handling-role? (get-in application [:application/user-roles userid]))))
 
 (defn can-see-everything?
   "Returns true if current user has special `:see-everything` permission in `application`.
@@ -157,4 +145,4 @@
   (->> application
        :application/events
        reverse
-       (find-first #(is-applying-userid? application (:event/actor %)))))
+       (find-first #(is-applying-user? application (:event/actor %)))))

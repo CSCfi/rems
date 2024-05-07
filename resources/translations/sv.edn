@@ -27,7 +27,8 @@
             :decide "Avgör"
             :delete "Radera utkast"
             :delete-intro [:div.intro [:p "Radera detta utkast permanent?"]]
-            :errors {:duplicate-id "Id:et är redan upptaget."
+            :errors {:cannot-join-draft-as-handling-user "Det gick inte att ansluta till utkast ansökningen, eftersom du redan deltar i dets behandling."
+                     :duplicate-id "Id:et är redan upptaget."
                      :invalid-token [:div [:p "Det gick inte att ansluta till ansökningen."] [:p "Vänligen kontrollera koden för inbjudan." [:code "%1"]]]
                      :licenses-not-accepted "Du har inte godkänt användarvillkoren."
                      :organization-does-not-exist "Organisationen \"%1\" hittades inte."
