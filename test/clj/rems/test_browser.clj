@@ -905,7 +905,24 @@
       (is (btu/eventually-visible? {:tag :h1 :fn/has-text "Catalogue"})
           "was redirected to catalogue")
       (is (btu/eventually-visible? {:fn/has-text "Joining the application failed."}))
-      (btu/screenshot "someone-else-cannot-use-the-link"))))
+      (btu/screenshot "someone-else-cannot-use-the-link"))
+
+    (logout)
+
+    (testing "handler can use invite link to view submitted application"
+      (btu/go (str (btu/get-server-url) "application/accept-invitation/" (btu/context-getx :handler-token)))
+      (is (btu/eventually-visible? {:css ".login-btn"}))
+      (btu/scroll-and-click {:css ".login-btn"})
+      (btu/wait-page-loaded)
+      (btu/scroll-and-click :show-special-users)
+      (is (btu/eventually-visible? [{:css ".users"} {:tag :a :fn/text "developer"}]))
+      (btu/scroll-and-click [{:css ".users"} {:tag :a :fn/text "developer"}])
+      (btu/wait-page-loaded)
+      ;; NB: this differs a bit from `login-as` and we should keep them the same
+      (btu/wait-visible :logout)
+      (is (btu/eventually-visible? {:tag :h1 :fn/has-text "test-applicant-member-invite-action"})
+          "gets to the application")
+      (btu/screenshot "handler-can-use-link-after-submit"))))
 
 (deftest test-applicant-member-remove-action
   (testing "submit test data with API"
