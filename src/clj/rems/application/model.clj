@@ -5,7 +5,7 @@
             [medley.core :refer [assoc-some dissoc-in distinct-by filter-vals find-first map-vals update-existing update-existing-in]]
             [rems.application.events :as events]
             [rems.application.master-workflow :as master-workflow]
-            [rems.common.application-util :refer [applicant-and-members can-redact-attachment? is-applying-user?]]
+            [rems.common.application-util :refer [applicant-and-members can-redact-attachment? draft? is-applying-user?]]
             [rems.common.form :as form]
             [rems.common.roles :refer [+handling-roles+]]
             [rems.common.util :refer [assoc-some-in conj-vec getx getx-in into-vec]]
@@ -1064,16 +1064,12 @@
     (assoc :application/todo :waiting-for-your-decision)))
 
 (defn see-application? [application userid]
-  (let [state (:application/state application)
-        roles (permissions/user-roles application userid)]
-    (cond
-      (= :application.state/draft state)
-      (is-applying-user? {:application/roles roles})
+  (cond
+    (draft? application)
+    (is-applying-user? application userid)
 
-      (= #{:everyone-else} roles)
-      false
-
-      :else true)))
+    :else
+    (not= #{:everyone-else} (permissions/user-roles application userid))))
 
 (defn apply-user-permissions [application userid]
   (let [roles (permissions/user-roles application userid)
