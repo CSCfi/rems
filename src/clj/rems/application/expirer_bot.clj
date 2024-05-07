@@ -7,7 +7,8 @@
             [clj-time.core :as time]
             [rems.common.application-util :as application-util]
             [rems.common.util :refer [getx]]
-            [rems.config :refer [env]])
+            [rems.config :refer [env]]
+            [rems.permissions :as permissions])
   (:import [org.joda.time Period]))
 
 (def bot-userid "expirer-bot")
@@ -97,39 +98,40 @@
     (testing "without reminders"
       (testing "expired draft"
         (is (some? (expire-application {:delete-after "P90D"}
-                                       {:application/applicant {:userid "alice"}
-                                        :application/state :application.state/draft
-                                        :application/last-activity exactly-90d-ago
-                                        :application/events [(created-event exactly-90d-ago)]}
+                                       (-> {:application/state :application.state/draft
+                                            :application/last-activity exactly-90d-ago
+                                            :application/events [(created-event exactly-90d-ago)]}
+                                           (permissions/give-role-to-users :applicant #{"alice"}))
                                        now))))
 
       (testing "only applicant activity is counted towards last activity"
         (is (some? (expire-application {:delete-after "P90D"}
-                                       {:application/applicant {:userid "alice"}
-                                        :application/state :application.state/draft
-                                        :application/last-activity exactly-90d-ago
-                                        :application/events [(created-event exactly-90d-ago)
-                                                             {:event/type :application.event/remarked
-                                                              :event/time exactly-1d-ago
-                                                              :event/actor "hannah"}]}
+                                       (-> {:application/state :application.state/draft
+                                            :application/last-activity exactly-90d-ago
+                                            :application/events [(created-event exactly-90d-ago)
+                                                                 {:event/type :application.event/remarked
+                                                                  :event/time exactly-1d-ago
+                                                                  :event/actor "hannah"}]}
+                                           (permissions/give-role-to-users :applicant #{"alice"})
+                                           (permissions/give-role-to-users :handler #{"hannah"}))
                                        now))))
 
       (testing "draft expires in 83 days"
         (is (nil? (expire-application {:delete-after "P90D"}
-                                      {:application/applicant {:userid "alice"}
-                                       :application/state :application.state/draft
-                                       :application/last-activity exactly-7d-ago
-                                       :application/events [(created-event exactly-7d-ago)]}
+                                      (-> {:application/state :application.state/draft
+                                           :application/last-activity exactly-7d-ago
+                                           :application/events [(created-event exactly-7d-ago)]}
+                                          (permissions/give-role-to-users :applicant #{"alice"}))
                                       now)))))
 
     (testing "with reminder set"
       (testing "draft expired 2 seconds ago but reminder has not been sent yet"
         (is (nil? (expire-application {:delete-after "P90D"
                                        :reminder-before "P7D"}
-                                      {:application/applicant {:userid "alice"}
-                                       :application/state :application.state/draft
-                                       :application/last-activity exactly-90d-ago
-                                       :application/events [(created-event exactly-90d-ago)]}
+                                      (-> {:application/state :application.state/draft
+                                           :application/last-activity exactly-90d-ago
+                                           :application/events [(created-event exactly-90d-ago)]}
+                                          (permissions/give-role-to-users :applicant #{"alice"}))
                                       now))))
 
       (testing "reminder has been sent 1 day before draft expiration"
@@ -139,13 +141,13 @@
                                                         exactly-1d-ago)))
         (is (nil? (expire-application {:delete-after "P90D"
                                        :reminder-before "P7D"}
-                                      {:application/applicant {:userid "alice"}
-                                       :application/state :application.state/draft
-                                       :application/last-activity exactly-90d-ago
-                                       :application/events [(created-event exactly-90d-ago)
-                                                            {:event/type :application.event/expiration-notifications-sent
-                                                             :event/time exactly-1d-ago
-                                                             :application/expires-on (time/plus now (time/days 6))}]}
+                                      (-> {:application/state :application.state/draft
+                                           :application/last-activity exactly-90d-ago
+                                           :application/events [(created-event exactly-90d-ago)
+                                                                {:event/type :application.event/expiration-notifications-sent
+                                                                 :event/time exactly-1d-ago
+                                                                 :application/expires-on (time/plus now (time/days 6))}]}
+                                          (permissions/give-role-to-users :applicant #{"alice"}))
                                       now))))
 
       (testing "reminder has been sent 7 days before draft expiration"
@@ -155,21 +157,21 @@
                                                         exactly-7d-ago)))
         (is (some? (expire-application {:delete-after "P90D"
                                         :reminder-before "P7D"}
-                                       {:application/applicant {:userid "alice"}
-                                        :application/state :application.state/draft
-                                        :application/last-activity exactly-90d-ago
-                                        :application/events [(created-event exactly-90d-ago)
-                                                             {:event/type :application.event/expiration-notifications-sent
-                                                              :event/time exactly-7d-ago
-                                                              :application/expires-on now}]}
+                                       (-> {:application/state :application.state/draft
+                                            :application/last-activity exactly-90d-ago
+                                            :application/events [(created-event exactly-90d-ago)
+                                                                 {:event/type :application.event/expiration-notifications-sent
+                                                                  :event/time exactly-7d-ago
+                                                                  :application/expires-on now}]}
+                                           (permissions/give-role-to-users :applicant #{"alice"}))
                                        now)))))
 
     (testing "if not configured"
       (is (nil? (expire-application nil
-                                    {:application/applicant {:userid "alice"}
-                                     :application/state :application.state/draft
-                                     :application/last-activity exactly-90d-ago
-                                     :application/events [(created-event exactly-90d-ago)]}
+                                    (-> {:application/state :application.state/draft
+                                         :application/last-activity exactly-90d-ago
+                                         :application/events [(created-event exactly-90d-ago)]}
+                                        (permissions/give-role-to-users :applicant #{"alice"}))
                                     now))))))
 
 (deftest test-calculate-reminder-time
@@ -184,38 +186,38 @@
       (is (time/equal? (time/plus now (time/days 83))
                        (calculate-reminder-time {:delete-after "P90D"
                                                  :reminder-before "P7D"}
-                                                {:application/applicant {:userid "alice"}
-                                                 :application/state :application.state/draft
-                                                 :application/last-activity now
-                                                 :application/events [(created-event now)]}))))
+                                                (-> {:application/state :application.state/draft
+                                                     :application/last-activity now
+                                                     :application/events [(created-event now)]}
+                                                    (permissions/give-role-to-users :applicant #{"alice"}))))))
 
     (testing "when draft expires in 7 days"
       (is (time/equal? now
                        (calculate-reminder-time {:delete-after "P90D"
                                                  :reminder-before "P7D"}
-                                                {:application/applicant {:userid "alice"}
-                                                 :application/state :application.state/draft
-                                                 :application/last-activity exactly-83d-ago
-                                                 :application/events [(created-event exactly-83d-ago)]}))))
+                                                (-> {:application/state :application.state/draft
+                                                     :application/last-activity exactly-83d-ago
+                                                     :application/events [(created-event exactly-83d-ago)]}
+                                                    (permissions/give-role-to-users :applicant #{"alice"}))))))
 
     (testing "when draft expires in 6 days"
       (is (time/equal? (time/minus now (time/days 1))
                        (calculate-reminder-time {:delete-after "P90D"
                                                  :reminder-before "P7D"}
-                                                {:application/applicant {:userid "alice"}
-                                                 :application/state :application.state/draft
-                                                 :application/last-activity exactly-84d-ago
-                                                 :application/events [(created-event exactly-84d-ago)]}))))
+                                                (-> {:application/state :application.state/draft
+                                                     :application/last-activity exactly-84d-ago
+                                                     :application/events [(created-event exactly-84d-ago)]}
+                                                    (permissions/give-role-to-users :applicant #{"alice"}))))))
 
     (testing "when reminder is not configured"
       (doseq [expiration [nil
                           {:delete-after "P90D"}
                           {:delete-after "P90D" :reminder-before nil}]]
         (is (nil? (calculate-reminder-time expiration
-                                           {:application/applicant {:userid "alice"}
-                                            :application/state :application.state/draft
-                                            :application/last-activity now
-                                            :application/events [(created-event now)]})))))))
+                                           (-> {:application/state :application.state/draft
+                                                :application/last-activity now
+                                                :application/events [(created-event now)]}
+                                               (permissions/give-role-to-users :applicant #{"alice"})))))))))
 
 (defn- should-send-notification-email? [expiration application now]
   (when-let [reminder-time (calculate-reminder-time expiration application)]
