@@ -319,22 +319,6 @@
     ;; them to nil but instead throw an error.
     (is (thrown? AssertionError (remove-nil-vals {:a ""})))))
 
-(defkeyframes shake
-  ["10%, 90%"
-   {:transform "perspective(500px) translate3d(0, 0, 1px)"}]
-  ["20%, 80%"
-   {:transform "perspective(500px) translate3d(0, 0, -3px)"}]
-  ["30%, 50%, 70%"
-   {:transform "perspective(500px) translate3d(0, 0, 8px)"}]
-  ["40%, 60%"
-   {:transform "perspective(500px) translate3d(0, 0, -8px)"}])
-
-(defkeyframes pulse-opacity
-  ["0%"
-   {:opacity "1.0"}]
-  ["100%"
-   {:opacity "0.0"}])
-
 (defn build-screen []
   (list
    [:* {:margin 0}]
@@ -506,23 +490,6 @@
    [:.alert-dark {:color (theme-getx :alert-dark-color)
                   :background-color (theme-getx :alert-dark-bgcolor)
                   :border-color (theme-getx :alert-dark-bordercolor :alert-dark-color)}]
-   shake
-   [:.flash-message.alert-danger
-    {:animation [[shake "0.6s cubic-bezier(.36,.07,.19,.97) both"]]}]
-
-   ;; animating opacity instead of box-shadow for smooth performance
-   ;; https://tobiasahlin.com/blog/how-to-animate-box-shadow/
-   pulse-opacity
-   [".flash-message.alert-success::after"
-    {:content "''"
-     :position :absolute
-     :border-radius ".25rem"
-     :top 0
-     :left 0
-     :width "100%"
-     :height "100%"
-     :box-shadow "0 0 4px 8px rgba(60, 108, 61, 0.5)"
-     :animation [[pulse-opacity "0.6s ease-out 1 both"]]}]
 
    ;; Navbar
    [:.navbar-wrapper
