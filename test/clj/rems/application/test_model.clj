@@ -1418,6 +1418,7 @@
                                 :application/id 1
                                 :application/member {:userid "member"}}
                                get-user get-catalogue-item))))
+
   (testing "member-removed"
     (is (= {:event/type :application.event/member-removed
             :event/time (DateTime. 1)
@@ -1687,6 +1688,52 @@
             (is (= nil
                    (get-in application [:application/workflow :workflow.dynamic/handlers])))))))
 
+    (testing "invited user is removed after invitation is accepted"
+      (let [application (-> application
+                            (model/application-view {:event/type :application.event/member-invited
+                                                     :event/actor "applicant"
+                                                     :application/member {:name "member"
+                                                                          :email "member@example.com"}
+                                                     :invitation/token "secret"})
+                            (model/application-view {:event/type :application.event/member-joined
+                                                     :event/actor "applicant"
+                                                     :application/member {:name "member"
+                                                                          :email "member@example.com"}
+                                                     :invitation/token "secret"})
+                            (model/application-view {:event/type :application.event/reviewer-invited
+                                                     :event/actor "handler"
+                                                     :application/reviewer {:name "new-reviewer"
+                                                                            :email "reviewer@example.com"}
+                                                     :invitation/token "clandestine"})
+                            (model/application-view {:event/type :application.event/reviewer-joined
+                                                     :event/actor "carl"
+                                                     :invitation/token "clandestine"})
+                            (model/application-view {:event/type :application.event/decider-invited
+                                                     :event/actor "handler"
+                                                     :application/decider {:name "new-decider"
+                                                                           :email "decider@example.com"}
+                                                     :invitation/token "mystery"})
+                            (model/application-view {:event/type :application.event/decider-joined
+                                                     :event/actor "diana"
+                                                     :invitation/token "mystery"}))
+            enriched (model/enrich-with-injections application injections)]
+        (is (= {"secret" {:event/actor "applicant"
+                          :application/member {:name "member"
+                                               :email "member@example.com"}
+                          :token/used? true}
+                "clandestine" {:event/actor "handler"
+                               :application/reviewer {:name "new-reviewer"
+                                                      :email "reviewer@example.com"}
+                               :token/used? true}
+                "mystery" {:event/actor "handler"
+                           :application/decider {:name "new-decider"
+                                                 :email "decider@example.com"}
+                           :token/used? true}}
+               (:application/invitation-tokens enriched)))
+        (is (= #{}
+               (:application/invited-members enriched))
+            "invitation is used so no members remain")))
+
     (testing "invitation tokens are not visible to anybody"
       (let [application (-> application
                             (model/application-view {:event/type :application.event/member-invited
@@ -1698,16 +1745,24 @@
                                                      :event/actor "handler"
                                                      :application/reviewer {:name "new-reviewer"
                                                                             :email "reviewer@example.com"}
-                                                     :invitation/token "clandestine"}))
+                                                     :invitation/token "clandestine"})
+                            (model/application-view {:event/type :application.event/decider-invited
+                                                     :event/actor "handler"
+                                                     :application/decider {:name "new-decider"
+                                                                           :email "decider@example.com"}
+                                                     :invitation/token "mystery"}))
             enriched (model/enrich-with-injections application injections)]
         (testing "- original"
-          (is (= #{"secret" "clandestine" nil} (set (map :invitation/token (:application/events enriched)))))
+          (is (= #{"secret" "clandestine" "mystery"} (set (keep :invitation/token (:application/events enriched)))))
           (is (= {"secret" {:event/actor "applicant"
                             :application/member {:name "member"
                                                  :email "member@example.com"}}
                   "clandestine" {:event/actor "handler"
                                  :application/reviewer {:name "new-reviewer"
-                                                        :email "reviewer@example.com"}}}
+                                                        :email "reviewer@example.com"}}
+                  "mystery" {:event/actor "handler"
+                             :application/decider {:name "new-decider"
+                                                   :email "decider@example.com"}}}
                  (:application/invitation-tokens enriched)))
           (is (= #{{:name "member"
                     :email "member@example.com"}}
