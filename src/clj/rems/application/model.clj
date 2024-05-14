@@ -869,7 +869,9 @@
 
 (defn- enrich-invited-members [application]
   (let [invitations (vals (:application/invitation-tokens application))
-        members (keep :application/member invitations)]
+        members (->> invitations
+                     (remove :token/used?)
+                     (keep :application/member))]
     (-> application
         (assoc :application/invited-members (set members)))))
 
