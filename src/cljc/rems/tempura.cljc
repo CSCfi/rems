@@ -66,52 +66,55 @@
                        vargs)]
         (f res-args)))))
 
-(defn- get-map-compiler [{:keys [resource resource-keys]}]
-  (let [f (get-default-resource-compiler resource)]
+(defn- get-map-compiler [resource-with-map-params]
+  (let [{:keys [resource resource-keys]} (replace-map-args resource-with-map-params)
+        f (get-default-resource-compiler resource)]
     (fn compile-map-args [vargs]
-      (assert (map? (first vargs)) {:resource resource
-                                    :vargs vargs})
-      (let [res-args (mapv (first vargs) resource-keys)]
-        (f res-args)))))
+      (f (cond
+           (empty? vargs) []
+           (map? (first vargs)) (mapv (first vargs) resource-keys)
+           :else (assert (map? (first vargs))
+                         {:resource resource-with-map-params
+                          :resource-keys resource-keys
+                          :vargs vargs}))))))
+
 
 (defn- get-resource-compiler [resource]
   (if (seq (find-map-params resource))
-    (get-map-compiler (replace-map-args resource))
+    (get-map-compiler resource)
     (get-vec-compiler resource)))
 
-(defn tr
-  "Wrapper for `taoensso.tempura/tr`."
-  ([translations language ks] (taoensso.tempura/tr {:dict translations}
-                                                   [language]
-                                                   (vec ks)))
-  ([translations language ks args] (taoensso.tempura/tr {:dict translations
-                                                         :resource-compiler get-resource-compiler}
-                                                        [language]
-                                                        (vec ks)
-                                                        (vec args))))
+(def default-tr-opts {:cache-dict? :fn-local
+                      :resource-compiler get-resource-compiler})
 
-(deftest test-resource-compiler
+(defn get-cached-tr [translations & [opts]]
+  (taoensso.tempura/new-tr-fn (-> default-tr-opts
+                                  (merge opts)
+                                  (assoc :dict translations))))
+
+(deftest test-get-cached-tr
   (let [dict {:en
               {:string {:no-args "test"
                         :vector "%1 %2 %1"
                         :map "%:x% %:y% %:x%"}
                :hiccup {:no-args [:div {:aria-label "test"} [:span "test"]]
                         :vector [:div {:aria-label "%1 %2 %1"} [:span "%1 %2 %1"]]
-                        :map [:div {:aria-label "%:x% %:y% %:x%"} [:span "%:x% %:y% %:x%"]]}}}]
+                        :map [:div {:aria-label "%:x% %:y% %:x%"} [:span "%:x% %:y% %:x%"]]}}}
+        tr (get-cached-tr dict)]
     (testing "no args"
       (is (= "test"
-             (tr dict :en [:string/no-args])))
+             (tr [:en] [:string/no-args])))
       (is (= [:div {:aria-label "test"} [:span "test"]]
-             (tr dict :en [:hiccup/no-args]))))
+             (tr [:en] [:hiccup/no-args]))))
     (testing "index parameters"
       (is (= "1 2 1"
-             (tr dict :en [:string/vector] [1 2 3])))
+             (tr [:en] [:string/vector] [1 2 3])))
       ;; map attributes are identified by custom resource compiler, but tempura does not use them
       (is (= [:div {:aria-label "%1 %2 %1"} [:span "" 1 " " 2 " " 1]]
-             (tr dict :en [:hiccup/vector] [1 2 3]))))
+             (tr [:en] [:hiccup/vector] [1 2 3]))))
     (testing "named parameters"
       (is (= "1 2 1"
-             (tr dict :en [:string/map] [{:x 1 :y 2 :z 3}])))
+             (tr [:en] [:string/map] [{:x 1 :y 2 :z 3}])))
       ;; map attributes are identified by custom resource compiler, but tempura does not use them
       (is (= [:div {:aria-label "%1 %2 %1"} [:span "" 1 " " 2 " " 1]]
-             (tr dict :en [:hiccup/map] [{:x 1 :y 2 :z 3}]))))))
+             (tr [:en] [:hiccup/map] [{:x 1 :y 2 :z 3}]))))))
