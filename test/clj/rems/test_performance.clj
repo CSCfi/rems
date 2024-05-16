@@ -11,6 +11,7 @@
             [rems.db.test-data-users :refer [+fake-users+ +fake-user-data+]]
             [rems.email.template]
             [rems.locales]
+            [rems.markdown]
             [rems.service.todos :as todos]
             [rems.tempura]
             [rems.text])
@@ -91,7 +92,7 @@
     (run-benchmarks [{:name "get-application"
                       :benchmark test-get-application}])))
 
-(defn- get-template-app-and-event [{:keys [handler-count]}]
+(defn- get-template-app-and-event [handler-count]
   (let [fake-handlers (for [n (range handler-count)
                             :let [userid (str "benchmark-handler-" n)]]
                         [userid {:userid userid
@@ -101,7 +102,9 @@
                      :application/external-id "2024-05-15/1"
                      :application/applicant (get +fake-user-data+ (:alice +fake-users+))
                      :application/description "Template benchmark"
-                     :application/resources [{:catalogue-item/title {:en "Benchmark resource"}}]
+                     :application/resources [{:catalogue-item/title {:en "Benchmark resource (EN)"
+                                                                     :fi "Benchmark resource (FI)"
+                                                                     :sv "Benchmark resource (SV)"}}]
                      :application/workflow {:workflow.dynamic/handlers (set (map first fake-handlers))}}
         decided (-> {:application/id 7
                      :event/type :application.event/decided
@@ -111,36 +114,70 @@
     {:application application
      :event decided}))
 
-(defn benchmark-template-performance []
-  (let [{:keys [application event]} (get-template-app-and-event {:handler-count 200})
-        setup-benchmark (fn setup-benchmark-f []
+(defn benchmark-template-performance [{:keys [benchmark-handlers]}]
+  (let [setup-benchmark (fn setup-benchmark-f []
                           (mount/start #'rems.config/env ; :enable-handler-emails is enabled by default
                                        #'rems.locales/translations)
                           (rems.text/reset-cached-tr!))
-        test-event-to-emails (fn benchmark-event-to-emails []
-                               (doall (rems.email.template/event-to-emails event application)))]
+        get-benchmark-fn (fn [handler-count]
+                           (let [{:keys [application event]} (get-template-app-and-event handler-count)]
+                             (fn benchmark-event-to-emails []
+                               (doall (rems.email.template/event-to-emails event application)))))
+        all-stats (atom nil)]
 
     ;; Execution time mean : 9,400171 ms (2019 Macbook Pro with 2,3 GHz 8-Core Intel Core i9)
     ;; translations cache size 882,5 KiB
     (with-redefs [rems.db.user-settings/get-user-settings (fn [& _] {:language (rand-nth [:en :fi :sv])})]
-      (run-benchmark {:name "event-to-emails"
-                      :benchmark test-event-to-emails
-                      :setup setup-benchmark})
-      (prof/profile (dotimes [_ 100] (test-event-to-emails)))
-      (println "translations cache size" (mm/measure rems.text/cached-tr)))
+      (doall
+       (for [n benchmark-handlers
+             :let [test-event-to-emails (get-benchmark-fn n)
+                   stats (run-benchmark {:name (format "event-to-emails, cache, %s handlers" n)
+                                         :benchmark test-event-to-emails
+                                         :setup setup-benchmark})
+                   cache-size (mm/measure rems.text/cached-tr)]]
+         #_(prof/profile (dotimes [_ 100] (test-event-to-emails)))
+         (swap! all-stats update :cached (fnil conj []) (merge stats {:handler-count n
+                                                                      :cache-size cache-size})))))
 
     ;; XXX: potentially very slow and interesting only for comparison with cached version (default).
     ;; translations are cached using taoensso.tempura/new-tr-fn because (big & nested) dictionary compilation is expensive.
     ;; Execution time mean : 870,499348 ms (2019 Macbook Pro with 2,3 GHz 8-Core Intel Core i9)
-    ;; translations cache size 882,0 KiB
-    #_(let [get-cached-tr rems.tempura/get-cached-tr]
-        (with-redefs [rems.db.user-settings/get-user-settings (fn [& _] {:language (rand-nth [:en :fi :sv])})
-                      rems.tempura/get-cached-tr #(get-cached-tr % {:cache-dict? false})]
-          (run-benchmark {:name "event-to-emails, no cache"
-                          :benchmark test-event-to-emails
-                          :setup setup-benchmark})
-          (prof/profile (test-event-to-emails))
-          (println "translations cache size" (mm/measure rems.text/cached-tr))))))
+    (let [get-cached-tr rems.tempura/get-cached-tr]
+      (with-redefs [rems.db.user-settings/get-user-settings (fn [& _] {:language (rand-nth [:en :fi :sv])})
+                    rems.tempura/get-cached-tr #(get-cached-tr % {:cache-dict? false})]
+        (doall
+         (for [n benchmark-handlers
+               :let [test-event-to-emails (get-benchmark-fn n)
+                     stats (run-benchmark {:name (format "event-to-emails, disabled cache, %s handlers" n)
+                                           :benchmark test-event-to-emails
+                                           :setup setup-benchmark})]]
+           #_(prof/profile (dotimes [_ 10] (test-event-to-emails)))
+           (swap! all-stats update :disabled (fnil conj []) (merge stats {:handler-count n}))))))
+    @all-stats))
+
+(defn- print-template-performance-tables [all-stats]
+  (let [format-time #(apply criterium/format-value % (criterium/scale-time %))
+        mean (comp format-time :mean)
+        low (comp format-time :low)
+        high (comp format-time :high)]
+    (when (:cached all-stats)
+      (println "")
+      (println "event-to-emails, cache")
+      (println "---")
+      (doseq [row (rems.markdown/markdown-table
+                   {:header ["handler count" "mean" "lower-q 2.5%" "upper-q 97.5%" "cache size"]
+                    :rows (->> (:cached all-stats)
+                               (mapv (juxt :handler-count mean low high :cache-size)))})]
+        (println row)))
+    (when (:disabled all-stats)
+      (println "")
+      (println "event-to-emails, disabled cache")
+      (println "---")
+      (doseq [row (rems.markdown/markdown-table
+                   {:header ["handler count" "mean" "lower-q 2.5%" "upper-q 97.5%"]
+                    :rows (->> (:disabled all-stats)
+                               (mapv (juxt :handler-count mean low high)))})]
+        (println row)))))
 
 (comment
   ;; Note: If clj-memory-meter throws InaccessibleObjectException on Java 9+,
@@ -150,7 +187,11 @@
   (benchmark-get-events)
   (benchmark-get-all-applications)
   (benchmark-get-application)
-  (benchmark-template-performance)
+
+  ;; handler count increases email count linearly
+  (def stats (benchmark-template-performance {:benchmark-handlers [1 10 50 100 200]}))
+  ;; additional table formatting
+  (print-template-performance-tables stats)
 
   (prof/clear-results)
   (prof/serve-ui 8080))
