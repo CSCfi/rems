@@ -71,7 +71,7 @@
 
 (defn- fetch-theme! []
   (fetch "/api/theme"
-         {:handler #(rf/dispatch-sync [:loaded-theme %])
+         {:handler #(rf/dispatch-sync [:rems.theme/loaded-theme %])
           :error-handler (flash-message/default-error-handler :top "Fetch theme")}))
 
 ;;;; Global events & subscriptions
