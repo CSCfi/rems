@@ -126,12 +126,6 @@
  (fn [db [_ path]]
    (assoc db :path path)))
 
-;; XXX: unused event?
-(rf/reg-event-db
- :set-docs
- (fn [db [_ docs]]
-   (assoc db :docs docs)))
-
 (rf/reg-event-db
  :loaded-translations
  (fn [db [_ translations]]
