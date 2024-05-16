@@ -86,11 +86,6 @@
  (fn [db _]
    (or (:path db) "")))
 
-(rf/reg-sub
- :docs
- (fn [db _]
-   (:docs db)))
-
 ;; TODO: possibly move translations out
 (rf/reg-sub
  :translations
