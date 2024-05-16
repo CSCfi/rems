@@ -928,7 +928,6 @@
         members (:application/members application)
         invited-members (:application/invited-members application)]
     (into [:div
-           [flash-message/component :change-members]
            [member-info {:element-id "applicant"
                          :attributes applicant
                          :application application
@@ -984,16 +983,21 @@
     [collapsible/component
      (cond (is-handler? application userid)
            (assoc component
-                  :always (applicants-details application))
+                  :always [:<>
+                           [flash-message/component :change-members]
+                           [applicants-details application]])
 
            only-one-applicant?
            (assoc component
-                  :always (applicants-details application {:simple? true}))
+                  :always [:<>
+                           [flash-message/component :change-members]
+                           [applicants-details application {:simple? true}]])
 
            :else
            (assoc component
-                  :collapse-hidden (applicants-short application)
-                  :collapse (applicants-details application)))]))
+                  :always [flash-message/component :change-members]
+                  :collapse-hidden [applicants-short application]
+                  :collapse [applicants-details application]))]))
 
 (defn- request-review-dropdown []
   [:div.btn-group

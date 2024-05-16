@@ -314,7 +314,9 @@
         file (io/file (:reporting-dir @test-context) full-filename)
 
         window-size (et/get-window-size driver)
-        empty-space (parse-int (et/get-element-attr driver :empty-space "clientHeight"))
+        empty-space (if (et/exists? driver :empty-space) ; if page has not rendered, screenshot can fail due to missing element
+                      (parse-int (et/get-element-attr driver :empty-space "clientHeight"))
+                      0)
 
         without-extra-height (if (and empty-space
                                       (pos? empty-space))

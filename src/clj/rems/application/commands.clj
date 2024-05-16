@@ -571,9 +571,16 @@
                                       :application/resources (build-resources-list cat-ids injections)
                                       :application/licenses (build-licenses-list cat-ids injections)}))))
 
+(defn cannot-join-error [application userid]
+  (when (application-util/is-handling-user? application userid)
+    (if (application-util/draft? application)
+      {:errors [{:type :t.actions.errors/handling-user-cannot-join :userid userid}]}
+      {:errors [{:type :handling-user-cannot-join :userid userid :application-id (:application/id application)}]})))
+
 (defmethod command-handler :application.command/add-member
   [cmd application injections]
   (or (invalid-user-error (:userid (:member cmd)) injections)
+      (cannot-join-error application (:userid (:member cmd)))
       (already-joined-error application (:userid (:member cmd)))
       (ok {:event/type :application.event/member-added
            :application/member (:member cmd)})))
@@ -604,7 +611,8 @@
         invitation (get-in application [:application/invitation-tokens token])]
     (cond
       (:application/member invitation)
-      (or (already-joined-error application (:actor cmd))
+      (or (cannot-join-error application (:actor cmd))
+          (already-joined-error application (:actor cmd))
           (token-used-error invitation token)
           (ok-with-data {:application-id (:application-id cmd)}
                         [{:event/type :application.event/member-joined
