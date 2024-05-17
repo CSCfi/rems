@@ -11,7 +11,7 @@
             [rems.fetcher :as fetcher]
             [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
-            [rems.text :refer [text localized]]
+            [rems.text :refer [text text-format localized]]
             [rems.util :refer [navigate! put! post!]]))
 
 (rf/reg-event-fx
@@ -116,19 +116,19 @@
 
 (defn- category-children-field []
   (let [category-id (:category/id @(rf/subscribe [::category]))
-        categories (->> @(rf/subscribe [::categories])
-                        (filter #(not= category-id (:category/id %))))
-        selected-categories @(rf/subscribe [::selected-categories])
-        item-selected? (set selected-categories)]
+        selected-categories (set (mapv :category/id @(rf/subscribe [::selected-categories])))
+        item-selected? #(contains? selected-categories (:category/id %))]
     [:div.form-group
      [:label.administration-field-label {:for categories-dropdown-id}
-      (str (text :t.administration/category-children) " " (text :t.administration/optional))]
+      (text-format :t.label/optional (text :t.administration/category-children))]
      [dropdown/dropdown
       {:id categories-dropdown-id
-       :items categories
+       :items (->> @(rf/subscribe [::categories])
+                   (remove (comp #{category-id} :category/id))
+                   (mapv #(assoc % ::label (localized (:category/title %)))))
        :multi? true
        :item-key :category/id
-       :item-label #(localized (:category/title %))
+       :item-label ::label
        :item-selected? item-selected?
        :clearable? true
        :on-change #(rf/dispatch [::set-selected-categories %])}]]))

@@ -3,7 +3,8 @@
             [re-frame.core :as rf]
             [rems.config]
             [rems.identity]
-            [rems.spa]))
+            [rems.spa]
+            [rems.theme]))
 
 (enable-console-print!)
 
@@ -22,7 +23,7 @@
   (rf/dispatch-sync [:loaded-translations (read-transit translations)]))
 
 (defn ^:export setTheme [theme]
-  (rf/dispatch-sync [:loaded-theme (read-transit theme)]))
+  (rf/dispatch-sync [:rems.theme/loaded-theme (read-transit theme)]))
 
 (defn ^:export setHandledOrganizations [organizations]
   (rf/dispatch-sync [:loaded-handled-organizations (read-transit organizations)]))

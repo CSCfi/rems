@@ -85,9 +85,10 @@
      [:label {:for dropdown-id} (text :t.actions/licenses-selection)]
      [dropdown/dropdown
       {:id dropdown-id
-       :items potential-licenses
+       :items (->> potential-licenses
+                   (mapv #(assoc % ::label (get-localized-title % language))))
        :item-key :id
-       :item-label #(get-localized-title % language)
+       :item-label ::label
        :item-selected? #(contains? (set selected-licenses) %)
        :multi? true
        :on-change on-set-licenses}]]]])

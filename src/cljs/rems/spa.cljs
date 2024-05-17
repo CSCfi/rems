@@ -1,5 +1,6 @@
 (ns rems.spa
   (:require [accountant.core :as accountant]
+            [better-cond.core :as b]
             [clojure.string :as str]
             [goog.events :as events]
             [goog.history.EventType :as HistoryEventType]
@@ -39,7 +40,7 @@
             [rems.ajax :refer [load-interceptors!]]
             [rems.application :refer [application-page]]
             [rems.applications :refer [applications-page]]
-            [rems.atoms :refer [document-title logo]]
+            [rems.atoms :refer [document-title]]
             [rems.auth.auth :as auth]
             [rems.cart :as cart]
             [rems.catalogue :refer [catalogue-page]]
@@ -57,8 +58,9 @@
             [rems.common.roles :as roles]
             [rems.profile :refer [profile-page missing-email-warning]]
             [rems.text :refer [text text-format]]
+            [rems.theme]
             [rems.user-settings]
-            [rems.util :refer [fetch navigate! replace-url! set-location!]]
+            [rems.util :refer [fetch navigate! replace-url! set-location! react-strict-mode]]
             [secretary.core :as secretary])
   (:import goog.history.Html5History))
 
@@ -69,7 +71,7 @@
 
 (defn- fetch-theme! []
   (fetch "/api/theme"
-         {:handler #(rf/dispatch-sync [:loaded-theme %])
+         {:handler #(rf/dispatch-sync [:rems.theme/loaded-theme %])
           :error-handler (flash-message/default-error-handler :top "Fetch theme")}))
 
 ;;;; Global events & subscriptions
@@ -84,22 +86,11 @@
  (fn [db _]
    (or (:path db) "")))
 
-(rf/reg-sub
- :docs
- (fn [db _]
-   (:docs db)))
-
 ;; TODO: possibly move translations out
 (rf/reg-sub
  :translations
  (fn [db _]
    (:translations db)))
-
-;; TODO: possibly move theme out
-(rf/reg-sub
- :theme
- (fn [db _]
-   (:theme db)))
 
 (rf/reg-sub
  :error
@@ -131,19 +122,9 @@
    (assoc db :path path)))
 
 (rf/reg-event-db
- :set-docs
- (fn [db [_ docs]]
-   (assoc db :docs docs)))
-
-(rf/reg-event-db
  :loaded-translations
  (fn [db [_ translations]]
    (assoc db :translations translations)))
-
-(rf/reg-event-db
- :loaded-theme
- (fn [db [_ theme]]
-   (assoc db :theme theme)))
 
 (rf/reg-event-fx
  :unauthorized!
@@ -201,7 +182,7 @@
 (rf/reg-sub
  ::grab-focus?
  (fn [db _]
-   (::grab-focus? db)))
+   (::grab-focus? db true)))
 
 (rf/reg-event-fx
  :after-translations-are-loaded
@@ -341,7 +322,7 @@
                     (config/fetch-config!))}
     [:i.fas.fa-redo]]])
 
-(defn footer []
+(defn- footer []
   [:footer.footer
    [:div.container.d-flex.flex-row.justify-content-between.align-items-center
     [:div.d-flex.flex-row [nav/footer-extra-pages]]
@@ -349,53 +330,34 @@
     (when (config/dev-environment?)
       [dev-reload-button])]])
 
-(defn main-content [_page-id _grab-focus?]
-  (let [on-update (fn [this]
-                    (let [[_ _page-id grab-focus?] (r/argv this)]
-                      (when grab-focus?
-                        (when-let [element (or (.querySelector js/document "h1")
-                                               (.querySelector js/document "#main-content"))]
-                          (focus/focus element)
-                          (rf/dispatch [::focus-grabbed])))))]
-    (r/create-class
-     {:component-did-mount on-update
-      :component-did-update on-update
-      :display-name "main-content"
-      :reagent-render (fn [page-id _grab-focus?]
-                        [:main.container-fluid
-                         {:class (str "page-" (name page-id))
-                          :id "main-content"}
-                         (if-let [content (pages page-id)]
-                           [:<>
-                            [missing-email-warning]
-                            [content]]
-                           (do ; implementation error
-                             (println "Unknown page-id" page-id)
-                             (rf/dispatch [:set-active-page :not-found])
-                             nil))])})))
+(defn- logo [page-id]
+  (when (or (= :home page-id)
+            (not (rems.theme/use-navbar-logo?)))
+    [:div {:class "logo"}
+     [:div.img]]))
 
-(defn- lazy-load-data!
-  "Loads datasets that are not required for immediate render or e.g. require login."
-  []
-  (when @(rf/subscribe [:user])
-    (when (empty? @(rf/subscribe [:organizations]))
-      (config/fetch-organizations!))))
+(defn- main-content [page-id]
+  (b/cond
+    :when page-id
+    :let [content (get pages page-id)]
+
+    (some? content)
+    [:main#main-content.container-fluid {:class (str "page-" (name page-id))}
+     [missing-email-warning]
+     [content]]
+
+    ;; implementation error
+    :do (println "Unknown page-id" page-id)
+    :do (rf/dispatch-sync [:set-active-page :not-found])
+    :else
+    [:main#main-content.container-fluid.unknown-page]))
 
 (defn page []
-  (let [page-id @(rf/subscribe [:page])
-        grab-focus? @(rf/subscribe [::grab-focus?])
-        theme @(rf/subscribe [:theme])
-        lang @(rf/subscribe [:language])]
-    (lazy-load-data!)
+  (let [page-id @(rf/subscribe [:page])]
     [:div
      [nav/navigation-widget]
-     (when (or (= page-id :home)
-               (and lang
-                    (not ((keyword (str "navbar-logo-name-" (name lang))) theme))
-                    (not (:navbar-logo-name theme))))
-       [logo])
-     (when page-id
-       [main-content page-id grab-focus?])
+     [logo page-id]
+     [main-content page-id]
      [:div#empty-space]
      [footer]]))
 
@@ -648,9 +610,39 @@
 
 ;;;; Initialize app
 
+(defn- lazy-load-data!
+  "Loads datasets that are not required for immediate render or e.g. require login."
+  []
+  (let [user @(rf/subscribe [:user])
+        organizations @(rf/subscribe [:organizations])]
+    (when (and user (empty? organizations))
+      (config/fetch-organizations!))))
+
+(defn- grab-focus!
+  "Helper that sets focus on prominent header element when user navigates to new page."
+  []
+  (when (and @(rf/subscribe [::grab-focus?])
+             @(rf/subscribe [:page]))
+    (r/after-render
+     #(when-let [element (or (.querySelector js/document "h1")
+                             (.querySelector js/document "#main-content"))]
+        (focus/focus element)
+        (rf/dispatch-sync [::focus-grabbed])))))
+
+(defn- app []
+  (r/with-let [tracked (mapv r/track! [lazy-load-data! grab-focus!])]
+
+    (if (config/dev-environment?)
+      [react-strict-mode [page]]
+      [page])
+
+    (finally
+      (doseq [f tracked]
+        (r/dispose! f)))))
+
 (defn ^:dev/after-load mount-components []
   (rf/clear-subscription-cache!)
-  (rd/render [page] (.getElementById js/document "app")))
+  (rd/render [app] (.getElementById js/document "app")))
 
 (defn ^:export init []
   (version-info)

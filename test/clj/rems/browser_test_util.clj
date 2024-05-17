@@ -409,6 +409,7 @@
 (def wait-has-alert (wrap-etaoin et/wait-has-alert))
 (def accept-alert (wrap-etaoin et/accept-alert))
 (def reload (wrap-etaoin et/reload))
+(def get-title (wrap-etaoin et/get-title))
 ;; TODO add more of etaoin here
 
 ;;; etaoin extensions

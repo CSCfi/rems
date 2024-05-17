@@ -6,12 +6,13 @@
             [rems.administration.components :refer [localized-text-field organization-field]]
             [rems.atoms :as atoms :refer [document-title]]
             [rems.collapsible :as collapsible]
+            [rems.common.util :refer [andstr]]
             [rems.dropdown :as dropdown]
             [rems.fetcher :as fetcher]
             [rems.fields :as fields]
             [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
-            [rems.text :refer [text localized]]
+            [rems.text :refer [text text-format localized]]
             [rems.util :refer [navigate! post! put! trim-when-string]]))
 
 (defn- item-by-id [items id-key id]
@@ -163,15 +164,19 @@
 
 (defn- catalogue-item-infourl-field []
   [localized-text-field context {:keys [:infourl]
-                                 :label (str (text :t.administration/more-info) " "
-                                             (text :t.administration/optional))}])
+                                 :label (text-format :t.label/optional (text :t.administration/more-info))}])
+
+(defn- localize-org-short [x]
+  (when-let [org-short (get-in x [:organization :organization/short-name])]
+    (text-format :t.label/default
+                 (text :t.administration/org)
+                 (localized org-short))))
 
 (defn- catalogue-item-workflow-field []
   (let [workflows @(rf/subscribe [::workflows])
         editing? @(rf/subscribe [::editing?])
         selected-workflow @(rf/subscribe [::selected-workflow])
-        item-selected? #(= (:id %) (:id selected-workflow))
-        language @(rf/subscribe [:language])]
+        item-selected? #(= (:id %) (:id selected-workflow))]
     [:div.form-group
      [:label.administration-field-label {:for workflow-dropdown-id} (text :t.administration/workflow)]
      (if editing?
@@ -180,97 +185,93 @@
                                  :value (:title workflow)}])
        [dropdown/dropdown
         {:id workflow-dropdown-id
-         :items (->> workflows (filter :enabled) (remove :archived))
+         :items (->> workflows
+                     (filter :enabled)
+                     (remove :archived)
+                     (mapv #(assoc % ::label (text-format :t.label/parens (:title %) (localize-org-short %)))))
          :item-key :id
-         :item-label #(str (:title %)
-                           " (" (text :t.administration/org) ": "
-                           (get-in % [:organization :organization/short-name language])
-                           ")")
+         :item-label ::label
          :item-selected? item-selected?
-         :on-change #(rf/dispatch [::set-selected-workflow %])}])]))
+         :on-change #(rf/dispatch [::set-selected-workflow (dissoc % ::label)])}])]))
 
-(defn resource-label [r language counts]
-  (let [organisation (get-in r [:organization :organization/short-name language])
-        duplicate? (> (get counts (:resid r)) 1)
-        licenses? (seq (:licenses r))]
-    (str (:resid r)
-         (when organisation
-           (str " (" (text :t.administration/org) ": " organisation ")"))
-         (when (and duplicate? licenses?)
-           (str " (" (text :t.administration/licenses) ": "
-                (str/join ", " (mapv #(get-in % [:localizations language :title])
-                                     (:licenses r)))
-                ")")))))
+(defn- localize-licenses [resource language]
+  (let [licenses (->> (:licenses resource)
+                      (map #(get-in % [:localizations language :title])))]
+    (when (seq licenses)
+      (text-format :t.label/default (text :t.administration/licenses) (str/join ", " licenses)))))
 
 (defn- catalogue-item-resource-field []
   (let [resources @(rf/subscribe [::resources])
-        counts (frequencies (map :resid resources))
         editing? @(rf/subscribe [::editing?])
-        selected-resource @(rf/subscribe [::selected-resource])
-        item-selected? #(= (:id %) (:id selected-resource))
-        language @(rf/subscribe [:language])]
+        selected-resource (:id @(rf/subscribe [::selected-resource]))]
     [:div.form-group
      [:label.administration-field-label {:for resource-dropdown-id} (text :t.administration/resource)]
      (if editing?
-       (let [resource (item-by-id resources :id (:id selected-resource))]
-         [fields/readonly-field {:id resource-dropdown-id
-                                 :value (:resid resource)}])
-       [dropdown/dropdown
-        {:id resource-dropdown-id
-         :items (->> resources (filter :enabled) (remove :archived))
-         :item-key :id
-         :item-label #(resource-label % language counts)
-         :item-selected? item-selected?
-         :on-change #(rf/dispatch [::set-selected-resource %])}])]))
+       [fields/readonly-field {:id resource-dropdown-id
+                               :value (->> selected-resource
+                                           (item-by-id resources :id)
+                                           :resid)}]
+       (let [lang @(rf/subscribe [:language])
+             resid-counts (frequencies (map :resid resources))
+             has-duplicate-resid? #(> (get resid-counts (:resid %)) 1)]
+         [dropdown/dropdown
+          {:id resource-dropdown-id
+           :items (->> resources
+                       (filter :enabled)
+                       (remove :archived)
+                       (mapv #(assoc % ::label (str (:resid %)
+                                                    (andstr " (" (localize-org-short %) ")")
+                                                    (andstr " (" (when (has-duplicate-resid? %) (localize-licenses % lang)) ")")))))
+           :item-key :id
+           :item-label ::label
+           :item-selected? #(= selected-resource (:id %))
+           :on-change #(rf/dispatch [::set-selected-resource (dissoc % ::label)])}]))]))
 
 (defn- catalogue-item-form-field []
   (let [forms @(rf/subscribe [::forms])
         editing? @(rf/subscribe [::editing?])
         selected-form @(rf/subscribe [::selected-form])
-        item-selected? #(= (:form/id %) (:form/id selected-form))
-        language @(rf/subscribe [:language])]
+        item-selected? #(= (:form/id %) (:form/id selected-form))]
     [:div.form-group
      [:label.administration-field-label {:for form-dropdown-id}
-      (text :t.administration/form)
-      " "
-      (text :t.administration/optional)]
+      (text-format :t.label/optional (text :t.administration/form))]
      (if editing?
        (let [form (item-by-id forms :form/id (:form/id selected-form))]
          [fields/readonly-field {:id form-dropdown-id
                                  :value (:form/internal-name form)}])
        [dropdown/dropdown
         {:id form-dropdown-id
-         :items (->> forms (filter :enabled) (remove :archived))
+         :items (->> forms
+                     (filter :enabled)
+                     (remove :archived)
+                     (mapv #(assoc % ::label (text-format :t.label/parens (:form/internal-name %) (localize-org-short %)))))
          :item-key :form/id
-         :item-label #(str (:form/internal-name %)
-                           " (" (text :t.administration/org) ": "
-                           (get-in % [:organization :organization/short-name language])
-                           ")")
+         :item-label ::label
          :item-selected? item-selected?
          :clearable? true
          :placeholder (text :t.administration/no-form)
-         :on-change #(rf/dispatch [::set-selected-form %])}])]))
+         :on-change #(rf/dispatch [::set-selected-form (dissoc % ::label)])}])]))
 
 (defn- catalogue-item-categories-field []
   (let [categories @(rf/subscribe [::categories])
-        selected-categories @(rf/subscribe [::selected-categories])
-        item-selected? (set selected-categories)
+        selected-categories (set (mapv :category/id @(rf/subscribe [::selected-categories])))
+        item-selected? #(contains? selected-categories (:category/id %))
         config @(rf/subscribe [:rems.config/config])]
     [:div.form-group
      [:label.administration-field-label {:for categories-dropdown-id}
-      (text :t.administration/categories)
-      (when-not (:enable-catalogue-tree config)
-        (str " " (text :t.administration/optional)))]
+      (cond->> (text :t.administration/categories)
+        (not (:enable-catalogue-tree config)) (text-format :t.label/optional))]
      [dropdown/dropdown
       {:id categories-dropdown-id
-       :items categories
+       :items (->> categories
+                   (mapv #(assoc % ::label (localized (:category/title %)))))
        :multi? true
        :item-key :category/id
-       :item-label #(localized (:category/title %))
+       :item-label ::label
        :item-selected? item-selected?
        :clearable? true
        :placeholder (text :t.administration/no-categories)
-       :on-change #(rf/dispatch [::set-selected-categories %])}]]))
+       :on-change (fn [items] (rf/dispatch [::set-selected-categories (mapv #(dissoc % ::label) items)]))}]]))
 
 (defn- cancel-button [catalogue-item-id]
   [atoms/link {:id :cancel

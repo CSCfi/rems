@@ -4,7 +4,8 @@
             [clojure.string :as str]
             [clojure.test :refer [deftest are testing]]
             [goog.string :refer [format]]
-            [re-frame.core :as rf]))
+            [re-frame.core :as rf]
+            ["react" :as react]))
 
 (defn replace-url!
   "Navigates to the given URL without adding a browser history entry."
@@ -212,3 +213,24 @@
       nil nil
       nil {}
       nil [])))
+
+(defn react-strict-mode
+  "Wrapper around React <StrictMode> component. See more https://react.dev/reference/react/StrictMode#strictmode"
+  [body]
+  [:> react/StrictMode body])
+
+(defn- log-profiler-event [id phase actual-duration base-duration start-time commit-time]
+  (js/console.count (str phase " → " id))
+  (js/console.debug "\t"
+                    "actual:" actual-duration
+                    "base:" base-duration
+                    "\n\t"
+                    "start:" start-time
+                    "commit:" commit-time))
+
+(defn react-profiler
+  "Wrapper around React <Profiler> component. See more https://react.dev/reference/react/Profiler#profiler"
+  [{:keys [id on-render]} body]
+  [:> react/Profiler {:id id
+                      :onRender (or on-render log-profiler-event)}
+   body])

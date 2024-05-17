@@ -6,7 +6,7 @@
             [reagent.impl.util]
             [rems.common.util :refer [escape-element-id]]
             [rems.guide-util :refer [component-info example]]
-            [rems.text :refer [text localized localize-attachment]]
+            [rems.text :refer [text text-format localized localize-attachment]]
             [rems.util :refer [focus-when-collapse-opened]]))
 
 (defn external-link []
@@ -79,18 +79,6 @@
 (defn textarea [attrs]
   [autosize/textarea (merge {:min-rows 5}
                             (update attrs :class #(str/trim (str "form-control " %))))])
-
-(defn flash-message
-  "Displays a notification (aka flash) message.
-
-   :id      - HTML element ID
-   :status  - one of the alert types from Bootstrap i.e. :success, :info, :warning or :danger
-   :content - content to show inside the notification"
-  [{:keys [id status content]}]
-  (when status
-    [:div.flash-message.alert {:class (str "alert-" (name status))
-                               :id id}
-     content]))
 
 (defn checkbox
   "Displays a checkbox."
@@ -230,32 +218,17 @@
                          (str (localized (:name email))
                               " <" (:email email) ">")]))
 
-(defn set-document-title! [title]
-  (set! (.-title js/document)
-        (str title
-             (when-not (str/blank? title)
-               " - ")
-             (text :t.header/title))))
+(defn- set-document-title! [s]
+  (r/with-let [title (r/reaction ; changes when text and text-format change
+                      (if-not (str/blank? s)
+                        (text-format :t.label/dash s (text :t.header/title))
+                        (text :t.header/title)))]
+    (set! (.-title js/document) @title)))
 
-(defn document-title [_title & [{:keys [heading?] :or {heading? true}}]]
-  (let [on-update (fn [this]
-                    (let [[_ title] (r/argv this)]
-                      (set-document-title! title)))]
-    (r/create-class
-     {:component-did-mount on-update
-      :component-did-update on-update
-      :display-name "document-title"
-      :reagent-render (fn [title]
-                        (when heading?
-                          [:h1 title]))})))
-
-(defn logo []
-  [:div {:class "logo"}
-   [:div.img]])
-
-(defn logo-navigation []
-  [:div {:class "navbar-brand logo-menu"}
-   [:div.img]])
+(defn document-title [title & [{:keys [heading?] :or {heading? true}}]]
+  (let [the-title @(r/track set-document-title! title)]
+    (when heading?
+      [:h1 the-title])))
 
 (defn expander
   "Displays an expandable block of content with animated chevron.
@@ -411,15 +384,6 @@
        (component-info failure-symbol)
        (example "failure symbol"
                 [failure-symbol])
-
-       (component-info flash-message)
-       (example "flash-message with info"
-                [flash-message {:status :info
-                                :content "Hello world"}])
-
-       (example "flash-message with error"
-                [flash-message {:status :danger
-                                :content "You fail"}])
 
        (component-info readonly-checkbox)
        (example "readonly-checkbox unchecked"
