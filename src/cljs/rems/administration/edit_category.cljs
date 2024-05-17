@@ -139,7 +139,7 @@
     [:button#save.btn.btn-primary
      {:type :button
       :on-click (fn []
-                  (rf/dispatch [:rems.spa/user-triggered-navigation])
+                  (rf/dispatch [:rems.app/user-triggered-navigation])
                   (rf/dispatch [::edit-category request]))
       :disabled (nil? request)}
      (text :t.administration/save)]))

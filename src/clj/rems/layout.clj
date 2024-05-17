@@ -121,14 +121,14 @@
              (when (bound? #'*anti-forgery-token*)
                *anti-forgery-token*))]
     (include-js (cache-bust "/js/app.js"))
-    [:script {:type "text/javascript"} "rems.spa.init();"]
+    [:script {:type "text/javascript"} "rems.app.init();"]
     (inline-value "rems.app.setIdentity" {:user context/*user* :roles context/*roles*})
     (inline-value "rems.app.setConfig" (public/get-config))
     (inline-value "rems.app.setTranslations" (public/get-translations))
     (inline-value "rems.app.setTheme" (public/get-theme))
     (when (contains? context/*roles* :handler)
       (inline-value "rems.app.setHandledOrganizations" (organizations/get-handled-organizations (select-keys context/*user* [:userid]))))
-    [:script {:type "text/javascript"} "rems.spa.mount();"])))
+    [:script {:type "text/javascript"} "rems.app.mount();"])))
 
 (defn- error-content
   [error-details]

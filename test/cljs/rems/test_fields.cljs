@@ -1,7 +1,7 @@
 (ns rems.test-fields
   (:require [clojure.test :refer [deftest is testing use-fixtures]]
             [rems.fields :refer [field-wrapper toggle-diff-button]]
-            [rems.spa]
+            [rems.app]
             [rems.testing :refer [init-spa-fixture]]))
 
 (use-fixtures :each init-spa-fixture)

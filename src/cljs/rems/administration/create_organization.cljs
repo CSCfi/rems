@@ -161,7 +161,7 @@
      {:type :button
       :id :save
       :on-click (fn []
-                  (rf/dispatch [:rems.spa/user-triggered-navigation])
+                  (rf/dispatch [:rems.app/user-triggered-navigation])
                   (if id
                     (rf/dispatch [::edit-organization request])
                     (rf/dispatch [::create-organization request])))

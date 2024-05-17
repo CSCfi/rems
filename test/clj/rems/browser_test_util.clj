@@ -654,12 +654,12 @@
 (defmacro with-client-config [config & body]
   `(do
      (rems.browser-test-util/js-execute
-      "return window.rems.spa.set_config_BANG_(arguments[0]);" ~config)
+      "return window.rems.app.mergeConfig(arguments[0]);" ~config)
      ~@body
      (rems.browser-test-util/js-async
       "var args = arguments;
        var callback = args[args.length - 1];
-       return window.rems.spa.fetch_config_BANG_(callback);")))
+       return window.rems.app.fetchConfig(callback);")))
 
 (defn autosave-enabled? []
   (get env :enable-autosave false))

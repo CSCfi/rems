@@ -564,7 +564,7 @@
    {:type :button
     :id :save
     :on-click (fn []
-                (rf/dispatch [:rems.spa/user-triggered-navigation]) ;; scroll to top
+                (rf/dispatch [:rems.app/user-triggered-navigation]) ;; scroll to top
                 (on-click))}
    (text :t.administration/save)])
 

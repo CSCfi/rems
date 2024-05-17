@@ -1,6 +1,7 @@
 (ns rems.util
   (:require [accountant.core :as accountant]
             [ajax.core :refer [GET PUT POST]]
+            [cognitect.transit]
             [clojure.string :as str]
             [clojure.test :refer [deftest are testing]]
             [goog.string :refer [format]]
@@ -24,9 +25,6 @@
   "Sets the browser URL. We use this to force a reload when e.g. the identity changes."
   [location]
   (set! (.-location js/window) location))
-
-(defn unauthorized! []
-  (rf/dispatch [:unauthorized! (.. js/window -location -href)]))
 
 (defn redirect-when-unauthorized-or-forbidden!
   "If the request was unauthorized or forbidden, redirects the user
@@ -234,3 +232,6 @@
   [:> react/Profiler {:id id
                       :onRender (or on-render log-profiler-event)}
    body])
+
+(defn read-transit [value]
+  (cognitect.transit/read (cognitect.transit/reader :json) value))

@@ -54,7 +54,7 @@
   (atoms/edit-action
    {:class "edit-form"
     :on-click (fn []
-                (rf/dispatch [:rems.spa/user-triggered-navigation])
+                (rf/dispatch [:rems.app/user-triggered-navigation])
                 (rf/dispatch [::edit-form form-id]))}))
 
 (defn edit-button [form-id]
