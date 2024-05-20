@@ -364,5 +364,5 @@
 (defn perform-action-button [{:keys [loading?] :as props}]
   [atoms/rate-limited-button
    (-> props
-       (dissoc (when (or loading? @(rf/subscribe [:rems.spa/any-pending-request?]))
+       (dissoc (when (or loading? @(rf/subscribe [:rems.app/any-pending-request?]))
                  :on-click)))])
