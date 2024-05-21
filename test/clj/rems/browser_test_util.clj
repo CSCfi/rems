@@ -37,11 +37,16 @@
 (defn get-driver [] (:driver @test-context))
 (defn get-server-url [] (:url @test-context))
 (defn get-seed [] (:seed @test-context))
-(defn context-get [k] (get @test-context k))
-(defn context-getx [k] (getx @test-context k))
-(defn context-assoc! [& args] (swap! test-context #(apply assoc % args)))
-(defn context-dissoc! [& args] (swap! test-context #(apply dissoc % args)))
-(defn context-update! [& args] (swap! test-context #(apply update % args)))
+
+;; test data uses separate key path to avoid conflicts with configuration data
+
+(defn reset-context! [] (swap! test-context dissoc :test-data))
+
+(defn context-get [k] (get (:test-data @test-context) k))
+(defn context-getx [k] (getx (:test-data @test-context) k))
+(defn context-update! [& args] (apply swap! test-context update :test-data args))
+(defn context-assoc! [& args] (apply context-update! assoc args))
+(defn context-dissoc! [& args] (apply context-update! dissoc args))
 
 (defn- ensure-empty-directories! []
   (ensure-empty-directory! (:reporting-dir @test-context))
@@ -124,6 +129,7 @@
   (et/set-window-size (get-driver) 1400 7000))
 
 (defn fixture-init-driver
+(defn init-driver-fixture
   "Executes a test running a fresh driver except when in development."
   [f]
   (letfn [(run []
@@ -136,7 +142,7 @@
         (log/warn e "WebDriver failed to start, retrying...")
         (run)))))
 
-(defn fixture-refresh-driver
+(defn refresh-driver-fixture
   "Executes a test running with a re-used but clean and refreshed driver."
   [f]
   (try
@@ -148,8 +154,12 @@
         (if (= "invalid session id" (get-in data [:response :value :error]))
           (do
             (log/warn e "Unexpected problem, need to restart driver" data)
-            (fixture-init-driver f))
+            (init-driver-fixture f))
           (throw e))))))
+
+(defn reset-context-fixture [f]
+  (reset-context!)
+  (f))
 
 (defn smoke-test [f]
   (let [response (http/get (str (get-server-url) "js/app.js"))]
@@ -622,7 +632,7 @@
         (doseq [[target original] originals]
           (when original
             (js-execute (str "var x = document.querySelector('" target "'); if (x && x.style) x.style.outline = \"" original "\";"))))))
-    (context-update! :axe conj-vec results)))
+    (swap! test-context update :axe conj-vec results)))
 
 (defn accessibility-report-fixture
   "Runs the tests and finally stores the gathered accessibility
@@ -631,16 +641,16 @@
   NB: the individual tests must call `gather-axe-results` in each
   interesting spot to have a sensible report to write."
   [f]
-  (context-dissoc! :axe)
+  (swap! test-context dissoc :axe)
   (try
     (f)
     (finally
       (let [violations (atom nil)]
-        (doseq [k (->> (context-get :axe)
+        (doseq [k (->> (:axe @test-context)
                        (mapcat keys)
                        distinct)
                 :let [filename (str (str/lower-case (name k)) ".json")
-                      content (->> (context-get :axe)
+                      content (->> (:axe @test-context)
                                    (mapcat #(get % k))
                                    distinct
                                    (sort-by :impact))]]
