@@ -180,10 +180,6 @@
         (println row)))))
 
 (comment
-  ;; Note: If clj-memory-meter throws InaccessibleObjectException on Java 9+,
-  ;;       you *could* work around it by adding `--add-opens` JVM options, but
-  ;;       the root cause is probably that there is a lazy sequence that could
-  ;;       easily be avoided.
   (benchmark-get-events)
   (benchmark-get-all-applications)
   (benchmark-get-application)
