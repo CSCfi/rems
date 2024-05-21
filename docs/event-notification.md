@@ -488,11 +488,23 @@ NB: can include comments
 ### MemberUninvitedEvent
 
 - `event/type` always `application.event/member-uninvited`
-- `application/member` A map describing the person uninvited `name` (string) and `email` (string)
+- `application/member` A map describing the person uninvited `name` (string) and `email` (string). NB, there is no `userid` as it is not known.
 
 NB: can include comments
 
 ```json
+{
+  "event/id": 748,
+  "event/type": "application.event/member-uninvited",
+  "event/actor": "applicant",
+  "event/time": "2023-12-22T08:01:55.498Z",
+  "application/id": 123,
+  "application/member": {
+    "name": "Some Body",
+    "email": "somebody@applicants.com"
+  },
+  "event/application": {...}
+}
 ```
 
 ### AttachmentsRedactedEvent
