@@ -182,7 +182,7 @@
 (rf/reg-event-fx
  :after-translations-are-loaded
  (fn [{:keys [db]} [_ on-loaded]]
-   (if (not-empty @rems.globals/translations)
+   (if (seq @rems.globals/translations)
      (on-loaded)
      (.setTimeout js/window #(rf/dispatch [:after-translations-are-loaded on-loaded]) 100))
    {}))
@@ -190,7 +190,7 @@
 (rf/reg-sub
  ::any-pending-request?
  (fn [db _]
-   (some? (not-empty (::request db)))))
+   (some? (seq (::request db)))))
 
 (rf/reg-event-db
  ::on-request
