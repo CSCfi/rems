@@ -5,9 +5,7 @@
   of globals thanks to reagent."
   (:require [reagent.core :as r]))
 
-(def initial-state {::config {:languages [:en] :default-language :en}})
-
-(def ^:private state (r/atom initial-state))
+(def ^:private state (r/atom {}))
 
 
 
@@ -24,10 +22,3 @@
 (def theme "Map of theme key/value pairs." (r/cursor state [::theme]))
 
 (def translations "Map of translation key/value pairs, in all available languages." (r/cursor state [::translations]))
-
-
-
-;;; helper functions
-
-(defn reset-all-globals! [new-state]
-  (reset-vals! state new-state))

@@ -9,13 +9,15 @@
   #_(rf/clear-sub)
   (rf/clear-subscription-cache!))
 
+(defn- reset-globals! []
+  (reset! rems.globals/config {:default-language :en
+                               :languages [:en]}))
+
 (defn init-spa-fixture [f]
   (let [restore-fn (rf/make-restore-fn)]
     (try
       (clear-rf-state!)
-      (rems.globals/reset-all-globals! nil)
-      (reset! rems.globals/config {:default-language :en
-                                   :languages [:en]})
+      (reset-globals!)
       (f)
       (finally
         (restore-fn)))))
