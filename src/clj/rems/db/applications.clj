@@ -175,7 +175,7 @@
           ::users-by-role
           - Map of role to set of `userid` who has that role.
             E.g. {:applicant #{\"alice\" \"bob\" ...}}"}
-    all-applications-cache
+  all-applications-cache
   :start (events-cache/new))
 
 (defn- group-apps-by-user [apps]
