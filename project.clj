@@ -114,6 +114,7 @@
 
    :project/dev {:dependencies [[binaryage/devtools "1.0.7"]
                                 [com.clojure-goes-fast/clj-memory-meter "0.3.0"]
+                                [com.clojure-goes-fast/clj-async-profiler "1.2.0"]
                                 [criterium "0.4.6"]
                                 [lambdaisland/kaocha "1.87.1366"]
                                 [lambdaisland/kaocha-junit-xml "1.17.101"]
