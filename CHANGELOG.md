@@ -8,6 +8,10 @@ have notable changes.
 
 Changes since v2.37
 
+### Changes
+- The performance has been improved when there are many handlers. (#3283)
+- The error message "shake" animation has been removed. (#3298)
+
 ## v2.37 "Laivapojankatu" 2024-05-16
 
 ### Additions
