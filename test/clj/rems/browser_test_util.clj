@@ -611,6 +611,14 @@
        (mapv value-of-el)
        first))
 
+(def ^:private check-axe-js
+  "var args = arguments;
+   var callback = args[args.length-1]; // async callback
+   window.axe.configure({ 'reporter': 'v2' });
+   window.axe.run({ exclude: [['.dev-reload-button'],
+                              ['body > div:not(#app)']]
+   }).then(callback);")
+
 (defn check-axe
   "Runs automated accessibility tests using axe.
 
@@ -622,15 +630,8 @@
 
   See https://www.deque.com/axe/"
   []
-  (let [result (js-async "
-    var args = arguments;
-    var callback = args[args.length-1];
-    window.axe.configure({'reporter': 'v2'});
-    window.axe.run({ exclude:[['.dev-reload-button'],
-                              ['body > div:not(#app)']]})
-
-    .then(callback);")]
-    result))
+  (when (:accessibility-report env)
+    (js-async check-axe-js)))
 
 (defn gather-axe-results
   "Runs automatic accessbility tests using `check-axe`
