@@ -496,7 +496,7 @@ NB: can include comments
 {
   "event/id": 748,
   "event/type": "application.event/member-uninvited",
-  "event/actor": "applicant",
+  "event/actor": "ABC123XYZ456",
   "event/time": "2023-12-22T08:01:55.498Z",
   "application/id": 123,
   "application/member": {
