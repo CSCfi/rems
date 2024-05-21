@@ -21,8 +21,8 @@
                  [::handled-applications-count]
                  [:rems.table/reset]]}))
 
-(fetcher/reg-fetcher ::todo-applications "/api/applications/todo")
-(fetcher/reg-fetcher ::handled-applications "/api/applications/handled")
+(fetcher/reg-fetcher ::todo-applications "/api/applications/todo?only-active-handlers=true")
+(fetcher/reg-fetcher ::handled-applications "/api/applications/handled?only-active-handlers=true")
 (fetcher/reg-fetcher ::handled-applications-count "/api/applications/handled/count")
 
 (rf/reg-sub ::show-all-rows (fn [db _] (::show-all-rows db)))
