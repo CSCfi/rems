@@ -113,6 +113,7 @@
    :test [:project/dev :project/test :profiles/test]
 
    :project/dev {:dependencies [[binaryage/devtools "1.0.7"]
+                                [com.clojure-goes-fast/clj-async-profiler "1.2.0"] ; also check extra :jvm-opts https://github.com/clojure-goes-fast/clj-async-profiler?tab=readme-ov-file#tuning-for-better-accuracy
                                 [com.clojure-goes-fast/clj-memory-meter "0.3.0"]
                                 [com.clojure-goes-fast/clj-async-profiler "1.2.0"]
                                 [criterium "0.4.6"]

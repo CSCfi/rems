@@ -5,7 +5,9 @@
             [rems.db.applications :as applications]
             [rems.db.roles :as roles]
             [rems.db.users :as users]
-            [rems.db.organizations :as organizations])
+            [rems.db.organizations :as organizations]
+            [rems.locales]
+            [rems.text])
   (:import [ch.qos.logback.classic Level Logger]
            [java.nio.file Files]
            [java.nio.file.attribute FileAttribute]
@@ -73,3 +75,10 @@
                                                                                                :description (pr-str v)}))}])]
      ~@body))
 
+(defmacro with-translations [translations & body]
+  `(try
+     (with-redefs [rems.locales/translations ~translations]
+       (rems.text/reset-cached-tr!) ; ensure next call gets new cache
+       ~@body)
+     (finally ; clean up stale cache
+       (rems.text/reset-cached-tr!))))
