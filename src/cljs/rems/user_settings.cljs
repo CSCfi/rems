@@ -34,15 +34,7 @@
   (reset! rems.globals/language lang))
 
 (defn- validate-lang [lang]
-  (cond
-    (empty? @rems.config/languages)
-    nil
-
-    (not (contains? (set @rems.config/languages) lang))
-    nil
-
-    :else
-    lang))
+  (some #{lang} (set @rems.config/languages)))
 
 (defn fetch-user-settings! []
   (when @roles/logged-in?
