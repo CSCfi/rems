@@ -49,7 +49,7 @@
     (fetch "/api/user-settings"
            {:custom-error-handler? true
             :handler #(rf/dispatch-sync [::loaded-user-settings %])
-            :error-handler #(flash-message/show-default-error! :top (str "Fetch user settings"))})))
+            :error-handler (flash-message/default-error-handler :top (str "Fetch user settings"))})))
 
 (defn save-user-language! [lang]
   (b/cond
