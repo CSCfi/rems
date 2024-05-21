@@ -6,7 +6,6 @@
             [rems.application.eraser :as eraser]
             [rems.application.expirer-bot :as expirer-bot]
             [rems.config :refer [env]]
-            [rems.locales :refer [translations]]
             [rems.db.applications :as applications]
             [rems.db.outbox :as outbox]
             [rems.db.roles :as roles]
@@ -223,10 +222,7 @@
                     user-settings/get-user-settings (constantly {:language :en})
                     env {:application-id-column :id
                          :public-url "localhost/"
-                         :application-expiration expiration-config}
-                    translations (-> translations
-                                     (assoc-in [:en :t :email :footer] "")
-                                     (assoc-in [:en :t :email :regards] ""))]
+                         :application-expiration expiration-config}]
         (with-fixed-time test-time
           (log-test/with-log
             (reset! outbox-emails [])
@@ -253,14 +249,16 @@
                          :outbox/email {:subject (str "Your unsubmitted application " draft-expires-in-6d " will be deleted soon")
                                         :body (str "Dear alice,"
                                                    "\n\nYour unsubmitted application has been inactive since 2022-10-09 and it will be deleted after 2023-01-08, if it is not edited."
-                                                   "\n\nYou can view and edit the application at localhost/application/" draft-expires-in-6d)
+                                                   "\n\nYou can view and edit the application at localhost/application/" draft-expires-in-6d
+                                                   "\n\nKind regards,\n\nREMS\n\n\nPlease do not reply to this automatically generated message.")
                                         :to-user "alice"}
                          :outbox/type :email}
                         {:outbox/deadline test-time
                          :outbox/email {:subject (str "Your unsubmitted application " draft-expires-in-6d " will be deleted soon")
                                         :body (str "Dear member,"
                                                    "\n\nYour unsubmitted application has been inactive since 2022-10-09 and it will be deleted after 2023-01-08, if it is not edited."
-                                                   "\n\nYou can view and edit the application at localhost/application/" draft-expires-in-6d)
+                                                   "\n\nYou can view and edit the application at localhost/application/" draft-expires-in-6d
+                                                   "\n\nKind regards,\n\nREMS\n\n\nPlease do not reply to this automatically generated message.")
                                         :to-user "member"}
                          :outbox/type :email}]
                        @outbox-emails))))))
@@ -327,9 +325,10 @@
             (testing "email is sent to applicant for expiring draft"
               (is (= [{:outbox/deadline test-time-plus-ten-days
                        :outbox/email {:subject (str "Your unsubmitted application " draft-expires-in-8d " will be deleted soon")
-                                      :body (str "Dear alice,\n\n"
-                                                 "Your unsubmitted application has been inactive since 2022-10-11 and it will be deleted after 2023-01-18, if it is not edited.\n\n"
-                                                 "You can view and edit the application at localhost/application/" draft-expires-in-8d)
+                                      :body (str "Dear alice,"
+                                                 "\n\nYour unsubmitted application has been inactive since 2022-10-11 and it will be deleted after 2023-01-18, if it is not edited."
+                                                 "\n\nYou can view and edit the application at localhost/application/" draft-expires-in-8d
+                                                 "\n\nKind regards,\n\nREMS\n\n\nPlease do not reply to this automatically generated message.")
                                       :to-user "alice"}
                        :outbox/type :email}]
                      @outbox-emails)))))))))
