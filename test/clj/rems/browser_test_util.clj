@@ -314,7 +314,9 @@
         file (io/file (:reporting-dir @test-context) full-filename)
 
         window-size (et/get-window-size driver)
-        empty-space (parse-int (et/get-element-attr driver :empty-space "clientHeight"))
+        empty-space (if (et/exists? driver :empty-space) ; if page has not rendered, screenshot can fail due to missing element
+                      (parse-int (et/get-element-attr driver :empty-space "clientHeight"))
+                      0)
 
         without-extra-height (if (and empty-space
                                       (pos? empty-space))
@@ -407,6 +409,7 @@
 (def wait-has-alert (wrap-etaoin et/wait-has-alert))
 (def accept-alert (wrap-etaoin et/accept-alert))
 (def reload (wrap-etaoin et/reload))
+(def get-title (wrap-etaoin et/get-title))
 ;; TODO add more of etaoin here
 
 ;;; etaoin extensions

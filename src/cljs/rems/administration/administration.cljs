@@ -45,7 +45,7 @@
    [(rf/subscribe [:owned-organizations])
     (rf/subscribe [:handled-organizations])])
  (fn [[owned-organizations handled-organizations] _]
-   (concat owned-organizations handled-organizations)))
+   (doall (concat owned-organizations handled-organizations))))
 
 (rf/reg-sub
  ::displayed-organization-ids

@@ -75,30 +75,36 @@
 (defn selected-navigation-menu? [link-text]
   (btu/has-class? [:big-navbar {:tag :a :fn/text link-text}] "active"))
 
+(defn wait-page-title
+  "Waits until main header is visible with given text, and document title has the same value."
+  [title-text]
+  (btu/wait-visible {:tag :h1 :fn/text title-text})
+  (btu/wait-predicate #(= title-text (btu/get-title))
+                      #(do {:document-title (btu/get-title)})))
+
 (defn go-to-catalogue []
   (click-navigation-menu "Catalogue")
-  (btu/wait-visible {:tag :h1 :fn/text "Catalogue"})
+  (wait-page-title "Catalogue – REMS")
   (btu/wait-page-loaded)
   (btu/screenshot "catalogue-page")
   (btu/gather-axe-results "catalogue-page"))
 
 (defn go-to-applications []
   (click-navigation-menu "Applications")
-  (btu/wait-visible {:tag :h1 :fn/text "Applications"})
+  (wait-page-title "Applications – REMS")
   (btu/wait-page-loaded)
   (btu/screenshot "applications-page")
   (btu/gather-axe-results "applications-page"))
 
 (defn go-to-actions []
   (click-navigation-menu "Actions")
-  (btu/wait-visible {:tag :h1 :fn/text "Actions"})
+  (wait-page-title "Actions – REMS")
   (btu/wait-page-loaded)
   (btu/screenshot "actions-page")
   (btu/gather-axe-results "actions-page"))
 
 (defn go-to-application [application-id]
   (btu/go (str (btu/get-server-url) "application/" application-id))
-  (btu/wait-visible {:tag :h1 :fn/has-text "Application"})
   (btu/wait-page-loaded)
   (btu/screenshot "application-page")
   (btu/gather-axe-results "application-page"))
@@ -111,7 +117,7 @@
     (click-navigation-menu "Administration")
     (btu/wait-page-loaded))
   (click-administration-menu link-text)
-  (btu/wait-visible {:tag :h1 :fn/text link-text})
+  (wait-page-title (str link-text " – REMS"))
   (btu/wait-page-loaded)
   (btu/screenshot (str "administration-page-" (str/replace link-text " " "-"))))
 
@@ -152,7 +158,7 @@
                          {:fn/has-text "Apply for"}
                          {:xpath "./ancestor::tr"}
                          {:css ".apply-for-catalogue-items"}])
-  (btu/wait-visible {:tag :h1 :fn/has-text "Application"})
+  (is (btu/eventually-visible? {:tag :h1 :fn/has-text "Application"}))
   (btu/wait-page-loaded)
   (btu/screenshot "application-page")
   (btu/gather-axe-results "application-page"))
@@ -293,6 +299,7 @@
     (btu/clear {:id id})))
 
 (defn select-option [label option]
+  (btu/wait-for-idle)
   (let [id (btu/get-element-attr {:tag :label :fn/has-text label} :for)]
     (btu/wait-enabled {:id id})
     (btu/fill {:id id} option etaoin.keys/enter))) ; XXX: react-select does not accept new value without pressing enter
@@ -438,6 +445,9 @@
              {:as :json
               :headers {"x-rems-api-key" "42"
                         "x-rems-user-id" (or userid "handler")}})))
+
+(defn- get-external-id [application-id userid]
+  (:application/external-id (get-application-from-api application-id userid)))
 
 ;;; tests
 
@@ -638,7 +648,8 @@
 
         (testing "fetch application from API"
           (let [application (get-application-from-api (btu/context-getx :application-id))]
-            (btu/context-assoc! :attachment-ids (mapv :attachment/id (:application/attachments application)))
+            (btu/context-assoc! :attachment-ids (mapv :attachment/id (:application/attachments application))
+                                :external-id (:application/external-id application))
 
             (testing "see application on applications page"
               (go-to-applications)
@@ -704,7 +715,7 @@
               (btu/scroll-and-click [{:css "table.my-applications"}
                                      {:tag :tr :data-row (btu/context-getx :application-id)}
                                      {:css ".btn-primary"}])
-              (is (btu/eventually-visible? {:tag :h1 :fn/has-text "Application"}))
+              (wait-page-title (format "Application %s: Test name – REMS" (btu/context-getx :external-id)))
               (btu/wait-page-loaded)
               (btu/gather-axe-results "application-page-again")
               (testing "check a field answer"
@@ -726,11 +737,15 @@
                                                                             :resource-id (btu/context-getx :resource-id)}))
     (btu/context-assoc! :application-id (test-helpers/create-draft! "alice"
                                                                     [(btu/context-getx :catalogue-id)]
-                                                                    "test-applicant-member-invite-action")))
-
+                                                                    "test-applicant-member-invite-action"))
+    (btu/context-assoc! :external-id (-> (btu/context-getx :application-id)
+                                         (get-application-from-api "alice")
+                                         :application/external-id)))
   (btu/with-postmortem
     (login-as "alice")
     (go-to-application (btu/context-getx :application-id))
+    (wait-page-title (format "Application %s: test-applicant-member-invite-action – REMS"
+                             (btu/context-getx :external-id)))
 
     (testing "invite member"
       (is (not (btu/visible? [:actions-invite-member {:fn/has-text "Invite member"}])))
@@ -791,7 +806,50 @@
       (btu/scroll-and-click :invite-member)
       (is (btu/eventually-visible? {:fn/has-string "Invite member: Success"})))
 
+    (testing "invite handler as member"
+      (is (not (btu/visible? [:actions-invite-member {:fn/has-text "Invite member"}])))
+      (btu/scroll-and-click :invite-member-action-button)
+      (is (btu/eventually-visible? [:actions-invite-member {:fn/has-text "Invite member"}]))
+      (btu/fill-human [:actions-invite-member :name-invite-member] "Developer")
+      (btu/fill-human [:actions-invite-member :email-invite-member] "developer@example.com")
+      (btu/scroll-and-click :invite-member)
+      (is (btu/eventually-visible? {:fn/has-string "Invite member: Success"}))
+
+      (testing "get invite token"
+        (let [[token invitation] (-> (btu/context-getx :application-id)
+                                     applications/get-application-internal
+                                     :application/invitation-tokens
+                                     second)]
+          (is (string? token))
+          (is (= {:application/member {:name "Developer" :email "developer@example.com"}
+                  :event/actor "alice"}
+                 invitation))
+          (btu/context-assoc! :handler-token token)))
+
+      (logout)
+
+      (testing "accept invitation as handler"
+        (btu/go (str (btu/get-server-url) "application/accept-invitation/" (btu/context-getx :handler-token)))
+        (is (btu/eventually-visible? {:css ".login-btn"}))
+        (btu/scroll-and-click {:css ".login-btn"})
+        (btu/wait-page-loaded)
+        (btu/scroll-and-click :show-special-users)
+        (is (btu/eventually-visible? [{:css ".users"} {:tag :a :fn/text "developer"}]))
+        (btu/scroll-and-click [{:css ".users"} {:tag :a :fn/text "developer"}])
+        (btu/wait-page-loaded)
+
+        (testing "joining the application fails"
+          (is (btu/eventually-visible? {:tag :h1 :fn/has-text "Catalogue"})
+              "was redirected to catalogue")
+          (is (btu/eventually-visible? {:fn/has-string "Accept invitation: Failed"}))
+          (is (btu/eventually-visible? {:fn/has-string "A handling user cannot join application as member"}))
+          (btu/screenshot "handler-cannot-join-as-member"))))
+
+    (logout)
+
     (testing "submit application"
+      (login-as "alice")
+      (go-to-application (btu/context-getx :application-id))
       (btu/scroll-and-click :submit)
       (is (btu/eventually-visible? {:fn/has-string "Send application: Success"})))
 
@@ -862,7 +920,24 @@
       (is (btu/eventually-visible? {:tag :h1 :fn/has-text "Catalogue"})
           "was redirected to catalogue")
       (is (btu/eventually-visible? {:fn/has-text "Joining the application failed."}))
-      (btu/screenshot "someone-else-cannot-use-the-link"))))
+      (btu/screenshot "someone-else-cannot-use-the-link"))
+
+    (logout)
+
+    (testing "handler can use invite link to view submitted application"
+      (btu/go (str (btu/get-server-url) "application/accept-invitation/" (btu/context-getx :handler-token)))
+      (is (btu/eventually-visible? {:css ".login-btn"}))
+      (btu/scroll-and-click {:css ".login-btn"})
+      (btu/wait-page-loaded)
+      (btu/scroll-and-click :show-special-users)
+      (is (btu/eventually-visible? [{:css ".users"} {:tag :a :fn/text "developer"}]))
+      (btu/scroll-and-click [{:css ".users"} {:tag :a :fn/text "developer"}])
+      (btu/wait-page-loaded)
+      ;; NB: this differs a bit from `login-as` and we should keep them the same
+      (btu/wait-visible :logout)
+      (is (btu/eventually-visible? {:tag :h1 :fn/has-text "test-applicant-member-invite-action"})
+          "gets to the application")
+      (btu/screenshot "handler-can-use-link-after-submit"))))
 
 (deftest test-applicant-member-remove-action
   (testing "submit test data with API"
@@ -875,6 +950,9 @@
     (btu/context-assoc! :application-id (test-helpers/create-draft! "alice"
                                                                     [(btu/context-getx :catalogue-id)]
                                                                     "test-applicant-member-remove-action"))
+    (btu/context-assoc! :external-id (-> (btu/context-getx :application-id)
+                                         (get-application-from-api "alice")
+                                         :application/external-id))
     (test-helpers/command! {:type :application.command/submit
                             :application-id (btu/context-getx :application-id)
                             :actor "alice"})
@@ -896,6 +974,8 @@
   (btu/with-postmortem
     (login-as "alice")
     (go-to-application (btu/context-getx :application-id))
+    (wait-page-title (format "Application %s: test-applicant-member-remove-action – REMS"
+                             (btu/context-getx :external-id)))
 
     (testing "remove second member jade"
       (is (not (btu/visible? :actions-member1-operations-remove)))
@@ -943,6 +1023,9 @@
     (btu/context-assoc! :application-id (test-helpers/create-draft! "alice"
                                                                     [(btu/context-getx :catalogue-id) (btu/context-getx :catalogue-id2)]
                                                                     "test-handling"))
+    (btu/context-assoc! :external-id (-> (btu/context-getx :application-id)
+                                         (get-application-from-api "alice")
+                                         :application/external-id))
     (test-helpers/command! {:type :application.command/submit
                             :application-id (btu/context-getx :application-id)
                             :actor "alice"})
@@ -963,7 +1046,7 @@
         (is (btu/eventually-visible? app-button)))
       (btu/scroll-and-click app-button))
     (testing "handler should see application after clicking on View"
-      (is (btu/eventually-visible? {:tag :h1 :fn/has-text "test-handling"})))
+      (wait-page-title (format "Application %s: test-handling – REMS" (btu/context-getx :external-id))))
     (testing "handler should see the applicant info"
       (btu/scroll-and-click :applicant-info-collapse-more-link)
       (btu/screenshot "after-opening-applicant-info")
@@ -1129,6 +1212,9 @@
     (btu/context-assoc! :application-id (test-helpers/create-draft! "alice"
                                                                     [(btu/context-getx :catalogue-id)]
                                                                     "test-invite-decider"))
+    (btu/context-assoc! :external-id (-> (btu/context-getx :application-id)
+                                         (get-application-from-api "alice")
+                                         :application/external-id))
     (test-helpers/submit-application {:application-id (btu/context-getx :application-id)
                                       :actor "alice"})
     (test-helpers/create-user! {:userid "new-decider" :name "New Decider" :email "new-decider@example.com"}))
@@ -1137,7 +1223,7 @@
     (testing "handler invites decider"
       (login-as "developer")
       (go-to-application (btu/context-getx :application-id))
-      (is (btu/eventually-visible? {:tag :h1 :fn/has-text "test-invite-decider"}))
+      (wait-page-title (format "Application %s: test-invite-decider – REMS" (btu/context-getx :external-id)))
 
       (btu/scroll-and-click :request-decision-dropdown)
       (is (btu/eventually-visible? :invite-decider-action-button))
@@ -1173,7 +1259,7 @@
         (btu/wait-page-loaded)
         ;; NB: this differs a bit from `login-as` and we should keep them the same
         (btu/wait-visible :logout)
-        (is (btu/eventually-visible? {:tag :h1 :fn/has-text "test-invite-decider"}))
+        (wait-page-title (format "Application %s: test-invite-decider – REMS" (btu/context-getx :external-id)))
         (btu/screenshot "decider-joined")))
 
     (testing "check decider-joined event"
@@ -1332,13 +1418,16 @@
                                                                     [(btu/context-getx :catalogue-id)
                                                                      (btu/context-getx :catalogue-id-2)]
                                                                     "test-invite-reviewer"))
+    (btu/context-assoc! :external-id (-> (btu/context-getx :application-id)
+                                         (get-application-from-api "alice")
+                                         :application/external-id))
     (test-helpers/submit-application {:application-id (btu/context-getx :application-id)
                                       :actor "alice"}))
   (btu/with-postmortem
     (testing "handler adds existing reviewer"
       (login-as "developer")
       (go-to-application (btu/context-getx :application-id))
-      (is (btu/eventually-visible? {:tag :h1 :fn/has-text "test-invite-reviewer"}))
+      (wait-page-title (format "Application %s: test-invite-reviewer – REMS" (btu/context-getx :external-id)))
 
       (btu/scroll-and-click :request-review-dropdown)
       (is (btu/eventually-visible? :request-review-action-button))
@@ -1359,6 +1448,7 @@
     (testing "reviewer should see applicant non-private form answers"
       (login-as "carl")
       (go-to-application (btu/context-getx :application-id))
+      (wait-page-title (format "Application %s: test-invite-reviewer – REMS" (btu/context-getx :external-id)))
       (is (= (count (btu/query-all {:css ".fields"}))
              1))
       (is (= {"description" "test-invite-reviewer"}
@@ -1447,13 +1537,16 @@
     (btu/context-assoc! :application-id (test-helpers/create-draft! "alice"
                                                                     [(btu/context-getx :catalogue-id)]
                                                                     "test-approve-with-end-date"))
+    (btu/context-assoc! :external-id (-> (btu/context-getx :application-id)
+                                         (get-application-from-api "alice")
+                                         :application/external-id))
     (test-helpers/command! {:type :application.command/submit
                             :application-id (btu/context-getx :application-id)
                             :actor "alice"}))
   (btu/with-postmortem
     (login-as "developer")
     (btu/go (str (btu/get-server-url) "application/" (btu/context-getx :application-id)))
-    (is (btu/eventually-visible? {:tag :h1 :fn/has-text "test-approve-with-end-date"}))
+    (wait-page-title (format "Application %s: test-approve-with-end-date – REMS" (btu/context-getx :external-id)))
     (testing "approve"
       (btu/scroll-and-click :approve-reject-action-button)
       (is (btu/eventually-visible? :comment-approve-reject))
@@ -1477,7 +1570,7 @@
 (deftest test-guide-page
   (btu/with-postmortem
     (btu/go (str (btu/get-server-url) "guide"))
-    (is (btu/eventually-visible? {:tag :h1 :fn/text "Component Guide"}))
+    (wait-page-title "Component Guide – REMS")
     ;; if there is a js exception, nothing renders, so let's check
     ;; that we have lots of examples in the dom:
     (is (< 140 (count (btu/query-all {:class :example}))))))
@@ -1486,9 +1579,10 @@
   (btu/with-postmortem
     (testing "default language is English"
       (btu/go (btu/get-server-url))
+      ;; login page does not set header and document title the same, so we check only header element for now
       (is (btu/eventually-visible? {:tag :h1 :fn/text "Welcome to REMS"}))
       (login-as "alice")
-      (is (btu/eventually-visible? {:tag :h1 :fn/text "Catalogue"}))
+      (wait-page-title "Catalogue – REMS")
       (btu/wait-page-loaded))
 
     (testing "changing language while logged out"
@@ -1499,7 +1593,7 @@
 
     (testing "changed language must persist after login"
       (login-as "alice")
-      (is (btu/eventually-visible? {:tag :h1 :fn/text "Aineistoluettelo"}))
+      (wait-page-title "Aineistoluettelo – REMS")
       (btu/wait-page-loaded))
 
     (testing "wait for language change to show in the db"
@@ -1511,11 +1605,11 @@
       (is (btu/eventually-visible? {:tag :h1 :fn/text "Welcome to REMS"}))
       (btu/delete-cookies)
       (login-as "alice")
-      (is (btu/eventually-visible? {:tag :h1 :fn/text "Aineistoluettelo"})))
+      (wait-page-title "Aineistoluettelo – REMS"))
 
     (testing "changing language while logged in"
       (change-language :en)
-      (is (btu/eventually-visible? {:tag :h1 :fn/text "Catalogue"})))
+      (wait-page-title "Catalogue – REMS"))
 
     (user-settings/delete-user-settings! "alice"))) ; clear language settings
 
@@ -1550,7 +1644,7 @@
     (btu/with-postmortem
       (go-to-admin "Licenses")
       (btu/scroll-and-click :create-license)
-      (is (btu/eventually-visible? {:tag :h1 :fn/text "Create license"}))
+      (wait-page-title "Create license – REMS")
       (btu/wait-page-loaded)
       (select-option "Organization" "nbn")
       (btu/scroll-and-click :licensetype-link)
@@ -1562,7 +1656,7 @@
       (btu/fill-human :localizations-sv-link "https://www.csc.fi/home")
       (btu/screenshot "about-to-create-license")
       (btu/scroll-and-click :save)
-      (is (btu/eventually-visible? {:tag :h1 :fn/text "License"}))
+      (wait-page-title "License – REMS")
       (btu/wait-page-loaded)
       (btu/screenshot "created-license")
       (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
@@ -1577,7 +1671,7 @@
               "Active" true}
              (slurp-fields :license)))
       (go-to-admin "Licenses")
-      (is (btu/eventually-visible? {:tag :h1 :fn/text "Licenses"}))
+      (wait-page-title "Licenses – REMS")
       (is (some #{{"organization" "NBN"
                    "title" (str (btu/context-getx :license-name) " EN")
                    "type" "link"
@@ -1615,7 +1709,7 @@
     (btu/with-postmortem
       (go-to-admin "Resources")
       (btu/scroll-and-click :create-resource)
-      (is (btu/eventually-visible? {:tag :h1 :fn/text "Create resource"}))
+      (wait-page-title "Create resource – REMS")
       (btu/wait-page-loaded)
       (select-option "Organization" "nbn")
       (fill-form-field "Resource identifier" (btu/context-getx :resid))
@@ -1624,7 +1718,7 @@
       ;; (fill-form-field "Approved user(s)" "developers developers developers")
       (btu/screenshot "about-to-create-resource")
       (btu/scroll-and-click :save)
-      (is (btu/eventually-visible? {:tag :h1 :fn/text "Resource"}))
+      (wait-page-title "Resource – REMS")
       (btu/wait-page-loaded)
       (btu/screenshot "created-resource")
       (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
@@ -1643,7 +1737,7 @@
     (btu/with-postmortem
       (go-to-admin "Forms")
       (btu/scroll-and-click :create-form)
-      (is (btu/eventually-visible? {:tag :h1 :fn/text "Create form"}))
+      (wait-page-title "Create form – REMS")
       (btu/wait-page-loaded)
       (select-option "Organization" "nbn")
       (fill-form-field "Name" (btu/context-getx :form-name))
@@ -1653,7 +1747,7 @@
       ;; TODO: create fields
       (btu/screenshot "about-to-create-form")
       (btu/scroll-and-click :save)
-      (is (btu/eventually-visible? {:tag :h1 :fn/text "Form"}))
+      (wait-page-title "Form – REMS")
       (btu/wait-page-loaded)
       (btu/screenshot "created-form")
       (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
@@ -1673,7 +1767,7 @@
     (btu/with-postmortem
       (go-to-admin "Workflows")
       (btu/scroll-and-click :create-workflow)
-      (is (btu/eventually-visible? {:tag :h1 :fn/text "Create workflow"}))
+      (wait-page-title "Create workflow – REMS")
       (btu/wait-page-loaded)
       (select-option "Organization" "nbn")
       (fill-form-field "Title" (btu/context-getx :workflow-name))
@@ -1682,7 +1776,7 @@
       ;; No form
       (btu/screenshot "about-to-create-workflow")
       (btu/scroll-and-click :save)
-      (is (btu/eventually-visible? {:tag :h1 :fn/text "Workflow"}))
+      (wait-page-title "Workflow – REMS")
       (btu/wait-page-loaded)
       (btu/screenshot "created-workflow")
       (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
@@ -1725,7 +1819,7 @@
     (btu/with-postmortem
       (go-to-admin "Catalogue items")
       (btu/scroll-and-click :create-catalogue-item)
-      (is (btu/eventually-visible? {:tag :h1 :fn/text "Create catalogue item"}))
+      (wait-page-title "Create catalogue item – REMS")
       (btu/wait-page-loaded)
       (select-option "Organization" (btu/context-getx :organization-name))
       (fill-localized-form-field "Title" "EN" (btu/context-getx :catalogue-item-name))
@@ -1738,7 +1832,7 @@
       (select-option "Categories" (btu/context-getx :category-name))
       (btu/screenshot "about-to-create-catalogue-item")
       (btu/scroll-and-click :save)
-      (is (btu/eventually-visible? {:tag :h1 :fn/text "Catalogue item"}))
+      (wait-page-title "Catalogue item – REMS")
       (btu/wait-page-loaded)
       (btu/screenshot "created-catalogue-item")
       (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
@@ -1867,7 +1961,7 @@
     (btu/fill-human :infourl-en "http://google.com")
     (btu/screenshot "test-edit-catalogue-item-2")
     (btu/scroll-and-click :save)
-    (is (btu/eventually-visible? {:tag :h1 :fn/text "Catalogue item"}))
+    (wait-page-title "Catalogue item – REMS")
     (btu/wait-page-loaded)
     (is (= {"Organization" (str (btu/context-getx :organization-name) " en")
             "Title (EN)" "test-edit-catalogue-item EN"
@@ -1965,7 +2059,7 @@
       (btu/scroll-and-click {:fn/text "test-update-catalogue-item 3 EN"})
       (btu/wait-enabled {:tag :button :fn/text "Update catalogue item"})
       (btu/scroll-and-click {:fn/text "Update catalogue item"})
-      (is (btu/eventually-visible? {:tag :h1 :fn/text "Update catalogue item"})))
+      (wait-page-title "Update catalogue item – REMS"))
 
     (testing "initial state"
       (btu/screenshot "test-update-catalogue-item-initial-state")
@@ -2084,7 +2178,7 @@
 
     (testing "create form"
       (btu/scroll-and-click :create-form)
-      (is (btu/eventually-visible? {:tag :h1 :fn/text "Create form"}))
+      (wait-page-title "Create form – REMS")
       (select-option "Organization" "nbn")
       (fill-form-field "Name" "Form editor test")
       (fill-form-field "EN" "Form Editor Test (EN)")
@@ -2427,7 +2521,7 @@
       (btu/scroll-and-click :save))
 
     (testing "view form"
-      (is (btu/eventually-visible? {:tag :h1 :fn/text "Form"}))
+      (wait-page-title "Form – REMS")
       (btu/wait-page-loaded)
       (is (= {"Organization" "NBN"
               "Name" "Form editor test"
@@ -2475,9 +2569,9 @@
 
     (testing "edit form"
       (change-language :en)
-      (is (btu/eventually-visible? {:tag :h1 :fn/text "Form"}))
+      (wait-page-title "Form – REMS")
       (btu/scroll-and-click {:css ".edit-form"})
-      (is (btu/eventually-visible? {:tag :h1 :fn/text "Edit form"}))
+      (wait-page-title "Edit form – REMS")
 
       (testing "add description field"
         (create-context-field! :create-form-field/description {:insert-first true})
@@ -2490,12 +2584,12 @@
 
         (btu/scroll-and-click :save)
         (btu/wait-page-loaded)
-        (is (btu/eventually-visible? {:tag :h1 :fn/has-text "Form"}))
+        (wait-page-title "Form – REMS")
 
         (testing "check that error message is present on field empty"
           (btu/scroll-and-click {:css ".edit-form"})
           (btu/wait-page-loaded)
-          (is (btu/eventually-visible? {:tag :h1 :fn/text "Edit form"}))
+          (wait-page-title "Edit form – REMS")
 
           (let [id (field-id :create-form-field/description)]
             (btu/scroll-and-click {:id (str "field-editor-" id "-collapse-more-link")}))
@@ -2510,7 +2604,7 @@
           (btu/scroll-and-click :save)
 
           (btu/wait-page-loaded)
-          (is (btu/eventually-visible? {:tag :h1 :fn/has-text "Edit form"}))
+          (wait-page-title "Edit form – REMS")
           (is (btu/visible? {:id (field-selector 0 :info-text-sv) :fn/has-class :is-invalid}))
           ;; :fn/has-text has trouble working for the whole "Field \"Field description (optional)\" is required." string
           (is (btu/visible? {:fn/has-class :invalid-feedback :fn/has-text "Field description (optional)"}))
@@ -2521,7 +2615,7 @@
           (btu/fill-human (field-selector 0 :info-text-sv) "Info text (SV)")
           (btu/scroll-and-click :save)
           (btu/wait-page-loaded)
-          (is (btu/eventually-visible? {:tag :h1 :fn/has-text "Form"}))))
+          (wait-page-title "Form – REMS")))
 
       (testing "fetch form via api"
         (let [form-id (Integer/parseInt (last (str/split (btu/get-url) #"/")))]
@@ -2641,7 +2735,7 @@
 
     (testing "create form"
       (btu/scroll-and-click :create-form)
-      (is (btu/eventually-visible? {:tag :h1 :fn/text "Create form"}))
+      (wait-page-title "Create form – REMS")
       (select-option "Organization" "nbn")
       (fill-form-field "Name" "Conditional field test")
       (fill-form-field "EN" "Conditional field test (EN)")
@@ -2725,7 +2819,7 @@
         (btu/fill :fields-3-visibility-value "Z\n"))
 
       (btu/scroll-and-click :save)
-      (is (btu/eventually-visible? {:tag :h1 :fn/text "Form"}))
+      (wait-page-title "Form – REMS")
       (btu/context-assoc! :form-id (Integer/parseInt (last (str/split (btu/get-url) #"/")))))
 
     (testing "fetch form via api"
@@ -2779,13 +2873,16 @@
     (testing "create catalogue item and application"
       (btu/context-assoc! :catalogue-id (test-helpers/create-catalogue-item! {:form-id (btu/context-getx :form-id)}))
       (btu/context-assoc! :application-id (test-helpers/create-application! {:actor "alice"
-                                                                             :catalogue-item-ids [(btu/context-getx :catalogue-id)]})))
+                                                                             :catalogue-item-ids [(btu/context-getx :catalogue-id)]}))
+      (btu/context-assoc! :external-id (-> (btu/context-getx :application-id)
+                                           (get-application-from-api "alice")
+                                           :application/external-id)))
 
     (testing "fill in application"
       (logout)
       (login-as "alice")
       (go-to-application (btu/context-getx :application-id))
-      (is (btu/eventually-visible? {:tag :h1 :fn/has-text "Application"}))
+      (wait-page-title (format "Application %s – REMS" (btu/context-getx :external-id)))
       (is (btu/field-visible? "Option (EN)"))
       (is (btu/field-visible? "Multiselect (EN)"))
 
@@ -2793,6 +2890,7 @@
         (is (not (btu/field-visible? "Text (EN)")))
         (select-option "Option (EN)" "Yes")
         (is (btu/eventually-visible? {:fn/has-text "Text (EN)"}))
+        (Thread/sleep 1000) ; XXX: idle callback is not enough due to dropdown lagging?
         (select-option "Option (EN)" "No")
         (is (btu/eventually-invisible? {:fn/has-text "Text (EN)"})))
 
@@ -2817,7 +2915,7 @@
     (testing "create workflow"
       (btu/context-assoc! :workflow-title (str "test-workflow-create-edit " (btu/get-seed)))
       (btu/scroll-and-click :create-workflow)
-      (is (btu/eventually-visible? {:tag :h1 :fn/text "Create workflow"}))
+      (wait-page-title "Create workflow – REMS")
       (btu/wait-page-loaded)
       (select-option "Organization" "nbn")
       (fill-form-field "Title" (btu/context-getx :workflow-title))
@@ -2832,7 +2930,7 @@
       (btu/screenshot "test-workflow-create-edit-1")
       (btu/scroll-and-click :save))
     (testing "view workflow"
-      (is (btu/eventually-visible? {:tag :h1 :fn/text "Workflow"}))
+      (wait-page-title "Workflow – REMS")
       (btu/wait-page-loaded)
       (btu/screenshot "test-workflow-create-edit-2")
       (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
@@ -2846,7 +2944,7 @@
              (slurp-fields :workflow-common-fields))))
     (testing "edit workflow"
       (btu/scroll-and-click {:css ".edit-workflow"})
-      (is (btu/eventually-visible? {:tag :h1 :fn/text "Edit workflow"}))
+      (wait-page-title "Edit workflow – REMS")
       (btu/wait-page-loaded)
       (btu/screenshot "test-workflow-create-edit-3")
       (select-option "Organization" "Default")
@@ -2859,7 +2957,7 @@
       (btu/screenshot "test-workflow-create-edit-4")
       (btu/scroll-and-click :save))
     (testing "view workflow again"
-      (is (btu/eventually-visible? {:tag :h1 :fn/text "Workflow"}))
+      (wait-page-title "Workflow – REMS")
       (btu/wait-page-loaded)
       (btu/screenshot "test-workflow-create-edit-5")
       (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
@@ -2883,7 +2981,7 @@
       (go-to-admin "Resources")
       (click-row-action [:resources] {:fn/text "blacklist-test"}
                         (select-button-by-label "View"))
-      (is (btu/eventually-visible? {:tag :h1 :fn/text "Resource"}))
+      (wait-page-title "Resource – REMS")
       (btu/wait-page-loaded)
       (is (btu/eventually-visible? :blacklist))
       (is (= [] (slurp-rows :blacklist)))
@@ -2905,7 +3003,7 @@
              (mapv #(dissoc % "added-at") (slurp-rows :blacklist)))))
     (testing "check entry on blacklist page"
       (go-to-admin "Blacklist")
-      (is (btu/eventually-visible? {:tag :h1 :fn/text "Blacklist"}))
+      (wait-page-title "Blacklist – REMS")
       (btu/wait-page-loaded)
       (is (btu/eventually-visible? :blacklist))
       (is (= [{"resource" "blacklist-test"
@@ -3215,11 +3313,11 @@
     (btu/gather-axe-results "small-navbar")
     (btu/scroll-and-click [:small-navbar {:tag :a :fn/text "Applications"}])
     (btu/wait-invisible :small-navbar) ; menu should be hidden
-    (is (btu/eventually-visible? {:tag :h1 :fn/text "Applications"}))
+    (wait-page-title "Applications – REMS")
     (btu/scroll-and-click {:css ".navbar-toggler"})
     (btu/scroll-and-click [:small-navbar {:tag :button :fn/text "FI"}])
     (btu/wait-invisible :small-navbar) ; menu should be hidden
-    (is (btu/eventually-visible? {:tag :h1 :fn/text "Hakemukset"}))
+    (wait-page-title "Hakemukset – REMS")
     (user-settings/delete-user-settings! "alice"))) ; clear language settings
 
 (defn slurp-categories-by-title []
@@ -3373,7 +3471,7 @@
 
       ;; must reload to see
       (btu/reload)
-      (btu/wait-visible {:tag :h1 :fn/text "Catalogue"})
+      (wait-page-title "Catalogue – REMS")
       (btu/wait-page-loaded)
 
       (btu/screenshot "after-reloading")
@@ -3414,10 +3512,9 @@
       (testing "external link"
         (with-change-language :en
           (go-to-admin "Licenses")
-          (is (btu/eventually-visible? {:tag :h1 :fn/has-text "Licenses"}))
           (btu/scroll-and-click :create-license)
           (btu/screenshot "before-filling-external-links-en")
-          (is (btu/eventually-visible? {:tag :h1 :fn/text "Create license"}))
+          (wait-page-title "Create license – REMS")
           (select-option "Organization" "NBN")
           (fill-license-fields {:title "E2E license with external links"
                                 :external-links {:en "http://www.google.com"
@@ -3429,7 +3526,7 @@
           (is (not (btu/disabled? :save)))
           (btu/scroll-and-click :save)
           (btu/screenshot "after-saving-external-links-en")
-          (is (btu/eventually-visible? {:tag :h1 :fn/text "License"}))
+          (wait-page-title "License – REMS")
           (is (= {"Organization" "NBN"
                   "Title (EN)" "E2E license with external links (EN)"
                   "Title (FI)" "E2E license with external links (FI)"
@@ -3443,10 +3540,10 @@
       (testing "inline text"
         (go-to-admin "Licenses")
         (with-change-language :fi
-          (is (btu/eventually-visible? {:tag :h1 :fn/has-text "Lisenssit"}))
+          (wait-page-title "Lisenssit – REMS")
           (btu/scroll-and-click :create-license)
           (btu/screenshot "before-filling-inline-text-fi")
-          (is (btu/eventually-visible? {:tag :h1 :fn/text "Uusi lisenssi"}))
+          (wait-page-title "Uusi lisenssi – REMS")
           (select-option "Organisaatio" "NBN")
           (fill-license-fields {:inline-text "Inline text lorem ipsum"})
           (btu/screenshot "saving-disabled-inline-text-fi")
@@ -3455,7 +3552,7 @@
           (is (not (btu/disabled? :save)))
           (btu/scroll-and-click :save)
           (btu/screenshot "after-saving-inline-text-fi")
-          (is (btu/eventually-visible? {:tag :h1 :fn/text "Lisenssi"}))
+          (wait-page-title "Lisenssi – REMS")
           (is (= {"Organisaatio" "NBN"
                   "Nimi (EN)" "E2E license with inline text (EN)"
                   "Nimi (FI)" "E2E license with inline text (FI)"
@@ -3469,17 +3566,17 @@
       (testing "attachment"
         (go-to-admin "Licenses")
         (with-change-language :sv
-          (is (btu/eventually-visible? {:tag :h1 :fn/has-text "Licenser"}))
+          (wait-page-title "Licenser – REMS")
           (btu/scroll-and-click :create-license)
           (btu/screenshot "before-filling-attachments-sv")
-          (is (btu/eventually-visible? {:tag :h1 :fn/text "Ny licens"}))
+          (wait-page-title "Ny licens – REMS")
           (select-option "Organisation" "NBN")
           (fill-license-fields {:title "E2E license with attachments"
                                 :attachments true
                                 :attachment-load-text "\nLadda ner fil"})
           (btu/scroll-and-click :save)
           (btu/screenshot "after-saving-attachments-sv")
-          (is (btu/eventually-visible? {:tag :h1 :fn/text "Licens"}))
+          (wait-page-title "Licens – REMS")
           (is (= {"Organisation" "NBN"
                   "Namn (EN)" "E2E license with attachments (EN)"
                   "Namn (FI)" "E2E license with attachments (FI)"
@@ -3499,20 +3596,20 @@
       (testing "extra page in menu"
         (is (btu/eventually-visible? [:big-navbar {:tag :a :fn/has-text "About"}]))
         (btu/scroll-and-click [:big-navbar {:tag :a :fn/has-text "About"}])
-        (is (btu/eventually-visible? {:css "h1" :fn/has-text "About"}))
+        (wait-page-title "About – REMS")
         (is (btu/eventually-visible? {:css ".document" :fn/has-text "This is a dummy About page for REMS."})))
 
       (testing "extra page in footer"
         (is (btu/eventually-visible? [{:css ".footer"} {:tag :a :fn/has-text "Footer"}]))
         (btu/scroll-and-click [{:css ".footer"} {:tag :a :fn/has-text "Footer"}])
-        (is (btu/eventually-visible? {:css "h1" :fn/has-text "Footer"}))
+        (wait-page-title "Footer – REMS")
         (is (btu/eventually-visible? {:css ".document" :fn/has-text "This is a dummy footer page for REMS."})))
 
       (testing "extra page in link"
         (is (not (btu/visible? [:big-navbar {:tag :a :fn/has-text "Link"}])))
         (is (not (btu/visible? [{:css ".footer"} {:tag :a :fn/has-text "Link"}])))
         (btu/go (str (btu/get-server-url) "extra-pages/link"))
-        (is (btu/eventually-visible? {:css "h1" :fn/has-text "Link"}))
+        (wait-page-title "Link – REMS")
         (is (btu/eventually-visible? {:css ".document" :fn/has-text "This is a dummy extra page for REMS that can only be shown with a direct link."}))))
 
     (testing "localizations"
@@ -3524,7 +3621,7 @@
         (testing "markdown content"
           (is (btu/eventually-visible? [{:css ".footer"} {:tag :a :fn/has-text "Footer"}]))
           (btu/scroll-and-click [{:css ".footer"} {:tag :a :fn/has-text "Footer"}])
-          (is (btu/eventually-visible? {:css "h1" :fn/has-text "Footer"}))
+          (wait-page-title "Footer – REMS")
           (is (btu/eventually-visible? {:css ".document" :fn/has-text "Tämä on REMSin footer sivun tynkä."})))
 
         (testing "link content"
@@ -3538,7 +3635,9 @@
 
         (testing "mixed markdown content"
           (btu/go (str (btu/get-server-url) "extra-pages/mixed"))
-          (is (btu/eventually-visible? {:css "h1" :fn/has-text "Tämä otsikko on Markdown-tiedostosta"}))
+          ;; mixed page has disabled heading config, so document title and header are different
+          (is (btu/eventually-visible? {:tag :h1 :fn/text "Tämä otsikko on Markdown-tiedostosta"}))
+          (is (= "Mixed – REMS" (btu/get-title)))
           (is (btu/eventually-visible? {:css ".document" :fn/has-text "Tämä on REMSin info-sivun tynkä, jossa muilla kielillä käytetään linkkiä."}))))
 
       (testing "fallback"
@@ -3550,7 +3649,7 @@
           (testing "markdown content"
             (is (btu/eventually-visible? [{:css ".footer"} {:tag :a :fn/has-text "Footer"}]))
             (btu/scroll-and-click [{:css ".footer"} {:tag :a :fn/has-text "Footer"}])
-            (is (btu/eventually-visible? {:css "h1" :fn/has-text "Footer"}))
+            (wait-page-title "Footer – REMS")
             (is (btu/eventually-visible? {:css ".document" :fn/has-text "This is a dummy footer page for REMS."})))
 
           (testing "link content"
@@ -3564,6 +3663,9 @@
 
           (testing "mixed link content"
             (btu/go (str (btu/get-server-url) "extra-pages/mixed"))
+            ;; no header, only default translation in document title
+            (is (not (btu/visible? {:tag :h1})))
+            (is (= "REMS" (btu/get-title)))
             (is (btu/eventually-visible? {:tag :a :fn/has-text "https://example.org/en/mixed"}))))
 
         (btu/go (btu/get-server-url))
@@ -3573,7 +3675,7 @@
 
           (testing "mixed missing content"
             (btu/go (str (btu/get-server-url) "extra-pages/mixed"))
-            (is (btu/eventually-visible? {:css "h1" :fn/has-text "Sidan hittades inte"}))
+            (wait-page-title "Sidan hittades inte – REMS")
             (is (btu/eventually-visible? {:tag :p :fn/has-text "Denna sida hittades inte."})))))
 
       (change-language :en)

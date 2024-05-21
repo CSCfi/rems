@@ -221,6 +221,12 @@
                                          (into [:<>] (interpose ", ") forms)
                                          (text :t.administration/no-forms))}]))
 
+(defn- localize-org-short [x]
+  (when-let [org-short (get-in x [:organization :organization/short-name])]
+    (text-format :t.label/default
+                 (text :t.administration/org)
+                 (localized org-short))))
+
 (defn- workflow-forms []
   (let [id "workflow-forms"
         editing? @(rf/subscribe [::editing?])]
@@ -245,11 +251,7 @@
          :items (->> all-forms
                      (filter :enabled)
                      (remove :archived)
-                     (mapv (fn [form]
-                             (assoc form ::label (let [org-short (localized (get-in form [:organization :organization/short-name]))]
-                                                   (text-format :t.label/parens
-                                                                (:form/internal-name form)
-                                                                (text-format :t.label/default (text :t.administration/org) org-short)))))))
+                     (mapv #(assoc % ::label (text-format :t.label/parens (:form/internal-name %) (localize-org-short %)))))
          :item-key :form/id
          :item-label ::label
          :item-selected? #(contains? (set selected-forms) (:form/id %))
@@ -291,12 +293,9 @@
        [dropdown/dropdown
         {:id id
          :items (->> @(rf/subscribe [::licenses])
-                     (mapv (fn [license]
-                             (assoc license ::label (let [title (:title (localized (:localizations license)))
-                                                          org-short (localized (get-in license [:organization :organization/short-name]))]
-                                                      (text-format :t.label/parens
-                                                                   title
-                                                                   (text-format :t.label/default (text :t.administration/org) org-short)))))))
+                     (mapv #(assoc % ::label (text-format :t.label/parens
+                                                          (:title (localized (:localizations %)))
+                                                          (localize-org-short %)))))
          :item-key :id
          :item-label ::label
          :item-selected? #(contains? selected-ids (:id %))
@@ -362,10 +361,12 @@
      [dropdown/dropdown
       {:id id
        :items (->> (sort commands)
-                   (remove technical-commands))
-       :item-label #(text-format :t.label/parens (localize-command %) (name %))
-       :item-selected? #(= value %)
-       :on-change on-change}]]))
+                   (remove technical-commands)
+                   (mapv #(do {::value %
+                               ::label (text-format :t.label/parens (localize-command %) (name %))})))
+       :item-label ::label
+       :item-selected? #(= value (::value %))
+       :on-change (comp on-change ::value)}]]))
 
 (defn- select-application-states [{:keys [index
                                           on-change
@@ -376,12 +377,14 @@
       (text :t.administration/application-state)]
      [dropdown/dropdown
       {:id id
-       :items application-util/states
-       :item-label #(text-format :t.label/parens (localize-state %) (name %))
-       :item-selected? #(contains? (set value) %)
+       :items (->> application-util/states
+                   (mapv #(do {::value %
+                               ::label (text-format :t.label/parens (localize-state %) (name %))})))
+       :item-label ::label
+       :item-selected? #(contains? (set value) (::value %))
        :placeholder (text :t.dropdown/placeholder-any-selection)
        :multi? true
-       :on-change on-change}]]))
+       :on-change (comp on-change (partial mapv ::value))}]]))
 
 (defn- select-user-roles [{:keys [index
                                   on-change
@@ -398,12 +401,14 @@
       (text :t.administration/user-role)]
      [dropdown/dropdown
       {:id id
-       :items (concat applicant-roles expert-roles technical-roles)
-       :item-label #(text-format :t.label/parens (localize-dropdown-role %) (name %))
-       :item-selected? #(contains? (set value) %)
+       :items (->> (concat applicant-roles expert-roles technical-roles)
+                   (mapv #(do {::value %
+                               ::label (text-format :t.label/parens (localize-dropdown-role %) (name %))})))
+       :item-label ::label
+       :item-selected? #(contains? (set value) (::value %))
        :placeholder (text :t.dropdown/placeholder-any-selection)
        :multi? true
-       :on-change on-change}]]))
+       :on-change (comp on-change (partial mapv ::value))}]]))
 
 (defn- workflow-disable-commands []
   (let [id "disable-commands"]

@@ -6,7 +6,7 @@
 (defn big
   "Big spinner for indicating loading or in-progress state."
   []
-  (let [theme @(rf/subscribe [:theme])]
+  (let [theme @(rf/subscribe [:rems.theme/theme])]
     [:div.text-center
      [:i {:style {:display :inline-block
                   :color (:color2 theme :transparent)

@@ -7,7 +7,8 @@
             [rems.common.roles :as roles]
             [rems.guide-util :refer [component-info example]]
             [rems.language-switcher :refer [language-switcher]]
-            [rems.text :refer [text]]))
+            [rems.text :refer [text]]
+            [rems.theme]))
 
 (defn- nav-link-impl [{:keys [path title active? aria-label]}]
   [atoms/link
@@ -97,18 +98,16 @@
      [language-switcher]]))
 
 (defn navbar-normal [identity]
-  (let [theme @(rf/subscribe [:theme])
-        lang @(rf/subscribe [:language])]
-    [:nav.navbar-flex {:aria-label (text :t.navigation/navigation)}
-     [:div.navbar.navbar-expand-sm.flex-fill
-      [:button.navbar-toggler
-       {:type :button :data-toggle "collapse" :data-target "#small-navbar"}
-       "\u2630"]
-      (when (or ((keyword (str "navbar-logo-name-" (name lang))) theme)
-                (:navbar-logo-name theme))
-        [atoms/logo-navigation])
-      [navbar-items :div#big-navbar.collapse.navbar-collapse.mr-3 {} identity]]
-     [:div.navbar [user-widget (:user identity)]]]))
+  [:nav.navbar-flex {:aria-label (text :t.navigation/navigation)}
+   [:div.navbar.navbar-expand-sm.flex-fill
+    [:button.navbar-toggler
+     {:type :button :data-toggle "collapse" :data-target "#small-navbar"}
+     "\u2630"]
+    (when (rems.theme/use-navbar-logo?)
+      [:div.navbar-brand.logo-menu
+       [:div.img]])
+    [navbar-items :div#big-navbar.collapse.navbar-collapse.mr-3 {} identity]]
+   [:div.navbar [user-widget (:user identity)]]])
 
 (defn navbar-small [user]
   [navbar-items :nav#small-navbar.collapse.navbar-collapse.hidden-md-up {:aria-label (text :t.navigation/navigation-small)} user])
