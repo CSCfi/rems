@@ -91,6 +91,34 @@
                       :params {:behavior "allow"
                                :downloadPath (.getAbsolutePath (:download-dir @test-context))}}}))
 
+(defn- reset-window-size!
+  "Sets window size big enough to show the whole page in the screenshots."
+  [driver]
+  (et/set-window-size driver 1400 7000))
+
+(defn- init-session! [driver]
+  (doto driver
+    (enable-downloads!)
+    (reset-window-size!)))
+
+(def ^:private driver-defaults
+  {:args ["--lang=en-US"]
+   :prefs {:intl.accept_languages "en-US"
+           :download.directory_upgrade true
+           :safebrowsing.enabled false
+           :safebrowsing.disable_download_protection true}})
+
+(defn- get-driver-config [mode]
+  (let [non-headless? (= "0"
+                         (get (System/getenv) "HEADLESS"))
+        dev? (= :development mode)]
+    (assoc driver-defaults
+           :download-dir (.getAbsolutePath (:download-dir @test-context))
+           :headless (cond
+                       non-headless? false
+                       dev? false
+                       :else true))))
+
 ;; TODO these could use more of our wrapped fns if we reordered
 (defn init-driver!
   "Starts and initializes a driver. Also stops an existing driver.
@@ -101,34 +129,30 @@
 
    Uses a non-headless browser if the environment variable HEADLESS is set to 0"
   [& [browser-id url mode]]
-  (when (get-driver) (try (et/quit (get-driver)) (catch Exception e)))
+  (when (get-driver)
+    (try
+      (et/quit (get-driver))
+      (catch Exception e)))
   (swap! test-context
          assoc-some
          :driver (et/with-wait-timeout 60
-                   (et/boot-driver browser-id
-                                   {:args ["--lang=en-US"]
-                                    :prefs {:intl.accept_languages "en-US"
-                                            :download.directory_upgrade true
-                                            :safebrowsing.enabled false
-                                            :safebrowsing.disable_download_protection true}
-                                    :download-dir (.getAbsolutePath (:download-dir @test-context))
-                                    :headless (not (or (= "0" (get (System/getenv) "HEADLESS"))
-                                                       (= :development mode)))}))
+                   (-> browser-id
+                       (et/boot-driver (get-driver-config mode))
+                       (init-session!)))
          :url url
          :mode mode
-         :seed (random-seed))
-  (enable-downloads! (get-driver)))
+         :seed (random-seed)))
 
 (defn refresh-driver!
-  "Refreshes an existing driver, cleans up and sets default values."
+  "Re-creates session on an existing driver and sets default values."
   []
   (assert (get-driver) "must have initialized driver already!")
-  ;; start with a clean slate
-  (et/delete-cookies (get-driver))
-  ;; big enough to show the whole page in the screenshots
-  (et/set-window-size (get-driver) 1400 7000))
 
-(defn fixture-init-driver
+  (doto (get-driver)
+    (et/delete-session)
+    (et/create-session)
+    (init-session!)))
+
 (defn init-driver-fixture
   "Executes a test running a fresh driver except when in development."
   [f]
@@ -271,6 +295,7 @@
     (test-helpers/submit-application {:application-id app-id
                                       :actor "applicant"}))
   (f))
+
 (defn test-dev-or-standalone-fixture
   "Depending on if we are trying to develop browser tests or
   run them for real, we use an existing server and db or
