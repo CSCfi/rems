@@ -48,7 +48,7 @@
   (when @roles/logged-in?
     (fetch "/api/user-settings"
            {:custom-error-handler? true
-            :handler #(rf/dispatch-sync [:rems.user-settings/loaded-user-settings %])
+            :handler #(rf/dispatch-sync [::loaded-user-settings %])
             :error-handler #(flash-message/show-default-error! :top (str "Fetch user settings"))})))
 
 (defn save-user-language! [lang]
@@ -66,7 +66,7 @@
            :error-handler (flash-message/default-error-handler :top "Update user settings")})))
 
 (rf/reg-event-fx
- :rems.user-settings/loaded-user-settings
+ ::loaded-user-settings
  (fn [{:keys [db]} [_ user-settings]]
    (b/cond
      :when (not (:user-settings db)) ; first time loading user settings

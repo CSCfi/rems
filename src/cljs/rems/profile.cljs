@@ -21,7 +21,7 @@
   ;; select only the keys that can be edited on this page
   (rf/dispatch [::set-form (select-keys result [:notification-email])])
   ;; update user settings in SPA state after user has changed them
-  (rf/dispatch [:loaded-user-settings result]))
+  (rf/dispatch [:rems.user-settings/loaded-user-settings result]))
 
 (fetcher/reg-fetcher ::user-settings "/api/user-settings" {:on-success fetch-user-settings-success})
 
