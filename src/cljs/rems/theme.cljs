@@ -4,7 +4,7 @@
 
 (defn use-navbar-logo? []
   (let [theme @rems.globals/theme
-        lang (some-> @rems.config/language-or-default name)
+        lang (some-> @rems.config/current-language name)
         navbar-logo (or (get theme (keyword (str "navbar-logo-name-" lang)))
                         (get theme :navbar-logo-name))]
     (some? navbar-logo)))

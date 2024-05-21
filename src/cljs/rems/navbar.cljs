@@ -59,7 +59,7 @@
        [:span.icon-description (text :t.navigation/logout)]]]]))
 
 (defn- extra-page-link [page]
-  (let [lang @rems.config/language-or-default
+  (let [lang @rems.config/current-language
         url (or (get-in page [:translations lang :url])
                 (page :url)
                 (str "/extra-pages/" (page :id)))

@@ -419,7 +419,7 @@
                          :class (:id tree)}
       [:thead
        [tree-header tree]]
-      [:tbody {:key @rems.config/language-or-default} ; performance optimization: rebuild instead of update existing components
+      [:tbody {:key @rems.config/current-language} ; performance optimization: rebuild instead of update existing components
        (for [row rows]
          ^{:key (:react-key row)} ; row key can be duplicated because it's a DAG
          [tree-row row tree])]]]))

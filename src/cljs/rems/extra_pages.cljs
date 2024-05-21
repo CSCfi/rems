@@ -41,7 +41,7 @@
 
 (defn extra-pages []
   (let [page-config @(rf/subscribe [::page])
-        language @rems.config/language-or-default
+        language @rems.config/current-language
         title (get-in page-config [:translations language :title])
         heading? (get page-config :heading true)]
     [:div

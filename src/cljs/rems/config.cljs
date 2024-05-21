@@ -7,7 +7,7 @@
 
 ;; config
 
-(def language-or-default
+(def current-language
   "Current user language, or default language from config."
   (r/reaction
    (or @rems.globals/language
@@ -37,7 +37,7 @@
  :organizations
  :<- [:organization-by-id]
  (fn [organization-by-id]
-   (sort-by (comp @rems.config/language-or-default :organization/name) (vals organization-by-id))))
+   (sort-by (comp @rems.config/current-language :organization/name) (vals organization-by-id))))
 
 (rf/reg-sub
  :owned-organizations

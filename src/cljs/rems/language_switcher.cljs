@@ -20,7 +20,7 @@
               (let [lang-str (str/upper-case (name language))]
                 [:form.inline
                  [:button {:type :button
-                           :class (lang-link-classes @rems.config/language-or-default language)
+                           :class (lang-link-classes @rems.config/current-language language)
                            :on-click #(rems.user-settings/save-user-language! language)
                            :aria-label (text-format :t.navigation/change-language lang-str)
                            :data-toggle "collapse"

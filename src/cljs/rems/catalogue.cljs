@@ -47,7 +47,7 @@
 ;;;; UI
 
 (defn- catalogue-item-more-info [item]
-  (let [link (catalogue-item-more-info-url item @rems.config/language-or-default @rems.globals/config)]
+  (let [link (catalogue-item-more-info-url item @rems.config/current-language @rems.globals/config)]
     (when link
       [:a.btn.btn-link
        {:href link
@@ -112,7 +112,7 @@
                    :default-sort-column :name}])
 
 (defn- catalogue-tree []
-  (let [language @rems.config/language-or-default
+  (let [language @rems.config/current-language
         cart @(rf/subscribe [:rems.cart/cart])
         cart-item-ids (set (map :id cart))
         catalogue {:id ::catalogue-tree

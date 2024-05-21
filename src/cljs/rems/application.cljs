@@ -489,7 +489,7 @@
   (let [title (localized (:license/title license))
         link (str "/applications/" (:application/id application)
                   "/license-attachment/" (:license/id license)
-                  "/" (name @rems.config/language-or-default))]
+                  "/" (name @rems.config/current-language))]
     [:a.license-title {:href link :target :_blank}
      title " " [file-download]]))
 
@@ -1091,7 +1091,7 @@
 (defn- render-resource [resource]
   (let [config @rems.globals/config
         duos (get-in resource [:resource/duo :duo/codes])
-        language @rems.config/language-or-default
+        language @rems.config/current-language
         resource-header [:p
                          (localized (:catalogue-item/title resource))
                          (when-let [url (catalogue-item-more-info-url resource language config)]

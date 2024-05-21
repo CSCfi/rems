@@ -39,7 +39,7 @@
                            [k :t/missing]
                            args)
      :cljs (rems.tempura/tr @rems.globals/translations
-                            @rems.config/language-or-default
+                            @rems.config/current-language
                             [k :t/missing (failsafe-fallback k args)]
                             args)))
 
@@ -65,7 +65,7 @@
                            ks)
      :cljs (try
              (rems.tempura/tr @rems.globals/translations
-                              @rems.config/language-or-default
+                              @rems.config/current-language
                               ks)
              (catch js/Object e
                ;; fail gracefully if the re-frame state is incomplete
@@ -83,7 +83,7 @@
      ;; we can both call this as function or use as a React component
      :cljs (try
              (rems.tempura/tr @rems.globals/translations
-                              @rems.config/language-or-default
+                              @rems.config/current-language
                               (conj (vec ks) (text-format :t/missing (vec ks))))
              (catch js/Object e
                ;; fail gracefully if the re-frame state is incomplete
@@ -92,14 +92,14 @@
 
 (defn localized [m]
   (let [lang #?(:clj context/*lang*
-                :cljs @rems.config/language-or-default)]
+                :cljs @rems.config/current-language)]
     (or (get m lang)
         (first (vals m)))))
 
 ;; TODO: replace usages of `get-localized-title` with `localized`
 (defn get-localized-title [item]
   (let [lang #?(:clj context/*lang*
-                :cljs @rems.config/language-or-default)]
+                :cljs @rems.config/current-language)]
     (or (get-in item [:localizations lang :title])
         (:title (first (vals (get item :localizations)))))))
 

@@ -470,7 +470,7 @@
                          :class (:id table)}
       [:thead
        [table-header table]]
-      [:tbody {:key @rems.config/language-or-default} ; performance optimization: rebuild instead of update existing components
+      [:tbody {:key @rems.config/current-language} ; performance optimization: rebuild instead of update existing components
        (for [row rows]
          ^{:key (:key row)} [table-row row table columns])]]]))
 
