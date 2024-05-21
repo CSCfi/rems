@@ -56,11 +56,14 @@
  (fn [db [_ organizations]]
    (assoc db :organization-by-id (index-by [:organization/id] organizations))))
 
-(defn fetch-organizations! [{on-error :error-handler}]
+(defn fetch-organizations! []
   (fetch "/api/organizations"
          {:params {:disabled true :archived true}
           :handler #(rf/dispatch-sync [:loaded-organizations %])
-          :error-handler on-error}))
+          :error-handler (fn [response]
+                           (rf/dispatch-sync [:rems.flash-message/show-response-error
+                                              :top "Fetch organizations" response])
+                           response)}))
 
 (rf/reg-sub
  :handled-organizations
@@ -72,7 +75,10 @@
  (fn [db [_ organizations]]
    (assoc db :handled-organizations organizations)))
 
-(defn fetch-handled-organizations! [{on-error :error-handler}]
+(defn fetch-handled-organizations! []
   (fetch "/api/organizations/handled"
          {:handler #(rf/dispatch-sync [:loaded-handled-organizations %])
-          :error-handler on-error}))
+          :error-handler (fn [response]
+                           (rf/dispatch-sync [:rems.flash-message/show-response-error
+                                              :top "Fetch handled organizations" response])
+                           response)}))

@@ -106,7 +106,7 @@
      (post! "/api/organizations/create"
             {:params request
              :handler (flash-message/default-success-handler
-                       :top description #(do (rems.config/fetch-organizations! {:error-handler (flash-message/default-error-handler :top "Fetch organizations")})
+                       :top description #(do (rems.config/fetch-organizations!)
                                              (navigate! (str "/administration/organizations/" (:organization/id %)))))
              :error-handler (flash-message/default-error-handler :top description)}))
    {}))
@@ -118,7 +118,7 @@
      (put! "/api/organizations/edit"
            {:params request
             :handler (flash-message/default-success-handler
-                      :top description #(do (rems.config/fetch-organizations! {:error-handler (flash-message/default-error-handler :top "Fetch organizations")})
+                      :top description #(do (rems.config/fetch-organizations!)
                                             (navigate! (str "/administration/organizations/" (:organization/id %)))))
             :error-handler (flash-message/default-error-handler :top description)}))
    {}))

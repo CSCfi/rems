@@ -610,7 +610,7 @@
   []
   (when (and (empty? @(rf/subscribe [:organizations]))
              @rems.globals/user)
-    (rems.config/fetch-organizations! {:error-handler (flash-message/default-error-handler :top "Fetch organizations")})))
+    (rems.config/fetch-organizations!)))
 
 (defn- grab-focus!
   "Helper that sets focus on prominent header element when user navigates to new page."

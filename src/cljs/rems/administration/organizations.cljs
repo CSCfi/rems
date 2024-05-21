@@ -26,7 +26,7 @@
      ;; Refresh :organizations subscription. We do this here
      ;; since it would be surprising if an organization was visible on
      ;; this page but not selectable e.g. when creating a resource.
-     (rems.config/fetch-organizations! {:error-handler (flash-message/default-error-handler :top "Fetch organizations")})
+     (rems.config/fetch-organizations!)
      ;; Fetch the organizations for our display on this page:
      (fetch "/api/organizations"
             {:url-params {:disabled true
