@@ -7,15 +7,9 @@
             [rems.config]
             [rems.db.user-settings :as user-settings]
             [rems.email.template :as template]
-            [rems.locales]))
-
-(defn empty-footer [f]
-  (with-redefs [rems.locales/translations (assoc-in rems.locales/translations [:en :t :email :footer] "")]
-    (f)))
-
-(defn empty-signature [f]
-  (with-redefs [rems.locales/translations (assoc-in rems.locales/translations [:en :t :email :regards] "")]
-    (f)))
+            [rems.locales]
+            [rems.text]
+            [rems.testing-util :refer [with-translations]]))
 
 (use-fixtures
   :once
@@ -27,8 +21,11 @@
 
 (use-fixtures
   :each
-  empty-signature
-  empty-footer)
+  (fn [f]
+    (with-translations (-> rems.locales/translations
+                           (update-vals #(assoc-in % [:t :email :footer] ""))
+                           (update-vals #(assoc-in % [:t :email :regards] "")))
+      (f))))
 
 (def ^:private get-catalogue-item
   {10 {:localizations {:en {:langcode :en
@@ -473,14 +470,13 @@
 
 (deftest test-finnish-emails
   ;; only one test case so far, more of a smoke test
-  (with-redefs [rems.locales/translations (assoc-in rems.locales/translations [:fi :t :email :regards] "")]
-    (testing "submitted"
-      (let [mails (emails :fi created-events submit-event)]
-        (is (= #{"applicant" "assistant" "handler"} (email-recipients mails)))
-        (is (= {:to-user "handler"
-                :subject "(2001/3, \"Application title\") Uusi hakemus"
-                :body "Hyvä Hannah Handler,\n\nAlice Applicant on lähettänyt käyttöoikeushakemuksen 2001/3, \"Application title\" resurss(e)ille fi title 11, fi title 21.\n\nVoit tarkastella hakemusta osoitteessa http://example.com/application/7\n\nTämä on automaattinen viesti. Älä vastaa."}
-               (email-to "handler" mails)))))))
+  (testing "submitted"
+    (let [mails (emails :fi created-events submit-event)]
+      (is (= #{"applicant" "assistant" "handler"} (email-recipients mails)))
+      (is (= {:to-user "handler"
+              :subject "(2001/3, \"Application title\") Uusi hakemus"
+              :body "Hyvä Hannah Handler,\n\nAlice Applicant on lähettänyt käyttöoikeushakemuksen 2001/3, \"Application title\" resurss(e)ille fi title 11, fi title 21.\n\nVoit tarkastella hakemusta osoitteessa http://example.com/application/7"}
+             (email-to "handler" mails))))))
 
 (deftest test-handler-reminder-email
   (with-redefs [rems.config/env (assoc rems.config/env :public-url "http://example.com/")]
@@ -561,7 +557,7 @@
             {:title "Template Workflow"})))))
 
 (deftest test-disabled-email
-  (with-redefs [rems.locales/translations (assoc-in rems.locales/translations [:en :t :email :application-submitted :message-to-handler] "")]
+  (with-translations (assoc-in rems.locales/translations [:en :t :email :application-submitted :message-to-handler] "")
     (let [mails (emails created-events submit-event)]
       (is (= #{"applicant"} (email-recipients mails))
           "applicant gets the email but handler messages are not sent")
@@ -599,13 +595,23 @@
                  :subject "Your unsubmitted application 2001/3, \"Application title\" will be deleted soon"
                  :body "Dear member,\n\nYour unsubmitted application has been inactive since 2023-03-28 and it will be deleted after 2023-06-26, if it is not edited.\n\nYou can view and edit the application at http://example.com/application/7"}]
                (emails member-events notifications-sent)))
-        (with-redefs [rems.locales/translations (assoc-in rems.locales/translations
-                                                          [:fi :t :email :application-expiration-notification :message-to-member]
-                                                          "Lähettämätön hakemuksesi %5 poistetaan automaattisesti %4 jälkeen, jos sitä ei muokata.")]
-          (is (= [{:to-user "applicant"
-                   :subject "Lähettämätön hakemuksesi 2001/3, \"Application title\" poistetaan pian"
-                   :body "Lähettämätön hakemuksesi http://example.com/application/7 poistetaan automaattisesti 2023-06-26 jälkeen, jos sitä ei muokata.\n\nYstävällisin terveisin,\n\nREMS\n\n\nTämä on automaattinen viesti. Älä vastaa."}
-                  {:to-user "member"
-                   :subject "Lähettämätön hakemuksesi 2001/3, \"Application title\" poistetaan pian"
-                   :body "Lähettämätön hakemuksesi http://example.com/application/7 poistetaan automaattisesti 2023-06-26 jälkeen, jos sitä ei muokata.\n\nYstävällisin terveisin,\n\nREMS\n\n\nTämä on automaattinen viesti. Älä vastaa."}]
-                 (emails :fi member-events notifications-sent))))))))
+        (testing "localization overrides"
+          (with-translations (-> rems.locales/translations
+                                 (assoc-in [:fi :t :email :application-expiration-notification :subject-to-member]
+                                           "Hakemus %2 poistetaan %4 jälkeen")
+                                 (assoc-in [:sv :t :email :application-expiration-notification :subject-to-member]
+                                           "Ansökan %:application-id% kommer att raderas efter %:expires-on%"))
+            (is (= [{:to-user "applicant"
+                     :subject "Hakemus 2001/3, \"Application title\" poistetaan 2023-06-26 jälkeen"
+                     :body "Hyvä Alice Applicant,\n\nLähettämätön hakemuksesi on ollut passiivisena 2023-03-28 lähtien ja se poistetaan 2023-06-26 jälkeen, jos sitä ei muokata. \n\nVoit tarkastella ja muokata hakemusta osoitteessa http://example.com/application/7"}
+                    {:to-user "member"
+                     :subject "Hakemus 2001/3, \"Application title\" poistetaan 2023-06-26 jälkeen"
+                     :body "Hyvä member,\n\nLähettämätön hakemuksesi on ollut passiivisena 2023-03-28 lähtien ja se poistetaan 2023-06-26 jälkeen, jos sitä ei muokata. \n\nVoit tarkastella ja muokata hakemusta osoitteessa http://example.com/application/7"}]
+                   (emails :fi member-events notifications-sent)))
+            (is (= [{:to-user "applicant"
+                     :subject "Ansökan 2001/3, \"Application title\" kommer att raderas efter 2023-06-26"
+                     :body "Alice Applicant,\n\nDin ej inlämnad ansökan har varit inaktiv sedan 2023-03-28 och kommer att raderas efter 2023-06-26, om det inte ändras. \n\nDu kan granska ansökningen här: http://example.com/application/7"}
+                    {:to-user "member"
+                     :subject "Ansökan 2001/3, \"Application title\" kommer att raderas efter 2023-06-26"
+                     :body "member,\n\nDin ej inlämnad ansökan har varit inaktiv sedan 2023-03-28 och kommer att raderas efter 2023-06-26, om det inte ändras. \n\nDu kan granska ansökningen här: http://example.com/application/7"}]
+                   (emails :sv member-events notifications-sent)))))))))

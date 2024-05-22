@@ -36,7 +36,10 @@
 (comment ; convenience for development testing
   (btu/init-driver! :chrome "http://localhost:3000/" :development))
 
-(use-fixtures :each btu/fixture-refresh-driver)
+(use-fixtures
+  :each
+  btu/reset-context-fixture
+  btu/refresh-driver-fixture)
 
 (use-fixtures
   :once
@@ -44,7 +47,7 @@
   btu/test-dev-or-standalone-fixture
   btu/smoke-test
   btu/accessibility-report-fixture
-  btu/fixture-init-driver)
+  btu/init-driver-fixture)
 
 ;;; common functionality
 
@@ -3501,7 +3504,7 @@
 
       (btu/screenshot "after-closing")
 
-      (is (nil? (some #{{"name bg-depth-2" (btu/context-get :catalogue-item-name) "commands bg-depth-2" "More info\nOpens in a new window\nRemove from cart"}}
+      (is (nil? (some #{{"name bg-depth-2" (btu/context-getx :catalogue-item-name) "commands bg-depth-2" "More info\nOpens in a new window\nRemove from cart"}}
                       (slurp-rows :catalogue-tree)))
           "can't see item anymore because it's hidden again"))))
 

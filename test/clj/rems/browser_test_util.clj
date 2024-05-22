@@ -37,11 +37,16 @@
 (defn get-driver [] (:driver @test-context))
 (defn get-server-url [] (:url @test-context))
 (defn get-seed [] (:seed @test-context))
-(defn context-get [k] (get @test-context k))
-(defn context-getx [k] (getx @test-context k))
-(defn context-assoc! [& args] (swap! test-context #(apply assoc % args)))
-(defn context-dissoc! [& args] (swap! test-context #(apply dissoc % args)))
-(defn context-update! [& args] (swap! test-context #(apply update % args)))
+
+;; test data uses separate key path to avoid conflicts with configuration data
+
+(defn reset-context! [] (swap! test-context dissoc :test-data))
+
+(defn context-get [k] (get (:test-data @test-context) k))
+(defn context-getx [k] (getx (:test-data @test-context) k))
+(defn context-update! [& args] (apply swap! test-context update :test-data args))
+(defn context-assoc! [& args] (apply context-update! assoc args))
+(defn context-dissoc! [& args] (apply context-update! dissoc args))
 
 (defn- ensure-empty-directories! []
   (ensure-empty-directory! (:reporting-dir @test-context))
@@ -86,6 +91,34 @@
                       :params {:behavior "allow"
                                :downloadPath (.getAbsolutePath (:download-dir @test-context))}}}))
 
+(defn- reset-window-size!
+  "Sets window size big enough to show the whole page in the screenshots."
+  [driver]
+  (et/set-window-size driver 1400 7000))
+
+(defn- init-session! [driver]
+  (doto driver
+    (enable-downloads!)
+    (reset-window-size!)))
+
+(def ^:private driver-defaults
+  {:args ["--lang=en-US"]
+   :prefs {:intl.accept_languages "en-US"
+           :download.directory_upgrade true
+           :safebrowsing.enabled false
+           :safebrowsing.disable_download_protection true}})
+
+(defn- get-driver-config [mode]
+  (let [non-headless? (= "0"
+                         (get (System/getenv) "HEADLESS"))
+        dev? (= :development mode)]
+    (assoc driver-defaults
+           :download-dir (.getAbsolutePath (:download-dir @test-context))
+           :headless (cond
+                       non-headless? false
+                       dev? false
+                       :else true))))
+
 ;; TODO these could use more of our wrapped fns if we reordered
 (defn init-driver!
   "Starts and initializes a driver. Also stops an existing driver.
@@ -96,34 +129,31 @@
 
    Uses a non-headless browser if the environment variable HEADLESS is set to 0"
   [& [browser-id url mode]]
-  (when (get-driver) (try (et/quit (get-driver)) (catch Exception e)))
+  (when (get-driver)
+    (try
+      (et/quit (get-driver))
+      (catch Exception e)))
   (swap! test-context
          assoc-some
          :driver (et/with-wait-timeout 60
-                   (et/boot-driver browser-id
-                                   {:args ["--lang=en-US"]
-                                    :prefs {:intl.accept_languages "en-US"
-                                            :download.directory_upgrade true
-                                            :safebrowsing.enabled false
-                                            :safebrowsing.disable_download_protection true}
-                                    :download-dir (.getAbsolutePath (:download-dir @test-context))
-                                    :headless (not (or (= "0" (get (System/getenv) "HEADLESS"))
-                                                       (= :development mode)))}))
+                   (-> browser-id
+                       (et/boot-driver (get-driver-config mode))
+                       (init-session!)))
          :url url
          :mode mode
-         :seed (random-seed))
-  (enable-downloads! (get-driver)))
+         :seed (random-seed)))
 
 (defn refresh-driver!
-  "Refreshes an existing driver, cleans up and sets default values."
+  "Re-creates session on an existing driver and sets default values."
   []
   (assert (get-driver) "must have initialized driver already!")
-  ;; start with a clean slate
-  (et/delete-cookies (get-driver))
-  ;; big enough to show the whole page in the screenshots
-  (et/set-window-size (get-driver) 1400 7000))
 
-(defn fixture-init-driver
+  (doto (get-driver)
+    (et/delete-session)
+    (et/create-session)
+    (init-session!)))
+
+(defn init-driver-fixture
   "Executes a test running a fresh driver except when in development."
   [f]
   (letfn [(run []
@@ -136,7 +166,7 @@
         (log/warn e "WebDriver failed to start, retrying...")
         (run)))))
 
-(defn fixture-refresh-driver
+(defn refresh-driver-fixture
   "Executes a test running with a re-used but clean and refreshed driver."
   [f]
   (try
@@ -148,8 +178,12 @@
         (if (= "invalid session id" (get-in data [:response :value :error]))
           (do
             (log/warn e "Unexpected problem, need to restart driver" data)
-            (fixture-init-driver f))
+            (init-driver-fixture f))
           (throw e))))))
+
+(defn reset-context-fixture [f]
+  (reset-context!)
+  (f))
 
 (defn smoke-test [f]
   (let [response (http/get (str (get-server-url) "js/app.js"))]
@@ -261,6 +295,7 @@
     (test-helpers/submit-application {:application-id app-id
                                       :actor "applicant"}))
   (f))
+
 (defn test-dev-or-standalone-fixture
   "Depending on if we are trying to develop browser tests or
   run them for real, we use an existing server and db or
@@ -576,6 +611,14 @@
        (mapv value-of-el)
        first))
 
+(def ^:private check-axe-js
+  "var args = arguments;
+   var callback = args[args.length-1]; // async callback
+   window.axe.configure({ 'reporter': 'v2' });
+   window.axe.run({ exclude: [['.dev-reload-button'],
+                              ['body > div:not(#app)']]
+   }).then(callback);")
+
 (defn check-axe
   "Runs automated accessibility tests using axe.
 
@@ -587,15 +630,8 @@
 
   See https://www.deque.com/axe/"
   []
-  (let [result (js-async "
-    var args = arguments;
-    var callback = args[args.length-1];
-    window.axe.configure({'reporter': 'v2'});
-    window.axe.run({ exclude:[['.dev-reload-button'],
-                              ['body > div:not(#app)']]})
-
-    .then(callback);")]
-    result))
+  (when (:accessibility-report env)
+    (js-async check-axe-js)))
 
 (defn gather-axe-results
   "Runs automatic accessbility tests using `check-axe`
@@ -622,7 +658,7 @@
         (doseq [[target original] originals]
           (when original
             (js-execute (str "var x = document.querySelector('" target "'); if (x && x.style) x.style.outline = \"" original "\";"))))))
-    (context-update! :axe conj-vec results)))
+    (swap! test-context update :axe conj-vec results)))
 
 (defn accessibility-report-fixture
   "Runs the tests and finally stores the gathered accessibility
@@ -631,16 +667,16 @@
   NB: the individual tests must call `gather-axe-results` in each
   interesting spot to have a sensible report to write."
   [f]
-  (context-dissoc! :axe)
+  (swap! test-context dissoc :axe)
   (try
     (f)
     (finally
       (let [violations (atom nil)]
-        (doseq [k (->> (context-get :axe)
+        (doseq [k (->> (:axe @test-context)
                        (mapcat keys)
                        distinct)
                 :let [filename (str (str/lower-case (name k)) ".json")
-                      content (->> (context-get :axe)
+                      content (->> (:axe @test-context)
                                    (mapcat #(get % k))
                                    distinct
                                    (sort-by :impact))]]

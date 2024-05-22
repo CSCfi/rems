@@ -29,19 +29,31 @@
                  (first args)
                  (cons k args)))))
 
+(def cached-tr (atom nil))
+(defn reset-cached-tr! [] (reset! cached-tr nil))
+
+(defn ensure-cached-tr! []
+  (when-not (fn? @cached-tr)
+    (reset! cached-tr (rems.tempura/get-cached-tr #?(:clj rems.locales/translations
+                                                     :cljs @rems.globals/translations))))
+  @cached-tr)
+
+(defn- tr [ks & [args]]
+  (let [language #?(:clj context/*lang*
+                    :cljs @rems.config/current-language)]
+    ((ensure-cached-tr!) [language]
+                         (vec ks)
+                         (some-> args vec))))
+
 (defn text-format
   "Return the tempura translation for a given key and arguments:
 
    `(text-format :key 1 2)`"
   [k & args]
-  #?(:clj (rems.tempura/tr rems.locales/translations
-                           context/*lang*
-                           [k :t/missing]
-                           args)
-     :cljs (rems.tempura/tr @rems.globals/translations
-                            @rems.config/current-language
-                            [k :t/missing (failsafe-fallback k args)]
-                            args)))
+  #?(:clj (tr [k :t/missing]
+              args)
+     :cljs (tr [k :t/missing (failsafe-fallback k args)]
+               args)))
 
 (defn text-format-map
   "Return the tempura translation for a given key and argument map:
@@ -60,13 +72,9 @@
   "Return the tempura translation for a given key. Additional fallback
   keys can be given but there is no default fallback text."
   [& ks]
-  #?(:clj (rems.tempura/tr rems.locales/translations
-                           context/*lang*
-                           ks)
+  #?(:clj (tr ks)
      :cljs (try
-             (rems.tempura/tr @rems.globals/translations
-                              @rems.config/current-language
-                              ks)
+             (tr ks)
              (catch js/Object e
                ;; fail gracefully if the re-frame state is incomplete
                (.error js/console e)
@@ -76,15 +84,11 @@
   "Return the tempura translation for a given key. Additional fallback
   keys can be given."
   [& ks]
-  #?(:clj (rems.tempura/tr rems.locales/translations
-                           context/*lang*
-                           (conj (vec ks) (text-format :t/missing (vec ks))))
+  #?(:clj (tr (conj (vec ks) (text-format :t/missing (vec ks))))
      ;; NB: we can't call the text-no-fallback here as in CLJS
      ;; we can both call this as function or use as a React component
      :cljs (try
-             (rems.tempura/tr @rems.globals/translations
-                              @rems.config/current-language
-                              (conj (vec ks) (text-format :t/missing (vec ks))))
+             (tr (conj (vec ks) (text-format :t/missing (vec ks))))
              (catch js/Object e
                ;; fail gracefully if the re-frame state is incomplete
                (.error js/console e)
