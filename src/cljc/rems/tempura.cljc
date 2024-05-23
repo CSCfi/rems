@@ -85,12 +85,13 @@
     (get-vec-compiler resource)))
 
 (def default-tr-opts {:cache-dict? :fn-local
-                      :resource-compiler get-resource-compiler})
+                      :cache-locales? :fn-local})
 
 (defn get-cached-tr [translations & [opts]]
   (taoensso.tempura/new-tr-fn (-> default-tr-opts
                                   (merge opts)
-                                  (assoc :dict translations))))
+                                  (assoc :dict translations
+                                         :resource-compiler (memoize get-resource-compiler)))))
 
 (deftest test-get-cached-tr
   (let [dict {:en
