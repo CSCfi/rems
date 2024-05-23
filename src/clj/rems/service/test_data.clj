@@ -15,6 +15,7 @@
             [rems.db.test-data-users :refer :all]
             [rems.db.users :as users]
             [rems.db.workflow :as workflow]
+            [rems.db.user-settings :as user-settings]
             [rems.service.form :as form]
             [rems.service.organizations :as organizations]
             [rems.testing-util :refer [with-user]])
@@ -596,7 +597,9 @@
                          :email (str (str/lower-case first-name) "." (str/lower-case last-name) "@perftester.org")})
 
         _ (doseq [handler handlers-data]
-            (test-helpers/create-user! handler))
+            (test-helpers/create-user! handler)
+            (user-settings/update-user-settings! (:userid handler)
+                                                 {:language (rand-nth [:en :fi :sv])}))
 
         handlers (concat [(+fake-users+ :approver1)
                           (+fake-users+ :approver2)]
