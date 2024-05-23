@@ -8,7 +8,7 @@
             [rems.config]
             [rems.db.applications :as applications]
             [rems.db.events :as events]
-            [rems.db.user-settings])
+            [rems.db.user-settings]
             [rems.db.test-data-users :refer [+fake-users+ +fake-user-data+]]
             [rems.email.template]
             [rems.locales]
@@ -67,8 +67,8 @@
                                #'rems.db.events/low-level-events-cache
                                #'rems.db.user-settings/low-level-user-settings-cache))
         cached (fn []
-                 (mount/stop #'rems.db.applications/all-applications-cache #'rems.db.events/low-level-events-cache #'rems.db.user-settings/low-level-user-settings-cache))
-                 (mount/start #'rems.db.applications/all-applications-cache #'rems.db.events/low-level-events-cache #'rems.db.user-settings/low-level-user-settings-cache))
+                 (mount/stop #'rems.db.applications/all-applications-cache #'rems.db.events/low-level-events-cache #'rems.db.user-settings/low-level-user-settings-cache)
+                 (mount/start #'rems.db.applications/all-applications-cache #'rems.db.events/low-level-events-cache #'rems.db.user-settings/low-level-user-settings-cache)
                  (test-get-all-unrestricted-applications))]
     (run-benchmarks [{:name "get-all-unrestricted-applications, no cache"
                       :benchmark test-get-all-unrestricted-applications
