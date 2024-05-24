@@ -5,6 +5,7 @@
             [medley.core :refer [map-vals]]
             [mount.core :as mount]
             [rems.application.model]
+            [rems.common.util :refer [recursive-keys to-keyword]]
             [rems.config]
             [rems.db.applications :as applications]
             [rems.db.events :as events]
@@ -13,6 +14,7 @@
             [rems.email.template]
             [rems.locales]
             [rems.markdown]
+            [rems.service.test-data :as test-data]
             [rems.service.todos :as todos]
             [rems.tempura]
             [rems.text])
@@ -122,7 +124,7 @@
                           (mount/start #'rems.config/env ; :enable-handler-emails is enabled by default
                                        #'rems.locales/translations)
                           (rems.text/reset-cached-tr!))
-        get-benchmark-fn (fn [handler-count]
+        get-benchmark-fn (fn get-benchmark-event-to-emails [handler-count]
                            (let [{:keys [application event]} (get-template-app-and-event handler-count)]
                              (fn benchmark-event-to-emails []
                                (doall (rems.email.template/event-to-emails event application)))))
@@ -130,7 +132,8 @@
 
     ;; Execution time mean : 9,400171 ms (2019 Macbook Pro with 2,3 GHz 8-Core Intel Core i9)
     ;; translations cache size 882,5 KiB
-    (with-redefs [rems.db.user-settings/get-user-settings (fn [& _] {:language (rand-nth [:en :fi :sv])})]
+    (with-redefs [rems.db.user-settings/get-user-settings (fn wrapped-get-user-settings [& _]
+                                                            {:language (rand-nth [:en :fi :sv])})]
       (doall
        (for [n benchmark-handlers
              :let [test-event-to-emails (get-benchmark-fn n)
@@ -146,8 +149,11 @@
     ;; translations are cached using taoensso.tempura/new-tr-fn because (big & nested) dictionary compilation is expensive.
     ;; Execution time mean : 870,499348 ms (2019 Macbook Pro with 2,3 GHz 8-Core Intel Core i9)
     (let [get-cached-tr rems.tempura/get-cached-tr]
-      (with-redefs [rems.db.user-settings/get-user-settings (fn [& _] {:language (rand-nth [:en :fi :sv])})
-                    rems.tempura/get-cached-tr #(get-cached-tr % {:cache-dict? false})]
+      (with-redefs [rems.db.user-settings/get-user-settings (fn wrapped-get-user-settings [& _]
+                                                              {:language (rand-nth [:en :fi :sv])})
+                    rems.tempura/get-cached-tr (fn wrapped-get-cached-tr [translations & _]
+                                                 (get-cached-tr translations {:cache-dict? false
+                                                                              :cache-locales? false}))]
         (doall
          (for [n benchmark-handlers
                :let [test-event-to-emails (get-benchmark-fn n)
@@ -158,11 +164,13 @@
            (swap! all-stats update :disabled (fnil conj []) (merge stats {:handler-count n}))))))
     @all-stats))
 
+(defn- format-criterium-time [x]
+  (apply criterium/format-value x (criterium/scale-time x)))
+
 (defn- print-template-performance-tables [all-stats]
-  (let [format-time #(apply criterium/format-value % (criterium/scale-time %))
-        mean (comp format-time :mean)
-        low (comp format-time :low)
-        high (comp format-time :high)]
+  (let [mean (comp format-criterium-time :mean)
+        low (comp format-criterium-time :low)
+        high (comp format-criterium-time :high)]
     (when (:cached all-stats)
       (println "")
       (println "event-to-emails, cache")
@@ -182,15 +190,121 @@
                                (mapv (juxt :handler-count mean low high)))})]
         (println row)))))
 
+(defn- get-cache-sizes []
+  (doall
+   (for [s ['rems.db.applications/all-applications-cache
+            'rems.db.events/event-cache
+            'rems.db.user-settings/user-settings-cache
+            'rems.db.category/categories-cache
+            'rems.db.catalogue/cached
+            'rems.db.user-mappings/user-mappings-by-value
+            'rems.ext.duo/code-by-id
+            'rems.ext.mondo/code-by-id
+            'rems.ext.mondo/codes-dag
+            'rems.service.dependencies/dependencies-cache
+            'rems.text/cached-tr]
+         :let [size (mm/measure (-> s requiring-resolve var-get)
+                                {:bytes true})]]
+     {:name (str s)
+      :bytes size
+      :size ((var-get #'mm/convert-to-human-readable) size)})))
+
+(defn- get-all-translations []
+  (let [key-paths (recursive-keys rems.locales/translations)
+        vec-arg-translations (for [ks key-paths
+                                   :let [v (get-in rems.locales/translations ks)
+                                         args (rems.tempura/find-vec-params v)]
+                                   :when (seq args)]
+                               {:ks ks :args (distinct args)})
+        map-arg-translations (for [ks key-paths
+                                   :let [v (get-in rems.locales/translations ks)
+                                         args (rems.tempura/find-map-params v)]
+                                   :when (seq args)]
+                               {:ks ks :args (distinct args)})
+        no-arg-translations (for [ks (->> key-paths
+                                          (remove (set (map :ks vec-arg-translations)))
+                                          (remove (set (map :ks map-arg-translations))))]
+                              {:ks ks})]
+    {:vec-args vec-arg-translations
+     :map-args map-arg-translations
+     :no-args no-arg-translations}))
+
+(defn- benchmark-all-translations []
+  (let [all-translations (get-all-translations)
+        vec-args (group-by :lang (for [t (:vec-args all-translations)]
+                                   {:lang (first (:ks t))
+                                    :key (to-keyword (rest (:ks t)))
+                                    :fn-args (mapv (fn [& _] (test-data/random-word)) (:args t))}))
+        map-args (group-by :lang (for [t (:map-args all-translations)]
+                                   {:lang (first (:ks t))
+                                    :key (to-keyword (rest (:ks t)))
+                                    :fn-args [(reduce #(assoc %1 %2 (test-data/random-word)) {} (:args t))]}))
+        no-args (group-by :lang (for [t (:no-args all-translations)]
+                                  {:lang (first (:ks t))
+                                   :key (to-keyword (rest (:ks t)))}))
+        text #(rems.text/text (:key %))
+        text-format #(apply rems.text/text-format (:key %) (:fn-args %))
+        tr-all (fn []
+                 (doseq [lang [:en :fi :sv]]
+                   (rems.text/with-language lang
+                     (mapv text (get no-args lang))
+                     (mapv text-format (get vec-args lang))
+                     (mapv text-format (get map-args lang)))))]
+
+    (mount/start #'rems.config/env ; :enable-handler-emails is enabled by default
+                 #'rems.locales/translations)
+    (rems.text/reset-cached-tr!)
+
+    (let [empty-cache-size (mm/measure rems.text/cached-tr)
+          _ (doall (tr-all)) ; run once to warm cache
+          warm-cache-size (mm/measure rems.text/cached-tr)
+          all (run-benchmark {:name "all translations" :benchmark tr-all})
+          final-cache-size (mm/measure rems.text/cached-tr)]
+
+      {:all all
+       :empty-cache-size empty-cache-size
+       :warm-cache-size warm-cache-size
+       :final-cache-size final-cache-size
+       :translations-count (->> (vals all-translations)
+                                (map count)
+                                (reduce + 0))})))
+
 (comment
   (benchmark-get-events)
   (benchmark-get-all-applications)
   (benchmark-get-application)
 
   ;; handler count increases email count linearly
-  (def stats (benchmark-template-performance {:benchmark-handlers [1 10 50 100 200]}))
+  (def template-stats (benchmark-template-performance {:benchmark-handlers [1 10 50 100 200]}))
   ;; additional table formatting
-  (print-template-performance-tables stats)
+  (print-template-performance-tables template-stats)
+
+  (def translations-stats (benchmark-all-translations))
+  ;; additional table formatting
+  (do (println "")
+      (println "translations")
+      (println "---")
+      (doseq [row (rems.markdown/markdown-table
+                   {:header ["total translations" "mean" "empty cache size" "warm cache size" "final cache size"]
+                    :rows (->> [translations-stats]
+                               (mapv (juxt :translations-count
+                                           (comp format-criterium-time :mean :all)
+                                           :empty-cache-size
+                                           :warm-cache-size
+                                           :final-cache-size)))})]
+        (println row)))
+
+  (def cache-stats (get-cache-sizes))
+  ;; additional table formatting
+  (do (println "")
+      (println "cache sizes")
+      (println "---")
+      (doseq [row (rems.markdown/markdown-table
+                   {:header ["cache" "size"]
+                    :rows (->> cache-stats
+                               (sort-by :bytes >)
+                               (mapv (juxt :name :size)))})]
+        (println row)))
 
   (prof/clear-results)
   (prof/serve-ui 8080))
