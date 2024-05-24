@@ -242,12 +242,14 @@
         no-args (group-by :lang (for [t (:no-args all-translations)]
                                   {:lang (first (:ks t))
                                    :key (to-keyword (rest (:ks t)))}))
+        text #(rems.text/text (:key %))
+        text-format #(apply rems.text/text-format (:key %) (:fn-args %))
         tr-all (fn []
                  (doseq [lang [:en :fi :sv]]
                    (rems.text/with-language lang
-                     (mapv #(rems.text/text (:k %)) (get no-args lang))
-                     (mapv #(apply rems.text/text-format (:k %) (:fn-args %)) (get vec-args lang))
-                     (mapv #(apply rems.text/text-format (:k %) (:fn-args %)) (get map-args lang)))))]
+                     (mapv text (get no-args lang))
+                     (mapv text-format (get vec-args lang))
+                     (mapv text-format (get map-args lang)))))]
 
     (mount/start #'rems.config/env ; :enable-handler-emails is enabled by default
                  #'rems.locales/translations)
