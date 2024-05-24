@@ -164,11 +164,13 @@
            (swap! all-stats update :disabled (fnil conj []) (merge stats {:handler-count n}))))))
     @all-stats))
 
+(defn- format-criterium-time [x]
+  (apply criterium/format-value x (criterium/scale-time x)))
+
 (defn- print-template-performance-tables [all-stats]
-  (let [format-time #(apply criterium/format-value % (criterium/scale-time %))
-        mean (comp format-time :mean)
-        low (comp format-time :low)
-        high (comp format-time :high)]
+  (let [mean (comp format-criterium-time :mean)
+        low (comp format-criterium-time :low)
+        high (comp format-criterium-time :high)]
     (when (:cached all-stats)
       (println "")
       (println "event-to-emails, cache")
@@ -276,6 +278,19 @@
   (print-template-performance-tables template-stats)
 
   (def translations-stats (benchmark-all-translations))
+  ;; additional table formatting
+  (do (println "")
+      (println "translations")
+      (println "---")
+      (doseq [row (rems.markdown/markdown-table
+                   {:header ["total translations" "mean" "empty cache size" "warm cache size" "final cache size"]
+                    :rows (->> [translations-stats]
+                               (mapv (juxt :translations-count
+                                           (comp format-criterium-time :mean :all)
+                                           :empty-cache-size
+                                           :warm-cache-size
+                                           :final-cache-size)))})]
+        (println row)))
 
   (def cache-stats (get-cache-sizes))
   ;; additional table formatting
