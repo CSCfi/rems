@@ -1,6 +1,5 @@
 (ns rems.tempura
-  (:require [better-cond.core :as b]
-            [clojure.string]
+  (:require [clojure.string]
             [clojure.test :refer [deftest is testing]]
             [clojure.walk]
             [taoensso.tempura]))
@@ -38,23 +37,30 @@
             :resource-keys [:x :y]}
            (replace-map-args [:div {:aria-label "argument x is %:x%, argument y is %:y%"} "{:x %:x% :y %:y%}"])))))
 
-(defn find-map-params [resource]
-  (b/cond
-    :let [extract-args #(->> (re-seq +map-args+ %)
-                             (map second))]
+(defn- string-seq [x]
+  (filter string? (tree-seq vector? seq x)))
 
-    (string? resource) (set (extract-args resource))
-    (vector? resource) (set (->> (flatten resource)
-                                 (filter string?)
-                                 (mapcat extract-args)))
-    nil))
+(defn find-vec-params [x]
+  (mapcat #(re-seq +vector-args+ %) (string-seq x)))
 
-(deftest test-find-map-params
-  (is (= #{"x" "long.ns/y" "z"}
-         (find-map-params "arg %:x%, arg %:long.ns/y%, args %:x% %:long.ns/y% %:z%")
-         (find-map-params [:div "arg %:x%" [:span "arg %:long.ns/y%"] [:span "args %:x% %:long.ns/y% %:z%"]])))
-  (is (nil? (find-map-params (constantly "arg %:x%, arg %:long.ns/y%, args %:x% %:long.ns/y% %:z%"))))
-  (is (nil? (find-map-params nil))))
+(defn find-map-params [x]
+  (->> (string-seq x)
+       (mapcat #(re-seq +map-args+ %))
+       (map (comp keyword second))))
+
+(deftest test-find-params
+  (testing "vec params"
+    (is (= ["%1" "%2" "%1" "%2" "%3"]
+           (find-vec-params "arg %1, arg %2, args %1 %2 %3")
+           (find-vec-params [:div "arg %1" [:span "arg %2"] [:span "args %1 %2 %3"]])))
+    (is (= [] (find-vec-params (constantly "arg %1, arg %2, args %1 %2 %3"))))
+    (is (= [] (find-vec-params nil))))
+  (testing "map params"
+    (is (= [:x :long.ns/y :x :long.ns/y :z]
+           (find-map-params "arg %:x%, arg %:long.ns/y%, args %:x% %:long.ns/y% %:z%")
+           (find-map-params [:div "arg %:x%" [:span "arg %:long.ns/y%"] [:span "args %:x% %:long.ns/y% %:z%"]])))
+    (is (= [] (find-map-params (constantly "arg %:x%, arg %:long.ns/y%, args %:x% %:long.ns/y% %:z%"))))
+    (is (= [] (find-map-params nil)))))
 
 (def ^:private get-default-resource-compiler (:resource-compiler taoensso.tempura/default-tr-opts))
 
@@ -77,7 +83,6 @@
                          {:resource resource-with-map-params
                           :resource-keys resource-keys
                           :vargs vargs}))))))
-
 
 (defn- get-resource-compiler [resource]
   (if (seq (find-map-params resource))
