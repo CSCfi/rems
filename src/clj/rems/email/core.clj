@@ -150,15 +150,30 @@
             (log/warn e "failed sending email:" (pr-str email))
             (str "failed sending email: " e)))))))
 
+(defn handle-send-error! [email error]
+  (if (str/includes? error "javax.mail.internet.AddressException") ; e.g. illegal character in address
+    ;; give up immediately
+    (let [email (outbox/attempt-failed-fatally! email error)]
+      (log/warn "all attempts to send email " (:outbox/id email) "failed")
+      ::giving-up-after-fatal-error)
+
+    ;; maybe keep trying
+    (let [email (outbox/attempt-failed! email error)]
+      (if (:outbox/next-attempt email)
+        ::failed-but-will-retry-again
+
+        (do
+          (log/warn "all attempts to send email " (:outbox/id email) "failed")
+          ::giving-up-after-all-attempts)))))
+
 (defn try-send-emails! []
   (log/debug "Trying to send emails")
   (let [due-emails (outbox/get-due-entries :email)]
     (log/debug (str "Emails due: " (count due-emails)))
     (doseq [email due-emails]
       (if-let [error (send-email! (:outbox/email email))]
-        (let [email (outbox/attempt-failed! email error)]
-          (when (not (:outbox/next-attempt email))
-            (log/warn "all attempts to send email " (:outbox/id email) "failed")))
+        (handle-send-error! email error)
+
         (outbox/attempt-succeeded! (:outbox/id email))))))
 
 (mount/defstate email-poller

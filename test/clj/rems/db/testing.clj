@@ -4,7 +4,6 @@
             [conman.core :as conman]
             [luminus-migrations.core :as migrations]
             [mount.core :as mount]
-            [rems.service.dependencies :as dependencies]
             [rems.application.search]
             [rems.config :refer [env]]
             [rems.db.applications :as applications]
@@ -12,9 +11,11 @@
             [rems.db.category :as category]
             [rems.db.core :as db]
             [rems.db.events :as events]
-            [rems.service.test-data :as test-data]
             [rems.db.user-mappings :as user-mappings]
-            [rems.locales]))
+            [rems.db.user-settings]
+            [rems.locales]
+            [rems.service.dependencies :as dependencies]
+            [rems.service.test-data :as test-data]))
 
 (defn reset-db-fixture [f]
   (try
@@ -35,7 +36,9 @@
   (applications/empty-injections-cache!)
 
   (migrations/migrate ["migrate"] {:database-url (:test-database-url env)})
-  (mount/start #'rems.db.events/low-level-events-cache) ; needs DB to start
+  ;; need DB to start these
+  (mount/start #'rems.db.events/low-level-events-cache
+               #'rems.db.user-settings/low-level-user-settings-cache)
   (f)
   (mount/stop))
 

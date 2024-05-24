@@ -15,9 +15,10 @@
 
 #?(:clj
    (defmacro with-language [lang & body]
-     `(binding [rems.context/*lang* ~lang]
-        (assert (keyword? ~lang) {:lang ~lang})
-        ~@body)))
+     `(let [lang# ~lang] ; ensure lang is evaluated only once
+        (binding [rems.context/*lang* lang#]
+          (assert (keyword? lang#) {:lang lang#})
+          ~@body))))
 
 (defn- failsafe-fallback
   "Fallback for when loading the translations has failed."

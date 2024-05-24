@@ -75,6 +75,11 @@
 (s/defschema Count
   s/Int)
 
+(defn- overview-only-active-handlers [app]
+  (update-in app
+             [:application/workflow :workflow.dynamic/handlers]
+             #(filterv :handler/active? %)))
+
 ;; Api implementation
 
 (def last-activity (comp time-coerce/to-long :application/last-activity))
@@ -173,8 +178,10 @@
       :roles #{:logged-in}
       :return [schema/ApplicationOverview]
       :query-params [{query :- (describe s/Str "search query [documentation](https://github.com/CSCfi/rems/blob/master/docs/search.md)") nil}
+                     {only-active-handlers :- (describe s/Bool "return only workflow handlers that are active making a smaller result") false}
                      {limit :- (describe s/Int "how many results to return") nil}]
       (ok (cond->> (todos/get-handled-todos (getx-user-id))
+            only-active-handlers (map overview-only-active-handlers)
             query (filter-with-search query)
             true (sort-by last-activity >)
             limit (take limit))))

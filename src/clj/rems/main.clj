@@ -14,12 +14,15 @@
             [rems.db.api-key :as api-key]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
-            [rems.service.fix-userid]
+            [rems.db.events]
             [rems.db.roles :as roles]
-            [rems.service.test-data :as test-data]
+            [rems.db.user-settings]
             [rems.db.users :as users]
             [rems.handler :as handler]
             [rems.json :as json]
+            [rems.locales]
+            [rems.service.fix-userid]
+            [rems.service.test-data :as test-data]
             [rems.validate :as validate])
   (:import [sun.misc Signal SignalHandler]
            [org.eclipse.jetty.server.handler.gzip GzipHandler])
@@ -182,7 +185,8 @@
             (mount/start #'rems.config/env
                          #'rems.db.core/*db*
                          #'rems.locales/translations
-                         #'rems.db.events/low-level-events-cache)
+                         #'rems.db.events/low-level-events-cache
+                         #'rems.db.user-settings/low-level-user-settings-cache)
             (test-data/create-test-data!)
             (log/info "Test data created"))
 
@@ -191,7 +195,8 @@
             (mount/start #'rems.config/env
                          #'rems.db.core/*db*
                          #'rems.locales/translations
-                         #'rems.db.events/low-level-events-cache)
+                         #'rems.db.events/low-level-events-cache
+                         #'rems.db.user-settings/low-level-user-settings-cache)
             (log/info "Creating performance test data")
             (test-data/create-performance-test-data!)
             (log/info "Performance test data created"))
@@ -201,7 +206,8 @@
             (mount/start #'rems.config/env
                          #'rems.db.core/*db*
                          #'rems.locales/translations
-                         #'rems.db.events/low-level-events-cache)
+                         #'rems.db.events/low-level-events-cache
+                         #'rems.db.user-settings/low-level-user-settings-cache)
             (test-data/create-demo-data!))
 
           "dev-setup"
@@ -212,7 +218,8 @@
             (log/info "Creating test data")
             (mount/start #'rems.db.core/*db*
                          #'rems.locales/translations
-                         #'rems.db.events/low-level-events-cache)
+                         #'rems.db.events/low-level-events-cache
+                         #'rems.db.user-settings/low-level-user-settings-cache)
             (test-data/create-test-data!)
             (log/info "Test data created"))
 
@@ -224,7 +231,8 @@
             (log/info "Creating test data")
             (mount/start #'rems.db.core/*db*
                          #'rems.locales/translations
-                         #'rems.db.events/low-level-events-cache)
+                         #'rems.db.events/low-level-events-cache
+                         #'rems.db.user-settings/low-level-user-settings-cache)
             (test-data/create-test-data!)
             (log/info "Test data created")
             (log/info "Creating performance test data")
@@ -289,7 +297,10 @@
               (do (println "\n\n*** Renaming a user's identity can't easily be undone. ***\nType 'YES' to proceed or anything else to run a simulation only.")
                   (let [simulate? (not= "YES" (read-line))]
                     (println (if simulate? "Simulating only..." "Renaming..."))
-                    (mount/start #'rems.config/env #'rems.db.core/*db* #'rems.db.events/low-level-events-cache)
+                    (mount/start #'rems.config/env
+                                 #'rems.db.core/*db*
+                                 #'rems.db.events/low-level-events-cache
+                                 #'rems.db.user-settings/low-level-user-settings-cache)
                     (rems.service.fix-userid/fix-all old-userid new-userid simulate?)
                     (println "Finished.\n\nConsider rebooting the server process next to refresh all the caches, most importantly the application cache.")))))
 

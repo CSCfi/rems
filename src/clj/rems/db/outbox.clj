@@ -168,5 +168,14 @@
                         :outboxdata (json/generate-string (dissoc entry :outbox/id))})
     entry))
 
+(defn attempt-failed-fatally!
+  "Like `attampt-failed!` but it makes no sense to try again."
+  [entry error]
+  (let [entry (assoc (next-attempt entry (time/now) error)
+                     :outbox/next-attempt nil)]
+    (db/update-outbox! {:id (getx entry :outbox/id)
+                        :outboxdata (json/generate-string (dissoc entry :outbox/id))})
+    entry))
+
 (defn attempt-succeeded! [id]
   (db/delete-outbox! {:id id}))

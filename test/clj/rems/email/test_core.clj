@@ -2,7 +2,8 @@
   (:require [clojure.test :refer :all]
             [mount.core :as mount]
             [rems.config]
-            [rems.email.core :refer [send-email!]])
+            [rems.email.core :refer [send-email! handle-send-error!]]
+            [clj-time.core :as time])
   (:import [com.icegreen.greenmail.util GreenMail ServerSetup]))
 
 (use-fixtures
@@ -21,7 +22,9 @@
                                          :mail-from "rems@rems.rems")
                   postal.core/send-message (fn [_host message] (reset! message-atom message))
                   rems.db.users/get-user (constantly {:email "user@example.com"})
-                  rems.db.user-settings/get-user-settings (constantly {})]
+                  rems.db.user-settings/get-user-settings (constantly {})
+                  rems.db.outbox/attempt-failed! (fn [email error])
+                  rems.db.outbox/attempt-failed-fatally! (fn [email error])]
 
       (testing "don't send if there is no body (mail toggled off)"
         (is (nil? (send-email! {:to "foo@example.com" :subject "ding" :body nil})))
@@ -68,16 +71,38 @@
         (reset! message-atom nil))
 
       (testing "invalid email address"
-        (is (= "failed address validation: Invalid address \"fake email\": javax.mail.internet.AddressException: Local address contains control or whitespace in string ``fake email''"
-               (send-email! {:to "fake email" :subject "x" :body "y"})))
-        (is (nil? @message-atom))
-        (reset! message-atom nil))
+        (let [email {:to "fake email" :subject "x" :body "y"}
+              entry {:outbox/email email}
+              error (send-email! email)]
+          (is (= "failed address validation: Invalid address \"fake email\": javax.mail.internet.AddressException: Local address contains control or whitespace in string ``fake email''"
+                 error))
+          (is (nil? @message-atom))
+          (is (= :rems.email.core/giving-up-after-fatal-error (handle-send-error! entry error)))
+          (reset! message-atom nil)))
+
+      (testing "invalid email address"
+        (let [email {:to "foo.bar;@example.com" :subject "x" :body "y"}
+              entry {:outbox/email email}
+              error (send-email! email)]
+          (is (= "failed address validation: Invalid address \"foo.bar;@example.com\": javax.mail.internet.AddressException: Illegal semicolon, not in group in string ``foo.bar;@example.com'' at position 7"
+                 error))
+          (is (nil? @message-atom))
+          (is (= :rems.email.core/giving-up-after-fatal-error (handle-send-error! entry error)))
+          (reset! message-atom nil)))
 
       (testing "failed send"
         (with-redefs [postal.core/send-message (fn [_host _message]
                                                  (throw (Throwable. "dummy exception")))]
-          (is (= "failed sending email: java.lang.Throwable: dummy exception"
-                 (send-email! {:to-user "user" :subject "x" :body "y"})))))
+          (let [email {:to-user "user" :subject "x" :body "y"}
+                entry {:outbox/email email}
+                error (send-email! email)]
+            (is (= "failed sending email: java.lang.Throwable: dummy exception"
+                   error))
+            (is (nil? @message-atom))
+            ;; NB: we could test retry but that is for outbox tests
+            ;; our dummy does not have next attempt
+            (is (= :rems.email.core/giving-up-after-all-attempts (handle-send-error! entry error)))
+            (reset! message-atom nil))))
 
       (testing "SMTP not configured"
         (with-redefs [rems.config/env (assoc rems.config/env :smtp-host nil)]

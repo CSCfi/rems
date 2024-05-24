@@ -8,6 +8,13 @@ have notable changes.
 
 Changes since v2.37
 
+### Changes
+- The performance has been improved when there are many handlers. (#3283)
+- The error message "shake" animation has been removed. (#3298)
+- If REMS is trying to send email, and if the address has an obvious problem,
+  REMS will not try sending it again, but gives up immediately. This should
+  avoid having many hopeless retries, if there is a typo in an email address.
+
 ## v2.37 "Laivapojankatu" 2024-05-16
 
 ### Additions
