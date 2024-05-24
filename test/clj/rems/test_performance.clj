@@ -1,7 +1,6 @@
 (ns rems.test-performance
   (:require [clj-async-profiler.core :as prof]
             [clj-memory-meter.core :as mm]
-            [clojure.string :as str]
             [criterium.core :as criterium]
             [medley.core :refer [map-vals]]
             [mount.core :as mount]
@@ -15,6 +14,7 @@
             [rems.email.template]
             [rems.locales]
             [rems.markdown]
+            [rems.service.test-data :as test-data]
             [rems.service.todos :as todos]
             [rems.tempura]
             [rems.text])
@@ -209,70 +209,61 @@
 
 (defn- get-all-translations []
   (let [key-paths (recursive-keys rems.locales/translations)
-
-        find-tr-args (fn [f x]
-                       (->> (flatten [x])
-                            (into [] (comp (filter string?)
-                                           (mapcat f)
-                                           (distinct)))))
-        vec-args (partial re-seq rems.tempura/+vector-args+)
-        map-args #(map (comp keyword second) (re-seq rems.tempura/+map-args+ %))
-
         vec-arg-translations (for [ks key-paths
                                    :let [v (get-in rems.locales/translations ks)
-                                         args (find-tr-args vec-args v)]
+                                         args (rems.tempura/find-vec-params v)]
                                    :when (seq args)]
-                               {:ks ks
-                                :lang (first ks)
-                                :k (to-keyword (rest ks))
-                                :v v
-                                :args args
-                                :fn-args (mapv get-random-word args)})
+                               {:ks ks :args (distinct args)})
         map-arg-translations (for [ks key-paths
                                    :let [v (get-in rems.locales/translations ks)
-                                         args (find-tr-args map-args v)]
+                                         args (rems.tempura/find-map-params v)]
                                    :when (seq args)]
-                               {:ks ks
-                                :lang (first ks)
-                                :k (to-keyword (rest ks))
-                                :v v
-                                :args args
-                                :fn-args [(reduce #(assoc %1 %2 (get-random-word)) {} args)]})]
-    {:vector-args vec-arg-translations
+                               {:ks ks :args (distinct args)})
+        no-arg-translations (for [ks (->> key-paths
+                                          (remove (set (map :ks vec-arg-translations)))
+                                          (remove (set (map :ks map-arg-translations))))]
+                              {:ks ks})]
+    {:vec-args vec-arg-translations
      :map-args map-arg-translations
-     :no-args (for [ks (->> key-paths
-                            (remove (set (map :ks vec-arg-translations)))
-                            (remove (set (map :ks map-arg-translations))))
-                    :let [v (get-in rems.locales/translations ks)]]
-                {:lang (first ks)
-                 :k (to-keyword (rest ks))
-                 :v v})}))
+     :no-args no-arg-translations}))
 
 (defn- benchmark-all-translations []
   (let [all-translations (get-all-translations)
-        tr-all (fn [lang]
-                 (rems.text/with-language lang
-                   (doseq [t (:no-args all-translations)
-                           :when (= lang (:lang t))]
-                     (rems.text/text (:k t)))
-                   (doseq [t (:vector-args all-translations)
-                           :when (= lang (:lang t))]
-                     (apply rems.text/text-format (:k t) (:fn-args t)))
-                   (doseq [t (:map-args all-translations)
-                           :when (= lang (:lang t))]
-                     (apply rems.text/text-format-map (:k t) (:fn-args t)))))
-
-        print-cache #(println :before "tr cache" (mm/measure rems.text/cached-tr))]
+        vec-args (group-by :lang (for [t (:vec-args all-translations)]
+                                   {:lang (first (:ks t))
+                                    :key (to-keyword (rest (:ks t)))
+                                    :fn-args (mapv (fn [& _] (test-data/random-word)) (:args t))}))
+        map-args (group-by :lang (for [t (:map-args all-translations)]
+                                   {:lang (first (:ks t))
+                                    :key (to-keyword (rest (:ks t)))
+                                    :fn-args [(reduce #(assoc %1 %2 (test-data/random-word)) {} (:args t))]}))
+        no-args (group-by :lang (for [t (:no-args all-translations)]
+                                  {:lang (first (:ks t))
+                                   :key (to-keyword (rest (:ks t)))}))
+        tr-all (fn []
+                 (doseq [lang [:en :fi :sv]]
+                   (rems.text/with-language lang
+                     (mapv #(rems.text/text (:k %)) (get no-args lang))
+                     (mapv #(apply rems.text/text-format (:k %) (:fn-args %)) (get vec-args lang))
+                     (mapv #(apply rems.text/text-format (:k %) (:fn-args %)) (get map-args lang)))))]
 
     (mount/start #'rems.config/env ; :enable-handler-emails is enabled by default
                  #'rems.locales/translations)
     (rems.text/reset-cached-tr!)
 
-    (run-benchmarks [{:name "all translations (en), cached" :setup print-cache :benchmark #(tr-all :en)}
-                     {:name "all translations (fi), cached" :setup print-cache :benchmark #(tr-all :fi)}
-                     {:name "all translations (sv), cached" :setup print-cache :benchmark #(tr-all :sv)}])
+    (let [empty-cache-size (mm/measure rems.text/cached-tr)
+          _ (doall (tr-all)) ; run once to warm cache
+          warm-cache-size (mm/measure rems.text/cached-tr)
+          all (run-benchmark {:name "all translations" :benchmark tr-all})
+          final-cache-size (mm/measure rems.text/cached-tr)]
 
-    (println :after "tr cache" (mm/measure rems.text/cached-tr))))
+      {:all all
+       :empty-cache-size empty-cache-size
+       :warm-cache-size warm-cache-size
+       :final-cache-size final-cache-size
+       :translations-count (->> (vals all-translations)
+                                (map count)
+                                (reduce + 0))})))
 
 (comment
   (benchmark-get-events)
@@ -280,11 +271,11 @@
   (benchmark-get-application)
 
   ;; handler count increases email count linearly
-  (def stats (benchmark-template-performance {:benchmark-handlers [1 10 50 100 200]}))
+  (def template-stats (benchmark-template-performance {:benchmark-handlers [1 10 50 100 200]}))
   ;; additional table formatting
-  (print-template-performance-tables stats)
+  (print-template-performance-tables template-stats)
 
-  (benchmark-all-translations)
+  (def translations-stats (benchmark-all-translations))
 
   (def cache-stats (get-cache-sizes))
   ;; additional table formatting
