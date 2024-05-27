@@ -542,10 +542,14 @@ SELECT userAttrs::TEXT
 FROM users
 WHERE userId = :user;
 
--- :name get-user-settings :? :1
-SELECT settings::TEXT
-from user_settings
-where userId = :user;
+-- :name get-user-settings :? :*
+SELECT userid, settings::TEXT
+FROM user_settings
+WHERE 1=1
+/*~ (when (:user params) */
+  AND userId = :user
+/*~ ) ~*/
+;
 
 -- :name get-application-events :? :*
 SELECT id, eventdata::TEXT

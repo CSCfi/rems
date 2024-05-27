@@ -18,9 +18,10 @@
 
 #?(:clj
    (defmacro with-language [lang & body]
-     `(binding [rems.context/*lang* ~lang]
-        (assert (keyword? ~lang) {:lang ~lang})
-        ~@body)))
+     `(let [lang# ~lang] ; ensure lang is evaluated only once
+        (binding [rems.context/*lang* lang#]
+          (assert (keyword? lang#) {:lang lang#})
+          ~@body))))
 
 (defn- failsafe-fallback
   "Fallback for when loading the translations has failed."
@@ -65,8 +66,7 @@
 
    `(text-format-map :key {:a 1 :b 2} [:b :a])`"
   ([k arg-map] (text-format k arg-map))
-  ([k arg-map arg-vec] (apply text-format k arg-map (for [k arg-vec]
-                                                      (get arg-map k)))))
+  ([k arg-map arg-vec] (apply text-format k arg-map (mapv arg-map arg-vec))))
 
 (defn text-no-fallback
   "Return the tempura translation for a given key. Additional fallback
@@ -84,11 +84,13 @@
   "Return the tempura translation for a given key. Additional fallback
   keys can be given."
   [& ks]
-  #?(:clj (tr (conj (vec ks) (text-format :t/missing (vec ks))))
+  #?(:clj (or (tr ks) ; optimization: fetch missing translation only when needed
+              (text-format :t/missing ks))
      ;; NB: we can't call the text-no-fallback here as in CLJS
      ;; we can both call this as function or use as a React component
      :cljs (try
-             (tr (conj (vec ks) (text-format :t/missing (vec ks))))
+             (or (tr ks)
+                 (text-format :t/missing ks))
              (catch js/Object e
                ;; fail gracefully if the re-frame state is incomplete
                (.error js/console e)
