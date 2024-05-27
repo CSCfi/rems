@@ -45,30 +45,30 @@
 
 (rf/reg-sub ::disable-commands-table-rows
             :<- [::disable-commands]
-            :<- [:language] ; re-renders when language changes
-            (fn [[disable-commands _language] _]
-              (for [[index value] (indexed disable-commands)
-                    :let [command (:command value)
-                          states (sort (:when/state value))
-                          roles (sort (:when/role value))]]
-                {:key (str "disable-command-" index)
-                 :command {:display-value [:div
-                                           (localize-command command)
-                                           [:code.color-pre " (" (name command) ")"]]}
-                 :application-state {:display-value (if (seq states)
-                                                      (into [:<>] (for [state states]
-                                                                    [:div
-                                                                     (localize-state state)
-                                                                     [:code.color-pre " (" (name state) ")"]]))
-                                                      (text :t.dropdown/placeholder-any-selection))}
-                 :user-role {:display-value (if (seq roles)
-                                              (into [:<>] (for [role roles]
-                                                            [:div
-                                                             (if (some #{role} [:expirer :reporter])
-                                                               (text :t.roles/technical-role)
-                                                               (localize-role role))
-                                                             [:code.color-pre " (" (name role) ")"]]))
-                                              (text :t.dropdown/placeholder-any-selection))}})))
+            (fn [disable-commands]
+              (doall
+               (for [[index value] (indexed disable-commands)
+                     :let [command (:command value)
+                           states (sort (:when/state value))
+                           roles (sort (:when/role value))]]
+                 {:key (str "disable-command-" index)
+                  :command {:display-value [:div
+                                            (localize-command command)
+                                            [:code.color-pre " (" (name command) ")"]]}
+                  :application-state {:display-value (if (seq states)
+                                                       (into [:<>] (for [state states]
+                                                                     [:div
+                                                                      (localize-state state)
+                                                                      [:code.color-pre " (" (name state) ")"]]))
+                                                       (text :t.dropdown/placeholder-any-selection))}
+                  :user-role {:display-value (if (seq roles)
+                                               (into [:<>] (for [role roles]
+                                                             [:div
+                                                              (if (some #{role} [:expirer :reporter])
+                                                                (text :t.roles/technical-role)
+                                                                (localize-role role))
+                                                              [:code.color-pre " (" (name role) ")"]]))
+                                               (text :t.dropdown/placeholder-any-selection))}}))))
 
 (defn- disable-commands-table []
   [table/table {:id ::disable-commands
@@ -91,12 +91,12 @@
 
 (rf/reg-sub ::processing-states-table-rows
             :<- [::processing-states]
-            :<- [:language]
-            (fn [[processing-states language] _]
-              (for [[index value] (indexed processing-states)]
-                {:key (str "processing-state-" index)
-                 :value {:display-value [:code.color-pre (:processing-state/value value)]}
-                 :title {:display-value (get-in value [:processing-state/title language])}})))
+            (fn [processing-states]
+              (doall
+               (for [[index value] (indexed processing-states)]
+                 {:key (str "processing-state-" index)
+                  :value {:display-value [:code.color-pre (:processing-state/value value)]}
+                  :title {:display-value (localized (:processing-state/title value))}}))))
 
 (defn- processing-states-table []
   [table/table {:id ::processing-states
@@ -134,12 +134,11 @@
     (text wf-localization-key)))
 
 (defn- common-fields []
-  (let [language @(rf/subscribe [:language])
-        workflow @(rf/subscribe [::workflow])
+  (let [workflow @(rf/subscribe [::workflow])
         active? (status-flags/active? workflow)
         organization (:organization workflow)
-        organization-long (get-in organization [:organization/name language])
-        organization-short (get-in organization [:organization/short-name language])
+        organization-long (localized (:organization/name organization))
+        organization-short (localized (:organization/short-name organization))
         title (:title workflow)
         workflow-type (get-in workflow [:workflow :type])
         anonymize-handling (get-in workflow [:workflow :anonymize-handling])

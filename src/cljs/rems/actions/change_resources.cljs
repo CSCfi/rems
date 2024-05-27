@@ -1,6 +1,7 @@
 (ns rems.actions.change-resources
   (:require [re-frame.core :as rf]
             [rems.actions.components :refer [action-button action-form-view comment-field collapse-action-form perform-action-button]]
+            [rems.globals]
             [rems.dropdown :as dropdown]
             [rems.flash-message :as flash-message]
             [medley.core :refer [distinct-by]]
@@ -74,13 +75,13 @@
   (= original-workflow-id (:wfid item)))
 
 (defn change-resources-view
-  [{:keys [application initial-resources selected-resources catalogue can-comment? language on-set-resources on-send]}]
+  [{:keys [application initial-resources selected-resources catalogue can-comment? on-set-resources on-send]}]
   (let [original-workflow-id (get-in application [:application/workflow :workflow/id])
         compatible-first-sort-fn #(if (compatible-item? % original-workflow-id) -1 1)
         sorted-selected-catalogue (->> catalogue
-                                       (sort-by #(get-localized-title % language))
+                                       (sort-by #(get-localized-title %))
                                        (sort-by compatible-first-sort-fn))
-        config @(rf/subscribe [:rems.config/config])]
+        enable-cart? (:enable-cart @rems.globals/config)]
     [action-form-view action-form-id
      (text :t.actions/change-resources)
      [[perform-action-button {:id "change-resources"
@@ -104,28 +105,28 @@
          [dropdown/dropdown
           {:id dropdown-id
            :items (->> sorted-selected-catalogue
-                       (mapv #(assoc % ::label (get-localized-title % language))))
+                       (mapv #(assoc % ::label (get-localized-title %))))
            :item-disabled? #(not (compatible-item? % original-workflow-id))
            :item-key :id
            :item-label ::label
            :item-selected? #(contains? (set selected-resources) (% :id))
-           :multi? (:enable-cart config)
-           :on-change #(on-set-resources (flatten (list %)))}]] ; single resource or list
-        (when (:enable-cart config)
+           :multi? enable-cart?
+           :on-change (if enable-cart?
+                        (fn [items] (on-set-resources items))
+                        (fn [item] (on-set-resources [item])))}]]
+        (when enable-cart?
           (text :t.actions/bundling-intro))])]))
 
 (defn change-resources-form [application can-comment? on-finished]
   (let [initial-resources @(rf/subscribe [::initial-resources])
         selected-resources @(rf/subscribe [::selected-resources])
         catalogue @(rf/subscribe [::catalogue])
-        comment @(rf/subscribe [:rems.actions.components/comment action-form-id])
-        language @(rf/subscribe [:language])]
+        comment @(rf/subscribe [:rems.actions.components/comment action-form-id])]
     [change-resources-view {:application application
                             :initial-resources initial-resources
                             :selected-resources selected-resources
                             :catalogue catalogue
                             :can-comment? can-comment?
-                            :language language
                             :on-set-resources #(rf/dispatch [::set-selected-resources %])
                             :on-send #(rf/dispatch [::send-change-resources {:application-id (:application/id application)
                                                                              :resources selected-resources

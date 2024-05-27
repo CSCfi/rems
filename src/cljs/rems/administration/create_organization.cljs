@@ -14,7 +14,7 @@
             [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
             [rems.text :refer [text text-format]]
-            [rems.util :refer [navigate! post! put! trim-when-string]]))
+            [rems.util :refer [fetch navigate! post! put! trim-when-string]]))
 
 (rf/reg-event-fx
  ::enter-page
@@ -106,7 +106,7 @@
      (post! "/api/organizations/create"
             {:params request
              :handler (flash-message/default-success-handler
-                       :top description #(do (config/fetch-organizations!)
+                       :top description #(do (rems.config/fetch-organizations!)
                                              (navigate! (str "/administration/organizations/" (:organization/id %)))))
              :error-handler (flash-message/default-error-handler :top description)}))
    {}))
@@ -118,7 +118,7 @@
      (put! "/api/organizations/edit"
            {:params request
             :handler (flash-message/default-success-handler
-                      :top description #(do (config/fetch-organizations!)
+                      :top description #(do (rems.config/fetch-organizations!)
                                             (navigate! (str "/administration/organizations/" (:organization/id %)))))
             :error-handler (flash-message/default-error-handler :top description)}))
    {}))
@@ -153,7 +153,7 @@
 (defn- save-organization-button []
   (let [form @(rf/subscribe [::form])
         id @(rf/subscribe [::organization-id])
-        languages @(rf/subscribe [:languages])
+        languages @rems.config/languages
         request (if id
                   (build-edit-request id form languages)
                   (build-create-request form languages))]
@@ -161,7 +161,7 @@
      {:type :button
       :id :save
       :on-click (fn []
-                  (rf/dispatch [:rems.spa/user-triggered-navigation])
+                  (rf/dispatch [:rems.app/user-triggered-navigation])
                   (if id
                     (rf/dispatch [::edit-organization request])
                     (rf/dispatch [::create-organization request])))

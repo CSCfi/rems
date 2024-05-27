@@ -1,17 +1,20 @@
 (ns rems.text
   (:require [clojure.string :as str]
             [clojure.test :refer [deftest is]]
-            #?(:clj [clj-time.core :as time]
-               :cljs [cljs-time.core :as time])
-            #?(:clj [clj-time.format :as time-format]
-               :cljs [cljs-time.format :as time-format])
-            #?(:cljs [cljs-time.coerce :as time-coerce])
-            #?(:clj [rems.locales]
-               :cljs [re-frame.core :as rf])
             [rems.common.application-util :as application-util]
             [rems.common.util :refer [not-blank]]
-            #?(:clj [rems.context :as context])
-            [rems.tempura]))
+            [rems.tempura]
+            #?@(:clj
+                [[clj-time.core :as time]
+                 [clj-time.format :as time-format]
+                 [rems.locales]
+                 [rems.context :as context]]
+                :cljs
+                [[cljs-time.core :as time]
+                 [cljs-time.format :as time-format]
+                 [cljs-time.coerce :as time-coerce]
+                 [rems.config]
+                 [rems.globals]])))
 
 #?(:clj
    (defmacro with-language [lang & body]
@@ -33,12 +36,12 @@
 (defn ensure-cached-tr! []
   (when-not (fn? @cached-tr)
     (reset! cached-tr (rems.tempura/get-cached-tr #?(:clj rems.locales/translations
-                                                     :cljs @(rf/subscribe [:translations])))))
+                                                     :cljs @rems.globals/translations))))
   @cached-tr)
 
 (defn- tr [ks & [args]]
   (let [language #?(:clj context/*lang*
-                    :cljs @(rf/subscribe [:language]))]
+                    :cljs @rems.config/current-language)]
     ((ensure-cached-tr!) [language]
                          (vec ks)
                          (some-> args vec))))
@@ -95,14 +98,16 @@
 
 (defn localized [m]
   (let [lang #?(:clj context/*lang*
-                :cljs @(rf/subscribe [:language]))]
+                :cljs @rems.config/current-language)]
     (or (get m lang)
         (first (vals m)))))
 
 ;; TODO: replace usages of `get-localized-title` with `localized`
-(defn get-localized-title [item language]
-  (or (get-in item [:localizations language :title])
-      (:title (first (vals (get item :localizations))))))
+(defn get-localized-title [item]
+  (let [lang #?(:clj context/*lang*
+                :cljs @rems.config/current-language)]
+    (or (get-in item [:localizations lang :title])
+        (:title (first (vals (get item :localizations)))))))
 
 (def ^:private states
   {:application.state/draft :t.applications.states/draft

@@ -561,7 +561,7 @@
           (fill-form-field "Conditional field" "Conditional")
           (select-option "Option list" "Second option")
           (btu/wait-predicate #(not (btu/field-visible? "Conditional field")))
-          (btu/wait-for-idle 1000) ; XXX: conditional field check sometimes fails due to rendering latency
+          (Thread/sleep 1000) ; XXX: conditional field check sometimes fails due to rendering latency
           (when (btu/autosave-enabled?)
             (btu/wait-visible {:css ".alert-success" :fn/text "Application is saved."}))
           (select-option "Option list" "First option")

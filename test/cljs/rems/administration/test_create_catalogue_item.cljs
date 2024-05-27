@@ -1,9 +1,19 @@
 (ns rems.administration.test-create-catalogue-item
   (:require [clojure.test :refer [deftest is testing use-fixtures]]
+            [reagent.core :as r]
             [rems.administration.create-catalogue-item :refer [build-request]]
+            [rems.globals]
             [rems.testing :refer [init-spa-fixture]]))
 
-(use-fixtures :each init-spa-fixture)
+(defn- languages-fixture [langs]
+  (fn [f]
+    (r/rswap! rems.globals/config assoc :languages langs)
+    (f)))
+
+(use-fixtures
+  :each
+  init-spa-fixture
+  (languages-fixture [:en :fi]))
 
 (deftest build-request-test
   (let [form {:title {:en "en title"
@@ -20,8 +30,7 @@
               :categories [{:category/id 1
                             :category/title {:fi "fi" :en "en" :sv "sv"}
                             :category/description {:fi "fi" :en "en" :sv "sv"}
-                            :category/children []}]}
-        languages [:en :fi]]
+                            :category/children []}]}]
 
     (testing "valid form"
       (is (= {:wfid 123
@@ -33,7 +42,7 @@
                               :fi {:title "fi title"
                                    :infourl nil}}
               :categories [{:category/id 1}]}
-             (build-request form languages))))
+             (build-request form))))
 
     (testing "missing form"
       (is (= {:wfid 123
@@ -45,22 +54,16 @@
                               :fi {:title "fi title"
                                    :infourl nil}}
               :categories [{:category/id 1}]}
-             (build-request (assoc form :form nil)
-                            languages))))
+             (build-request (assoc form :form nil)))))
 
     (testing "missing title"
-      (is (nil? (build-request (assoc-in form [:title :en] "")
-                               languages)))
-      (is (nil? (build-request (assoc-in form [:title :fi] "")
-                               languages))))
+      (is (nil? (build-request (assoc-in form [:title :en] ""))))
+      (is (nil? (build-request (assoc-in form [:title :fi] "")))))
 
     (testing "missing organization"
-      (is (nil? (build-request (dissoc form :organization)
-                               languages))))
+      (is (nil? (build-request (dissoc form :organization)))))
 
     (testing "missing workflow"
-      (is (nil? (build-request (assoc form :workflow nil)
-                               languages))))
+      (is (nil? (build-request (assoc form :workflow nil)))))
     (testing "missing resource"
-      (is (nil? (build-request (assoc form :resource nil)
-                               languages))))))
+      (is (nil? (build-request (assoc form :resource nil)))))))

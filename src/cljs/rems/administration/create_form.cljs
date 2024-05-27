@@ -21,13 +21,14 @@
             [rems.collapsible :as collapsible]
             [rems.common.form :refer [field-visible? generate-field-id validate-form-template] :as common-form]
             [rems.common.util :refer [parse-int]]
+            [rems.config :as config]
             [rems.dropdown :as dropdown]
             [rems.fetcher :as fetcher]
             [rems.fields :as fields]
             [rems.flash-message :as flash-message]
             [rems.focus :as focus]
             [rems.spinner :as spinner]
-            [rems.text :refer [text text-format]]
+            [rems.text :refer [localized text text-format]]
             [rems.util :refer [navigate! put! post! trim-when-string visibility-ratio focus-input-field]]))
 
 (rf/reg-event-fx
@@ -149,9 +150,6 @@
 
 ;;;; form submit
 
-(defn- localized-field-title [field lang]
-  (get-in field [:field/title lang]))
-
 (defn build-localized-string [lstr languages]
   (let [v (into {} (for [language languages]
                      [language (trim-when-string (get lstr language ""))]))]
@@ -206,8 +204,8 @@
  ::send-form
  (fn [{:keys [db]} [_]]
    (let [edit? (::edit-form? db)
-         request (build-request (get-in db [::form :data]) (:languages db))
-         form-errors (validate-form-template request (:languages db))
+         request (build-request (get-in db [::form :data]) @rems.config/languages)
+         form-errors (validate-form-template request @rems.config/languages)
          send-verb (if edit? put! post!)
          send-url (str "/api/forms/" (if edit?
                                        "edit"
@@ -428,7 +426,6 @@
         error-type (get-in form-errors [:form/fields field-index :field/visibility :visibility/type])
         error-field (get-in form-errors [:form/fields field-index :field/visibility :visibility/field])
         error-value (get-in form-errors [:form/fields field-index :field/visibility :visibility/values])
-        lang @(rf/subscribe [:language])
         id-type (str "fields-" field-index "-visibility-type")
         id-field (str "fields-" field-index "-visibility-field")
         id-value (str "fields-" field-index "-visibility-value")
@@ -467,7 +464,7 @@
             (for [field (form-fields-that-can-be-used-in-visibility form)]
               ^{:key (str field-index "-" (:field/id field))}
               [:option {:value (:field/id field)}
-               (text-format :t.create-form/field-n (inc (:field/index field)) (localized-field-title field lang))]))]
+               (text-format :t.create-form/field-n (inc (:field/index field)) (localized (:field/title field)))]))]
           [:div.invalid-feedback
            (when error-field (text-format error-field label-field))]]]
         (when (:field/id visibility-field)
@@ -478,7 +475,7 @@
              {:id id-value
               :items (for [value (form-field-values form (:field/id visibility-field))]
                        {:value (:value value)
-                        :label (get-in value [:title lang])})
+                        :label (localized (:title value))})
               :item-key #(str field-index "-" %)
               :item-label :label
               :item-selected? #(contains? (set visibility-value) (:value %))
@@ -501,7 +498,6 @@
   (let [form @(rf/subscribe [::form-data])
         form-errors @(rf/subscribe [::form-errors])
         error (get-in form-errors [:form/fields field-index :field/privacy])
-        lang @(rf/subscribe [:language])
         id (str "fields-" field-index "-privacy-type")
         label (text :t.create-form/type-privacy)
         privacy (get-in form [:form/fields field-index :field/privacy])]
@@ -568,7 +564,7 @@
    {:type :button
     :id :save
     :on-click (fn []
-                (rf/dispatch [:rems.spa/user-triggered-navigation]) ;; scroll to top
+                (rf/dispatch [:rems.app/user-triggered-navigation]) ;; scroll to top
                 (on-click))}
    (text :t.administration/save)])
 
@@ -585,9 +581,8 @@
   (text-format error (str (text label) " (" (str/upper-case (name lang)) ")")))
 
 (defn- format-field-validation [field field-errors]
-  (let [field-index (:field/index field)
-        lang @(rf/subscribe [:language])]
-    [:li (text-format :t.create-form/field-n (inc field-index) (localized-field-title field lang))
+  (let [field-index (:field/index field)]
+    [:li (text-format :t.create-form/field-n (inc field-index) (localized (:field/title field)))
      (into [:ul]
            (concat
             (for [[lang error] (:field/title field-errors)]
@@ -640,7 +635,7 @@
                           (format-validation-link (str "fields-" field-index "-columns-" column-id "-label-" (name lang))
                                                   (format-error-for-localized-field error :t.create-form/option-label lang))))]]))))]))
 
-(defn format-validation-errors [form-errors form lang]
+(defn format-validation-errors [form-errors form]
   ;; TODO: deduplicate with field definitions
   (into [:ul
          (when-let [error (:organization form-errors)]
@@ -657,15 +652,14 @@
 
         (for [[field-index field-errors] (into (sorted-map) (:form/fields form-errors))]
           (let [field (get-in form [:form/fields field-index])]
-            [format-field-validation field field-errors lang]))))
+            [format-field-validation field field-errors]))))
 
 (defn- validation-errors-summary []
   (let [form @(rf/subscribe [::form-data])
-        errors @(rf/subscribe [::form-errors])
-        lang @(rf/subscribe [:language])]
+        errors @(rf/subscribe [::form-errors])]
     (when errors
       [:div.alert.alert-danger (text :t.actions.errors/validation-errors)
-       [format-validation-errors errors form lang]])))
+       [format-validation-errors errors form]])))
 
 (defn- form-fields [fields]
   (into [:div
@@ -681,7 +675,7 @@
              {:id (field-editor-id (:field/id field))
               :always
               [:div.form-field-header.d-flex
-               [:h3 (text-format :t.create-form/field-n (inc index) (localized-field-title field @(rf/subscribe [:language])))]
+               [:h3 (text-format :t.create-form/field-n (inc index) (localized (:field/title field)))]
                [:div.form-field-controls.text-nowrap.ml-auto
                 [move-form-field-up-button index]
                 [move-form-field-down-button index]
@@ -733,8 +727,7 @@
    (::preview db {})))
 
 (defn form-preview [form]
-  (let [preview @(rf/subscribe [::preview])
-        lang @(rf/subscribe [:language])]
+  (let [preview @(rf/subscribe [::preview])]
     [collapsible/component
      {:id "preview-form"
       :title (text :t.administration/preview)

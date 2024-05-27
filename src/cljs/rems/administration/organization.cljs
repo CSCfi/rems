@@ -9,7 +9,7 @@
             [rems.common.roles :as roles]
             [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
-            [rems.text :refer [text]]
+            [rems.text :refer [localized text]]
             [rems.util :refer [fetch]]))
 
 (rf/reg-event-fx
@@ -62,11 +62,11 @@
                 (map display-localized-review-email)
                 (interpose [:br])))]))
 
-(defn organization-view [organization language]
+(defn organization-view [organization]
   [:div.spaced-vertically-3
    [collapsible/component
     {:id "organization"
-     :title (get-in organization [:organization/name language])
+     :title (localized (:organization/name organization))
      :always [:div
               [inline-info-field (text :t.administration/id) (:organization/id organization)]
               (doall (for [[langcode localization] (:organization/short-name organization)]
@@ -102,7 +102,6 @@
 
 (defn organization-page []
   (let [organization (rf/subscribe [::organization])
-        language (rf/subscribe [:language])
         loading? (rf/subscribe [::loading?])]
     [:div
      [administration/navigator]
@@ -110,4 +109,4 @@
      [flash-message/component :top]
      (if @loading?
        [spinner/big]
-       [organization-view @organization @language])]))
+       [organization-view @organization])]))

@@ -8,6 +8,7 @@
             [rems.common.application-util :as application-util]
             [rems.common.util :refer [build-index]]
             [rems.dropdown :as dropdown]
+            [rems.globals]
             [rems.text :refer [text text-format]]))
 
 (def ^:private action-form-id "vote")
@@ -79,7 +80,7 @@
 
 (defn vote-form [application-id application on-finished]
   (let [vote @(rf/subscribe [::vote])
-        userid (:userid @(rf/subscribe [:user]))
+        userid (:userid @rems.globals/user)
         comment @(rf/subscribe [:rems.actions.components/comment action-form-id])
         attachments @(rf/subscribe [:rems.actions.components/attachments action-form-id])]
     [vote-view {:application-id application-id

@@ -11,7 +11,7 @@
             [rems.flash-message :as flash-message]
             [rems.common.roles :as roles]
             [rems.spinner :as spinner]
-            [rems.text :refer [text]]
+            [rems.text :refer [localized text]]
             [rems.util :refer [navigate! fetch]]))
 
 (rf/reg-event-fx
@@ -54,7 +54,7 @@
   (atoms/edit-action
    {:class "edit-form"
     :on-click (fn []
-                (rf/dispatch [:rems.spa/user-triggered-navigation])
+                (rf/dispatch [:rems.app/user-triggered-navigation])
                 (rf/dispatch [::edit-form form-id]))}))
 
 (defn edit-button [form-id]
@@ -65,13 +65,13 @@
    (str "/administration/forms/create/" id)
    (text :t.administration/copy-as-new)])
 
-(defn form-view [form language]
+(defn form-view [form]
   [:div.spaced-vertically-3
    [collapsible/component
     {:id "form"
-     :title [:span (andstr (get-in form [:organization :organization/short-name language]) "/") (:form/internal-name form)]
+     :title [:span (andstr (localized (get-in form [:organization :organization/short-name])) "/") (:form/internal-name form)]
      :always [:div
-              [inline-info-field (text :t.administration/organization) (get-in form [:organization :organization/name language])]
+              [inline-info-field (text :t.administration/organization) (localized (get-in form [:organization :organization/name]))]
               [inline-info-field (text :t.administration/internal-name) (get-in form [:form/internal-name])]
               (doall (for [[langcode title] (:form/external-title form)]
                        ^{:key langcode}
@@ -90,18 +90,17 @@
    (when-let [errors (:form/errors form)]
      [:div.alert.alert-danger
       [text :t.administration/has-errors]
-      [format-validation-errors errors form @(rf/subscribe [:language])]])
+      [format-validation-errors errors form]])
    [form-preview form]])
 ;; TODO Do we support form licenses?
 
 (defn form-page []
   (let [form @(rf/subscribe [::form])
-        loading? @(rf/subscribe [::loading?])
-        language @(rf/subscribe [:language])]
+        loading? @(rf/subscribe [::loading?])]
     [:div
      [administration/navigator]
      [document-title (text :t.administration/form)]
      [flash-message/component :top]
      (if loading?
        [spinner/big]
-       [form-view form language])]))
+       [form-view form])]))

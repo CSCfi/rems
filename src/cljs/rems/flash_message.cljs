@@ -147,3 +147,9 @@
   (fn [response]
     (show-default-error! location description [format-response-error response])
     response))
+
+(rf/reg-event-fx
+ ::show-response-error
+ (fn [_ [_ location description response]]
+   (show-default-error! location description [format-response-error response])
+   {}))

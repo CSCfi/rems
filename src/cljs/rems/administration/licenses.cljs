@@ -7,7 +7,7 @@
             [rems.common.roles :as roles]
             [rems.spinner :as spinner]
             [rems.table :as table]
-            [rems.text :refer [get-localized-title text]]
+            [rems.text :refer [get-localized-title localized text]]
             [rems.util :refer [put! fetch]]))
 
 (rf/reg-event-fx
@@ -81,16 +81,15 @@
  ::licenses-table-rows
  (fn [_ _]
    [(rf/subscribe [::licenses])
-    (rf/subscribe [:language])
     (rf/subscribe [:rems.administration.administration/displayed-organization-ids])])
- (fn [[licenses language displayed-organization-ids] _]
+ (fn [[licenses displayed-organization-ids] _]
    (->> licenses
         (administration/filter-by-displayed-organization displayed-organization-ids #(get-in % [:organization :organization/id]))
         (mapv (fn [license]
                 {:key (:id license)
-                 :title {:value (get-localized-title license language)}
+                 :title {:value (get-localized-title license)}
                  :type {:value (:licensetype license)}
-                 :organization {:value (get-in license [:organization :organization/short-name language])}
+                 :organization {:value (localized (get-in license [:organization :organization/short-name]))}
                  :active (let [checked? (status-flags/active? license)]
                            {:display-value [readonly-checkbox {:value checked?}]
                             :sort-value (if checked? 1 2)})

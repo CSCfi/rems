@@ -5,6 +5,7 @@
             [rems.flash-message :as flash-message]
             [rems.fetcher :as fetcher]
             [rems.guide-util :refer [component-info example]]
+            [rems.globals]
             [rems.spinner :as spinner]
             [rems.text :refer [text]]
             [rems.user :as user]
@@ -20,7 +21,7 @@
   ;; select only the keys that can be edited on this page
   (rf/dispatch [::set-form (select-keys result [:notification-email])])
   ;; update user settings in SPA state after user has changed them
-  (rf/dispatch [:loaded-user-settings result]))
+  (rf/dispatch [:rems.user-settings/loaded-user-settings result]))
 
 (fetcher/reg-fetcher ::user-settings "/api/user-settings" {:on-success fetch-user-settings-success})
 
@@ -47,7 +48,7 @@
 (rf/reg-sub
  ::missing-email?
  (fn [db _]
-   (let [user (:user (:identity db))]
+   (let [user @rems.globals/user]
      (and user
           (not (:email user))
           (not (:notification-email (:user-settings db)))))))
@@ -63,8 +64,7 @@
     [missing-email-warning-dialog]))
 
 (defn- user-settings []
-  (let [identity @(rf/subscribe [:identity])
-        form @(rf/subscribe [::form])]
+  (let [form @(rf/subscribe [::form])]
     [collapsible/component
      {:title (text :t.profile/settings)
       :always (if @(rf/subscribe [::user-settings :fetching?])
@@ -75,7 +75,7 @@
                                (rf/dispatch [::save]))}
 
                  [:div.form-group
-                  (text :t.profile/idp-email) ": " (or (:email (:user identity))
+                  (text :t.profile/idp-email) ": " (or (:email @rems.globals/user)
                                                        [:span.text-muted (text :t.profile/no-email)])]
 
                  (let [id "notification-email"]
@@ -94,12 +94,11 @@
                   (text :t.profile/save)]])}]))
 
 (defn- user-details []
-  (let [identity @(rf/subscribe [:identity])]
-    [collapsible/component
-     {:title (text :t.profile/your-details)
-      :always [:<>
-               [user/username (:user identity)]
-               [user/attributes (:user identity) false]]}]))
+  [collapsible/component
+   {:title (text :t.profile/your-details)
+    :always [:<>
+             [user/username @rems.globals/user]
+             [user/attributes @rems.globals/user false]]}])
 
 (defn profile-page []
   [:<>

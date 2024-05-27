@@ -6,6 +6,7 @@
             [rems.administration.duo :refer [duo-field]]
             [rems.atoms :as atoms :refer [document-title]]
             [rems.collapsible :as collapsible]
+            [rems.globals]
             [rems.dropdown :as dropdown]
             [rems.fetcher :as fetcher]
             [rems.flash-message :as flash-message]
@@ -18,7 +19,7 @@
  ::enter-page
  (fn [{:keys [db]}]
    {:db (dissoc db ::form)
-    :dispatch-n (if (-> db :config :enable-duo)
+    :dispatch-n (if (:enable-duo @rems.globals/config)
                   [[::licenses] [::duo-codes]]
                   [[::licenses]])}))
 
@@ -114,14 +115,13 @@
 
 (defn- resource-licenses-field []
   (let [licenses @(rf/subscribe [::licenses])
-        selected-licenses @(rf/subscribe [::selected-licenses])
-        language @(rf/subscribe [:language])]
+        selected-licenses (set @(rf/subscribe [::selected-licenses]))]
     [:div.form-group
      [:label.administration-field-label {:for licenses-dropdown-id} (text :t.create-resource/licenses-selection)]
      [dropdown/dropdown
       {:id licenses-dropdown-id
        :items (vec (for [license licenses
-                         :let [title (get-localized-title license language)
+                         :let [title (get-localized-title license)
                                org-short (localize-org-short license)]]
                      (assoc license
                             ::label (text-format :t.label/default title org-short))))
@@ -161,7 +161,7 @@
     [:button#save.btn.btn-primary
      {:type :button
       :on-click (fn []
-                  (rf/dispatch [:rems.spa/user-triggered-navigation])
+                  (rf/dispatch [:rems.app/user-triggered-navigation])
                   (rf/dispatch [::create-resource request]))
       :disabled (nil? request)}
      (text :t.administration/save)]))
@@ -173,8 +173,7 @@
 
 (defn create-resource-page []
   (let [loading? @(rf/subscribe [::licenses :fetching?])
-        form @(rf/subscribe [::form])
-        config @(rf/subscribe [:rems.config/config])]
+        form @(rf/subscribe [::form])]
     [:div
      [administration/navigator]
      [document-title (text :t.administration/create-resource)]
@@ -189,7 +188,7 @@
                    [resource-organization-field]
                    [resource-id-field]
                    [resource-licenses-field]
-                   (when (:enable-duo config) [resource-duos-field])
+                   (when (:enable-duo @rems.globals/config) [resource-duos-field])
                    [:div.col.commands
                     [cancel-button]
                     [save-resource-button form]]])]}]]))
