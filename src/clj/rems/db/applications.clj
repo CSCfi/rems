@@ -384,14 +384,14 @@
         personalize-app (fn [app] ; NB: may return nil if should not see the app
                           (model/apply-user-permissions app userid))
         apps (->> app-ids
-                  (mapv cached-apps)
+                  (map cached-apps)
                   (keep personalize-app))]
     apps))
 
 (defn get-all-applications [userid]
   (->> userid
        get-all-applications-full
-       (mapv ->ApplicationOverview)))
+       (map ->ApplicationOverview)))
 
 (defn get-all-application-roles [userid]
   (-> (refresh-all-applications-cache!)
