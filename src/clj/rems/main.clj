@@ -186,6 +186,7 @@
                          #'rems.db.core/*db*
                          #'rems.locales/translations
                          #'rems.db.events/low-level-events-cache
+                         #'rems.db.users/low-level-user-cache
                          #'rems.db.user-settings/low-level-user-settings-cache)
             (test-data/create-test-data!)
             (log/info "Test data created"))
@@ -196,6 +197,7 @@
                          #'rems.db.core/*db*
                          #'rems.locales/translations
                          #'rems.db.events/low-level-events-cache
+                         #'rems.db.users/low-level-user-cache
                          #'rems.db.user-settings/low-level-user-settings-cache)
             (log/info "Creating performance test data")
             (test-data/create-performance-test-data!)
@@ -207,6 +209,7 @@
                          #'rems.db.core/*db*
                          #'rems.locales/translations
                          #'rems.db.events/low-level-events-cache
+                         #'rems.db.users/low-level-user-cache
                          #'rems.db.user-settings/low-level-user-settings-cache)
             (test-data/create-demo-data!))
 
@@ -219,6 +222,7 @@
             (mount/start #'rems.db.core/*db*
                          #'rems.locales/translations
                          #'rems.db.events/low-level-events-cache
+                         #'rems.db.users/low-level-user-cache
                          #'rems.db.user-settings/low-level-user-settings-cache)
             (test-data/create-test-data!)
             (log/info "Test data created"))
@@ -232,6 +236,7 @@
             (mount/start #'rems.db.core/*db*
                          #'rems.locales/translations
                          #'rems.db.events/low-level-events-cache
+                         #'rems.db.users/low-level-user-cache
                          #'rems.db.user-settings/low-level-user-settings-cache)
             (test-data/create-test-data!)
             (log/info "Test data created")
@@ -300,6 +305,7 @@
                     (mount/start #'rems.config/env
                                  #'rems.db.core/*db*
                                  #'rems.db.events/low-level-events-cache
+                                 #'rems.db.users/low-level-user-cache
                                  #'rems.db.user-settings/low-level-user-settings-cache)
                     (rems.service.fix-userid/fix-all old-userid new-userid simulate?)
                     (println "Finished.\n\nConsider rebooting the server process next to refresh all the caches, most importantly the application cache.")))))

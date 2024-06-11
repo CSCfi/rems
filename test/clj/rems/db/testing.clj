@@ -11,8 +11,9 @@
             [rems.db.category :as category]
             [rems.db.core :as db]
             [rems.db.events :as events]
+            [rems.db.users :as users]
             [rems.db.user-mappings :as user-mappings]
-            [rems.db.user-settings]
+            [rems.db.user-settings :as user-settings]
             [rems.locales]
             [rems.service.dependencies :as dependencies]
             [rems.service.test-data :as test-data]))
@@ -38,6 +39,7 @@
   (migrations/migrate ["migrate"] {:database-url (:test-database-url env)})
   ;; need DB to start these
   (mount/start #'rems.db.events/low-level-events-cache
+               #'rems.db.users/low-level-user-cache
                #'rems.db.user-settings/low-level-user-settings-cache)
   (f)
   (mount/stop))
@@ -57,7 +59,9 @@
       (category/reset-cache!)
       (dependencies/reset-cache!)
       (user-mappings/reset-cache!)
-      (events/empty-event-cache!))))
+      (events/empty-event-cache!)
+      (users/empty-user-cache!)
+      (user-settings/empty-user-settings-cache!))))
 (def +test-api-key+ test-data/+test-api-key+) ;; re-exported for convenience
 
 (defn owners-fixture [f]

@@ -540,7 +540,11 @@ WHERE role = :role;
 -- :name get-user-attributes :? :1
 SELECT userAttrs::TEXT
 FROM users
-WHERE userId = :user;
+WHERE 1=1
+/*~ (when (:user params) */
+AND userId = :user
+/*~ ) ~*/
+;
 
 -- :name get-user-settings :? :*
 SELECT userid, settings::TEXT
