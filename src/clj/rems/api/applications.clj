@@ -184,6 +184,7 @@
     (GET "/handled" []
       :summary "Get all applications that the current user no more needs to act on."
       :roles #{:logged-in}
+      ;; XXX: checking this schema can be mighty slow (thousands of applications to check individually)
       :return [schema/ApplicationOverview]
       :query-params [{query :- (describe s/Str "search query [documentation](https://github.com/CSCfi/rems/blob/master/docs/search.md)") nil}
                      {only-active-handlers :- (describe s/Bool "return only workflow handlers that are active making a smaller result") false}
