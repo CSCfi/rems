@@ -143,15 +143,20 @@
          :mode mode
          :seed (random-seed)))
 
+(defn- recreate-session! [driver]
+  (et/delete-session driver)
+  (let [driver (dissoc driver :session)
+        session (et/create-session driver)]
+    (assoc driver :session session)))
+
 (defn refresh-driver!
   "Re-creates session on an existing driver and sets default values."
   []
   (assert (get-driver) "must have initialized driver already!")
-
-  (doto (get-driver)
-    (et/delete-session)
-    (et/create-session)
-    (init-session!)))
+  (et/with-wait-timeout 60
+    (-> (get-driver)
+        recreate-session!
+        init-session!)))
 
 (defn init-driver-fixture
   "Executes a test running a fresh driver except when in development."
@@ -185,7 +190,7 @@
   (reset-context!)
   (f))
 
-(defn smoke-test [f]
+(defn smoke-test-fixture [f]
   (let [response (http/get (str (get-server-url) "js/app.js"))]
     (assert (= 200 (:status response))
             (str "Failed to load app.js: " response))

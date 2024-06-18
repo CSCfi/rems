@@ -39,15 +39,14 @@
 (use-fixtures
   :each
   btu/reset-context-fixture
-  btu/refresh-driver-fixture)
+  btu/smoke-test-fixture
+  btu/init-driver-fixture)
 
 (use-fixtures
   :once
   btu/ensure-empty-directories-fixture
   btu/test-dev-or-standalone-fixture
-  btu/smoke-test
-  btu/accessibility-report-fixture
-  btu/init-driver-fixture)
+  btu/accessibility-report-fixture)
 
 ;;; common functionality
 
