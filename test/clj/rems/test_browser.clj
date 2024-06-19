@@ -814,6 +814,7 @@
       (is (btu/eventually-visible? {:fn/has-string "Invite member: Success"})))
 
     (testing "invite handler as member"
+      (Thread/sleep 1000)
       (is (not (btu/visible? [:actions-invite-member {:fn/has-text "Invite member"}])))
       (btu/scroll-and-click :invite-member-action-button)
       (is (btu/eventually-visible? [:actions-invite-member {:fn/has-text "Invite member"}]))
