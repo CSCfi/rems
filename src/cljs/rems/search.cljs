@@ -2,10 +2,10 @@
   (:require [clojure.string :as str]
             [goog.functions :refer [debounce]]
             [reagent.core :as r]
-            [rems.atoms :refer [close-symbol]]
+            [rems.atoms :as atoms]
+            [rems.collapsible :as collapsible]
             [rems.spinner :as spinner]
-            [rems.text :refer [text]]
-            [rems.util :refer [fetch focus-when-collapse-opened]]))
+            [rems.text :refer [text]]))
 
 (defn search-field [{:keys [id on-search searching? info debounce-time] :or {debounce-time 500}}]
   (r/with-let [input-value (r/atom "")
@@ -44,23 +44,20 @@
                         (reset! input-value "")
                         (on-search "")
                         (.focus @input-element))}
-           [close-symbol]]])]
+           [atoms/close-symbol]]])]
 
       (when info
-        [:a.application-search-tips.btn.btn-link.collapsed
-         {:data-toggle "collapse"
-          :href (str "#" collapse-id)
-          :aria-label (text :t.search/example-searches)
-          :aria-expanded "false"
-          :aria-controls collapse-id}
-         [:i.fa.fa-question-circle]])
+        [atoms/action-link
+         (assoc (collapsible/toggle-action collapse-id)
+                :class "application-search-tips"
+                :label [atoms/search-symbol]
+                :aria-label (text :t.search/example-searches)
+                :url "#")])
       (when searching?
         [spinner/small])]
      (when info
-       [:div.search-tips.collapse.my-3 {:id collapse-id
-                                        :ref focus-when-collapse-opened
-                                        :tab-index "-1"}
-        info])]))
+       [collapsible/minimal {:id collapse-id
+                             :collapse [:div.search-tips.my-3 info]}])]))
 
 (defn- application-search-info [] ; TODO: this should probably be almost completely in localized text
   [:span

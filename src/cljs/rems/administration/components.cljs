@@ -193,13 +193,12 @@
                          :normalizer normalizer
                          :on-change on-change}]))]
     (if collapse?
-      [:div.form-group.localized-field.mb-1
-       [:label.administration-field-label
+      [:div.form-group.field.localized-field
+       [:label.administration-field-label.d-flex.align-items-center
         label
-        " "
-        [collapsible/controls id (text :t.collapse/show) (text :t.collapse/hide)]]
-       [:div.collapse {:id id}
-        fields]]
+        [collapsible/toggle-control id]]
+       [collapsible/minimal {:id id
+                             :collapse fields}]]
       [:div.form-group.localized-field
        [:label.administration-field-label label]
        fields])))

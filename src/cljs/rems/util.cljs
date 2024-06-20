@@ -272,3 +272,9 @@
                    (on-element-appear (assoc opts
                                              :on-resolve resolve
                                              :on-reject reject))))))
+
+(defn event-value [^js event]
+  (.. event -target -value))
+
+(defn event-checked [^js event]
+  (.. event -target -checked))

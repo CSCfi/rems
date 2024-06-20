@@ -1,8 +1,9 @@
 (ns rems.administration.duo
   (:require [goog.functions :refer [debounce]]
             [re-frame.core :as rf]
-            [rems.administration.components :refer [date-field inline-info-field input-field textarea-autosize text-field]]
             [rems.atoms :as atoms]
+            [rems.administration.components :refer [date-field inline-info-field input-field textarea-autosize text-field]]
+            [rems.collapsible :as collapsible]
             [rems.common.duo :refer [duo-restriction-label duo-validation-summary]]
             [rems.common.util :refer [escape-element-id]]
             [rems.dropdown :as dropdown]
@@ -76,32 +77,32 @@
   (let [duo (:duo opts)
         matches (:duo/matches opts)
         statuses (map (comp :validity :duo/validation) matches)
-        collapsible-id (escape-element-id (:id opts))]
+        collapsible-id (escape-element-id (:id opts))
+        more-infos (not-empty (:duo/more-infos opts))]
     [:div.form-item {:class (if (:compact? opts) "mb-2" "my-2")}
-     [atoms/expander
+     [collapsible/expander
       {:id collapsible-id
        :title [(if (:compact? opts) :p :h3) {:class "mb-0"}
                [duo-valid-icon (duo-validation-summary statuses)]
                (text-format :t.label/dash (:shorthand duo) (localized (:label duo)))]
-       :content [:div.mt-2.solid-group
-                 [:pre (:id duo)]
-                 (if (empty? (:duo/more-infos opts))
-                   [:p (localized (:description duo))]
-                   [:div.mb-2
-                    [:span (localized (:description duo))]
-                    (when-let [more-infos (seq (:duo/more-infos opts))]
-                      [fields/info-collapse
-                       {:info-id (str collapsible-id "-more-infos")
-                        :aria-label-text (localized (:description duo))
-                        :content (into [:<>] (for [info more-infos]
-                                               [duo-more-info info]))}])])
-                 (for [restriction (:restrictions duo)
-                       :when (seq (:values restriction))]
-                   ^{:key (:type restriction)}
-                   [:<>
-                    [duo-restriction-info-field restriction]
-                    (into [:<>] (for [error (mapcat (comp :errors :duo/validation) matches)]
-                                  [duo-error error]))])]}]]))
+       :collapse [:div.mt-2.solid-group
+                  [:pre (:id duo)]
+                  (if-not more-infos
+                    [:p (localized (:description duo))]
+                    [:div.mb-2
+                     [:span (localized (:description duo))]
+                     [fields/info-collapsible-toggle {:id (str collapsible-id "-more-infos")
+                                                      :aria-label (localized (:description duo))}]
+                     [fields/info-collapsible {:id (str collapsible-id "-more-infos")
+                                               :collapse (into [:<>] (for [info more-infos]
+                                                                       [duo-more-info info]))}]])
+                  (for [restriction (:restrictions duo)
+                        :when (seq (:values restriction))]
+                    ^{:key (:type restriction)}
+                    [:<>
+                     [duo-restriction-info-field restriction]
+                     (into [:<>] (for [error (mapcat (comp :errors :duo/validation) matches)]
+                                   [duo-error error]))])]}]]))
 
 (fetcher/reg-fetcher ::mondo-codes "/api/resources/search-mondo-codes")
 

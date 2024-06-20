@@ -4,10 +4,8 @@
             [medley.core :refer [remove-vals update-existing]]
             [reagent.core :as r]
             [reagent.impl.util]
-            [rems.common.util :refer [escape-element-id]]
             [rems.guide-util :refer [component-info example]]
-            [rems.text :refer [text text-format localized localize-attachment]]
-            [rems.util :refer [focus-when-collapse-opened]]))
+            [rems.text :refer [text text-format localized localize-attachment]]))
 
 (defn external-link []
   [:i {:class "fa fa-external-link-alt"}
@@ -75,6 +73,8 @@
 (defn shown-to-applying-users-symbol []
   [:i.fas.fa-eye {:title (text :t.applications/shown-to-applying-users)}
    [:span.sr-only (text :t.applications/shown-to-applying-users)]])
+
+(defn info-symbol [] [:i.fa.fa-info-circle])
 
 (defn textarea [attrs]
   [autosize/textarea (merge {:min-rows 5}
@@ -230,34 +230,6 @@
     (when heading?
       [:h1 the-title])))
 
-(defn expander
-  "Displays an expandable block of content with animated chevron.
-
-   Pass a map of options with the following keys:
-   * `id` unique id for expanded content
-   * `content` content which is displayed in expanded state
-   * `expanded?` initial expanded state
-   * `title` content which is always displayed together with animated chevron"
-  [{:keys [expanded?] :or {expanded? false}}]
-  (let [expanded (r/atom expanded?)]
-    (fn [{:keys [id content title]}]
-      (let [id (escape-element-id id)]
-        [:<>
-         [:button.info-button.btn.d-flex.align-items-center.px-0 ; .btn adds unnecessary horizontal padding
-          {:data-toggle "collapse"
-           :href (str "#" id)
-           :aria-expanded (if @expanded "true" "false")
-           :aria-controls id
-           :on-click #(swap! expanded not)
-           :style {:white-space "normal"}} ; .btn uses "nowrap" which overflows the page with long input
-          [:span.mr-2.fa.fa-chevron-down.animate-transform
-           {:class (when @expanded "rotate-180")}]
-          title]
-         [:div.collapse {:id id
-                         :ref focus-when-collapse-opened
-                         :tab-index "-1"}
-          content]]))))
-
 (defn button
   "Plain button with defaults. `props` are passed to button, except for following keys:
 
@@ -293,21 +265,23 @@
 
 (defn action-button
   "Takes an `action` description and creates a button that triggers it."
-  [{:keys [class id label on-click url]}]
-  [link {:id id
-         :label label
-         :href url
-         :on-click on-click
-         :class (str/trim (str "btn btn-secondary " class))}])
+  [{:keys [class id label on-click url] :as action}]
+  [link (merge (dissoc action :class :id :label :on-click :url)
+               {:id id
+                :label label
+                :href url
+                :on-click on-click
+                :class (str/trim (str "btn btn-secondary " class))})])
 
 (defn action-link
   "Takes an `action` description and creates a link that triggers it."
-  [{:keys [class id label on-click url]}]
-  [link {:id id
-         :label label
-         :href url
-         :on-click on-click
-         :class (str/trim (str "btn btn-link " class))}])
+  [{:keys [class id label on-click url] :as action}]
+  [link (merge (dissoc action :class :id :label :on-click :url)
+               {:id id
+                :label label
+                :href url
+                :on-click on-click
+                :class (str/trim (str "btn btn-link " class))})])
 
 (defn rate-limited-action-button
   "Takes an `action` description and creates a button that triggers it.
@@ -420,13 +394,6 @@
        (example "attachment-link, long filename"
                 [attachment-link {:attachment/id 123
                                   :attachment/filename "this_is_the_very_very_very_long_filename_of_a_test_file_the_file_itself_is_quite_short_though_abcdefghijklmnopqrstuvwxyz0123456789_overflow_overflow_overflow.txt"}])
-
-       (component-info expander)
-       (example "expander"
-                [expander {:id "guide-expander-id"
-                           :title "Expander block with animated chevron"
-                           :expanded? false
-                           :content [:p "Expanded content"]}])
 
        (component-info action-link)
        (example "example command as link"

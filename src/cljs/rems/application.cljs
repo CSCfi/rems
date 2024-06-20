@@ -469,21 +469,13 @@
       title " " [external-link]]]))
 
 (defn- text-license [license]
-  (let [id (:license/id license)
-        collapse-id (str "collapse" id)
-        title (localized (:license/title license))
-        text (localized (:license/text license))]
+  (let [collapsible-id (str "license-" (:license/id license) "-collapsible")]
     [:div.license-panel
-     [:span.license-title
-      [:a.license-header.collapsed {:data-toggle "collapse"
-                                    :href (str "#" collapse-id)
-                                    :aria-expanded "false"
-                                    :aria-controls collapse-id}
-       title]]
-     [:div.collapse {:id collapse-id
-                     :ref focus-when-collapse-opened
-                     :tab-index "-1"}
-      [:div.license-block (str/trim (str text))]]]))
+     [collapsible/expander
+      {:id collapsible-id
+       :title (localized (:license/title license))
+       :collapse [:div.license-block
+                  (str/trim (localized (:license/text license)))]}]]))
 
 (defn- attachment-license [application license]
   (let [title (localized (:license/title license))
@@ -913,6 +905,7 @@
       :collapse [user/attributes attributes invited-user?]
       :footer (let [element-id (str element-id "-operations")]
                 [:div {:id element-id}
+                 [collapsible/toggle-control (str element-id "-collapsible")]
                  [:div.commands
                   (when can-change?
                     [change-applicant-action-button element-id])
@@ -1102,21 +1095,21 @@
     [:div.application-resource
      (if-not (and (:enable-duo @rems.globals/config) (seq duos))
        resource-header
-       [expander
+       [collapsible/expander
         {:id (str "resource-" (:resource/id resource) "-duos-collapsible")
          :title resource-header
-         :content [collapsible/component
-                   {:id (str "resource-" (:resource/id resource) "-duos")
-                    :class "mt-3"
-                    :title (text :t.duo/title)
-                    :always [:div
-                             (for [duo duos]
-                               ^{:key (:id duo)}
-                               [duo-info-field {:id (str "resource-" (:resource/id resource) "-duo-" (:id duo) "-collapsible")
-                                                :compact? true
-                                                :duo duo
-                                                :duo/more-infos (when (:more-info duo)
-                                                                  (list (select-keys duo [:more-info])))}])]}]}])]))
+         :collapse [collapsible/component
+                    {:id (str "resource-" (:resource/id resource) "-duos")
+                     :title (text :t.duo/title)
+                     :always (into [:div]
+                                   (for [duo duos
+                                         :let [id (rfmt/format "resource-%s-duo-%s-collapsible"
+                                                               (:resource/id resource) (:id duo))
+                                               more-info (select-keys duo [:more-info])]]
+                                     [duo-info-field {:id id
+                                                      :compact? true
+                                                      :duo duo
+                                                      :duo/more-infos (keep not-empty [more-info])}]))}]}])]))
 
 (defn- applied-resources [application userid]
   (let [application-id (:application/id application)
