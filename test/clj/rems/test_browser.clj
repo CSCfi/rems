@@ -2143,6 +2143,9 @@
 ;; NB: admin components use 0-base index (for both data and id)
 (defn field-component [attr] {:id (format "fields-%s-%s" (btu/context-getx :field-index) (name attr))})
 (defn preview-component [attr] {:id (format "form-1-field-%s-%s" (btu/context-getx :field-id) (name attr))})
+(defn field-settings-collapsible [] {:id (format "field-collapsible-%s-settings" (btu/context-getx :field-id))})
+(defn field-placeholder-collapsible [] {:id (format "field-collapsible-%s-placeholder" (btu/context-getx :field-id))})
+(defn field-description-collapsible [] {:id (format "field-collapsible-%s-description" (btu/context-getx :field-id))})
 
 (defn field-editor [& [{:keys [id index]}]]
   {:css (str ".form-field"
@@ -2216,15 +2219,15 @@
           (testing "fill localized title"
             (fill-localized-title! "Text field (%s)"))
           (testing "fill localized placeholder"
-            (open-external-collapsible (:id (field-component :placeholder)))
+            (open-external-collapsible (:id (field-placeholder-collapsible)))
             (fill-localized-placeholder! "Text field placeholder (%s)"))
           (testing "fill localized description"
-            (open-external-collapsible (:id (field-component :info-text)))
+            (open-external-collapsible (:id (field-description-collapsible)))
             (fill-localized-description! "Text field description (%s)"))
           (testing "set optional"
             (btu/scroll-and-click (field-component :optional)))
           (testing "set maximum length"
-            (open-external-collapsible (:id (field-component :additional-settings)))
+            (open-external-collapsible (:id (field-settings-collapsible)))
             (btu/fill-human (field-component :max-length) "127")))
 
         (testing "create text area"
@@ -2233,15 +2236,15 @@
           (testing "fill localized title"
             (fill-localized-title! "Text area (%s)"))
           (testing "fill localized placeholder"
-            (open-external-collapsible (:id (field-component :placeholder)))
+            (open-external-collapsible (:id (field-placeholder-collapsible)))
             (fill-localized-placeholder! "Text area placeholder (%s)"))
           (testing "fill localized description"
-            (open-external-collapsible (:id (field-component :info-text)))
+            (open-external-collapsible (:id (field-description-collapsible)))
             (fill-localized-description! "Text area description (%s)"))
           (testing "set optional"
             (btu/scroll-and-click (field-component :optional)))
           (testing "set maximum length"
-            (open-external-collapsible (:id (field-component :additional-settings)))
+            (open-external-collapsible (:id (field-settings-collapsible)))
             (btu/fill-human (field-component :max-length) "127")))
 
         (testing "create option field"
@@ -2250,7 +2253,7 @@
           (testing "fill localized title"
             (fill-localized-title! "Option list (%s)"))
           (testing "fill localized description"
-            (open-external-collapsible (:id (field-component :info-text)))
+            (open-external-collapsible (:id (field-description-collapsible)))
             (fill-localized-description! "Option description (%s)"))
           (testing "create two options"
             (btu/scroll-and-click (field-component :add-option))
@@ -2322,7 +2325,7 @@
           (testing "fill localized title"
             (fill-localized-title! "Date (%s)"))
           (testing "fill localized description"
-            (open-external-collapsible (:id (field-component :info-text)))
+            (open-external-collapsible (:id (field-description-collapsible)))
             (fill-localized-description! "Date description (%s)")))
 
         (testing "create email address field"
@@ -2331,7 +2334,7 @@
           (testing "fill localized title"
             (fill-localized-title! "Email (%s)"))
           (testing "fill localized description"
-            (open-external-collapsible (:id (field-component :info-text)))
+            (open-external-collapsible (:id (field-description-collapsible)))
             (fill-localized-description! "Email description (%s)")))
 
         (testing "create phone number field"
@@ -2340,7 +2343,7 @@
           (testing "fill localized title"
             (fill-localized-title! "Phone number (%s)"))
           (testing "fill localized description"
-            (open-external-collapsible (:id (field-component :info-text)))
+            (open-external-collapsible (:id (field-description-collapsible)))
             (fill-localized-description! "Phone number description (%s)")))
 
         (testing "create ip address field"
@@ -2349,7 +2352,7 @@
           (testing "fill localized title"
             (fill-localized-title! "IP address (%s)"))
           (testing "fill localized description"
-            (open-external-collapsible (:id (field-component :info-text)))
+            (open-external-collapsible (:id (field-description-collapsible)))
             (fill-localized-description! "IP address description (%s)")))
 
         (testing "create attachment field"
@@ -2358,7 +2361,7 @@
           (testing "fill localized title"
             (fill-localized-title! "Attachment (%s)"))
           (testing "fill localized description"
-            (open-external-collapsible (:id (field-component :info-text)))
+            (open-external-collapsible (:id (field-description-collapsible)))
             (fill-localized-description! "Attachment description (%s)"))
           (testing "attachment has extra info in preview"
             (btu/context-assoc! ::attachment-collapsible (str "upload-" (:id (preview-component :info-collapsible))))
@@ -2455,7 +2458,7 @@
 
         (open-external-collapsible (str "field-collapsible-" (btu/context-getx :field-id)))
         (btu/scroll-and-click (field-component :type-description))
-        (open-external-collapsible (:id (field-component :info-text)))
+        (open-external-collapsible (:id (field-description-collapsible)))
         (btu/fill-human (field-component :info-text-en) "Description (EN)")
         (btu/fill-human (field-component :info-text-fi) "Description (FI)")
         (btu/fill-human (field-component :info-text-sv) " ")
@@ -2656,7 +2659,7 @@
         (testing "fill localized title"
           (fill-localized-title! "Text (%s)"))
         (testing "set visibility to only if field 1 has true selected"
-          (open-external-collapsible (:id (field-component :additional-settings)))
+          (open-external-collapsible (:id (field-settings-collapsible)))
           (is (btu/eventually-visible? (field-component :visibility-type)))
           (btu/fill (field-component :visibility-type) "Only if\n")
           (is (btu/eventually-visible? (field-component :visibility-field)))
@@ -2670,7 +2673,7 @@
         (testing "fill localized title"
           (fill-localized-title! "Email (%s)"))
         (testing "set visibility to only if field 2 has X,Z selected"
-          (open-external-collapsible (:id (field-component :additional-settings)))
+          (open-external-collapsible (:id (field-settings-collapsible)))
           (is (btu/eventually-visible? (field-component :visibility-type)))
           (btu/fill (field-component :visibility-type) "Only if\n")
           (is (btu/eventually-visible? (field-component :visibility-field)))

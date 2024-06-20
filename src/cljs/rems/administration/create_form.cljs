@@ -19,7 +19,7 @@
             [reagent.format :as rfmt]
             [reagent.ratom :as ra]
             [rems.administration.administration :as administration]
-            [rems.administration.components :refer [checkbox field-validation-message keys-to-id localized-text-field organization-field radio-button-group text-field text-field-inline update-form]]
+            [rems.administration.components :refer [checkbox field-validation-message localized-text-field organization-field radio-button-group text-field text-field-inline update-form]]
             [rems.administration.items :as items]
             [rems.atoms :as atoms :refer [document-title]]
             [rems.collapsible :as collapsible]
@@ -62,7 +62,10 @@
             (fn [form-fields [_ field-id]]
               (find-first (comp #{field-id} :field/id) form-fields)))
 
-(defn- field-collapsible-id [id] (str "field-collapsible-" id))
+(defn- field-collapsible-id [field-id] (str "field-collapsible-" field-id))
+(defn- settings-collapsible-id [field-id] (str "field-collapsible-" field-id "-settings"))
+(defn- placeholder-collapsible-id [field-id] (str "field-collapsible-" field-id "-placeholder"))
+(defn- description-collapsible-id [field-id] (str "field-collapsible-" field-id "-description"))
 
 (defn- data-field-id [^js elem] (.. elem -dataset -fieldId))
 (defn- data-field-index [^js elem] (.. elem -dataset -fieldIndex))
@@ -307,14 +310,14 @@
   [localized-text-field context {:keys [:form/fields field-index :field/title]
                                  :label (text :t.create-form/field-title)}])
 
-(defn- form-field-placeholder-field [field-index]
+(defn- form-field-placeholder-field [field-index field-id]
   [localized-text-field context {:keys [:form/fields field-index :field/placeholder]
-                                 :collapse? true
+                                 :collapsible-id (placeholder-collapsible-id field-id)
                                  :label (text :t.create-form/placeholder)}])
 
-(defn- form-field-info-text [field-index]
+(defn- form-field-info-text [field-index field-id]
   [localized-text-field context {:keys [:form/fields field-index :field/info-text]
-                                 :collapse? true
+                                 :collapsible-id (description-collapsible-id field-id)
                                  :label (text :t.create-form/info-text)}])
 
 (defn- form-field-max-length-field [field-index]
@@ -636,15 +639,26 @@
                                          (rf/dispatch [::remove-form-field idx])))
                           :data-index idx}]]])
 
+(defn- form-field-additional-settings [idx {:keys [field-id max-length? privacy? visibility?]}]
+  (let [collapsible-id (settings-collapsible-id field-id)]
+    [:div.form-group.field
+     [:label.administration-field-label.d-flex.align-items-center
+      (text :t.create-form/additional-settings)
+      [collapsible/toggle-control collapsible-id]]
+     [collapsible/minimal
+      {:id collapsible-id
+       :collapse [:div.solid-group
+                  [form-field-id-field idx]
+                  (when max-length? [form-field-max-length-field idx])
+                  (when privacy? [form-field-privacy idx])
+                  (when visibility? [form-field-visibility idx])]}]]))
+
 (defn- field-editor [idx field field-count]
   (let [columns? (common-form/supports-columns? field)
         info-text? (common-form/supports-info-text? field)
-        max-length? (common-form/supports-max-length? field)
         optional? (common-form/supports-optional? field)
         options? (common-form/supports-options? field)
         placeholder? (common-form/supports-placeholder? field)
-        privacy? (common-form/supports-privacy? field)
-        visibility? (common-form/supports-visibility? field)
         collapsible-id (field-collapsible-id (:field/id field))]
 
     [collapsible/minimal
@@ -660,22 +674,14 @@
                      [form-field-table-optional-checkbox idx]
                      [form-field-optional-checkbox idx]))
 
-                 (when placeholder? [form-field-placeholder-field idx])
+                 (when placeholder? [form-field-placeholder-field idx (:field/id field)])
                  (when options? [form-field-option-fields idx])
-                 (when info-text? [form-field-info-text idx])
+                 (when info-text? [form-field-info-text idx (:field/id field)])
 
-                 (let [additional-settings-id (keys-to-id [:form/fields idx :additional-settings])]
-                   [:div.form-group.field
-                    [:label.administration-field-label.d-flex.align-items-center
-                     (text :t.create-form/additional-settings)
-                     [collapsible/toggle-control additional-settings-id]]
-                    [collapsible/minimal
-                     {:id additional-settings-id
-                      :collapse [:div.solid-group
-                                 [form-field-id-field idx]
-                                 (when max-length? [form-field-max-length-field idx])
-                                 (when privacy? [form-field-privacy idx])
-                                 (when visibility? [form-field-visibility idx])]}]])
+                 [form-field-additional-settings idx {:field-id (:field/id field)
+                                                      :max-length? (common-form/supports-max-length? field)
+                                                      :privacy? (common-form/supports-privacy? field)
+                                                      :visibility? (common-form/supports-visibility? field)}]
 
                  (when columns? [form-field-column-fields idx])]}]))
 
