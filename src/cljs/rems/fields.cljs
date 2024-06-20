@@ -2,8 +2,6 @@
   "UI components for form fields"
   (:require [clojure.string :as str]
             ["diff-match-patch" :refer [diff_match_patch]]
-            [goog.functions :refer [debounce rateLimit]]
-            [re-frame.core :as rf]
             [medley.core :refer [assoc-some]]
             [rems.administration.items :as items]
             [rems.atoms :as atoms :refer [add-symbol attachment-link download-button close-symbol failure-symbol textarea]]
@@ -174,31 +172,6 @@
    {:id (str "container-" (field-name opts))}
    children])
 
-(defn- event-value [event]
-  (.. event -target -value))
-
-(defn- clear-message []
-  (rems.flash-message/clear-message! :actions-form-flash))
-
-(def ^:private rate-limited-clear-message
-  (rateLimit clear-message 1000))
-
-(defn- notify-activity []
-  (rf/dispatch [:rems.application/autosave-application]))
-
-(def ^:private debounced-notify-activity
-  (debounce notify-activity 1000))
-
-(defn always-on-change
-  "Triggers autosave related functions.
-
-  Should be called always when something is changed in the application, that doesn't explicitly also save.
-  For example, add member internally also \"saves\" the state, but changing a text field value doesn't."
-  [event-value]
-  (rate-limited-clear-message) ; clear status as soon as possible
-  (debounced-notify-activity) ; try autosave only every second or so
-  event-value)
-
 (defn text-field
   [{:keys [validation on-change _info-text _type] :as opts}]
   (let [placeholder (localized (:field/placeholder opts))
@@ -223,7 +196,7 @@
                            :max-length max-length
                            :class (when validation "is-invalid")
                            :value value
-                           :on-change (comp on-change always-on-change event-value)}]]))
+                           :on-change (comp on-change event-value)}]]))
 
 (defn texta-field
   [{:keys [validation on-change] :as opts}]
@@ -243,7 +216,7 @@
                 :max-length max-length
                 :class (when validation "is-invalid")
                 :value value
-                :on-change (comp on-change always-on-change event-value)}]]))
+                :on-change (comp on-change event-value)}]]))
 
 (defn date-field
   [{:keys [min max validation on-change] :as opts}]
@@ -263,7 +236,7 @@
                                                (str (field-name opts) "-error"))
                            :min min
                            :max max
-                           :on-change (comp on-change always-on-change event-value)}]]))
+                           :on-change (comp on-change event-value)}]]))
 
 (defn- option-label [value options]
   (let [label (->> options
@@ -288,7 +261,7 @@
                                   :aria-invalid (when validation true)
                                   :aria-describedby (when validation
                                                       (str (field-name opts) "-error"))
-                                  :on-change (comp on-change always-on-change event-value)}
+                                  :on-change (comp on-change event-value)}
             [:option {:value ""}]]
            (for [{:keys [key label]} options]
              [:option {:value key}
@@ -301,7 +274,7 @@
 (defn multiselect-field [{:keys [validation on-change] :as opts}]
   (let [value (:field/value opts)
         options (:field/options opts)
-        optional (:field-/optional opts)
+        optional (:field/optional opts)
         selected-keys (common-form/parse-multiselect-values value)]
     [field-wrapper
      (assoc opts
@@ -320,7 +293,6 @@
                                                      (conj selected-keys key)
                                                      (disj selected-keys key))
                                      value (common-form/unparse-multiselect-values selected-keys)]
-                                 (always-on-change value)
                                  (on-change value)))]
                [:div.form-check
                 [:input.form-check-input {:type "checkbox"
@@ -439,9 +411,10 @@
                                               :aria-label (localized label)
                                               :id (str id "-row" row-i "-" key)
                                               :value (get-in rows [row-i key])
-                                              :on-change #(on-change (always-on-change (assoc-in rows [row-i key] (event-value %))))}])])
+                                              :on-change #(on-change (assoc-in rows [row-i key] (event-value %)))}])])
                    (when-not readonly
-                     [[:td.align-middle [items/remove-button #(on-change (always-on-change (items/remove rows row-i)))]]]))))
+                     [[:td.align-middle [items/remove-button {:on-click #(on-change (items/remove rows row-i))
+                                                              :data-index row-i}]]]))))
           (when (and readonly (empty? rows))
             [[:tr [:td {:col-span (count columns)}
                    (text :t.form/no-rows)]]])
@@ -449,7 +422,7 @@
             [[:tr [:td {:col-span (count columns)}
                    [:button.btn.btn-outline-secondary
                     {:id (str id "-add-row")
-                     :on-click #(on-change (always-on-change (conj rows (zipmap (mapv :key columns) (repeat "")))))}
+                     :on-click #(on-change (conj rows (zipmap (mapv :key columns) (repeat ""))))}
                     [add-symbol]
                     " "
                     (text :t.form/add-row)]]]])))])
@@ -499,7 +472,7 @@
                                  (empty? rows))
                           [(zipmap (mapv :key (:field/columns field)) (repeat ""))]
                           rows))
-                :on-change #(on-change (always-on-change (table-to-backend %)))}]])
+                :on-change #(on-change (table-to-backend %))}]])
 
 (defn unsupported-field
   [f]
@@ -553,7 +526,7 @@
                     :field/placeholder {:en "placeholder"}}])
    (example "field of type \"text\" with info field"
             [field {:form/id 1
-                    :field/id "1"
+                    :field/id "info-1"
                     :field/type :text
                     :field/title {:en "Title"}
                     :field/placeholder {:en "placeholder"}

@@ -2,7 +2,9 @@
   (:require [better-cond.core :as b]
             [clojure.string :as str]
             [clojure.set :refer [union]]
+            [goog.functions :refer [debounce rateLimit]]
             [reagent.core :as r]
+            [reagent.format :as rfmt]
             [re-frame.core :as rf]
             [medley.core :refer [find-first update-existing]]
             [cljs-time.core :as time-core]
@@ -33,7 +35,7 @@
             [rems.administration.duo :refer [duo-field duo-info-field]]
             [rems.common.application-util :refer [accepted-licenses? can-see-everything? form-fields-editable? get-member-name is-handler? is-handling-user?]]
             [rems.common.attachment-util :as attachment-util]
-            [rems.atoms :as atoms :refer [external-link expander file-download info-field readonly-checkbox document-title success-symbol make-empty-symbol]]
+            [rems.atoms :as atoms :refer [external-link file-download info-field readonly-checkbox document-title success-symbol make-empty-symbol]]
             [rems.common.catalogue-util :refer [catalogue-item-more-info-url]]
             [rems.collapsible :as collapsible]
             [rems.common.form :as form]
@@ -51,7 +53,7 @@
             [rems.spinner :as spinner]
             [rems.text :refer [localize-attachment localize-decision localize-event localized localize-state localize-processing-states localize-time localize-time-with-seconds text text-format]]
             [rems.user :as user]
-            [rems.util :refer [navigate! fetch post! focus-input-field focus-when-collapse-opened format-file-size]]))
+            [rems.util :refer [navigate! fetch post! focus-input-field format-file-size]]))
 
 ;;;; Helpers
 
@@ -336,6 +338,28 @@
              :error-handler (flash-message/default-error-handler :actions description)}))
    {}))
 
+(defn- clear-message []
+  (flash-message/clear-message! :actions-form-flash))
+
+(def ^:private rate-limited-clear-message
+  (rateLimit clear-message 1000))
+
+(defn- notify-activity []
+  (rf/dispatch [:rems.application/autosave-application]))
+
+(def ^:private debounced-notify-activity
+  (debounce notify-activity 1000))
+
+(defn always-on-change
+  "Triggers autosave related functions.
+
+  Should be called always when something is changed in the application, that doesn't explicitly also save.
+  For example, add member internally also \"saves\" the state, but changing a text field value doesn't."
+  [event-value]
+  (rate-limited-clear-message) ; clear status as soon as possible
+  (debounced-notify-activity) ; try autosave only every second or so
+  event-value)
+
 (defn- save-attachment [{:keys [db]} [_ form-id field-id file]]
   (let [application-id (get-in db [::application :data :application/id])
         current-attachments (form/parse-attachment-ids (get-in db [::edit-application :field-values form-id field-id]))
@@ -365,7 +389,7 @@
                                                                            (conj current-attachments (:id response)))])
                          (if (:enable-autosave @rems.globals/config)
                            (do
-                             (fields/always-on-change (:id response))
+                             (always-on-change (:id response))
                              (rf/dispatch [::set-attachment-status form-id field-id :success]))
                            (rf/dispatch [::save-application description #(rf/dispatch [::set-attachment-status form-id field-id :success])])))
               :error-handler (fn [response]
@@ -391,7 +415,7 @@
 (rf/reg-event-fx
  ::remove-attachment
  (fn [{:keys [db]} [_ form-id field-id attachment-id]]
-   (fields/always-on-change attachment-id)
+   (always-on-change attachment-id)
    {:db (update-in db [::edit-application :field-values form-id field-id]
                    (comp form/unparse-attachment-ids
                          (partial remove #{attachment-id})
@@ -570,7 +594,8 @@
                                    ids))
         depended-field-id (form/field-depends-on-field field)
         depended-value (when depended-field-id
-                         {depended-field-id @(rf/subscribe [::get-field-value form-id depended-field-id])})]
+                         {depended-field-id @(rf/subscribe [::get-field-value form-id depended-field-id])})
+        set-field-value #(rf/dispatch [::set-field-value form-id field-id %])]
 
     (when (and (form/field-visible? field depended-value)
                (not (:field/private field))) ; private fields will have empty value anyway
@@ -578,7 +603,7 @@
                            {:field/value field-value
                             :diff @(rf/subscribe [::get-field-diff form-id field-id])
                             :validation @(rf/subscribe [::get-field-validation form-id field-id])
-                            :on-change #(rf/dispatch [::set-field-value form-id field-id %])
+                            :on-change (comp set-field-value always-on-change)
                             :on-toggle-diff #(rf/dispatch [::toggle-diff form-id field-id])}
                            (when (= :attachment (:field/type field))
                              {:field/attachments (->> field-value
@@ -596,20 +621,20 @@
                               :on-remove-attachment #(rf/dispatch [::remove-attachment form-id field-id %1])}))])))
 
 (defn- application-fields [application]
-    (into [:div]
-          (for [form (:application/forms application)
-                :let [form-id (:form/id form)]
-                :when (->> (:form/fields form)
-                           (remove :field/private)
-                           seq)]
-            [collapsible/component
-             {:class "mb-3"
+  (into [:div]
+        (for [form (:application/forms application)
+              :let [form-id (:form/id form)]
+              :when (->> (:form/fields form)
+                         (remove :field/private)
+                         seq)]
+          [collapsible/component
+           {:class "mb-3"
             :title (or (localized (:form/external-title form)) (text :t.form/application))
-              :always (into [:div.fields]
-                            (for [field (:form/fields form)]
-                              [field-container (merge field
-                                                      {:form/id form-id
-                                                       :readonly @(rf/subscribe [::readonly?])
+            :always (into [:div.fields]
+                          (for [field (:form/fields form)]
+                            [field-container (merge field
+                                                    {:form/id form-id
+                                                     :readonly @(rf/subscribe [::readonly?])
                                                      :app-id (:application/id application)})]))}])))
 
 (defn- application-licenses [application userid]
@@ -647,9 +672,9 @@
               [accept-licenses-action-button application-id (mapv :license/id licenses) #(reload! application-id)]]))]}])))
 
 (defn- application-link [application prefix]
-    [:a {:href (str "/application/" (:application/id application))}
-     (when prefix
-       (str prefix " "))
+  [:a {:href (str "/application/" (:application/id application))}
+   (when prefix
+     (str prefix " "))
    (application-list/format-application-id application)])
 
 (defn- event-description [event]
@@ -832,7 +857,7 @@
 (defn- application-state [{:keys [application userid]}]
   (let [state (:application/state application)
         events (sort-by :event/time > (:application/events application))]
-    [collapsible/component (merge {:id "header"
+    [collapsible/component (merge {:id "header-collapsible"
                                    :title (text :t.applications/state)}
 
                                   (cond (is-handler? application userid)
@@ -870,12 +895,12 @@
 (defn member-info
   "Renders a applicant, member or invited member of an application
 
-  `:element-id`         - id of the element to generate unique ids
+  `:id`                 - id, used for generating unique ids
   `:attributes`         - user attributes to display
   `:application`        - application
   `:group?`             - specifies if a group border is rendered
   `:simple?`            - specifies if we want to simplify by leaving out expansion and heading, defaults to false"
-  [{:keys [element-id attributes application group? simple?] :or {simple? false}}]
+  [{:keys [id attributes application group? simple?] :or {simple? false}}]
   (let [application-id (:application/id application)
         user-id (:userid attributes)
         invited-user? (nil? user-id)
@@ -893,7 +918,7 @@
                          (not invited-user?)
                          (contains? permissions :application.command/change-applicant))]
     [collapsible/minimal
-     {:id (str element-id "-info")
+     {:id (str id "-collapsible")
       :class (when group? "group")
       :always [:div
                (when-not simple? [:h3 title])
@@ -902,10 +927,11 @@
                              simple?
                              (= :application.state/draft (:application/state application)))
                  [info-field (text :t.form/accepted-licenses) [readonly-checkbox {:value accepted?}] {:inline? true}])]
-      :collapse [user/attributes attributes invited-user?]
-      :footer (let [element-id (str element-id "-operations")]
+      :collapse [:div {:id (str id "-collapse")}
+                 [user/attributes attributes invited-user?]]
+      :footer (let [element-id (str id "-operations")]
                 [:div {:id element-id}
-                 [collapsible/toggle-control (str element-id "-collapsible")]
+                 [collapsible/toggle-control (str id "-collapsible")]
                  [:div.commands
                   (when can-change?
                     [change-applicant-action-button element-id])
@@ -919,19 +945,19 @@
         members (:application/members application)
         invited-members (:application/invited-members application)]
     (into [:div
-           [member-info {:element-id "applicant"
+           [member-info {:id "applicant-info"
                          :attributes applicant
                          :application application
                          :simple? (:simple? opts false)
                          :group? (:group? opts (not (:simple? opts false)))}]]
           (concat
            (for [[index member] (map-indexed vector (sort-by :name members))]
-             [member-info {:element-id (str "member" index)
+             [member-info {:id (str "member" index "-info")
                            :attributes member
                            :application application
                            :group? true}])
            (for [[index invited-member] (map-indexed vector (sort-by :name invited-members))]
-             [member-info {:element-id (str "invite" index)
+             [member-info {:id (str "invite" index "-info")
                            :attributes invited-member
                            :application application
                            :group? true}])))))
@@ -960,7 +986,7 @@
                                     (count (concat [(:application/applicant application)]
                                                    (:application/members application)
                                                    (:application/invited-members application)))))
-        component {:id "applicants-info"
+        component {:id "applicants-info-collapsible"
                    :title (if only-one-applicant?
                             (text :t.applicant-info/applicant)
                             (text :t.applicant-info/applicants))
@@ -1192,7 +1218,7 @@
                   :multi? true
                   :on-change (fn [items]
                                (let [duos (mapv #(dissoc % ::label) items)]
-                                 (fields/always-on-change duos)
+                                 (always-on-change duos)
                                  (rf/dispatch [::set-duo-codes duos])))}]]
                (into [:<>]
                      (for [edit-duo (sort-by :id selected-duos)
@@ -1200,7 +1226,7 @@
                                                   (filter (fn [match] (= (:id edit-duo) (:duo/id match)))))]]
                        [:div.form-field
                         [duo-field edit-duo {:context duo-context
-                                             :on-change fields/always-on-change
+                                             :on-change always-on-change
                                              :duo/statuses (map (comp :validity :duo/validation) duo-matches)
                                              :duo/errors (mapcat (comp :errors :duo/validation) duo-matches)
                                              :duo/more-infos (find-duo-more-info edit-duo)}]]))]}]))
@@ -1331,7 +1357,7 @@
   [:div
    (component-info member-info)
    (example "member-info: applicant with notification email, accepted licenses, researcher status"
-            [member-info {:element-id "info1"
+            [member-info {:id "info1"
                           :attributes {:userid "developer@uu.id"
                                        :email "developer@uu.id"
                                        :name "Deve Loper"
@@ -1344,12 +1370,12 @@
                                         :application/licenses [{:license/id 1}]
                                         :application/accepted-licenses {"developer@uu.id" #{1}}}}])
    (example "member-info with name missing"
-            [member-info {:element-id "info2"
+            [member-info {:id "info2"
                           :attributes {:userid "developer"
                                        :email "developer@uu.id"
                                        :address "Testikatu 1, 00100 Helsinki"}}])
    (example "member-info with buttons, licenses not accepted"
-            [member-info {:element-id "info3"
+            [member-info {:id "info3"
                           :attributes {:userid "alice"}
                           :application {:application/id 42
                                         :application/applicant {:userid "developer"}
@@ -1358,14 +1384,14 @@
                                                                    :application.command/change-applicant}}
                           :group? true}])
    (example "member-info: invited member"
-            [member-info {:element-id "info4"
+            [member-info {:id "info4"
                           :attributes {:name "John Smith"
                                        :email "john.smith@invited.com"}
                           :application {:application/id 42
                                         :application/applicant {:userid "developer"}}
                           :group? true}])
    (example "member-info: invited member, with remove button"
-            [member-info {:element-id "info5"
+            [member-info {:id "info5"
                           :attributes {:name "John Smith"
                                        :email "john.smith@invited.com"}
                           :application {:application/id 42
@@ -1374,14 +1400,14 @@
                           :group? true}])
 
    (example "member-info: not grouped"
-            [member-info {:element-id "info6"
+            [member-info {:id "info6"
                           :group? false
                           :attributes {:userid "developer@uu.id"
                                        :email "developer@uu.id"
                                        :name "Deve Loper"}}])
 
    (example "member-info: simple"
-            [member-info {:element-id "info7"
+            [member-info {:id "info7"
                           :simple? true
                           :attributes {:userid "developer@uu.id"
                                        :email "developer@uu.id"
