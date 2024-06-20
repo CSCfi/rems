@@ -1,26 +1,22 @@
 (ns rems.collapsible
-  (:require [reagent.impl.util]
+  (:require [reagent.core :as r]
+            [reagent.impl.util]
             [re-frame.core :as rf]
             [rems.atoms :as atoms]
             [rems.guide-util :refer [component-info example]]
             [rems.text :refer [text]]))
 
-(defn- set-expanded [db id expanded?]
-  {:db (assoc-in db [::id id] (true? expanded?))})
-
-(defn- toggle [db id]
-  {:db (update-in db [::id id] not)})
-
-(defn- show-and-focus [db id]
-  (when-not (get-in db [::id id])
-    {:db (assoc-in db [::id id] true)
-     :dispatch [:rems.focus/focus-input {:selector ".collapse-open"
-                                         :target (.getElementById js/document id)}]}))
-
 (rf/reg-sub ::expanded (fn [db [_ id init]] (true? (get-in db [::id id] init))))
-(rf/reg-event-fx ::set-expanded (fn [{:keys [db]} [_ id expanded?]] (set-expanded db id expanded?)))
-(rf/reg-event-fx ::toggle (fn [{:keys [db]} [_ id]] (toggle db id)))
-(rf/reg-event-fx ::show-and-focus (fn [{:keys [db]} [_ id]] (show-and-focus db id)))
+
+(rf/reg-event-db ::set-expanded (fn [db [_ id expanded?]] (assoc-in db [::id id] (true? expanded?))))
+(rf/reg-event-db ::reset-expanded (fn [db [_ id]] (update db ::id dissoc id)))
+(rf/reg-event-db ::toggle (fn [db [_ id]] (update-in db [::id id] not)))
+
+(rf/reg-event-fx ::show-and-focus (fn [{:keys [db]} [_ id]]
+                                    (when-not (get-in db [::id id])
+                                      {:db (assoc-in db [::id id] true)
+                                       :dispatch [:rems.focus/focus-input {:selector ".collapse-open"
+                                                                           :target (.getElementById js/document id)}]})))
 
 (defn- base-action [id & [{:keys [init]}]]
   (let [state @(rf/subscribe [::expanded id init])]
@@ -96,18 +92,20 @@
   - `:top-less-button?` should top show less button be shown?"
   [{:keys [always bottom-less-button? collapse collapse-hidden footer id on-close on-open open? title top-less-button?]
     :or {bottom-less-button? true}}]
-  (let [expanded? @(rf/subscribe [::expanded id open?])]
+  (r/with-let [expanded? (rf/subscribe [::expanded id open?])]
     [:div.collapsible.bordered-collapsible {:id id}
      [:h2.card-header title]
      [:div.collapsible-contents
       always
       (when collapse
         [:<>
-         (when (and expanded? top-less-button?) [hide-control id {:on-click on-close}])
-         [collapse-block expanded? collapse collapse-hidden]
-         (when (not expanded?) [show-control id {:on-click on-open}])
-         (when (and expanded? bottom-less-button?) [hide-control id {:on-click on-close}])])
-      footer]]))
+         (when (and @expanded? top-less-button?) [hide-control id {:on-click on-close}])
+         [collapse-block @expanded? collapse collapse-hidden]
+         (when (not @expanded?) [show-control id {:on-click on-open}])
+         (when (and @expanded? bottom-less-button?) [hide-control id {:on-click on-close}])])
+      footer]]
+    (finally
+      (rf/dispatch [::reset-expanded id]))))
 
 (defn minimal
   "Collapsible variation that does not have border or title, and controls
@@ -123,13 +121,15 @@
   - `:open?` should the collapsible be initially open?
   - `:title` component or text displayed in title area"
   [{:keys [always class collapse collapse-hidden footer id open? title]}]
-  (let [expanded? @(rf/subscribe [::expanded id open?])]
+  (r/with-let [expanded? (rf/subscribe [::expanded id open?])]
     [:div.collapsible (merge {:id id} (when class {:class class}))
      (when title [:h2.card-header title])
      [:div.collapsible-contents
       always
-      [collapse-block expanded? collapse collapse-hidden]
-      footer]]))
+      [collapse-block @expanded? collapse collapse-hidden]
+      footer]]
+    (finally
+      (rf/dispatch [::reset-expanded id]))))
 
 (defn expander
   "Collapsible variation where simple title is the toggle control.
@@ -140,16 +140,18 @@
   - `:open?` should the collapsible be initially open?
   - `:title` component or text displayed in title area"
   [{:keys [collapse id open? title]}]
-  (let [expanded? @(rf/subscribe [::expanded id open?])]
+  (r/with-let [expanded? (rf/subscribe [::expanded id open?])]
     [:div.collapsible.expander-collapsible {:id id}
      [atoms/action-link (assoc (toggle-action id {:init open?})
                                :class "expander-toggle"
                                :label [:div.d-flex.align-items-center.gap-1.pointer
-                                       [:i.fa.fa-chevron-down.animate-transform {:class (when expanded? "rotate-180")}]
+                                       [:i.fa.fa-chevron-down.animate-transform {:class (when @expanded? "rotate-180")}]
                                        title]
                                :url "#")]
      [:div.collapsible-contents
-      [collapse-block expanded? collapse]]]))
+      [collapse-block @expanded? collapse]]]
+    (finally
+      (rf/dispatch [::reset-expanded id]))))
 
 (defn guide
   []
