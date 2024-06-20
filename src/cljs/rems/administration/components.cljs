@@ -23,7 +23,7 @@
             [rems.fields :as fields]
             [rems.globals]
             [rems.common.roles :as roles]
-            [rems.common.util :refer [clamp parse-int]]
+            [rems.common.util :refer [andstr clamp parse-int]]
             [rems.text :refer [localized text text-format]]
             [rems.util :refer [event-checked event-value]]))
 
@@ -192,12 +192,9 @@
   in the form as a map of language to text. If `:localizations-key` is
   provided in opts, languages are mapped from `[:localizations lang localizations-key]`
   path."
-  [context {:keys [collapse? label localizations-key normalizer on-change]
+  [context {:keys [collapsible-id label localizations-key normalizer on-change]
             key-path :keys}]
-  (let [id (keys-to-id (if (some? localizations-key)
-                         [localizations-key]
-                         key-path))
-        fields (into [:div.spaced-vertically]
+  (let [fields (into [:div.spaced-vertically]
                      (for [lang @rems.config/languages]
                        [localized-text-field-lang context
                         {:keys-prefix key-path
@@ -206,12 +203,12 @@
                          :localizations-key localizations-key
                          :normalizer normalizer
                          :on-change on-change}]))]
-    (if collapse?
+    (if collapsible-id
       [:div.form-group.field.localized-field
        [:label.administration-field-label.d-flex.align-items-center
         label
-        [collapsible/toggle-control id]]
-       [collapsible/minimal {:id id
+        [collapsible/toggle-control collapsible-id]]
+       [collapsible/minimal {:id collapsible-id
                              :collapse fields}]]
       [:div.form-group.localized-field
        [:label.administration-field-label label]
