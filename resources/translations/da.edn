@@ -316,10 +316,8 @@
               :continue-existing-application "Genoptag ansøgning"
               :continue-existing-application-intro ""
               :apply-resources "Ansøg om ressourcer"}
-  :collapse {:hide "Skjul"
-             :show "Vis"
-             :show-less "Vis mindre"
-             :show-more "Vis mere"}
+  :collapse {:hide "Vis mindre"
+             :show "Vis mere"}
   :update-catalogue-item {:update-catalogue-item-intro "Du er ved at opdatera nedenstående ressourcer. Ændringerne foretages en ad gangen, så hver gammel ressource tages væk og en ny kopi vil benytte den valgte blanket og arbejdsgang."
                           :form-selection "Blanket"
                           :workflow-selection "Arbejdsgang"}

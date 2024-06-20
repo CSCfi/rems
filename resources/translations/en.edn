@@ -341,10 +341,8 @@
               :continue-existing-application "Continue application"
               :continue-existing-application-intro ""
               :apply-resources "Apply for access"}
-  :collapse {:hide "Hide"
-             :show "Show"
-             :show-less "Show less"
-             :show-more "Show more"}
+  :collapse {:hide "Show less"
+             :show "Show more"}
   :update-catalogue-item {:update-catalogue-item-intro "You are about to update the following catalogue items. The changes will be made one at a time, so that each old item is terminated and a new copy will use the chosen form and workflow."
                           :form-selection "Form"
                           :workflow-selection "Workflow"}

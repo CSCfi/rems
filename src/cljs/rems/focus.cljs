@@ -1,29 +1,24 @@
 (ns rems.focus
   "Focuses an HTML element as soon as it exists."
-  (:require [reagent.core :as reagent]
-            [re-frame.core :as rf]))
+  (:require [medley.core :refer [assoc-some]]
+            [re-frame.core :as rf]
+            [rems.common.util :refer [andstr]]
+            [rems.util :refer [on-element-appear]]))
 
 (defn focus [element]
-  (.setAttribute element "tabindex" "-1")
-  (.focus element))
+  (doto element
+    (.setAttribute "tabindex" "-1")
+    (.focus)
+    (.removeAttribute "tabindex")))
 
 (defn focus-selector [selector]
   (focus (.querySelector js/document selector)))
 
 (defn focus-without-scroll [element]
-  (.setAttribute element "tabindex" "-1")
-  (.focus element (js-obj "preventScroll" true)))
-
-(defn on-element-appear
-  "Do something when an element appears."
-  ([selector f]
-   (on-element-appear selector f 100))
-  ([selector f tries]
-   (when (pos? tries)
-     (if-let [element (.querySelector js/document selector)]
-       (f element)
-       (js/setTimeout #(on-element-appear selector f (dec tries))
-                      10)))))
+  (doto element
+    (.setAttribute "tabindex" "-1")
+    (.focus (js-obj "preventScroll" true))
+    (.removeAttribute "tabindex")))
 
 (defn- scroll-below-navigation-menu
   "Scrolls an element into view if it's behind the navigation menu."
@@ -39,11 +34,6 @@
   ;; it can still be hidden behind the navigation menu.
   (focus element)
   (scroll-below-navigation-menu element))
-
-(defn focus-element-async
-  "Focus an element when it appears."
-  [selector]
-  (on-element-appear selector focus-and-ensure-visible))
 
 (defn scroll-to-top
   "Scrolls an element to the top of the window (but below the navigation menu)"
@@ -64,11 +54,16 @@
         offset-after (.-top rect-after)]
     (.scrollBy js/window 0 (- offset-after offset-before))))
 
-(defn scroll-into-view [selector & [opts]]
-  (-> selector
-      (on-element-appear #(.scrollIntoView % (clj->js (or opts {}))))))
+(defn scroll-into-view-el [^js element opts]
+  (.scrollIntoView element (clj->js opts)))
 
-(rf/reg-fx :rems.focus/scroll-into-view (fn [[selector opts]]
-                                          (reagent/after-render #(scroll-into-view selector opts))))
-(rf/reg-event-fx :rems.focus/scroll-into-view (fn [_ [_ selector opts]]
-                                                {:rems.focus/scroll-into-view [selector opts]}))
+(defn scroll-into-view [selector & [opts]]
+  (on-element-appear {:selector selector
+                      :on-resolve #(scroll-into-view-el % (or opts {}))}))
+
+(rf/reg-fx ::on-element-appear (fn [opts] (on-element-appear opts)))
+
+(rf/reg-event-fx ::focus-input (fn [_ [_ {:keys [selector target]}]]
+                                 {::on-element-appear (-> {:selector (str (andstr selector " ") ":is(textarea, input)")
+                                                           :on-resolve focus}
+                                                          (assoc-some :target target))}))

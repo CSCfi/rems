@@ -11,7 +11,6 @@
             [compojure.core :refer [GET defroutes]]
             [garden.color :as c]
             [garden.core :as g]
-            [garden.def :refer [defkeyframes]]
             [garden.selectors :as s]
             [garden.stylesheet :as stylesheet]
             [garden.units :as u]
@@ -33,6 +32,10 @@
                                   :md (u/px 992)
                                   :lg (u/px 1200)
                                   :xl (u/px 1600)})
+
+(defn link-color [] (theme-getx :nav-color :link-color))
+(defn link-active-color [] (theme-getx :nav-active-color :color4))
+(defn link-hover-color [] (theme-getx :nav-hover-color :color4))
 
 (defn- form-placeholder-styles []
   (list
@@ -319,6 +322,44 @@
     ;; them to nil but instead throw an error.
     (is (thrown? AssertionError (remove-nil-vals {:a ""})))))
 
+(defn collapsible-styles []
+  (list
+   ;;; main collapsible styles
+   [:.collapsible.bordered-collapsible {:border-radius (u/rem 0.4)
+                                        :border "1px solid #ccc"
+                                        :background-color (theme-getx :collapse-bgcolor)
+                                        :box-shadow (theme-getx :collapse-shadow :table-shadow)}]
+   [:.collapsible.info-collapsible {:white-space :pre-wrap}]
+
+   ;;; collapsible header, bootstrap customization
+   [(s/> :.collapsible :.card-header) {:border-bottom "none"
+                                       :border-radius (u/rem 0.4)
+                                       :font-weight 400
+                                       :font-size (u/rem 1.5)
+                                       :line-height 1.1
+                                       :font-family (theme-getx :font-family)
+                                       :color (theme-getx :table-heading-color :collapse-color)
+                                       :background-color (theme-getx :table-heading-bgcolor :color3)
+                                       ;; make sure header overlaps container border
+                                       :margin (u/px -1)}]
+   [(s/descendant :.card-header :a) {:color :inherit}]
+
+   ;;; collapsible contents, aka everything after header
+   [".collapsible-contents:not(:empty)" {:margin (u/rem 1)}]
+   [(s/> :.collapsible.info-collapsible ".collapsible-contents:not(:empty)") {:margin [[0 (u/rem 1) (u/rem 0.5) 0]]}]
+   [(s/> :.collapsible.expander-collapsible :a.expander-toggle.btn-link) {:text-decoration :none
+                                                                          :white-space :normal
+                                                                          :color (link-color)}]
+   ;;; customizations
+   [:.page-create-form
+    ;; form editor fields have inner collapsibles with fields that don't align nicely when margin is double applied
+    [(s/descendant :#create-form :.collapsible-contents :.collapsible-contents) {:margin 0}]
+    ;; improves form editor preview readability on smaller screens
+    [(s/> :#preview-form.collapsible :.collapsible-contents) {:margin-left 0}]]
+
+   [(s/descendant :.page-application :.license-panel :.expander-toggle) {:padding-left 0
+                                                                         :padding-top 0}]))
+
 (defn build-screen []
   (list
    [:* {:margin 0}]
@@ -526,13 +567,13 @@
    [:.navbar-toggler {:border-color (theme-getx :color1)}]
    [:.nav-link
     :.btn-link
-    {:color (theme-getx :nav-color :link-color)
+    {:color (link-color)
      :font-weight (button-navbar-font-weight)
      :border 0} ; for button links
     [:&.active
-     {:color (theme-getx :nav-active-color :color4)}]
+     {:color (link-active-color)}]
     [:&:hover
-     {:color (theme-getx :nav-hover-color :color4)}]]
+     {:color (link-hover-color)}]]
    [:.navbar {:white-space "nowrap"}]
    [(s/descendant :.user-widget :.nav-link) {:display :inline-block}]
    [:.user-name {:text-transform :none}]
@@ -634,6 +675,7 @@
                 :min-width (u/rem 5.5)}]
    [:td.more-info {:display :flex
                    :justify-content :flex-end}]
+   [".spaced-vertically > *:not(:first-child)" {:margin-top (u/rem 0.25)}]
    (for [i (range 1 10)]
      [(format ".spaced-vertically-%d > *:not(:first-child)" i) {:margin-top (u/rem (* i 0.5))}])
 
@@ -660,8 +702,6 @@
     [:legend {:font-size "inherit"}]]
    [:.application-field-label {:font-weight "bold"}]
    [:.administration-field-label {:font-weight "bold"}]
-   [:div.info-collapse {:font-weight "400"
-                        :white-space :pre-wrap}]
    ;; Bootstrap's has "display: none" on .invalid-feedback by default
    ;; and overrides that for example when there is a sibling .form-control.is-invalid,
    ;; but that doesn't work with checkbox groups, dropdowns, etc., and we anyways
@@ -713,7 +753,6 @@
 
    [:#preview-form {:position :sticky ;; TODO seems to work on Chrome and Firefox. check Edge?
                     :top "100px"}
-    [:.collapse-content {:margin-left 0}]
     [:#preview-form-contents {:overflow-y :scroll
                               :overflow-x :hidden
                               ;; subtract #preview-form top value plus a margin here to stay inside the viewbox
@@ -738,10 +777,6 @@
    [:.license-panel {:display :inline-block
                      :width "inherit"}]
    [:.clickable {:cursor :pointer}]
-   [:.rems-card-margin-fix {:margin (u/px -1)}] ; make sure header overlaps container border
-   [:.rems-card-header {:color (theme-getx :table-heading-color)
-                        :background-color (theme-getx :table-heading-bgcolor :color3)}]
-   [(s/descendant :.card-header :a) {:color :inherit}]
    [:.application-resources
     [:.application-resource {:margin-bottom (u/rem 1)
                              :line-height (u/rem 1)
@@ -753,26 +788,8 @@
                       :margin-top (u/px 3)
                       :line-height (u/rem 1)
                       :font-size (u/rem 1)}]]
-   [:.collapsing {:-webkit-transition "height 0.1s linear"
-                  :-o-transition "height 0.1s linear"
-                  :transition "height 0.1s linear"}]
-   [:.collapse-toggle {:text-align :center}]
-   [:.collapse-wrapper {:border-radius (u/rem 0.4)
-                        :border "1px solid #ccc"
-                        :background-color (theme-getx :collapse-bgcolor)
-                        :box-shadow (theme-getx :collapse-shadow :table-shadow)}
-    [:.card-header {:border-bottom "none"
-                    :border-radius (u/rem 0.4)
-                    :font-weight 400
-                    :font-size (u/rem 1.5)
-                    :line-height 1.1
-                    :font-family (theme-getx :font-family)
-                    :color (theme-getx :collapse-color)}]]
-   [:.collapse-content {:margin (u/rem 1.25)}]
-   [:.collapse-wrapper.slow
-    [:.collapsing {:-webkit-transition "height 0.25s linear"
-                   :-o-transition "height 0.25s linear"
-                   :transition "height 0.25s linear"}]]
+
+   (collapsible-styles)
 
    [:.color1 {:color (theme-getx :color1)}]
    [:.color1-faint {:color (when (theme-getx :color1)
@@ -869,11 +886,7 @@
     [:.commands {:display :none}]
     [:#member-action-forms {:display :none}]
     [:#resource-action-forms {:display :none}]
-    [:.flash-message {:display :none}]
-
-    ;; open "show more" drawers
-    [".collapse:not(.show)" {:display :block}]
-    [:.collapse-toggle.collapse {:display :none}])
+    [:.flash-message {:display :none}])
 
    ;; animation utilities
    [:.animate-transform {:-webkit-transition "transform 0.2s ease-in-out"

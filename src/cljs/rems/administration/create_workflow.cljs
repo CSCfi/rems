@@ -15,6 +15,7 @@
             [rems.fetcher :as fetcher]
             [rems.fields :as fields]
             [rems.flash-message :as flash-message]
+            [rems.focus :as focus]
             [rems.spinner :as spinner]
             [rems.text :refer [localized localize-command localize-role localize-state text text-format text-format-map]]
             [rems.util :refer [navigate! post! put! trim-when-string]]))
@@ -421,9 +422,8 @@
                [:div.form-field-header
                 [:h4 (text :t.create-workflow/rule)]
                 [:div.form-field-controls
-                 [items/remove-button (fn []
-                                        (rf/dispatch [::remove-disable-command index])
-                                        (rf/dispatch [:rems.focus/scroll-into-view (str "#" id) {:block :end}]))]]]
+                 [items/remove-button {:on-click #(rf/dispatch [::remove-disable-command index])
+                                       :data-index index}]]]
                [select-command {:commands @(rf/subscribe [::commands])
                                 :index index
                                 :on-change #(rf/dispatch [::set-form-field [:disable-commands index :command] %])
@@ -442,7 +442,7 @@
                      :on-click (fn [event]
                                  (.preventDefault event)
                                  (rf/dispatch [::new-disable-command])
-                                 (rf/dispatch [:rems.focus/scroll-into-view (str "#" id) {:block :end}]))}
+                                 (focus/scroll-into-view (str "#" id " .new-rule") {:block :end}))}
         (text :t.create-workflow/create-new-rule)]]]]))
 
 (rf/reg-sub ::processing-states (fn [db _] (get-in db [::form :processing-states])))
@@ -463,9 +463,8 @@
                [:div.form-field-header
                 [:h4 (get-processing-state-title value)]
                 [:div.form-field-controls
-                 [items/remove-button (fn []
-                                        (rf/dispatch [::remove-processing-state index])
-                                        (rf/dispatch [:rems.focus/scroll-into-view (str "#" id) {:block :end}]))]]]
+                 [items/remove-button {:on-click #(rf/dispatch [::remove-processing-state index])
+                                       :data-index index}]]]
                [text-field context {:keys [:processing-states index :processing-state/value]
                                     :label (text :t.administration/technical-value)}]
                [localized-text-field context {:keys [:processing-states index :processing-state/title]
@@ -475,7 +474,7 @@
                      :on-click (fn [event]
                                  (.preventDefault event)
                                  (rf/dispatch [::new-processing-state])
-                                 (rf/dispatch [:rems.focus/scroll-into-view (str "#" id) {:block :end}]))}
+                                 (focus/scroll-into-view (str "#" id " .new-rule") {:block :end}))}
         (text :t.create-workflow/create-new-processing-state)]]]]))
 
 ;;;; page component

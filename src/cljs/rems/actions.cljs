@@ -39,7 +39,7 @@
      [flash-message/component :top]
      [:div.spaced-sections
       [collapsible/component
-       {:id "todo-applications-collapse"
+       {:id "todo-applications-collapsible"
         :open? true
         :title (text :t.actions/todo-applications)
         :bottom-less-button? false
@@ -53,7 +53,7 @@
                                                 :default-sort-column :last-activity
                                                 :default-sort-order :desc}]]}]
       [collapsible/component
-       {:id "handled-applications-collapse"
+       {:id "handled-applications-collapsible"
         :title (text :t.actions/handled-applications)
         :on-open #(do (rf/dispatch [::handled-applications {:limit 51}])
                       (rf/dispatch [::handled-applications-count]))

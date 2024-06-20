@@ -197,7 +197,8 @@
        :on-change #(rf/dispatch [::set-owners %])}]]))
 
 (defn- remove-review-email-button [field-index]
-  [items/remove-button #(rf/dispatch [::remove-review-email field-index])])
+  [items/remove-button {:on-click #(rf/dispatch [::remove-review-email field-index])
+                        :data-index field-index}])
 
 (rf/reg-event-db
  ::add-review-email

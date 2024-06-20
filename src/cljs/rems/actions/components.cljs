@@ -7,7 +7,7 @@
             [rems.fields :as fields]
             [rems.flash-message :as flash-message]
             [rems.text :refer [text text-format]]
-            [rems.util :refer [post!]]))
+            [rems.util :refer [event-value post!]]))
 
 (defn- action-collapse-id [action-id]
   (str "actions-" action-id))
@@ -76,9 +76,7 @@
                 :max-rows 4
                 :name id
                 :value @(rf/subscribe [::comment field-key])
-                :on-change (fn [event]
-                             (let [value (.. event -target -value)]
-                               (rf/dispatch [::set-comment field-key value])))}]]))
+                :on-change #(rf/dispatch [::set-comment field-key (event-value %)])}]]))
 
 (rf/reg-sub ::event-public (fn [db [_ field-key]] (get-in db [::event-public field-key] false)))
 (rf/reg-event-db ::set-event-public (fn [db [_ field-key value]] (assoc-in db [::event-public field-key] value)))

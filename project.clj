@@ -116,7 +116,7 @@
                                 [com.clojure-goes-fast/clj-async-profiler "1.2.0"] ; also check extra :jvm-opts https://github.com/clojure-goes-fast/clj-async-profiler?tab=readme-ov-file#tuning-for-better-accuracy
                                 [com.clojure-goes-fast/clj-memory-meter "0.3.0"]
                                 [criterium "0.4.6"]
-                                [lambdaisland/kaocha "1.87.1366"]
+                                [lambdaisland/kaocha "1.91.1392"]
                                 [lambdaisland/kaocha-junit-xml "1.17.101"]
                                 [etaoin "1.0.40"]
                                 [ring/ring-mock "0.4.0" :exclusions [cheshire]]

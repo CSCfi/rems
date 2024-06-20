@@ -2,10 +2,10 @@
   "UI components for form fields"
   (:require [clojure.string :as str]
             ["diff-match-patch" :refer [diff_match_patch]]
-            [goog.functions :refer [debounce rateLimit]]
-            [re-frame.core :as rf]
+            [medley.core :refer [assoc-some]]
             [rems.administration.items :as items]
-            [rems.atoms :refer [add-symbol attachment-link download-button close-symbol failure-symbol textarea]]
+            [rems.atoms :as atoms :refer [add-symbol attachment-link download-button close-symbol failure-symbol textarea]]
+            [rems.collapsible :as collapsible]
             [rems.common.attachment-util :as attachment-util]
             [rems.common.form :as common-form]
             [rems.common.util :refer [assoc-not-present build-index getx]]
@@ -14,29 +14,10 @@
             [rems.guide-util :refer [component-info example lipsum-short lipsum-paragraphs]]
             [rems.spinner :as spinner]
             [rems.text :refer [localized text text-format]]
-            [rems.util :refer [focus-when-collapse-opened linkify format-file-size]]))
+            [rems.util :refer [linkify format-file-size event-value]]))
 
 (defn field-name [field]
   (str "form-" (getx field :form/id) "-field-" (getx field :field/id)))
-
-(defn info-collapse
-  "Collapse field from Bootstrap that shows extra information about input fields.
-
-  `:info-id`           - id of the element being described
-  `:aria-label-text`   - text describing aria-label of collapse, see more https://developers.google.com/web/fundamentals/accessibility/semantics-aria/aria-labels-and-relationships
-  `:content`           - component that is shown if open"
-  [{:keys [info-id aria-label-text content]}]
-  [:<> [:button.info-button.btn.btn-link
-        {:data-toggle "collapse"
-         :href (str "#" (str info-id "-collapse"))
-         :aria-label aria-label-text
-         :aria-expanded "false"
-         :aria-controls (str info-id "-collapse")}
-        [:i.fa.fa-info-circle]]
-   [:div.info-collapse.collapse.my-3 {:id (str info-id "-collapse")
-                                      :ref focus-when-collapse-opened
-                                      :tab-index "-1"}
-    content]])
 
 (defn- diff [value previous-value]
   (let [dmp (diff_match_patch.)
@@ -90,6 +71,53 @@
   (readonly-field-raw {:id id
                        :value (linkify (str/trim (str value)))}))
 
+(defn info-collapsible-toggle [{:keys [aria-label id]}]
+  [atoms/action-link
+   (assoc-some (collapsible/toggle-action id)
+               :class "info-collapsible-toggle"
+               :label [atoms/info-symbol]
+               :aria-label aria-label
+               :url "#")])
+
+(defn info-collapsible [{:keys [id collapse]}]
+  [collapsible/minimal
+   {:id id
+    :class "info-collapsible"
+    :collapse [:div.mb-2 collapse]}])
+
+(defn- field-label [{info-text :field/info-text
+                     max-length :field/max-length
+                     title :field/title
+                     optional :field/optional
+                     :keys [fieldset]
+                     :as opts}]
+  (let [raw-title (localized title)
+        info-text (localized info-text)
+        label (->> (conj []
+                         (linkify raw-title)
+                         (when max-length (text-format :t.form/maxlength (str max-length)))
+                         (if optional
+                           (text :t.form/optional)
+                           (text :t.form/required)))
+                   (interpose " "))
+        collapsible-id (str (field-name opts) "-collapsible")
+        info-text? (not (str/blank? info-text))]
+    [:<>
+     (if fieldset ; XXX: currently only used by multiselect-field
+       [:legend.application-field-label
+        label
+        (when info-text? [info-collapsible-toggle {:id collapsible-id
+                                                   :aria-label (str (text :t.create-form/collapse-aria-label) raw-title)}])]
+
+       [:label.application-field-label {:for (field-name opts)}
+        label
+        (when info-text? [info-collapsible-toggle {:id collapsible-id
+                                                   :aria-label (str (text :t.create-form/collapse-aria-label) raw-title)}])])
+
+     (when info-text?
+       [info-collapsible {:id collapsible-id
+                          :collapse [:div.mb-2 (linkify info-text)]}])]))
+
 (defn field-wrapper
   "Common parts of a form field.
 
@@ -110,88 +138,39 @@
 
   editor-component      - HTML, form component for editing the field"
   [{:keys [readonly readonly-component diff diff-component validation on-toggle-diff fieldset] :as opts} editor-component]
-  (let [raw-title (localized (:field/title opts))
-        title (linkify raw-title)
-        optional (:field/optional opts)
-        value (:field/value opts)
+  (let [value (:field/value opts)
         previous-value (:field/previous-value opts)
-        max-length (:field/max-length opts)
-        info-text (localized (:field/info-text opts))
-        collapse-aria-label (str (text :t.create-form/collapse-aria-label) raw-title)]
+        the-field-name (field-name opts)]
     ;; TODO: simplify fieldset code
-    [(if fieldset
-       :fieldset.form-group.field
-       :div.form-group.field)
-     (merge
-      {:id (str "container-" (field-name opts))}
-      (when fieldset
-        {:tab-index -1
-         :aria-invalid (when validation true)
-         :aria-describedby (when validation
-                             (str (field-name opts) "-error"))}))
-     [(if fieldset
-        :legend.application-field-label
-        :label.application-field-label)
-      (when (not fieldset)
-        {:for (field-name opts)})
-      title " "
-      (when max-length
-        (text-format :t.form/maxlength (str max-length)))
-      " "
-      (if optional
-        (text :t.form/optional)
-        (text :t.form/required))
-      (when-not (str/blank? info-text)
-        [info-collapse
-         {:info-id (field-name opts)
-          :aria-label-text collapse-aria-label
-          :content (linkify info-text)}])]
-     (when (and previous-value
-                (not= value previous-value))
-       [toggle-diff-button diff on-toggle-diff])
-     (cond
-       diff (or diff-component
-                [diff-field {:id (field-name opts)
-                             :value value
-                             :previous-value previous-value}])
-       readonly (or readonly-component
-                    [readonly-field {:id (field-name opts)
-                                     :value value}])
-       :else editor-component)
-     (when validation
-       [:div.invalid-feedback
-        {:id (str (field-name opts) "-error")}
-        (text-format (:type validation) raw-title)])]))
+    (into
+     (if fieldset ; XXX: currently only used by multiselect-field
+       [:fieldset.form-group.field {:id (str "container-" the-field-name)
+                                    :tab-index -1
+                                    :aria-invalid (when validation true)
+                                    :aria-describedby (when validation (str the-field-name "-error"))}]
+       [:div.form-group.field {:id (str "container-" the-field-name)}])
+     (list
+      [field-label opts]
+      (when (and previous-value
+                 (not= value previous-value))
+        [toggle-diff-button diff on-toggle-diff])
+      (cond
+        diff (or diff-component
+                 [diff-field {:id the-field-name
+                              :value value
+                              :previous-value previous-value}])
+        readonly (or readonly-component
+                     [readonly-field {:id the-field-name
+                                      :value value}])
+        :else editor-component)
+      (when validation
+        [:div.invalid-feedback {:id (str the-field-name "-error")}
+         (text-format (:type validation) (localized (:field/title opts)))])))))
 
 (defn- non-field-wrapper [opts children]
   [:div.form-group
    {:id (str "container-" (field-name opts))}
    children])
-
-(defn- event-value [event]
-  (.. event -target -value))
-
-(defn- clear-message []
-  (rems.flash-message/clear-message! :actions-form-flash))
-
-(def ^:private rate-limited-clear-message
-  (rateLimit clear-message 1000))
-
-(defn- notify-activity []
-  (rf/dispatch [:rems.application/autosave-application]))
-
-(def ^:private debounced-notify-activity
-  (debounce notify-activity 1000))
-
-(defn always-on-change
-  "Triggers autosave related functions.
-
-  Should be called always when something is changed in the application, that doesn't explicitly also save.
-  For example, add member internally also \"saves\" the state, but changing a text field value doesn't."
-  [event-value]
-  (rate-limited-clear-message) ; clear status as soon as possible
-  (debounced-notify-activity) ; try autosave only every second or so
-  event-value)
 
 (defn text-field
   [{:keys [validation on-change _info-text _type] :as opts}]
@@ -217,7 +196,7 @@
                            :max-length max-length
                            :class (when validation "is-invalid")
                            :value value
-                           :on-change (comp on-change always-on-change event-value)}]]))
+                           :on-change (comp on-change event-value)}]]))
 
 (defn texta-field
   [{:keys [validation on-change] :as opts}]
@@ -237,7 +216,7 @@
                 :max-length max-length
                 :class (when validation "is-invalid")
                 :value value
-                :on-change (comp on-change always-on-change event-value)}]]))
+                :on-change (comp on-change event-value)}]]))
 
 (defn date-field
   [{:keys [min max validation on-change] :as opts}]
@@ -257,7 +236,7 @@
                                                (str (field-name opts) "-error"))
                            :min min
                            :max max
-                           :on-change (comp on-change always-on-change event-value)}]]))
+                           :on-change (comp on-change event-value)}]]))
 
 (defn- option-label [value options]
   (let [label (->> options
@@ -282,7 +261,7 @@
                                   :aria-invalid (when validation true)
                                   :aria-describedby (when validation
                                                       (str (field-name opts) "-error"))
-                                  :on-change (comp on-change always-on-change event-value)}
+                                  :on-change (comp on-change event-value)}
             [:option {:value ""}]]
            (for [{:keys [key label]} options]
              [:option {:value key}
@@ -295,7 +274,7 @@
 (defn multiselect-field [{:keys [validation on-change] :as opts}]
   (let [value (:field/value opts)
         options (:field/options opts)
-        optional (:field-/optional opts)
+        optional (:field/optional opts)
         selected-keys (common-form/parse-multiselect-values value)]
     [field-wrapper
      (assoc opts
@@ -314,7 +293,6 @@
                                                      (conj selected-keys key)
                                                      (disj selected-keys key))
                                      value (common-form/unparse-multiselect-values selected-keys)]
-                                 (always-on-change value)
                                  (on-change value)))]
                [:div.form-check
                 [:input.form-check-input {:type "checkbox"
@@ -330,40 +308,42 @@
                  (localized label)]])))]))
 
 (defn- upload-button [id status on-upload]
-  (let [upload-id (str id "-input")
-        info-id (str id "-info")]
+  (let [upload-id (str id "-input")]
     [:div.upload-file
-     [:input {:style {:display "none"}
-              :type "file"
-              :id upload-id
-              :name upload-id
-              :accept attachment-util/allowed-extensions-string
-              :on-change (fn [event]
-                           (let [filecontent (aget (.. event -target -files) 0)
-                                 form-data (doto (js/FormData.)
-                                             (.append "file" filecontent))]
-                             (set! (.. event -target -value) nil) ; empty selection to fix uploading the same file twice
-                             (on-upload form-data)))}]
-     [:button.btn.btn-outline-secondary
-      {:id id
-       :type :button
-       :on-click (fn [e] (.click (.getElementById js/document upload-id)))}
-      [add-symbol]
-      " "
-      (text :t.form/upload)]
-     [:span.ml-2
-      (case status
-        :pending [spinner/small]
-        :success nil ; the new attachment row appearing is confirmation enough
-        :error [failure-symbol]
-        nil)]
-     [info-collapse
-      {:info-id info-id
-       :aria-label-text (text-format :t.form/upload-extensions attachment-util/allowed-extensions-string)
-       :content [:div
-                 [:p [text-format :t.form/upload-extensions attachment-util/allowed-extensions-string]]
-                 [:p (text-format :t.form/attachment-max-size
-                                  (format-file-size (:attachment-max-size @rems.globals/config)))]]}]]))
+     [:div.mb-3
+      [:input {:style {:display "none"}
+               :type "file"
+               :id upload-id
+               :name upload-id
+               :accept attachment-util/allowed-extensions-string
+               :on-change (fn [event]
+                            (let [filecontent (aget (.. event -target -files) 0)
+                                  form-data (doto (js/FormData.)
+                                              (.append "file" filecontent))]
+                              (set! (.. event -target -value) nil) ; empty selection to fix uploading the same file twice
+                              (on-upload form-data)))}]
+      [:button.btn.btn-outline-secondary
+       {:id id
+        :type :button
+        :on-click (fn [e] (.click (.getElementById js/document upload-id)))}
+       [add-symbol]
+       " "
+       (text :t.form/upload)]
+      [:span.ml-2
+       (case status
+         :pending [spinner/small]
+         :success nil ; the new attachment row appearing is confirmation enough
+         :error [failure-symbol]
+         nil)]
+      [info-collapsible-toggle
+       {:id (str id "-info-collapsible")
+        :aria-label (text-format :t.form/upload-extensions attachment-util/allowed-extensions-string)}]]
+     [info-collapsible
+      {:id (str id "-info-collapsible")
+       :collapse [:div
+                  [:p [text-format :t.form/upload-extensions attachment-util/allowed-extensions-string]]
+                  [:p (text-format :t.form/attachment-max-size
+                                   (format-file-size (:attachment-max-size @rems.globals/config)))]]}]]))
 
 (defn multi-attachment-view [{:keys [id attachments status on-attach on-remove-attachment label]}]
   [:div.form-group
@@ -431,9 +411,10 @@
                                               :aria-label (localized label)
                                               :id (str id "-row" row-i "-" key)
                                               :value (get-in rows [row-i key])
-                                              :on-change #(on-change (always-on-change (assoc-in rows [row-i key] (event-value %))))}])])
+                                              :on-change #(on-change (assoc-in rows [row-i key] (event-value %)))}])])
                    (when-not readonly
-                     [[:td.align-middle [items/remove-button #(on-change (always-on-change (items/remove rows row-i)))]]]))))
+                     [[:td.align-middle [items/remove-button {:on-click #(on-change (items/remove rows row-i))
+                                                              :data-index row-i}]]]))))
           (when (and readonly (empty? rows))
             [[:tr [:td {:col-span (count columns)}
                    (text :t.form/no-rows)]]])
@@ -441,7 +422,7 @@
             [[:tr [:td {:col-span (count columns)}
                    [:button.btn.btn-outline-secondary
                     {:id (str id "-add-row")
-                     :on-click #(on-change (always-on-change (conj rows (zipmap (mapv :key columns) (repeat "")))))}
+                     :on-click #(on-change (conj rows (zipmap (mapv :key columns) (repeat ""))))}
                     [add-symbol]
                     " "
                     (text :t.form/add-row)]]]])))])
@@ -491,7 +472,7 @@
                                  (empty? rows))
                           [(zipmap (mapv :key (:field/columns field)) (repeat ""))]
                           rows))
-                :on-change #(on-change (always-on-change (table-to-backend %)))}]])
+                :on-change #(on-change (table-to-backend %))}]])
 
 (defn unsupported-field
   [f]
@@ -545,7 +526,7 @@
                     :field/placeholder {:en "placeholder"}}])
    (example "field of type \"text\" with info field"
             [field {:form/id 1
-                    :field/id "1"
+                    :field/id "info-1"
                     :field/type :text
                     :field/title {:en "Title"}
                     :field/placeholder {:en "placeholder"}

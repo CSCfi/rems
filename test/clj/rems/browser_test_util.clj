@@ -4,12 +4,14 @@
   NB: Don't use etaoin directly but wrap it to functions that don't need the driver to be passed."
   (:require [clj-http.client :as http]
             [clojure.java.io :as io]
+            [clojure.set]
             [clojure.stacktrace]
             [clojure.string :as str]
             [clojure.test :refer [compose-fixtures]]
             [clojure.tools.logging :as log]
             [com.rpl.specter :refer [ALL select]]
             [etaoin.api :as et]
+            [etaoin.keys]
             [medley.core :refer [assoc-some]]
             [rems.api.testing :refer [standalone-fixture]]
             [rems.common.util :refer [conj-vec getx parse-int]]
@@ -143,15 +145,20 @@
          :mode mode
          :seed (random-seed)))
 
+(defn- recreate-session! [driver]
+  (et/delete-session driver)
+  (let [driver (dissoc driver :session)
+        session (et/create-session driver)]
+    (assoc driver :session session)))
+
 (defn refresh-driver!
   "Re-creates session on an existing driver and sets default values."
   []
   (assert (get-driver) "must have initialized driver already!")
-
-  (doto (get-driver)
-    (et/delete-session)
-    (et/create-session)
-    (init-session!)))
+  (et/with-wait-timeout 60
+    (-> (get-driver)
+        recreate-session!
+        init-session!)))
 
 (defn init-driver-fixture
   "Executes a test running a fresh driver except when in development."
@@ -185,7 +192,7 @@
   (reset-context!)
   (f))
 
-(defn smoke-test [f]
+(defn smoke-test-fixture [f]
   (let [response (http/get (str (get-server-url) "js/app.js"))]
     (assert (= 200 (:status response))
             (str "Failed to load app.js: " response))
@@ -416,6 +423,7 @@
 (def js-execute (wrap-etaoin et/js-execute))
 (def js-async (wrap-etaoin et/js-async))
 (def fill (wrap-etaoin et/fill))
+(def fill-el (wrap-etaoin et/fill-el))
 (def wait-has-class (wrap-etaoin et/wait-has-class))
 (def get-element-text-el (wrap-etaoin et/get-element-text-el))
 (def query (wrap-etaoin et/query))
@@ -475,21 +483,25 @@
 (def +character-delay+ 0.01)
 (def +max-extra-delay+ 0.2)
 (def +typo-probability+ 0.05)
+(def +typoable-chars+
+  (clojure.set/union (set "abcdefghijklmnopqrstuvwxyzåäö")
+                     (set "ABCDEFGHIJKLMONPQRSTUVWXYZÅÄÖ")))
 
 (defn fill-human [q text]
   (wait-for-idle)
   (wait-visible q)
 
-  (doseq [c text]
+  (doseq [c text
+          :let [elem (query q)]]
     (et/wait (* +max-extra-delay+ (Math/pow (rand) 5)))
-    (when (< (rand) +typo-probability+)
+    (when (and (contains? +typoable-chars+ c)
+               (< (rand) +typo-probability+))
       (et/wait +character-delay+)
-      (et/fill (get-driver) q (char (inc (int c))))
+      (fill-el elem (char (inc (int c))))
       (et/wait +character-delay+)
-      (et/fill (get-driver) q \backspace))
+      (fill-el elem etaoin.keys/backspace))
     (et/wait +character-delay+)
-    (et/fill (get-driver) q c))
-  (et/wait +character-delay+)
+    (fill-el elem c))
 
   (wait-for-idle)
 

@@ -9,7 +9,7 @@
             [rems.spinner :as spinner]
             [rems.text :refer [text]]
             [rems.user :as user]
-            [rems.util :refer [put!]]))
+            [rems.util :refer [event-value put!]]))
 
 (rf/reg-event-fx
  ::enter-page
@@ -85,9 +85,7 @@
                      {:type "email"
                       :id id
                       :value (:notification-email form)
-                      :on-change (fn [event]
-                                   (let [value (.. event -target -value)]
-                                     (rf/dispatch [::set-form (assoc form :notification-email value)])))}]])
+                      :on-change #(rf/dispatch [::set-form (assoc form :notification-email (event-value %))])}]])
 
                  [:button.btn.btn-primary
                   {:type "submit"}
