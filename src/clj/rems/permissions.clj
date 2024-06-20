@@ -197,10 +197,10 @@
    permissions are set for the user."
   [application user]
   (reduce (fn [permissions role]
-              (into permissions
-                    (-> application :application/role-permissions role)))
-            #{}
-            (user-roles application user)))
+            (into permissions
+                  (-> application :application/role-permissions role)))
+          #{}
+          (user-roles application user)))
 
 (deftest test-user-permissions
   (testing "unknown user"

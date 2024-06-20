@@ -65,8 +65,8 @@
 
 (defn- merge-user-settings [user-attributes]
   (when (and user-attributes (:userid user-attributes))
-   (merge user-attributes
-          (get-user-attributes-from-settings (:userid user-attributes)))))
+    (merge user-attributes
+           (get-user-attributes-from-settings (:userid user-attributes)))))
 
 (defn- get-all-users-raw []
   (->> (db/get-users {})

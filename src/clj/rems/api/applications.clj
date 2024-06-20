@@ -137,11 +137,11 @@
 
 (defn- get-handled-applications [{:keys [query only-active-handlers limit]}]
   (time
-  (cond->> (todos/get-handled-todos (getx-user-id))
-    only-active-handlers (map overview-only-active-handlers)
-    query (filter-with-search query)
-    true (sort-by last-activity >)
-    limit (take limit))))
+   (cond->> (todos/get-handled-todos (getx-user-id))
+     only-active-handlers (map overview-only-active-handlers)
+     query (filter-with-search query)
+     true (sort-by last-activity >)
+     limit (take limit))))
 
 (def my-applications-api
   (context "/my-applications" []
