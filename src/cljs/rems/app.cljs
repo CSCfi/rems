@@ -625,11 +625,7 @@
 
 (defn- app []
   (r/with-let [tracked (mapv r/track! [lazy-load-data! grab-focus!])]
-
-    (if @config/dev-environment?
-      [react-strict-mode [page]]
-      [page])
-
+    [page]
     (finally
       (doseq [f tracked]
         (r/dispose! f)))))
