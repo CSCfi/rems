@@ -481,11 +481,15 @@
 ;; probably due to the lack of a _minimum_ delay between keypresses.
 ;; This is a reimplementation.
 (def +character-delay+ 0.01)
-(def +max-extra-delay+ 0.2)
 (def +typo-probability+ 0.05)
 (def +typoable-chars+
-  (clojure.set/union (set "abcdefghijklmnopqrstuvwxyzåäö")
+  (clojure.set/union (set "0123456789")
+                     (set "abcdefghijklmnopqrstuvwxyzåäö")
                      (set "ABCDEFGHIJKLMONPQRSTUVWXYZÅÄÖ")))
+
+(defn- wait-delay-and-idle [seconds]
+  (et/wait seconds) ; minimum wait
+  (wait-for-idle)) ; extra wait, in case browser is in middle of something
 
 (defn fill-human [q text]
   (wait-for-idle)
@@ -493,21 +497,20 @@
 
   (doseq [c text
           :let [elem (query q)]]
-    (et/wait (* +max-extra-delay+ (Math/pow (rand) 5)))
+    (et/wait (* 0.05 (rand))) ; max 50ms
     (when (and (contains? +typoable-chars+ c)
                (< (rand) +typo-probability+))
-      (et/wait +character-delay+)
       (fill-el elem (char (inc (int c))))
-      (et/wait +character-delay+)
-      (fill-el elem etaoin.keys/backspace))
-    (et/wait +character-delay+)
+      (wait-delay-and-idle +character-delay+)
+      (fill-el elem etaoin.keys/backspace)
+      (wait-delay-and-idle +character-delay+))
     (fill-el elem c))
 
-  (wait-for-idle)
+  (wait-delay-and-idle 0.1)
 
   (let [value (get-element-attr q "value")]
-    (when-not (= text value)
-      (log/warn "Failed to fill field to" (pr-str text) "got" (pr-str value) "instead."))))
+    (when (not= text value)
+      (log/warn "Failed to fill field" (pr-str {:expected text :actual value})))))
 
 (defn visible-el?
   "Checks whether an element is visible on the page."
