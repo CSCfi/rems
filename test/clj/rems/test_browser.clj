@@ -148,6 +148,19 @@
        (finally
          (change-language :en)))))
 
+(defn open-collapsible [id]
+  (btu/scroll-and-click [{:id (name id) :fn/has-class :collapsible}
+                         {:css ".show-more-link"}])
+  (btu/wait-visible [{:id (name id)}
+                     {:css ".collapse-open"}]))
+
+(defn aria-controls [id] (format "[aria-controls='%s']" (name id)))
+
+(defn open-external-collapsible [id]
+  (btu/scroll-and-click {:css (str "a.show-more-link" (aria-controls id))})
+  (btu/wait-visible [{:id (name id)}
+                     {:css ".collapse-open"}]))
+
 ;;; catalogue page
 
 (defn add-to-cart [resource-name]
@@ -449,9 +462,6 @@
               :headers {"x-rems-api-key" "42"
                         "x-rems-user-id" (or userid "handler")}})))
 
-(defn- get-external-id [application-id userid]
-  (:application/external-id (get-application-from-api application-id userid)))
-
 ;;; tests
 
 (deftest test-new-application
@@ -636,8 +646,8 @@
         (send-application)
         (btu/gather-axe-results "sent-application")
 
-        (btu/scroll-and-click :header-collapse-more-link) ; show application state details
-        (is (btu/eventually-visible? :header-collapse))
+        (open-collapsible :header-collapsible) ; show application state details
+        (is (btu/eventually-visible? :application-state))
         (is (= "Applied" (btu/get-element-text :application-state)))
 
         (testing "check a field answer"
@@ -757,17 +767,13 @@
       (btu/fill-human [:actions-invite-member :name-invite-member] "John Smith")
       (btu/fill-human [:actions-invite-member :email-invite-member] "john.smith@generic.name")
       (btu/scroll-and-click :invite-member)
-      (btu/scroll-and-click :applicants-info-collapse-more-link)
-      (is (btu/eventually-visible? :applicants-info-collapse))
+      (open-collapsible :applicants-info-collapsible)
       (btu/wait-invisible [:actions-invite-member {:fn/has-text "Invite member"}])
-      (btu/scroll-and-click :invite0-info-collapse-more-link)
-      (is (btu/eventually-visible? :invite0-info-collapse))
-      (btu/scroll-and-click :header-collapse-more-link) ; show events
-      (is (btu/eventually-visible? :header-collapse))
-
+      (open-collapsible :invite0-info-collapsible)
+      (open-collapsible :header-collapsible) ; show events
       (is (= {"Name" "John Smith"
               "Email" "john.smith@generic.name"}
-             (slurp-fields :invite0-info)))
+             (slurp-fields :invite0-info-collapsible)))
       (is (string? (-> (btu/context-getx :application-id)
                        applications/get-application-internal
                        :application/invitation-tokens
@@ -784,15 +790,14 @@
       (is (btu/visible? {:css "div.event-description" :fn/text "Alice Applicant invited John Smith to the application."})))
 
     (testing "uninvite member"
-      (is (not (btu/visible? :actions-invite0-operations-remove)))
-      (btu/scroll-and-click :invite0-operations-remove-action-button)
-      (is (btu/eventually-visible? :actions-invite0-operations-remove))
-      (btu/fill-human :comment-invite0-operations-remove-comment "sorry but no")
-      (btu/scroll-and-click :invite0-operations-remove-submit)
-      (is (btu/eventually-visible? [{:fn/has-string "Remove member: Success"}]))
-      (btu/get-element-text :status-success)
-      (btu/wait-invisible :actions-invite0-operations-remove)
-      (btu/wait-invisible :invite0-info)
+      (is (not (btu/visible? :actions-invite0-info-operations-remove)))
+      (btu/scroll-and-click :invite0-info-operations-remove-action-button)
+      (is (btu/eventually-visible? :actions-invite0-info-operations-remove))
+      (btu/fill-human :comment-invite0-info-operations-remove-comment "sorry but no")
+      (btu/scroll-and-click :invite0-info-operations-remove-submit)
+      (is (btu/eventually-visible? [{:css ".alert-success" :fn/has-text "Remove member: Success"}]))
+      (btu/wait-invisible :actions-invite0-info-operations-remove)
+      (btu/wait-invisible :invite0-info-collapsible)
 
       (is (empty? (-> (btu/context-getx :application-id)
                       applications/get-application-internal
@@ -982,26 +987,27 @@
 
     (testing "remove second member jade"
       (is (not (btu/visible? :actions-member1-operations-remove)))
-      (is (not (btu/visible? :member1-operations-remove-action-button)))
-      (btu/scroll-and-click :applicants-info-collapse-more-link)
-      (is (btu/eventually-visible? :applicants-info-collapse))
-      (btu/scroll-and-click :member1-operations-remove-action-button)
-      (is (btu/eventually-visible? :actions-member1-operations-remove))
-      (btu/fill-human :comment-member1-operations-remove-comment "not in research group anymore")
-      (btu/scroll-and-click :member1-operations-remove-submit)
+      (is (not (btu/visible? :member1-info-operations-remove-action-button)))
+      (open-collapsible :applicants-info-collapsible)
+      (btu/scroll-and-click :member1-info-operations-remove-action-button)
+      (is (btu/eventually-visible? :actions-member1-info-operations-remove))
+      (btu/fill-human :comment-member1-info-operations-remove-comment "not in research group anymore")
+      (btu/scroll-and-click :member1-info-operations-remove-submit)
       (is (btu/eventually-visible? [{:fn/has-string "Remove member: Success"}]))
-      (btu/wait-invisible :actions-member1-operations-remove)
+      (btu/wait-invisible :actions-member1-info-operations-remove)
       (btu/wait-invisible :member2-info) ; last element is removed from DOM, remaining updated
-      (btu/scroll-and-click :header-collapse-more-link) ; show events
-      (is (btu/eventually-visible? :header-collapse))
+      (open-collapsible :header-collapsible) ; show events
 
       (is (= #{{:userid "ionna" :name "Ionna Insprucker" :email "ionna@ins.mail"}
                {:userid "kayla" :name "Kayla Kale" :email "kale@is.good"}}
              (-> (btu/context-getx :application-id)
                  applications/get-application-internal
                  :application/members)))
-      (is (btu/visible? {:css "div.event-description" :fn/text "Alice Applicant removed Jade Jenner from the application."}))
-      (is (btu/visible? {:css "div.event-comment" :fn/text "not in research group anymore"})))))
+
+      (Thread/sleep 500)
+      ;; first event
+      (is (btu/visible? [{:css ".event" :index 1} {:css ".event-description" :fn/text "Alice Applicant removed Jade Jenner from the application."}]))
+      (is (btu/visible? [{:css ".event" :index 1} {:css ".event-comment" :fn/text "not in research group anymore"}])))))
 
 (deftest test-handling
   (testing "submit test data with API"
@@ -1051,7 +1057,7 @@
     (testing "handler should see application after clicking on View"
       (wait-page-title (format "Application %s: test-handling – REMS" (btu/context-getx :external-id))))
     (testing "handler should see the applicant info"
-      (btu/scroll-and-click :applicant-info-collapse-more-link)
+      (open-collapsible :applicants-info-collapsible)
       (btu/screenshot "after-opening-applicant-info")
       (is (= {"Name" "Alice Applicant"
               "Accepted terms of use" true
@@ -1060,7 +1066,7 @@
               "Organization" "Default"
               "Nickname" "In Wonderland"
               "Applicant researcher status" true}
-             (slurp-fields :applicant-info))))
+             (slurp-fields :applicants-info-collapsible))))
     (testing "handler should see all form fields"
       (is (= {"description" "test-handling"
               "private en" "test-handling"}
@@ -1160,10 +1166,10 @@
       (btu/reload)
       (btu/wait-visible {:fn/text (str "There are " (count (btu/context-getx :todos)) " processed applications.")})
       (btu/screenshot "processed-applications-closed")
-      (btu/scroll-and-click [:handled-applications-collapse {:fn/text "Show more"}])
+      (open-collapsible :handled-applications-collapsible)
       (btu/wait-visible {:fn/text "Showing the first 50 rows only."})
       (btu/screenshot "processed-applications-opened")
-      (btu/scroll-and-click [:handled-applications-collapse {:fn/text "Show all rows"}])
+      (btu/scroll-and-click [:handled-applications-collapsible {:fn/text "Show all rows"}])
       (btu/wait-invisible {:fn/text "Showing the first 50 rows only."})
       (btu/screenshot "processed-applications-show-all-rows"))
 
@@ -1171,7 +1177,7 @@
       ;; revisit (reload without reloading config)
       (click-navigation-menu "Catalogue")
       (click-navigation-menu "Actions")
-      (btu/scroll-and-click [:handled-applications-collapse {:fn/text "Show more"}])
+      (open-collapsible :handled-applications-collapsible)
       (btu/screenshot "processed-applications-paged-opened-page-1")
       (testing "first page has newest rows"
         (is (= (for [i (range 100 90 -1)]
@@ -1190,7 +1196,7 @@
       (testing "visiting another page will reset current page to first"
         (click-navigation-menu "Catalogue")
         (click-navigation-menu "Actions")
-        (btu/scroll-and-click [:handled-applications-collapse {:fn/text "Show more"}])
+        (open-collapsible :handled-applications-collapsible)
         (btu/screenshot "processed-applications-paged-revisit")
         (testing "first page still has newest rows"
           (is (= (for [i (range 100 90 -1)]
@@ -1198,7 +1204,7 @@
                  (mapv #(get % "description") (slurp-rows :handled-applications))))))
 
       (testing "load all rows to visit 10th page"
-        (btu/scroll-and-click [:handled-applications-collapse {:fn/text "Show all rows"}])
+        (btu/scroll-and-click [:handled-applications-collapsible {:fn/text "Show all rows"}])
         (btu/scroll-and-click [:handled-applications-paging-pages {:fn/text "10"}])
         (btu/wait-visible {:fn/text "test-processed-applications-10"}) ; wait for at least one to appear before checking all
         (is (= (for [i (range 10 0 -1)]
@@ -2131,56 +2137,63 @@
              (->> (slurp-tds [:catalogue {:css "tr:has(td.selection *[aria-checked=true])"}])
                   (mapv #(dissoc % "resource" "created" "commands"))))))))
 
-(defn create-context-field!
-  "Utility function that keeps track of created form fields in
-   context object. Stores form field in stack with `id`, that can
-   optionally be passed in `opts`. Form field can also be created into
-   the front of stack using `:insert-first` in `opts`.
+;;; form editor test utilities
 
-   Useful for keeping track of created form fields in form tests."
-  [kw & [opts]]
-  (let [fields (or (btu/context-getx :create-form-field/fields) [])
-        id (:id opts (str "fld" (inc (count fields))))]
-    (if (:insert-first opts)
-      (btu/context-assoc! :create-form-field/fields (into [{kw id}] fields))
-      (btu/context-assoc! :create-form-field/fields (conj fields {kw id})))))
 
-(defn field-selector
-  "Utility function that returns keyword of form `:fields-0-attr`.
-   When given only keyword `attr`, uses current last index of context
-   form fields. Otherwise `idx` is used to create selector.
+;; NB: admin components use 0-base index (for both data and id)
+(defn field-component [attr] {:id (format "fields-%s-%s" (btu/context-getx :field-index) (name attr))})
+(defn preview-component [attr] {:id (format "form-1-field-%s-%s" (btu/context-getx :field-id) (name attr))})
 
-   Useful for automatically creating contextually correct fields selector
-   in form tests, where a lot of fields need to be filled."
-  ([attr]
-   (let [fields (btu/context-getx :create-form-field/fields)
-         idx (dec (count fields))]
-     (keyword (str "fields-" idx "-" (name attr)))))
-  ([idx attr]
-   (keyword (str "fields-" idx "-" (name attr)))))
+(defn field-editor [& [{:keys [id index]}]]
+  {:css (str ".form-field"
+             (format "[data-field-id='%s']" (name (or id (btu/context-getx :field-id))))
+             (format "[data-field-index='%s']" (or index (btu/context-getx :field-index))))})
 
-(defn field-container-selector [id] {:id (str "container-form-1-field-" id)})
-(defn field-collapse-selector [id] {:id (str "form-1-field-" id "-collapse")})
-(defn field-upload-collapse-selector [id] {:id (str "upload-form-1-field-" id "-info-collapse")})
-(defn form-field-selector [id] {:id (str "form-1-field-" id)})
+(defn field-preview [& [{:keys [id index]}]]
+  {:css (str ".field-preview"
+             (format "[data-field-id='%s']" (name (or id (btu/context-getx :field-id))))
+             (format "[data-field-index='%s']" (or index (btu/context-getx :field-index))))})
 
-(defn field-id
-  "Utility function that finds created form field with given `kw`
-  and returns the associated id."
-  [kw]
-  (some->> (or (btu/context-getx :create-form-field/fields) [])
-           (map #(get % kw))
-           (find-first some?)))
+(defn check-data-attribute! [elem k v]
+  (is (= (str v) (btu/get-element-attr-el elem (str "data-" (name k)))))
+  v)
+
+(defn add-form-field! [{:keys [expected-field-id expected-field-index]}]
+  (btu/scroll-and-click-el (nth (btu/query-all {:class :add-form-field}) expected-field-index))
+  (btu/wait-visible {:css ".form-field"})
+  (let [new-field (nth (btu/query-all {:css ".form-field"}) expected-field-index)]
+    (btu/context-assoc! :field-id (check-data-attribute! new-field :field-id expected-field-id)
+                        :field-index (check-data-attribute! new-field :field-index expected-field-index))))
+
+(defn fill-localized-title! [fmt]
+  (btu/fill-human (field-component :title-en) (format fmt "EN"))
+  (btu/fill-human (field-component :title-fi) (format fmt "FI"))
+  (btu/fill-human (field-component :title-sv) (format fmt "SV")))
+
+(defn fill-localized-placeholder! [fmt]
+  (btu/fill-human (field-component :placeholder-en) (format fmt "EN"))
+  (btu/fill-human (field-component :placeholder-fi) (format fmt "FI"))
+  (btu/fill-human (field-component :placeholder-sv) (format fmt "SV")))
+
+(defn fill-localized-description! [fmt]
+  (btu/fill-human (field-component :info-text-en) (format fmt "EN"))
+  (btu/fill-human (field-component :info-text-fi) (format fmt "FI"))
+  (btu/fill-human (field-component :info-text-sv) (format fmt "SV"))
+  ;; check preview as well
+  (btu/scroll-and-click [{:css (aria-controls (:id (preview-component :collapsible)))}])
+  (is (btu/eventually-visible? (preview-component :collapsible)))
+  (is (= (btu/value-of (preview-component :collapsible))
+         (format fmt "EN"))))
 
 (deftest test-form-editor
-  (btu/context-assoc! :create-form-field/fields nil)
+  (btu/context-dissoc! :field-id :field-index) ; empty form
 
   (btu/with-postmortem
     (login-as "owner")
     (go-to-admin "Forms")
 
     (testing "create form"
-      (btu/scroll-and-click :create-form)
+      (btu/scroll-and-click {:fn/text "Create form"})
       (wait-page-title "Create form – REMS")
       (select-option "Organization" "nbn")
       (fill-form-field "Name" "Form editor test")
@@ -2189,339 +2202,185 @@
       (fill-form-field "SV" "Form Editor Test (SV)")
 
       (testing "add and remove a field"
-        (btu/scroll-and-click-el (last (btu/query-all {:class :add-form-field})))
-        (btu/scroll-and-click {:css "#field-editor-fld1 .form-field-controls .remove"})
+        (add-form-field! {:expected-field-id "fld1" :expected-field-index 0})
+        (btu/scroll-and-click [(field-editor) {:css ".form-field-controls .remove"}])
         (btu/wait-has-alert)
         (btu/accept-alert)
-        (btu/wait-invisible :field-editor-fld1))
+        (btu/wait-invisible (field-editor))
+        (btu/context-dissoc! :field-id :field-index))
 
       (testing "create all field types"
+
         (testing "create text field"
-          (create-context-field! :create-form-field/text)
-
-          (btu/scroll-and-click {:class :add-form-field})
-          (is (btu/eventually-visible? (field-selector :title-en)))
-          (btu/fill-human (field-selector :title-en) "Text field (EN)")
-          (btu/fill-human (field-selector :title-fi) "Text field (FI)")
-          (btu/fill-human (field-selector :title-sv) "Text field (SV)")
-
-          (btu/scroll-and-click (field-selector :placeholder-more-link))
-          (is (btu/eventually-visible? (field-selector :placeholder-en)))
-          (btu/fill-human (field-selector :placeholder-en) "Placeholder (EN)")
-          (btu/fill-human (field-selector :placeholder-fi) "Placeholder (FI)")
-          (btu/fill-human (field-selector :placeholder-sv) "Placeholder (SV)")
-
-          (btu/scroll-and-click (field-selector :info-text-more-link))
-          (is (btu/eventually-visible? (field-selector :info-text-en)))
-          (btu/fill-human (field-selector :info-text-en) "")
-          (btu/fill-human (field-selector :info-text-fi) " ")
-          (btu/fill-human (field-selector :info-text-sv) "")
-
-          (btu/scroll-and-click (field-selector :type-text))
-          (btu/scroll-and-click (field-selector :optional))
-          (btu/scroll-and-click (field-selector :additional-more-link))
-          (btu/fill-human (field-selector :max-length) "127"))
+          (add-form-field! {:expected-field-id "fld1" :expected-field-index 0})
+          (testing "fill localized title"
+            (fill-localized-title! "Text field (%s)"))
+          (testing "fill localized placeholder"
+            (open-external-collapsible (:id (field-component :placeholder)))
+            (fill-localized-placeholder! "Text field placeholder (%s)"))
+          (testing "fill localized description"
+            (open-external-collapsible (:id (field-component :info-text)))
+            (fill-localized-description! "Text field description (%s)"))
+          (testing "set optional"
+            (btu/scroll-and-click (field-component :optional)))
+          (testing "set maximum length"
+            (open-external-collapsible (:id (field-component :additional-settings)))
+            (btu/fill-human (field-component :max-length) "127")))
 
         (testing "create text area"
-          (create-context-field! :create-form-field/text-area)
-
-          (btu/scroll-and-click-el (last (btu/query-all {:class :add-form-field})))
-          (is (btu/eventually-visible? (field-selector :title-en)))
-          (btu/fill-human (field-selector :title-en) "Text area (EN)")
-          (btu/fill-human (field-selector :title-fi) "Text area (FI)")
-          (btu/fill-human (field-selector :title-sv) "Text area (SV)")
-
-          (btu/scroll-and-click (field-selector :placeholder-more-link))
-          (is (btu/eventually-visible? (field-selector :placeholder-en)))
-          (btu/fill-human (field-selector :placeholder-en) "Placeholder (EN)")
-          (btu/fill-human (field-selector :placeholder-fi) "Placeholder (FI)")
-          (btu/fill-human (field-selector :placeholder-sv) "Placeholder (SV)")
-
-          (btu/scroll-and-click (field-selector :info-text-more-link))
-          (is (btu/eventually-visible? (field-selector :info-text-en)))
-          (btu/fill-human (field-selector :info-text-en) "")
-          (btu/fill-human (field-selector :info-text-fi) " ")
-          (btu/fill-human (field-selector :info-text-sv) "")
-
-          (btu/scroll-and-click (field-selector :type-texta))
-          (btu/scroll-and-click (field-selector :optional))
-          (btu/scroll-and-click (field-selector :additional-more-link))
-          (btu/fill-human (field-selector :max-length) "127"))
+          (add-form-field! {:expected-field-id "fld2" :expected-field-index 1})
+          (btu/scroll-and-click (field-component :type-texta))
+          (testing "fill localized title"
+            (fill-localized-title! "Text area (%s)"))
+          (testing "fill localized placeholder"
+            (open-external-collapsible (:id (field-component :placeholder)))
+            (fill-localized-placeholder! "Text area placeholder (%s)"))
+          (testing "fill localized description"
+            (open-external-collapsible (:id (field-component :info-text)))
+            (fill-localized-description! "Text area description (%s)"))
+          (testing "set optional"
+            (btu/scroll-and-click (field-component :optional)))
+          (testing "set maximum length"
+            (open-external-collapsible (:id (field-component :additional-settings)))
+            (btu/fill-human (field-component :max-length) "127")))
 
         (testing "create option field"
-          (create-context-field! :create-form-field/option)
+          (add-form-field! {:expected-field-id "fld3" :expected-field-index 2})
+          (btu/scroll-and-click (field-component :type-option))
+          (testing "fill localized title"
+            (fill-localized-title! "Option list (%s)"))
+          (testing "fill localized description"
+            (open-external-collapsible (:id (field-component :info-text)))
+            (fill-localized-description! "Option description (%s)"))
+          (testing "create two options"
+            (btu/scroll-and-click (field-component :add-option))
+            (is (btu/eventually-visible? (field-component :options-0-key)))
+            (btu/fill-human (field-component :options-0-key) "true")
+            (btu/fill-human (field-component :options-0-label-en) "Yes")
+            (btu/fill-human (field-component :options-0-label-fi) "Kyllä")
+            (btu/fill-human (field-component :options-0-label-sv) "Ja")
 
-          (btu/scroll-and-click-el (last (btu/query-all {:class :add-form-field})))
-          (is (btu/eventually-visible? (field-selector :title-en)))
-          (btu/fill-human (field-selector :title-en) "Option list (EN)")
-          (btu/fill-human (field-selector :title-fi) "Option list (FI)")
-          (btu/fill-human (field-selector :title-sv) "Option list (SV)")
-
-          (btu/scroll-and-click (field-selector :info-text-more-link))
-          (is (btu/eventually-visible? (field-selector :info-text-en)))
-          (btu/fill-human (field-selector :info-text-en) "Info text (EN)")
-          (btu/fill-human (field-selector :info-text-fi) "Info text (FI)")
-          (btu/fill-human (field-selector :info-text-sv) "Info text (SV)")
-
-          (btu/scroll-and-click (field-selector :type-option))
-          (btu/scroll-and-click {:class :add-option})
-          (is (btu/eventually-visible? (field-selector :options-0-key)))
-          (btu/fill-human (field-selector :options-0-key) "true")
-          (btu/fill-human (field-selector :options-0-label-en) "Yes")
-          (btu/fill-human (field-selector :options-0-label-fi) "Kyllä")
-          (btu/fill-human (field-selector :options-0-label-sv) "Ja")
-
-          (btu/scroll-and-click {:class :add-option})
-          (is (btu/eventually-visible? (field-selector :options-1-key)))
-          (btu/fill-human (field-selector :options-1-key) "false")
-          (btu/fill-human (field-selector :options-1-label-en) "No")
-          (btu/fill-human (field-selector :options-1-label-fi) "Ei")
-          (btu/fill-human (field-selector :options-1-label-sv) "Nej"))
+            (btu/scroll-and-click (field-component :add-option))
+            (is (btu/eventually-visible? (field-component :options-1-key)))
+            (btu/fill-human (field-component :options-1-key) "false")
+            (btu/fill-human (field-component :options-1-label-en) "No")
+            (btu/fill-human (field-component :options-1-label-fi) "Ei")
+            (btu/fill-human (field-component :options-1-label-sv) "Nej")))
 
         (testing "create multi-select field"
-          (create-context-field! :create-form-field/multi-select)
-
-          (btu/scroll-and-click-el (last (btu/query-all {:class :add-form-field})))
-          (btu/scroll-and-click (field-selector :type-multiselect))
-          (is (btu/eventually-visible? (field-selector :add-option)))
-          (btu/fill-human (field-selector :title-en) "Multi-select list (EN)")
-          (btu/fill-human (field-selector :title-fi) "Multi-select list (FI)")
-          (btu/fill-human (field-selector :title-sv) "Multi-select list (SV)")
-
-          (btu/scroll-and-click (field-selector :add-option))
-          (is (btu/eventually-visible? (field-selector :options-0-key)))
-          (btu/fill-human (field-selector :options-0-key) "multi-select-option-0")
-          (btu/fill-human (field-selector :options-0-label-en) "Multi-select option 0 (EN)")
-          (btu/fill-human (field-selector :options-0-label-fi) "Multi-select option 0 (FI)")
-          (btu/fill-human (field-selector :options-0-label-sv) "Multi-select option 0 (SV)")
-
-          (btu/scroll-and-click (field-selector :add-option))
-          (is (btu/eventually-visible? (field-selector :options-1-key)))
-          (btu/fill-human (field-selector :options-1-key) "multi-select-option-1")
-          (btu/fill-human (field-selector :options-1-label-en) "Multi-select option 1 (EN)")
-          (btu/fill-human (field-selector :options-1-label-fi) "Multi-select option 1 (FI)")
-          (btu/fill-human (field-selector :options-1-label-sv) "Multi-select option 1 (SV)")
-
-          (btu/scroll-and-click (field-selector :add-option))
-          (is (btu/eventually-visible? (field-selector :options-2-key)))
-          (btu/fill-human (field-selector :options-2-key) "multi-select-option-2")
-          (btu/fill-human (field-selector :options-2-label-en) "Multi-select option 2 (EN)")
-          (btu/fill-human (field-selector :options-2-label-fi) "Multi-select option 2 (FI)")
-          (btu/fill-human (field-selector :options-2-label-sv) "Multi-select option 2 (SV)")
-
-          (testing "change multi-select option order"
-            (let [id (field-id :create-form-field/multi-select)]
-              (is (= (map btu/value-of-el (btu/query-all [(field-container-selector id)
-                                                          {:class "form-check"}]))
-                     ["multi-select-option-0"
-                      "multi-select-option-1"
-                      "multi-select-option-2"]))
-              (btu/scroll-and-click {:class (str "move-up " (name (field-selector :option-1)))})
-              (is (= (map btu/value-of-el (btu/query-all [(field-container-selector id)
-                                                          {:class "form-check"}]))
-                     ["multi-select-option-1"
-                      "multi-select-option-0"
-                      "multi-select-option-2"])))))
+          (add-form-field! {:expected-field-id "fld4" :expected-field-index 3})
+          (btu/scroll-and-click (field-component :type-multiselect))
+          (testing "fill localized title"
+            (fill-localized-title! "Multi-select list (%s)"))
+          (testing "create three options"
+            (doseq [i (range 3)
+                    :let [option-id (keyword (format "options-%s-key" i))
+                          label-id (comp keyword (partial format "options-%s-label-%s" i) name)]]
+              (btu/scroll-and-click (field-component :add-option))
+              (is (btu/eventually-visible? (field-component option-id)))
+              (btu/fill-human (field-component option-id) (format "multi-select-option-%s" i))
+              (btu/fill-human (field-component (label-id :en)) (format "Multi-select option %s (EN)" i))
+              (btu/fill-human (field-component (label-id :fi)) (format "Multi-select option %s (FI)" i))
+              (btu/fill-human (field-component (label-id :sv)) (format "Multi-select option %s (SV)" i))))
+          (testing "preview is updated when multi-select option order changes"
+            (is (= (map btu/value-of-el (btu/query-all [(field-preview) {:class :form-check}]))
+                   ["multi-select-option-0"
+                    "multi-select-option-1"
+                    "multi-select-option-2"]))
+            (btu/scroll-and-click [(field-editor) {:css (str ".form-field-option .move-up[data-index='1']")}])
+            (is (= (map btu/value-of-el (btu/query-all [(field-preview) {:class :form-check}]))
+                   ["multi-select-option-1"
+                    "multi-select-option-0"
+                    "multi-select-option-2"]))))
 
         (testing "create table field"
-          (create-context-field! :create-form-field/table)
-
-          (btu/scroll-and-click-el (last (btu/query-all {:class :add-form-field})))
-          (btu/scroll-and-click (field-selector :type-table))
-          (is (btu/eventually-visible? (field-selector :add-column)))
-          (btu/fill-human (field-selector :title-en) "Table (EN)")
-          (btu/fill-human (field-selector :title-fi) "Table (FI)")
-          (btu/fill-human (field-selector :title-sv) "Table (SV)")
-
-          (btu/scroll-and-click (field-selector :add-column))
-          (btu/fill-human (field-selector :columns-0-key) "table-column-0")
-          (btu/fill-human (field-selector :columns-0-label-en) "Table column 0 (EN)")
-          (btu/fill-human (field-selector :columns-0-label-fi) "Table column 0 (FI)")
-          (btu/fill-human (field-selector :columns-0-label-sv) "Table column 0 (SV)")
-
-          (btu/scroll-and-click (field-selector :add-column))
-          (btu/fill-human (field-selector :columns-1-key) "table-column-1")
-          (btu/fill-human (field-selector :columns-1-label-en) "Table column 1 (EN)")
-          (btu/fill-human (field-selector :columns-1-label-fi) "Table column 1 (FI)")
-          (btu/fill-human (field-selector :columns-1-label-sv) "Table column 1 (SV)")
-
-          (btu/scroll-and-click (field-selector :add-column))
-          (btu/fill-human (field-selector :columns-2-key) "table-column-2")
-          (btu/fill-human (field-selector :columns-2-label-en) "Table column 2 (EN)")
-          (btu/fill-human (field-selector :columns-2-label-fi) "Table column 2 (FI)")
-          (btu/fill-human (field-selector :columns-2-label-sv) "Table column 2 (SV)")
-
-          (let [id (field-id :create-form-field/table)]
-            (is (= (->> (btu/query-all [(field-container-selector id)
-                                        {:tag :th}])
-                        (map btu/value-of-el)
-                        (remove str/blank?))
-                   ["Table column 0 (EN)"
-                    "Table column 1 (EN)"
-                    "Table column 2 (EN)"
-                    "Actions"]))))
+          (add-form-field! {:expected-field-id "fld5" :expected-field-index 4})
+          (btu/scroll-and-click (field-component :type-table))
+          (testing "fill localized title"
+            (fill-localized-title! "Table (%s)"))
+          (testing "create three columns and fill localized fields"
+            (doseq [i (range 3)
+                    :let [column-id (keyword (format "columns-%s-key" i))
+                          label-id (comp keyword (partial format "columns-%s-label-%s" i) name)]]
+              (btu/scroll-and-click (field-component :add-column))
+              (btu/fill-human (field-component column-id) (format "table-column-%s" i))
+              (btu/fill-human (field-component (label-id :en)) (format "Table column %s (EN)" i))
+              (btu/fill-human (field-component (label-id :fi)) (format "Table column %s (FI)" i))
+              (btu/fill-human (field-component (label-id :sv)) (format "Table column %s (SV)" i)))
+            (testing "preview shows correct table headers"
+              (is (= (->> (btu/query-all [(field-preview) {:tag :table} {:tag :th}])
+                          (map btu/value-of-el)
+                          (remove str/blank?))
+                     ["Table column 0 (EN)"
+                      "Table column 1 (EN)"
+                      "Table column 2 (EN)"
+                      "Actions"])))))
 
         (testing "create date field"
-          (create-context-field! :create-form-field/date)
-
-          (let [id (field-id :create-form-field/date)]
-            (btu/scroll-and-click-el (last (btu/query-all {:class :add-form-field})))
-            (btu/scroll-and-click (field-selector :type-date))
-            (is (btu/eventually-visible? (form-field-selector id)))
-            (btu/fill-human (field-selector :title-en) "Date field (EN)")
-            (btu/fill-human (field-selector :title-fi) "Date field (FI)")
-            (btu/fill-human (field-selector :title-sv) "Date field (SV)")
-
-            (btu/scroll-and-click (field-selector :info-text-more-link))
-            (is (btu/eventually-visible? (field-selector :info-text-en)))
-            (btu/fill-human (field-selector :info-text-en) "Info text (EN)")
-            (btu/fill-human (field-selector :info-text-fi) "Info text (FI)")
-            (btu/fill-human (field-selector :info-text-sv) "Info text (SV)")
-            (is (btu/eventually-visible? [(field-container-selector id)
-                                          {:tag :button :fn/has-class :info-button}]))
-
-            (btu/scroll-and-click [(field-container-selector id)
-                                   {:tag :button :fn/has-class :info-button}])
-            (is (btu/eventually-visible? (field-collapse-selector id)))
-            (is (= (btu/value-of (field-collapse-selector id))
-                   "Info text (EN)"))))
+          (add-form-field! {:expected-field-id "fld6" :expected-field-index 5})
+          (btu/scroll-and-click (field-component :type-date))
+          (testing "fill localized title"
+            (fill-localized-title! "Date (%s)"))
+          (testing "fill localized description"
+            (open-external-collapsible (:id (field-component :info-text)))
+            (fill-localized-description! "Date description (%s)")))
 
         (testing "create email address field"
-          (create-context-field! :create-form-field/email)
-
-          (let [id (field-id :create-form-field/email)]
-            (btu/scroll-and-click-el (last (btu/query-all {:class :add-form-field})))
-            (btu/scroll-and-click (field-selector :type-email))
-            (is (btu/eventually-visible? (form-field-selector id)))
-
-            (btu/fill-human (field-selector :title-en) "Email field (EN)")
-            (btu/fill-human (field-selector :title-fi) "Email field (FI)")
-            (btu/fill-human (field-selector :title-sv) "Email field (SV)")
-
-            (btu/scroll-and-click (field-selector :info-text-more-link))
-            (is (btu/eventually-visible? (field-selector :info-text-en)))
-            (btu/fill-human (field-selector :info-text-en) "Info text (EN)")
-            (btu/fill-human (field-selector :info-text-fi) "Info text (FI)")
-            (btu/fill-human (field-selector :info-text-sv) "Info text (SV)")
-            (is (btu/eventually-visible? [(field-container-selector id)
-                                          {:tag :button :fn/has-class "info-button"}]))
-
-            (btu/scroll-and-click [(field-container-selector id)
-                                   {:tag :button :fn/has-class "info-button"}])
-            (is (btu/eventually-visible? (field-collapse-selector id)))
-            (is (= (btu/value-of (field-collapse-selector id))
-                   "Info text (EN)"))))
+          (add-form-field! {:expected-field-id "fld7" :expected-field-index 6})
+          (btu/scroll-and-click (field-component :type-email))
+          (testing "fill localized title"
+            (fill-localized-title! "Email (%s)"))
+          (testing "fill localized description"
+            (open-external-collapsible (:id (field-component :info-text)))
+            (fill-localized-description! "Email description (%s)")))
 
         (testing "create phone number field"
-          (create-context-field! :create-form-field/phone-number)
-
-          (let [id (field-id :create-form-field/phone-number)]
-            (btu/scroll-and-click-el (last (btu/query-all {:class :add-form-field})))
-            (btu/scroll-and-click (field-selector :type-phone-number))
-            (is (btu/eventually-visible? (form-field-selector id)))
-
-            (btu/fill-human (field-selector :title-en) "Phone number field (EN)")
-            (btu/fill-human (field-selector :title-fi) "Phone number field (FI)")
-            (btu/fill-human (field-selector :title-sv) "Phone number field (SV)")
-
-            (btu/scroll-and-click (field-selector :info-text-more-link))
-            (is (btu/eventually-visible? (field-selector :info-text-en)))
-            (btu/fill-human (field-selector :info-text-en) "Info text (EN)")
-            (btu/fill-human (field-selector :info-text-fi) "Info text (FI)")
-            (btu/fill-human (field-selector :info-text-sv) "Info text (SV)")
-            (is (btu/eventually-visible? [(field-container-selector id)
-                                          {:tag :button :fn/has-class "info-button"}]))
-
-            (btu/scroll-and-click [(field-container-selector id)
-                                   {:tag :button :fn/has-class "info-button"}])
-            (is (btu/eventually-visible? (field-collapse-selector id)))
-            (is (= (btu/value-of (field-collapse-selector id))
-                   "Info text (EN)"))))
+          (add-form-field! {:expected-field-id "fld8" :expected-field-index 7})
+          (btu/scroll-and-click (field-component :type-phone-number))
+          (testing "fill localized title"
+            (fill-localized-title! "Phone number (%s)"))
+          (testing "fill localized description"
+            (open-external-collapsible (:id (field-component :info-text)))
+            (fill-localized-description! "Phone number description (%s)")))
 
         (testing "create ip address field"
-          (create-context-field! :create-form-field/ip-address)
-
-          (let [id (field-id :create-form-field/ip-address)]
-            (btu/scroll-and-click-el (last (btu/query-all {:class :add-form-field})))
-            (btu/scroll-and-click (field-selector :type-ip-address))
-            (is (btu/eventually-visible? (form-field-selector id)))
-            (btu/fill-human (field-selector :title-en) "IP address field (EN)")
-            (btu/fill-human (field-selector :title-fi) "IP address field (FI)")
-            (btu/fill-human (field-selector :title-sv) "IP address field (SV)")
-
-            (btu/scroll-and-click (field-selector :info-text-more-link))
-            (is (btu/eventually-visible? (field-selector :info-text-en)))
-            (btu/fill-human (field-selector :info-text-en) "Info text (EN)")
-            (btu/fill-human (field-selector :info-text-fi) "Info text (FI)")
-            (btu/fill-human (field-selector :info-text-sv) "Info text (SV)")
-            (is (btu/eventually-visible? [(field-container-selector id)
-                                          {:tag :button :fn/has-class :info-button}]))
-
-            (btu/scroll-and-click [(field-container-selector id)
-                                   {:tag :button :fn/has-class "info-button"}])
-            (is (btu/eventually-visible? (field-collapse-selector id)))
-            (is (= (btu/value-of (field-collapse-selector id))
-                   "Info text (EN)"))))
+          (add-form-field! {:expected-field-id "fld9" :expected-field-index 8})
+          (btu/scroll-and-click (field-component :type-ip-address))
+          (testing "fill localized title"
+            (fill-localized-title! "IP address (%s)"))
+          (testing "fill localized description"
+            (open-external-collapsible (:id (field-component :info-text)))
+            (fill-localized-description! "IP address description (%s)")))
 
         (testing "create attachment field"
-          (create-context-field! :create-form-field/attachment)
-
-          (let [id (field-id :create-form-field/attachment)]
-            (btu/scroll-and-click-el (last (btu/query-all {:class :add-form-field})))
-            (btu/scroll-and-click (field-selector :type-attachment))
-            (is (btu/eventually-invisible? {:id (str "upload-form-1-field-" id "-input")}))
-            (is (btu/eventually-visible? {:id (str "upload-form-1-field-" id)}))
-            (is (btu/eventually-visible? [(field-container-selector id)
-                                          {:fn/has-class :upload-file}
-                                          {:tag :button :fn/has-class :info-button}]))
-            (btu/scroll-and-click [(field-container-selector id)
-                                   {:fn/has-class :upload-file}
-                                   {:tag :button :fn/has-class :info-button}])
-            (is (btu/eventually-visible? (field-upload-collapse-selector id)))
-
-            (btu/fill-human (field-selector :title-en) "Attachment field (EN)")
-            (btu/fill-human (field-selector :title-fi) "Attachment field (FI)")
-            (btu/fill-human (field-selector :title-sv) "Attachment field (SV)")
-
-            (btu/scroll-and-click (field-selector :info-text-more-link))
-            (is (btu/eventually-visible? (field-selector :info-text-en)))
-            (btu/fill-human (field-selector :info-text-en) "Info text (EN)")
-            (btu/fill-human (field-selector :info-text-fi) "Info text (FI)")
-            (btu/fill-human (field-selector :info-text-sv) "Info text (SV)")
-            (is (btu/eventually-visible? [(field-container-selector id)
-                                          {:fn/has-class :application-field-label}
-                                          {:tag :button :fn/has-class :info-button}]))
-
-            (btu/scroll-and-click [(field-container-selector id)
-                                   {:tag :button :fn/has-class :info-button}])
-            (is (btu/eventually-visible? (field-collapse-selector id)))
-            (is (= (btu/value-of (field-collapse-selector id))
-                   "Info text (EN)"))))
+          (add-form-field! {:expected-field-id "fld10" :expected-field-index 9})
+          (btu/scroll-and-click (field-component :type-attachment))
+          (testing "fill localized title"
+            (fill-localized-title! "Attachment (%s)"))
+          (testing "fill localized description"
+            (open-external-collapsible (:id (field-component :info-text)))
+            (fill-localized-description! "Attachment description (%s)"))
+          (testing "attachment has extra info in preview"
+            (btu/context-assoc! ::attachment-collapsible (str "upload-" (:id (preview-component :info-collapsible))))
+            (is (not (btu/visible? {:id (btu/context-getx ::attachment-collapsible)})))
+            (btu/scroll-and-click {:css (aria-controls (btu/context-getx ::attachment-collapsible))})
+            (is (btu/eventually-visible? {:id (btu/context-getx ::attachment-collapsible)}))))
 
         (testing "create label field"
-          (create-context-field! :create-form-field/label)
-
-          (let [id (field-id :create-form-field/label)]
-            (btu/scroll-and-click-el (last (btu/query-all {:class :add-form-field})))
-            (btu/scroll-and-click (field-selector :type-label))
-            (btu/fill-human (field-selector :title-en) "Label (EN)")
-            (btu/fill-human (field-selector :title-fi) "Label (FI)")
-            (btu/fill-human (field-selector :title-sv) "Label (SV)")
-            (is (btu/eventually-visible? [(field-container-selector id)
-                                          {:tag :label :fn/text "Label (EN)"}]))))
+          (add-form-field! {:expected-field-id "fld11" :expected-field-index 10})
+          (btu/scroll-and-click (field-component :type-label))
+          (testing "fill localized title"
+            (fill-localized-title! "Label (%s)")
+            (is (btu/eventually-visible? [(field-preview) {:tag :label :fn/text "Label (EN)"}]))))
 
         (testing "create header field"
-          (create-context-field! :create-form-field/header)
+          (add-form-field! {:expected-field-id "fld12" :expected-field-index 11})
+          (btu/scroll-and-click (field-component :type-header))
+          (testing "fill localized title"
+            (fill-localized-title! "Header (%s)")
+            (is (btu/eventually-visible? [(field-preview) {:tag :h3 :fn/text "Header (EN)"}])))))
 
-          (let [id (field-id :create-form-field/header)]
-            (btu/scroll-and-click-el (last (btu/query-all {:class :add-form-field})))
-            (btu/scroll-and-click (field-selector :type-header))
-            (btu/fill-human (field-selector :title-en) "Header (EN)")
-            (btu/fill-human (field-selector :title-fi) "Header (FI)")
-            (btu/fill-human (field-selector :title-sv) "Header (SV)")
-            (is (btu/eventually-visible? [(field-container-selector id)
-                                          {:tag :h3 :fn/text "Header (EN)"}])))))
-      (btu/scroll-and-click :save))
+      (btu/scroll-and-click {:fn/text "Save"}))
 
     (testing "view form"
       (wait-page-title "Form – REMS")
@@ -2535,88 +2394,88 @@
              (slurp-fields :form)))
       (testing "preview"
         (is (btu/eventually-visible? :preview-form-contents))
-        (is (= (->> (btu/query-all [:preview-form-contents
-                                    {:class :field-preview}])
-                    (filter btu/visible-el?)
-                    (map btu/get-element-text-el)
-                    (map (comp first str/split-lines))) ;; first element is the label/header
-               ["Text field (EN) (max 127 characters) (optional)"
+        (is (= ["Text field (EN) (max 127 characters) (optional)"
                 "Text area (EN) (max 127 characters) (optional)"
                 "Option list (EN)"
                 "Multi-select list (EN)"
                 "Table (EN)"
-                "Date field (EN)"
-                "Email field (EN)"
-                "Phone number field (EN)"
-                "IP address field (EN)"
-                "Attachment field (EN)"
+                "Date (EN)"
+                "Email (EN)"
+                "Phone number (EN)"
+                "IP address (EN)"
+                "Attachment (EN)"
                 "Label (EN)"
-                "Header (EN)"])))
+                "Header (EN)"]
+               (->> (btu/query-all [:preview-form-contents {:class :field-preview}])
+                    (filter btu/visible-el?)
+                    (map btu/get-element-text-el)
+                    (map (comp first str/split-lines))))))
 
       (testing "info collapse can be toggled"
-        (is (not (btu/visible? {:tag :div :fn/has-class :info-collapse})))
-        (is (not (btu/visible? {:tag :div :fn/has-text "Info text (EN)"})))
-        (btu/click-el (first (btu/query-all {:tag :button :fn/has-class :info-button})))
-        (is (btu/eventually-visible? {:tag :div :fn/has-class :info-collapse}))
-        (is (btu/visible? {:tag :div :fn/has-text "Info text (EN)"}))
-        (btu/wait-for-idle 500) ; XXX: figure out what to wait for
-        (btu/click-el (first (btu/query-all {:tag :button :fn/has-class :info-button})))
-        (btu/wait-invisible {:tag :div :fn/has-text "Info text (EN)"})
-        (btu/wait-predicate #(not (btu/visible? {:tag :div :fn/has-text "Info text (EN)"})) {:timeout 30})
-        (change-language :fi)
-        (is (btu/eventually-visible? {:tag :label :class :application-field-label :fn/has-text "Text area (FI)"}))
-        (is (btu/visible? {:tag :label :class :application-field-label :fn/has-text "Text area (FI)"}))
-        (btu/click-el (first (btu/query-all {:tag :button :fn/has-class :info-button})))
-        (is (btu/eventually-visible? {:tag :div :fn/has-class :info-collapse}))
-        (is (btu/visible? {:tag :div :fn/has-text "Info text (FI)"}))))
+        (btu/context-assoc! ::info-collapsible (btu/get-element-attr {:css ".info-collapsible-toggle[aria-controls]"} "aria-controls"))
+        (btu/context-assoc! ::info-collapsible-toggle (str ".info-collapsible-toggle" (aria-controls (btu/context-getx ::info-collapsible))))
+        (testing "open collapse"
+          (is (not (btu/visible? {:id (btu/context-getx ::info-collapsible)})))
+          (is (not (btu/visible? {:tag :div :fn/has-text "Text field description (EN)"})))
+          (btu/scroll-and-click {:css (btu/context-getx ::info-collapsible-toggle)})
+          (is (btu/eventually-visible? {:id (btu/context-getx ::info-collapsible)}))
+          (is (btu/visible? {:tag :div :fn/has-text "Text field description (EN)"})))
+        (testing "close collapse"
+          (btu/scroll-and-click {:css (btu/context-getx ::info-collapsible-toggle)})
+          (btu/wait-invisible {:tag :div :fn/has-text "Text field description (EN)"})
+          (btu/wait-predicate #(not (btu/visible? {:tag :div :fn/has-text "Text field description (EN)"})) {:timeout 30}))
+        (testing "change language and re-open collapse"
+          (change-language :fi)
+          (is (not (btu/visible? {:id (btu/context-getx ::info-collapsible)})))
+          (is (not (btu/visible? {:tag :div :fn/has-text "Text field description (FI)"})))
+          (btu/scroll-and-click {:css (btu/context-getx ::info-collapsible-toggle)})
+          (is (btu/eventually-visible? {:id (btu/context-getx ::info-collapsible)}))
+          (is (btu/visible? {:tag :div :fn/has-text "Text field description (FI)"})))))
 
     (testing "edit form"
       (change-language :en)
       (wait-page-title "Form – REMS")
-      (btu/scroll-and-click {:css ".edit-form"})
+      (btu/scroll-and-click {:fn/text "Edit"})
       (wait-page-title "Edit form – REMS")
 
       (testing "add description field"
-        (create-context-field! :create-form-field/description {:insert-first true})
+        (add-form-field! {:expected-field-id "fld13" :expected-field-index 0})
+        (btu/scroll-and-click (field-component :type-description))
+        (testing "fill localized title"
+          (fill-localized-title! "Description (%s)"))
+        (testing "save"
+          (btu/scroll-and-click {:fn/text "Save"})
+          (btu/wait-page-loaded)
+          (wait-page-title "Form – REMS")))
 
-        (btu/scroll-and-click {:class :add-form-field})
-        (btu/scroll-and-click (field-selector 0 :type-description))
-        (btu/fill-human (field-selector 0 :title-en) "Description (EN)")
-        (btu/fill-human (field-selector 0 :title-fi) "Description (FI)")
-        (btu/fill-human (field-selector 0 :title-sv) "Description (SV)")
-
-        (btu/scroll-and-click :save)
+      (testing "edit description field"
+        (btu/scroll-and-click {:fn/text "Edit"})
         (btu/wait-page-loaded)
-        (wait-page-title "Form – REMS")
+        (wait-page-title "Edit form – REMS")
+
+        (open-external-collapsible (str "field-collapsible-" (btu/context-getx :field-id)))
+        (btu/scroll-and-click (field-component :type-description))
+        (open-external-collapsible (:id (field-component :info-text)))
+        (btu/fill-human (field-component :info-text-en) "Description (EN)")
+        (btu/fill-human (field-component :info-text-fi) "Description (FI)")
+        (btu/fill-human (field-component :info-text-sv) " ")
+
+        (btu/scroll-and-click {:fn/text "Save"})
 
         (testing "check that error message is present on field empty"
-          (btu/scroll-and-click {:css ".edit-form"})
           (btu/wait-page-loaded)
           (wait-page-title "Edit form – REMS")
-
-          (let [id (field-id :create-form-field/description)]
-            (btu/scroll-and-click {:id (str "field-editor-" id "-collapse-more-link")}))
-
-          (btu/scroll-and-click (field-selector 0 :type-description))
-          (btu/scroll-and-click (field-selector 0 :info-text-more-link))
-          (is (btu/eventually-visible? (field-selector 0 :info-text-en)))
-          (btu/fill-human (field-selector 0 :info-text-en) "Info text (EN)")
-          (btu/fill-human (field-selector 0 :info-text-fi) "Info text (FI)")
-          (btu/fill-human (field-selector 0 :info-text-sv) " ")
-
-          (btu/scroll-and-click :save)
-
-          (btu/wait-page-loaded)
-          (wait-page-title "Edit form – REMS")
-          (is (btu/visible? {:id (field-selector 0 :info-text-sv) :fn/has-class :is-invalid}))
+          (is (btu/visible? (merge (field-component :info-text-sv) {:fn/has-class :is-invalid})))
           ;; :fn/has-text has trouble working for the whole "Field \"Field description (optional)\" is required." string
           (is (btu/visible? {:fn/has-class :invalid-feedback :fn/has-text "Field description (optional)"}))
           (is (btu/visible? {:fn/has-class :invalid-feedback :fn/has-text "is required"}))
           (is (btu/visible? {:fn/has-class :alert-danger :fn/has-text "Check the following errors"})))
 
-        (testing "successful save"
-          (btu/fill-human (field-selector 0 :info-text-sv) "Info text (SV)")
-          (btu/scroll-and-click :save)
+        (testing "fill empty field and save successfully"
+          (btu/clear (field-component :info-text-sv))
+          (btu/fill-human (field-component :info-text-sv) "Description (SV)")
+          (Thread/sleep 2000) ; XXX: too fast for rate limited button, could wait for attribute
+          (btu/scroll-and-click {:fn/text "Save"})
           (btu/wait-page-loaded)
           (wait-page-title "Form – REMS")))
 
@@ -2630,25 +2489,27 @@
                                         :sv "Form Editor Test (SV)"}
                   :form/title "Form editor test" ; deprecated
                   :form/fields [{:field/title {:fi "Description (FI)" :en "Description (EN)" :sv "Description (SV)"}
-                                 :field/info-text {:en "Info text (EN)", :fi "Info text (FI)", :sv "Info text (SV)"}
+                                 :field/info-text {:en "Description (EN)", :fi "Description (FI)", :sv "Description (SV)"}
                                  :field/type "description"
                                  :field/id "fld13"
                                  :field/max-length nil
                                  :field/optional false}
-                                {:field/placeholder {:fi "Placeholder (FI)" :en "Placeholder (EN)" :sv "Placeholder (SV)"}
+                                {:field/placeholder {:fi "Text field placeholder (FI)" :en "Text field placeholder (EN)" :sv "Text field placeholder (SV)"}
                                  :field/title {:fi "Text field (FI)" :en "Text field (EN)" :sv "Text field (SV)"}
+                                 :field/info-text {:fi "Text field description (FI)" :en "Text field description (EN)" :sv "Text field description (SV)"}
                                  :field/type "text"
                                  :field/id "fld1"
                                  :field/max-length 127
                                  :field/optional true}
-                                {:field/placeholder {:fi "Placeholder (FI)" :en "Placeholder (EN)" :sv "Placeholder (SV)"}
+                                {:field/placeholder {:fi "Text area placeholder (FI)" :en "Text area placeholder (EN)" :sv "Text area placeholder (SV)"}
                                  :field/title {:fi "Text area (FI)" :en "Text area (EN)" :sv "Text area (SV)"}
+                                 :field/info-text {:fi "Text area description (FI)" :en "Text area description (EN)" :sv "Text area description (SV)"}
                                  :field/type "texta"
                                  :field/id "fld2"
                                  :field/max-length 127
                                  :field/optional true}
                                 {:field/title {:fi "Option list (FI)" :en "Option list (EN)" :sv "Option list (SV)"}
-                                 :field/info-text {:en "Info text (EN)", :fi "Info text (FI)", :sv "Info text (SV)"}
+                                 :field/info-text {:en "Option description (EN)" :fi "Option description (FI)" :sv "Option description (SV)"}
                                  :field/type "option"
                                  :field/id "fld3"
                                  :field/options [{:key "true" :label {:fi "Kyllä" :en "Yes" :sv "Ja"}}
@@ -2688,28 +2549,28 @@
                                  :field/optional false
                                  :field/title {:en "Table (EN)" :fi "Table (FI)" :sv "Table (SV)"}
                                  :field/type "table"}
-                                {:field/title {:fi "Date field (FI)" :en "Date field (EN)" :sv "Date field (SV)"}
-                                 :field/info-text {:en "Info text (EN)", :fi "Info text (FI)", :sv "Info text (SV)"}
+                                {:field/title {:fi "Date (FI)" :en "Date (EN)" :sv "Date (SV)"}
+                                 :field/info-text {:en "Date description (EN)", :fi "Date description (FI)", :sv "Date description (SV)"}
                                  :field/type "date"
                                  :field/id "fld6"
                                  :field/optional false}
-                                {:field/title {:fi "Email field (FI)" :en "Email field (EN)" :sv "Email field (SV)"}
-                                 :field/info-text {:en "Info text (EN)", :fi "Info text (FI)", :sv "Info text (SV)"}
+                                {:field/title {:fi "Email (FI)" :en "Email (EN)" :sv "Email (SV)"}
+                                 :field/info-text {:en "Email description (EN)", :fi "Email description (FI)", :sv "Email description (SV)"}
                                  :field/type "email"
                                  :field/id "fld7"
                                  :field/optional false}
-                                {:field/title {:fi "Phone number field (FI)" :en "Phone number field (EN)" :sv "Phone number field (SV)"}
-                                 :field/info-text {:en "Info text (EN)", :fi "Info text (FI)", :sv "Info text (SV)"}
+                                {:field/title {:fi "Phone number (FI)" :en "Phone number (EN)" :sv "Phone number (SV)"}
+                                 :field/info-text {:en "Phone number description (EN)", :fi "Phone number description (FI)", :sv "Phone number description (SV)"}
                                  :field/type "phone-number"
                                  :field/id "fld8"
                                  :field/optional false}
-                                {:field/title {:fi "IP address field (FI)" :en "IP address field (EN)" :sv "IP address field (SV)"}
-                                 :field/info-text {:en "Info text (EN)", :fi "Info text (FI)", :sv "Info text (SV)"}
+                                {:field/title {:fi "IP address (FI)" :en "IP address (EN)" :sv "IP address (SV)"}
+                                 :field/info-text {:en "IP address description (EN)", :fi "IP address description (FI)", :sv "IP address description (SV)"}
                                  :field/type "ip-address"
                                  :field/id "fld9"
                                  :field/optional false}
-                                {:field/title {:fi "Attachment field (FI)" :en "Attachment field (EN)" :sv "Attachment field (SV)"}
-                                 :field/info-text {:en "Info text (EN)", :fi "Info text (FI)", :sv "Info text (SV)"}
+                                {:field/title {:fi "Attachment (FI)" :en "Attachment (EN)" :sv "Attachment (SV)"}
+                                 :field/info-text {:en "Attachment description (EN)", :fi "Attachment description (FI)", :sv "Attachment description (SV)"}
                                  :field/type "attachment"
                                  :field/id "fld10"
                                  :field/optional false}
@@ -2728,10 +2589,11 @@
                   (http/get (str (btu/get-server-url) "/api/forms/" form-id)
                             {:as :json
                              :headers {"x-rems-api-key" "42"
-                                       "x-rems-user-id" "handler"}}))))))
-      (user-settings/delete-user-settings! "owner")))) ; clear language settings
+                                       "x-rems-user-id" "handler"}})))))))))
 
 (deftest test-conditional-field
+  (btu/context-dissoc! :field-id :field-index)
+
   (btu/with-postmortem
     (login-as "owner")
     (go-to-admin "Forms")
@@ -2746,80 +2608,76 @@
       (fill-form-field "SV" "Conditional field test (SV)")
 
       (testing "create option field"
-        (btu/scroll-and-click {:class :add-form-field})
-        (is (btu/eventually-visible? :fields-0-title-en))
-        (btu/fill-human :fields-0-title-en "Option (EN)")
-        (btu/fill-human :fields-0-title-fi "Option (FI)")
-        (btu/fill-human :fields-0-title-sv "Option (SV)")
-        (btu/scroll-and-click :fields-0-type-option)
-        (btu/scroll-and-click {:class :add-option})
-        (is (btu/eventually-visible? :fields-0-options-0-key))
-        (btu/fill-human :fields-0-options-0-key "true")
-        (btu/fill-human :fields-0-options-0-label-en "Yes")
-        (btu/fill-human :fields-0-options-0-label-fi "Kyllä")
-        (btu/fill-human :fields-0-options-0-label-sv "Ja")
-        (btu/scroll-and-click {:class :add-option})
-        (is (btu/eventually-visible? :fields-0-options-1-key))
-        (btu/fill-human :fields-0-options-1-key "false")
-        (btu/fill-human :fields-0-options-1-label-en "No")
-        (btu/fill-human :fields-0-options-1-label-fi "Ei")
-        (btu/fill-human :fields-0-options-1-label-sv "Nej"))
+        (add-form-field! {:expected-field-id "fld1" :expected-field-index 0})
+        (btu/scroll-and-click (field-component :type-option))
+        (testing "fill localized title"
+          (fill-localized-title! "Option (%s)"))
+        (testing "create two options"
+          (btu/scroll-and-click (field-component :add-option))
+          (is (btu/eventually-visible? (field-component :options-0-key)))
+          (btu/fill-human (field-component :options-0-key) "true")
+          (btu/fill-human (field-component :options-0-label-en) "Yes")
+          (btu/fill-human (field-component :options-0-label-fi) "Kyllä")
+          (btu/fill-human (field-component :options-0-label-sv) "Ja")
+
+          (btu/scroll-and-click (field-component :add-option))
+          (is (btu/eventually-visible? (field-component :options-1-key)))
+          (btu/fill-human (field-component :options-1-key) "false")
+          (btu/fill-human (field-component :options-1-label-en) "No")
+          (btu/fill-human (field-component :options-1-label-fi) "Ei")
+          (btu/fill-human (field-component :options-1-label-sv) "Nej")))
 
       (testing "create multiselect field"
-        (btu/scroll-and-click-el (last (btu/query-all {:class :add-form-field})))
-        (is (btu/eventually-visible? :fields-1-title-en))
-        (btu/fill-human :fields-1-title-en "Multiselect (EN)")
-        (btu/fill-human :fields-1-title-fi "Multiselect (FI)")
-        (btu/fill-human :fields-1-title-sv "Multiselect (SV)")
-        (btu/scroll-and-click :fields-1-type-multiselect)
-        (btu/scroll-and-click :fields-1-add-option)
-        (is (btu/eventually-visible? :fields-1-options-0-key))
-        (btu/fill-human :fields-1-options-0-key "x")
-        (btu/fill-human :fields-1-options-0-label-en "X")
-        (btu/fill-human :fields-1-options-0-label-fi "X")
-        (btu/fill-human :fields-1-options-0-label-sv "X")
-        (btu/scroll-and-click :fields-1-add-option)
-        (is (btu/eventually-visible? :fields-1-options-1-key))
-        (btu/fill-human :fields-1-options-1-key "y")
-        (btu/fill-human :fields-1-options-1-label-en "Y")
-        (btu/fill-human :fields-1-options-1-label-fi "Y")
-        (btu/fill-human :fields-1-options-1-label-sv "Y")
-        (btu/scroll-and-click :fields-1-add-option)
-        (is (btu/eventually-visible? :fields-1-options-2-key))
-        (btu/fill-human :fields-1-options-2-key "z")
-        (btu/fill-human :fields-1-options-2-label-en "Z")
-        (btu/fill-human :fields-1-options-2-label-fi "Z")
-        (btu/fill-human :fields-1-options-2-label-sv "Z"))
+        (add-form-field! {:expected-field-id "fld2" :expected-field-index 1})
+        (btu/scroll-and-click (field-component :type-multiselect))
+        (testing "fill localized title"
+          (fill-localized-title! "Multiselect (%s)"))
+        (testing "create three options"
+          (btu/scroll-and-click (field-component :add-option))
+          (btu/fill-human (field-component :options-0-key) "x")
+          (btu/fill-human (field-component :options-0-label-en) "X")
+          (btu/fill-human (field-component :options-0-label-fi) "X")
+          (btu/fill-human (field-component :options-0-label-sv) "X")
+
+          (btu/scroll-and-click (field-component :add-option))
+          (btu/fill-human (field-component :options-1-key) "y")
+          (btu/fill-human (field-component :options-1-label-en) "Y")
+          (btu/fill-human (field-component :options-1-label-fi) "Y")
+          (btu/fill-human (field-component :options-1-label-sv) "Y")
+
+          (btu/scroll-and-click (field-component :add-option))
+          (btu/fill-human (field-component :options-2-key) "z")
+          (btu/fill-human (field-component :options-2-label-en) "Z")
+          (btu/fill-human (field-component :options-2-label-fi) "Z")
+          (btu/fill-human (field-component :options-2-label-sv) "Z")))
 
       (testing "create conditional text field"
-        (btu/scroll-and-click-el (last (btu/query-all {:class :add-form-field})))
-        (is (btu/eventually-visible? :fields-2-title-en))
-        (btu/fill-human :fields-2-title-en "Text (EN)")
-        (btu/fill-human :fields-2-title-fi "Text (FI)")
-        (btu/fill-human :fields-2-title-sv "Text (SV)")
-        (btu/scroll-and-click :fields-2-additional-more-link)
-        (is (btu/eventually-visible? :fields-2-visibility-type))
-        (btu/fill :fields-2-visibility-type "Only if\n")
-        (is (btu/eventually-visible? :fields-2-visibility-type))
-        (btu/fill :fields-2-visibility-field "Field 1: Option (EN)\n")
-        (is (btu/eventually-visible? :fields-2-visibility-type))
-        (btu/fill :fields-2-visibility-value "Yes\n"))
+        (add-form-field! {:expected-field-id "fld3" :expected-field-index 2})
+        (testing "fill localized title"
+          (fill-localized-title! "Text (%s)"))
+        (testing "set visibility to only if field 1 has true selected"
+          (open-external-collapsible (:id (field-component :additional-settings)))
+          (is (btu/eventually-visible? (field-component :visibility-type)))
+          (btu/fill (field-component :visibility-type) "Only if\n")
+          (is (btu/eventually-visible? (field-component :visibility-field)))
+          (btu/fill (field-component :visibility-field) "Field 1: Option (EN)\n")
+          (is (btu/eventually-visible? (field-component :visibility-value)))
+          (btu/fill (field-component :visibility-value) "Yes\n")))
 
       (testing "create conditional email field"
-        (btu/scroll-and-click-el (last (btu/query-all {:class :add-form-field})))
-        (is (btu/eventually-visible? :fields-3-title-en))
-        (btu/fill-human :fields-3-title-en "Email (EN)")
-        (btu/fill-human :fields-3-title-fi "Email (FI)")
-        (btu/fill-human :fields-3-title-sv "Email (SV)")
+        (add-form-field! {:expected-field-id "fld4" :expected-field-index 3})
         (btu/scroll-and-click :fields-3-type-email)
-        (btu/scroll-and-click :fields-3-additional-more-link)
-        (is (btu/eventually-visible? :fields-3-visibility-type))
-        (btu/fill :fields-3-visibility-type "Only if\n")
-        (is (btu/eventually-visible? :fields-3-visibility-field))
-        (btu/fill :fields-3-visibility-field "Field 2: Multiselect (EN)\n")
-        (is (btu/eventually-visible? :fields-3-visibility-value))
-        (btu/fill :fields-3-visibility-value "X\n")
-        (btu/fill :fields-3-visibility-value "Z\n"))
+        (testing "fill localized title"
+          (fill-localized-title! "Email (%s)"))
+        (testing "set visibility to only if field 2 has X,Z selected"
+          (open-external-collapsible (:id (field-component :additional-settings)))
+          (is (btu/eventually-visible? (field-component :visibility-type)))
+          (btu/fill (field-component :visibility-type) "Only if\n")
+          (is (btu/eventually-visible? (field-component :visibility-field)))
+          (btu/fill (field-component :visibility-field) "Field 2: Multiselect (EN)\n")
+          (is (btu/eventually-visible? (field-component :visibility-value)))
+          (btu/fill (field-component :visibility-value) "X\n")
+          (btu/fill (field-component :visibility-value) "Z\n")))
 
       (btu/scroll-and-click :save)
       (wait-page-title "Form – REMS")
