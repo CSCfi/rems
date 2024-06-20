@@ -508,8 +508,11 @@
 
   (wait-delay-and-idle 0.1)
 
-  (assert (= text (get-element-attr q "value"))
-          "Failed to fill field"))
+  (let [value (get-element-attr q "value")]
+    (assert (= text value)
+            {:error "Failed to fill field"
+             :expected text
+             :actual value})))
 
 (defn visible-el?
   "Checks whether an element is visible on the page."
