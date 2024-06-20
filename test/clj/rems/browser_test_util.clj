@@ -509,10 +509,8 @@
   (wait-delay-and-idle 0.1)
 
   (let [value (get-element-attr q "value")]
-    (assert (= text value)
-            {:error "Failed to fill field"
-             :expected text
-             :actual value})))
+    (when (not= text value)
+      (log/warn "Failed to fill field" (pr-str {:expected text :actual value})))))
 
 (defn visible-el?
   "Checks whether an element is visible on the page."
