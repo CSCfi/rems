@@ -1,9 +1,9 @@
 (ns ^:integration rems.service.test-invitation
   (:require [clojure.test :refer :all]
             [rems.service.invitation :as invitation]
+            [rems.db.outbox :as outbox]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.db.testing :refer [reset-caches-fixture rollback-db-fixture test-db-fixture]]
-            [rems.email.core :as email]
             [rems.testing-util :refer [fixed-time-fixture with-user]])
   (:import [org.joda.time DateTime DateTimeUtils DateTimeZone]))
 
@@ -45,7 +45,7 @@
 
         (testing "success"
           (let [sent-email (atom nil)]
-            (with-redefs [email/enqueue-email! (fn [& args] (reset! sent-email args))]
+            (with-redefs [outbox/puts! (fn [datas] (reset! sent-email (:outbox/email (first datas))))]
               (let [invitation (invitation/create-invitation! {:userid "owner"
                                                                :name "Dorothy Vaughan"
                                                                :email "dorothy.vaughan@nasa.gov"
@@ -53,7 +53,7 @@
                     invitation-id (:invitation/id invitation)]
                 (is (= {:success true} (dissoc invitation :invitation/id)))
                 (is (number? invitation-id))
-                (is (= "dorothy.vaughan@nasa.gov" (:to (first @sent-email))))
+                (is (= "dorothy.vaughan@nasa.gov" (:to @sent-email)))
 
                 (testing "after creating invitations"
                   (let [invitations (invitation/get-invitations nil)]

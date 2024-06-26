@@ -540,7 +540,11 @@ WHERE role = :role;
 -- :name get-user-attributes :? :1
 SELECT userAttrs::TEXT
 FROM users
-WHERE userId = :user;
+WHERE 1=1
+/*~ (when (:user params) */
+AND userId = :user
+/*~ ) ~*/
+;
 
 -- :name get-user-settings :? :*
 SELECT userid, settings::TEXT
@@ -661,6 +665,11 @@ ORDER BY id ASC
 -- :name put-to-outbox! :insert
 INSERT INTO outbox (outboxData)
 VALUES (:outboxdata::jsonb)
+RETURNING id;
+
+-- :name puts-to-outbox! :returning-execute
+INSERT INTO outbox (outboxData)
+SELECT * FROM jsonb_to_recordset(:outboxdatas::jsonb) AS tmp(outboxdata jsonb)
 RETURNING id;
 
 -- :name get-outbox :? :*

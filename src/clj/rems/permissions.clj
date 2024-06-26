@@ -28,10 +28,9 @@
       (update :application/user-roles dissoc-if-empty user)))
 
 (defn user-roles [application user]
-  (let [specific-roles (set (get-in application [:application/user-roles user]))]
-    (if (seq specific-roles)
-      specific-roles
-      #{:everyone-else})))
+  (if-some [specific-roles (seq (-> application :application/user-roles (get user)))]
+    (set specific-roles)
+    #{:everyone-else}))
 
 (deftest test-user-roles
   (testing "give first role"
@@ -197,10 +196,11 @@
    Union of all role specific permissions. Returns an empty set if no
    permissions are set for the user."
   [application user]
-  (->> (user-roles application user)
-       (mapcat (fn [role]
-                 (get-in application [:application/role-permissions role])))
-       set))
+  (reduce (fn [permissions role]
+            (into permissions
+                  (-> application :application/role-permissions role)))
+          #{}
+          (user-roles application user)))
 
 (deftest test-user-permissions
   (testing "unknown user"

@@ -30,35 +30,43 @@
       (template/event-to-emails (rems.application.model/enrich-event event users/get-user (constantly nil))
                                 (applications/get-application app-id)))))
 
-(defn- enqueue-email! [email]
-  (outbox/put! {:outbox/type :email
-                :outbox/email email
-                :outbox/deadline (-> (time/now) (.plus ^Period (:email-retry-period env)))}))
-
 (defn generate-event-emails! [new-events]
-  (doseq [event new-events
-          email (event-to-emails event)]
-    (enqueue-email! email)))
+  (let [deadline (-> (time/now) (.plus ^Period (:email-retry-period env)))]
+    (->> (for [event new-events
+               email (event-to-emails event)]
+           {:outbox/type :email
+            :outbox/email email
+            :outbox/deadline deadline})
+         outbox/puts!)
+    nil)) ; no new events
 
 (defn generate-handler-reminder-emails! []
-  (doseq [email (->> (workflow/get-handlers)
-                     (map (fn [handler]
-                            (let [lang (:language (user-settings/get-user-settings (:userid handler)))
-                                  apps (todos/get-todos (:userid handler))]
-                              (template/handler-reminder-email lang handler apps))))
-                     (remove nil?))]
-    (enqueue-email! email)))
+  (let [deadline (-> (time/now) (.plus ^Period (:email-retry-period env)))]
+    (->> (for [email (->> (workflow/get-handlers)
+                          (map (fn [handler]
+                                 (let [lang (:language (user-settings/get-user-settings (:userid handler)))
+                                       apps (todos/get-todos (:userid handler))]
+                                   (template/handler-reminder-email lang handler apps))))
+                          (remove nil?))]
+           {:outbox/type :email
+            :outbox/email email
+            :outbox/deadline deadline})
+         outbox/puts!)))
 
 (defn generate-reviewer-reminder-emails! []
-  (doseq [email (->> (applications/get-users-with-role :reviewer)
-                     (map users/get-user)
-                     (map (fn [reviewer]
-                            (let [lang (:language (user-settings/get-user-settings (:userid reviewer)))
-                                  apps (->> (todos/get-todos (:userid reviewer))
-                                            (map #(= :waiting-for-your-review (:application/todo %))))]
-                              (template/reviewer-reminder-email lang reviewer apps))))
-                     (remove nil?))]
-    (enqueue-email! email)))
+  (let [deadline (-> (time/now) (.plus ^Period (:email-retry-period env)))]
+    (->> (for [email (->> (applications/get-users-with-role :reviewer)
+                          (map users/get-user)
+                          (map (fn [reviewer]
+                                 (let [lang (:language (user-settings/get-user-settings (:userid reviewer)))
+                                       apps (->> (todos/get-todos (:userid reviewer))
+                                                 (map #(= :waiting-for-your-review (:application/todo %))))]
+                                   (template/reviewer-reminder-email lang reviewer apps))))
+                          (remove nil?))]
+           {:outbox/type :email
+            :outbox/email email
+            :outbox/deadline deadline})
+         outbox/puts!)))
 
 (defn- render-invitation-template [invitation]
   (let [lang (:default-language env)] ; we don't know the preferred languages here since there is no user
@@ -67,12 +75,20 @@
             (assert workflow "Can't send invitation, missing workflow")
             (template/workflow-handler-invitation-email lang invitation workflow)))))
 
+(defn- mark-invitations-sent! [invitations]
+  (doseq [invitation invitations]
+    (invitation/mail-sent! (:invitation/id invitation))))
+
 (defn generate-invitation-emails! [invitations]
-  (doseq [invitation invitations
-          :when (not (:invitation/sent invitation))
-          :let [email (render-invitation-template invitation)]]
-    (invitation/mail-sent! (:invitation/id invitation))
-    (enqueue-email! email)))
+  (let [deadline (-> (time/now) (.plus ^Period (:email-retry-period env)))]
+    (->> (for [invitation invitations
+               :when (not (:invitation/sent invitation))
+               :let [email (render-invitation-template invitation)]]
+           {:outbox/type :email
+            :outbox/email email
+            :outbox/deadline deadline})
+         outbox/puts!)
+    (mark-invitations-sent! invitations)))
 
 ;;; Email poller
 

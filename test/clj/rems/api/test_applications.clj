@@ -3258,3 +3258,14 @@
                  (->> (get-application-for-user application-id userid)
                       :application/events
                       (mapv #(select-keys % [:event/actor :event/type :event/public :application/processing-state]))))))))))
+
+
+(comment
+  ;; This is a way to test the whole API performance
+  ;; e.g. Schema checking and JSON serialization in addition
+  ;; to the business logic.
+  ;;
+  ;; An alternative would be to do the same as the fixtures do
+  ;; to mount a proper handler.
+  (deftest test-todos-performance
+    (clj-async-profiler.core/profile {:interval 100000} (get-handled-todos "handler"))))

@@ -602,7 +602,8 @@
 
 (defn create-performance-test-data! []
   (log/info "Creating performance test data")
-  (let [resource-count 1000
+  (let [start-time (System/currentTimeMillis)
+        resource-count 1000
         application-count 3000
         user-count 1000
         handler-count 100
@@ -700,13 +701,15 @@
       (in-parallel
        (for [n (range-1 application-count)]
          (fn []
-           (log/info "Creating performance test application" n "/" application-count)
            (let [cat-item-id (rand-nth cat-item-ids)
                  user-id (rand-nth user-ids)
                  handler (rand-nth handlers)
                  app-id (test-helpers/create-application! {:catalogue-item-ids [cat-item-id]
                                                            :actor user-id})
                  long-answer (random-long-string)]
+
+             (log/info "Created performance test application" app-id (str "(" n "/" application-count ")"))
+
              (dotimes [i 20] ; user saves ~ 20 times while writing an application
                (test-helpers/command! {:type :application.command/save-draft
                                        :application-id app-id
@@ -730,7 +733,10 @@
                                      :application-id app-id
                                      :actor handler
                                      :comment ""}))))))
-    (log/info "Performance test applications created")))
+    (let [delta-time (/ (- (System/currentTimeMillis) start-time) 1000.0)]
+      (log/infof "Performance test applications created in %.2fs (%.2f/s)"
+                 delta-time
+                 (/ application-count delta-time)))))
 
 (defn- create-items! [users users-data]
   (let [owner (users :owner)
