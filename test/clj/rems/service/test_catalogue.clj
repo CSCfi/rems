@@ -8,15 +8,11 @@
             [rems.db.core :as db]
             [rems.db.category :as category]
             [rems.db.test-data-helpers :as test-helpers]
-            [rems.db.testing :refer [reset-caches-fixture rollback-db-fixture test-db-fixture]]
+            [rems.db.testing :refer [rollback-db-fixture test-db-fixture]]
             [rems.testing-util :refer [with-user]])
   (:import org.joda.time.DateTime))
 
-(use-fixtures
-  :once
-  test-db-fixture
-  reset-caches-fixture)
-
+(use-fixtures :once test-db-fixture)
 (use-fixtures :each rollback-db-fixture)
 
 (defn- status-flags [item-id]

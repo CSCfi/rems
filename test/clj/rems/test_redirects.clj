@@ -10,7 +10,7 @@
             [ring.mock.request :refer :all]))
 
 (use-fixtures
-  :once
+  :each
   api-fixture
   (fn [f]
     ;; need to set an explicit public-url since dev and test configs use different ports

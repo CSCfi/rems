@@ -2,7 +2,6 @@
   (:require [clojure.string :as str]
             [clojure.test :refer :all]
             [clojure.test.check.generators :as generators]
-            [mount.core :as mount]
             [rems.application.events :as events]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
@@ -16,13 +15,7 @@
            [org.joda.time DateTime DateTimeZone]))
 
 (use-fixtures :once test-db-fixture)
-
-(use-fixtures :each
-  rollback-db-fixture
-  (fn [f]
-    (mount/stop #'applications/all-applications-cache)
-    (mount/start #'applications/all-applications-cache)
-    (f)))
+(use-fixtures :each rollback-db-fixture)
 
 (deftest test-event-serialization
   (testing "round trip serialization"

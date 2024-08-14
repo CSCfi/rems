@@ -6,7 +6,7 @@
             [luminus-migrations.util]
             [migratus.core]
             [rems.db.core]
-            [rems.db.testing :refer [test-db-fixture reset-db-fixture rollback-db-fixture]]
+            [rems.db.testing :refer [test-db-fixture reset-db-after-fixture rollback-db-fixture]]
             [rems.config]
             [rems.json :as json]
             [rems.migrations.event-public :as event-public]
@@ -16,7 +16,7 @@
 (use-fixtures
   :once
   test-db-fixture
-  reset-db-fixture)
+  reset-db-after-fixture)
 
 (use-fixtures
   :each

@@ -9,7 +9,7 @@
   (:import [org.joda.time DateTimeUtils]))
 
 (use-fixtures
-  :once
+  :each
   api-fixture
   (fn [f]
     ;; TODO this needs to be in the future so that we can use the

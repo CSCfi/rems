@@ -2,7 +2,7 @@
   (:require [clojure.test :refer :all]
             [rems.service.invitation :as invitation]
             [rems.db.test-data-helpers :as test-helpers]
-            [rems.db.testing :refer [reset-caches-fixture rollback-db-fixture test-db-fixture]]
+            [rems.db.testing :refer [rollback-db-fixture test-db-fixture]]
             [rems.email.core :as email]
             [rems.testing-util :refer [fixed-time-fixture with-user]])
   (:import [org.joda.time DateTime DateTimeUtils DateTimeZone]))
@@ -13,7 +13,6 @@
 (use-fixtures
   :once
   test-db-fixture
-  reset-caches-fixture
   (fixed-time-fixture invitation-time))
 
 (use-fixtures :each rollback-db-fixture)
