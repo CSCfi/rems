@@ -29,8 +29,8 @@
   (rems.db.events/empty-event-cache!))
 
 (defn reset-db-after-fixture [f]
-  (f)
   (reset-caches!)
+  (f)
   (migrations/migrate ["reset"] {:database-url (:test-database-url env)}))
 
 (defn test-db-fixture [f]
@@ -44,13 +44,12 @@
   (mount/start #'rems.db.events/low-level-events-cache
                #'rems.db.user-settings/low-level-user-settings-cache
                #'rems.db.applications/all-applications-cache)
-  (reset-caches!)
   (f))
 
 (defn search-index-fixture [f]
-  ;; no specific teardown. relies on the teardown of test-db-fixture.
   (mount/start #'rems.application.search/search-index)
-  (f))
+  (f)
+  (mount/stop #'rems.application.search/search-index))
 
 (def +test-api-key+ test-data/+test-api-key+) ; re-exported for convenience
 
@@ -59,7 +58,7 @@
   (f))
 
 (defn rollback-db-fixture [f]
+  (reset-caches!)
   (conman/with-transaction [db/*db* {:isolation :serializable}]
     (jdbc/db-set-rollback-only! db/*db*)
-    (f)
-    (reset-caches!)))
+    (f)))

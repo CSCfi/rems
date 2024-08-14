@@ -5,7 +5,7 @@
             [clojure.test :refer [deftest is testing use-fixtures]]
             [rems.service.attachment :as attachment]
             [rems.service.catalogue :as catalogue]
-            [rems.api.testing :refer [api-call api-fixture api-response assert-response-is-ok authenticate get-csrf-token login-with-cookies read-body read-ok-body response-is-forbidden? response-is-not-found? response-is-ok? response-is-payload-too-large? response-is-unauthorized? response-is-unsupported-media-type? transit-body]]
+            [rems.api.testing :refer [api-call api-search-fixture api-response assert-response-is-ok authenticate get-csrf-token login-with-cookies read-body read-ok-body response-is-forbidden? response-is-not-found? response-is-ok? response-is-payload-too-large? response-is-unauthorized? response-is-unsupported-media-type? transit-body]]
             [rems.config]
             [rems.db.applications]
             [rems.db.blacklist :as blacklist]
@@ -20,7 +20,7 @@
 
 (use-fixtures
   :each
-  api-fixture
+  api-search-fixture
   ;; TODO should this fixture have a name?
   (fn [f]
     (test-data/create-test-api-key!)

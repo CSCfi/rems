@@ -37,7 +37,11 @@
 (def api-fixture
   (join-fixtures [test-db-fixture
                   rollback-db-fixture
-                  handler-fixture
+                  handler-fixture]))
+
+(def api-search-fixture
+  "Same as `api-fixture`, but also starts (slightly heavier) search index."
+  (join-fixtures [api-fixture
                   search-index-fixture]))
 
 (defn authenticate [request api-key user-id]
