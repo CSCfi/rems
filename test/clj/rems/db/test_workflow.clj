@@ -8,7 +8,7 @@
 (use-fixtures :each rollback-db-fixture)
 
 (deftest test-get-all-workflow-roles
-  (is (= nil (workflow/get-all-workflow-roles "anyone")))
+  (is (= #{} (workflow/get-all-workflow-roles "anyone")))
 
   (testing "handler role"
     (test-helpers/create-user! {:userid "handler-user"})

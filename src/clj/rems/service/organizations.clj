@@ -78,7 +78,7 @@
 (defn get-available-owners [] (users/get-users))
 
 (defn get-handled-organizations [{:keys [userid]}]
-  (for [workflow (workflow/get-workflows nil)
+  (for [workflow (workflow/get-workflows)
         :let [handlers (set (mapv :userid (get-in workflow [:workflow :handlers])))]
         :when (contains? handlers userid)
         :let [organization (organizations/getx-organization-by-id (get-in workflow [:organization :organization/id]))]]

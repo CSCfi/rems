@@ -254,7 +254,7 @@
 
 (defn fix-workflow [old-userid new-userid simulate?]
   (doall
-   (for [old (rems.db.workflow/get-workflows nil)
+   (for [old (rems.db.workflow/get-workflows)
          :let [old {:id (:id old)
                     :organization (:organization old)
                     :title (:title old)
