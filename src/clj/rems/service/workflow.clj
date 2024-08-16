@@ -1,7 +1,7 @@
 (ns rems.service.workflow
   (:require [rems.application.commands :as commands]
+            [rems.common.util :refer [apply-filters]]
             [rems.db.applications :as applications]
-            [rems.db.core :as db]
             [rems.db.form :as form]
             [rems.db.licenses :as licenses]
             [rems.db.organizations :as organizations]
@@ -72,21 +72,19 @@
         (invalid-disable-commands-error disable-commands)
         (do
           (workflow/edit-workflow! (update cmd :licenses #(map :license/id %)))
-          (applications/empty-injection-cache! :get-workflow)
           (applications/reload-applications! {:by-workflow-ids [id]})
           {:success true}))))
 
 (defn set-workflow-enabled! [{:keys [id enabled]}]
   (util/check-allowed-organization! (:organization (workflow/get-workflow id)))
-  (db/set-workflow-enabled! {:id id :enabled enabled})
+  (workflow/set-enabled! id enabled)
   {:success true})
 
 (defn set-workflow-archived! [{:keys [id archived]}]
   (util/check-allowed-organization! (:organization (workflow/get-workflow id)))
   (or (dependencies/change-archive-status-error archived {:workflow/id id})
       (do
-        (db/set-workflow-archived! {:id id
-                                    :archived archived})
+        (workflow/set-archived! id archived)
         {:success true})))
 
 ;; TODO more systematic joining for these needed. Now we just add the title for the UI
@@ -112,14 +110,16 @@
        join-dependencies))
 
 (defn get-workflows [filters]
-  (->> (workflow/get-workflows filters)
+  (->> (workflow/get-workflows)
+       (apply-filters filters)
        (mapv join-dependencies)))
 
 (defn get-available-actors [] (users/get-users))
 
 (defn get-handlers []
-  (let [workflows (workflow/get-workflows {:enabled true
-                                           :archived false})
+  (let [workflows (->> (workflow/get-workflows)
+                       (apply-filters {:enabled true
+                                       :archived false}))
         handlers (mapcat (fn [wf]
                            (get-in wf [:workflow :handlers]))
                          workflows)]

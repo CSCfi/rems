@@ -72,7 +72,6 @@
 (def ^:private license-cache (cache/ttl {:id ::license-cache}))
 (def ^:private user-cache (cache/ttl {:id ::user-cache}))
 (def ^:private users-with-role-cache (cache/ttl {:id ::users-with-role-cache}))
-(def ^:private workflow-cache (cache/ttl {:id ::workflow-cache}))
 (def ^:private blacklist-cache (cache/ttl {:id ::blacklist-cache}))
 
 (defn empty-injections-cache! []
@@ -81,7 +80,6 @@
   (cache/reset! license-cache)
   (cache/reset! user-cache)
   (cache/reset! users-with-role-cache)
-  (cache/reset! workflow-cache)
   (cache/reset! blacklist-cache))
 
 (defn empty-injection-cache!
@@ -92,8 +90,7 @@
   NB: only the necessary invalidations have been implemented"
   [cache-key]
   (cache/reset! (case cache-key
-                  :blacklisted? blacklist-cache
-                  :get-workflow workflow-cache)))
+                  :blacklisted? blacklist-cache)))
 
 (def fetcher-injections
   {:get-attachments-for-application attachments/get-attachments-for-application
@@ -104,7 +101,7 @@
    :get-license #(cache/lookup-or-miss! license-cache % licenses/get-license)
    :get-user #(cache/lookup-or-miss! user-cache % users/get-user)
    :get-users-with-role #(cache/lookup-or-miss! users-with-role-cache % users/get-users-with-role)
-   :get-workflow #(cache/lookup-or-miss! workflow-cache % workflow/get-workflow)
+   :get-workflow rems.db.workflow/get-workflow
    :blacklisted? #(cache/lookup-or-miss! blacklist-cache [%1 %2] (fn [[userid resource]]
                                                                    (blacklist/blacklisted? userid resource)))
    ;; TODO: no caching for these, but they're only used by command handlers currently
