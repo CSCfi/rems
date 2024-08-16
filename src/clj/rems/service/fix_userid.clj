@@ -235,7 +235,7 @@
       (when-not simulate?
         (rems.db.users/add-user! (assoc old-user :userid new-userid))
         (rems.db.user-settings/update-user-settings! new-userid old-settings)
-        (rems.db.user-mappings/delete-user-mapping! old-userid)
+        (rems.db.user-mappings/delete-user-mapping! {:userid old-userid})
         (doseq [old-mapping old-mappings
                 :when (not= (:ext-id-value old-mapping) new-userid)] ; not saved in login either
           (rems.db.user-mappings/create-user-mapping! (assoc old-mapping :userid new-userid))))

@@ -4,7 +4,6 @@
             [rems.db.test-data-helpers :as test-helpers]
             [rems.db.users]
             [rems.service.test-data :as test-data :refer [+test-api-key+]]
-            [rems.service.users]
             [rems.handler :refer [handler]]
             [ring.mock.request :refer [json-body request]])
   (:import [java.util UUID]))
@@ -37,7 +36,7 @@
       (is (= {:userid user-id
               :name "Pekka"
               :email "pekka@example.com"}
-             (rems.service.users/get-user user-id))))
+             (rems.db.users/get-user user-id))))
 
     (testing "update user settings"
       (-> (request :put "/api/user-settings/edit")
@@ -56,4 +55,4 @@
               :name "Pekka"
               :email "pekka@example.com"
               :notification-email "foo@example.com"}
-             (rems.service.users/get-user user-id))))))
+             (rems.db.users/get-user user-id))))))

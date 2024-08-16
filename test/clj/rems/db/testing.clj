@@ -11,7 +11,6 @@
             [rems.db.category]
             [rems.db.core :as db]
             [rems.db.events]
-            [rems.db.user-mappings]
             [rems.db.user-settings]
             [rems.locales]
             [rems.service.caches]
@@ -25,7 +24,6 @@
   (rems.db.catalogue/reset-cache!)
   (rems.db.category/reset-cache!)
   (rems.service.dependencies/reset-cache!)
-  (rems.db.user-mappings/reset-cache!)
   (rems.db.events/empty-event-cache!))
 
 (defn reset-db-after-fixture [f]
