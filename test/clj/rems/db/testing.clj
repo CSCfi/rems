@@ -42,7 +42,6 @@
   (db/assert-test-database!)
   (migrations/migrate ["migrate"] {:database-url (:test-database-url env)})
   (mount/start #'rems.db.events/low-level-events-cache
-               #'rems.db.user-settings/low-level-user-settings-cache
                #'rems.db.applications/all-applications-cache)
   (f))
 

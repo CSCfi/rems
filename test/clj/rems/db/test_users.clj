@@ -21,8 +21,7 @@
                                         :organizations [{:organization/id "org"}]})
 
   (testing "survives partial user settings"
-    (db/update-user-settings! {:user "user1" :settings "{\"language\": \"fi\"}"}) ; missing notification-email
-    (user-settings/reload-user-settings-cache!)
+    (user-settings/update-user-settings! "user1" {:language :fi}) ; missing notification-email
 
     (is (= {:userid "user1"
             :name "What Ever"
@@ -48,12 +47,12 @@
     (is (= {:userid "whatever"
             :name "What Ever"
             :some-attr "some value"}
-           (#'users/get-raw-user-attributes "user1")))
+           (users/get-raw-user-attributes "user1")))
     (is (= {:userid "user-with-org"
             :name "User Org"
             :email "user@org"
             :organizations [{:organization/id "org"}]}
-           (#'users/get-raw-user-attributes "user-with-org"))))
+           (users/get-raw-user-attributes "user-with-org"))))
 
   (testing "get-user"
     (is (= {:userid "user1"
