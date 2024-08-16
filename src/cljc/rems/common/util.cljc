@@ -708,9 +708,11 @@
 (defn contains-all-kv-pairs? [supermap map]
   (set/superset? (set supermap) (set map)))
 
-(defn apply-filters [filters coll]
-  (let [filters (or filters {})]
-    (filter #(contains-all-kv-pairs? % filters) coll)))
+(defn apply-filters
+  ([filters] (let [filters (or filters {})]
+               (filter #(contains-all-kv-pairs? % filters))))
+  ([filters coll] (let [filters (or filters {})]
+                    (filter #(contains-all-kv-pairs? % filters) coll))))
 
 (defn not-blank
   "Like `clojure.core/not-empty`, but for strings. Checks string emptiness with `clojure.string/blank?`"
