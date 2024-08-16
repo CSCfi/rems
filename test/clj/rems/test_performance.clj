@@ -14,6 +14,7 @@
             [rems.email.template]
             [rems.locales]
             [rems.markdown]
+            [rems.service.caches]
             [rems.service.test-data :as test-data]
             [rems.service.todos :as todos]
             [rems.tempura]
@@ -66,11 +67,12 @@
         test-get-todos #(doall (todos/get-todos "developer"))
         no-cache (fn []
                    (mount/stop #'rems.db.applications/all-applications-cache
-                               #'rems.db.events/low-level-events-cache
-                               #'rems.db.user-settings/low-level-user-settings-cache))
+                               #'rems.db.events/low-level-events-cache)
+                   (rems.service.caches/reset-all-caches!))
         cached (fn []
-                 (mount/stop #'rems.db.applications/all-applications-cache #'rems.db.events/low-level-events-cache #'rems.db.user-settings/low-level-user-settings-cache)
-                 (mount/start #'rems.db.applications/all-applications-cache #'rems.db.events/low-level-events-cache #'rems.db.user-settings/low-level-user-settings-cache)
+                 (mount/stop #'rems.db.applications/all-applications-cache #'rems.db.events/low-level-events-cache)
+                 (mount/start #'rems.db.applications/all-applications-cache #'rems.db.events/low-level-events-cache)
+                 (rems.service.caches/start-all-caches!)
                  (test-get-all-unrestricted-applications))]
     (run-benchmarks [{:name "get-all-unrestricted-applications, no cache"
                       :benchmark test-get-all-unrestricted-applications

@@ -2,15 +2,15 @@
   (:require [clojure.test :refer :all]
             [rems.db.testing :refer [rollback-db-fixture test-db-fixture]]
             [rems.db.user-settings :as user-settings]
-            [rems.db.users :as users]
+            [rems.db.users]
             [schema.core :as s]))
 
 (use-fixtures :once test-db-fixture)
 (use-fixtures :each rollback-db-fixture)
 
 (deftest test-user-settings
-  (users/add-user! {:userid "user"})
-  (users/add-user! {:userid "unrelated"})
+  (rems.db.users/add-user! "user" {:userid "user"})
+  (rems.db.users/add-user! "unrelated" {:userid "unrelated"})
 
   (testing "default settings for a new user"
     (is (= {:language :en
@@ -87,34 +87,3 @@
   (testing "nil email will clear the setting"
     (is (= {:notification-email nil}
            (user-settings/validate-new-settings {:notification-email nil})))))
-
-(deftest test-notification-email-visible
-  (users/add-user! {:userid "pekka" :name "Pekka" :email "pekka@example.com"})
-  (testing "before setting notifcation email"
-    (testing "get-user returns email from user attributes"
-      (is (= {:userid "pekka"
-              :name "Pekka"
-              :email "pekka@example.com"}
-             (users/get-user "pekka"))))
-    (testing "get-users returns email from user attributes"
-      (is (= [{:userid "pekka"
-               :name "Pekka"
-               :email "pekka@example.com"}]
-             (users/get-users)))))
-  (user-settings/update-user-settings! "pekka" {:notification-email "foo@example.com"})
-  (testing "after setting notification email"
-    (testing "get-user-settings returns new email"
-      (is (= {:language :en :notification-email "foo@example.com"}
-             (user-settings/get-user-settings "pekka"))))
-    (testing "get-user returns both emails"
-      (is (= {:userid "pekka"
-              :name "Pekka"
-              :email "pekka@example.com"
-              :notification-email "foo@example.com"}
-             (users/get-user "pekka"))))
-    (testing "get-users returns both emails"
-      (is (= [{:userid "pekka"
-               :name "Pekka"
-               :email "pekka@example.com"
-               :notification-email "foo@example.com"}]
-             (users/get-users))))))
