@@ -1,7 +1,6 @@
 (ns rems.db.applications
   "Query functions for forms and applications."
-  (:require [clojure.core.cache.wrapped :as cache]
-            [clojure.java.jdbc :as jdbc]
+  (:require [clojure.java.jdbc :as jdbc]
             [clojure.set :as set]
             [clojure.test :refer [deftest is]]
             [clojure.tools.logging :as log]
@@ -11,6 +10,7 @@
             [rems.application.events-cache :as events-cache]
             [rems.application.model :as model]
             [rems.auth.util :refer [throw-forbidden]]
+            [rems.cache :as cache]
             [rems.common.application-util :as application-util]
             [rems.common.util :refer [conj-set keep-keys]]
             [rems.config :refer [env]]
@@ -67,22 +67,22 @@
 
 ;;; Fetching applications (for API)
 
-(def ^:private form-template-cache (cache/ttl-cache-factory {}))
-(def ^:private catalogue-item-cache (cache/ttl-cache-factory {}))
-(def ^:private license-cache (cache/ttl-cache-factory {}))
-(def ^:private user-cache (cache/ttl-cache-factory {}))
-(def ^:private users-with-role-cache (cache/ttl-cache-factory {}))
-(def ^:private workflow-cache (cache/ttl-cache-factory {}))
-(def ^:private blacklist-cache (cache/ttl-cache-factory {}))
+(def ^:private form-template-cache (cache/ttl {:id ::form-template-cache}))
+(def ^:private catalogue-item-cache (cache/ttl {:id ::catalogue-item-cache}))
+(def ^:private license-cache (cache/ttl {:id ::license-cache}))
+(def ^:private user-cache (cache/ttl {:id ::user-cache}))
+(def ^:private users-with-role-cache (cache/ttl {:id ::users-with-role-cache}))
+(def ^:private workflow-cache (cache/ttl {:id ::workflow-cache}))
+(def ^:private blacklist-cache (cache/ttl {:id ::blacklist-cache}))
 
 (defn empty-injections-cache! []
-  (swap! form-template-cache empty)
-  (swap! catalogue-item-cache empty)
-  (swap! license-cache empty)
-  (swap! user-cache empty)
-  (swap! users-with-role-cache empty)
-  (swap! workflow-cache empty)
-  (swap! blacklist-cache empty))
+  (cache/reset! form-template-cache)
+  (cache/reset! catalogue-item-cache)
+  (cache/reset! license-cache)
+  (cache/reset! user-cache)
+  (cache/reset! users-with-role-cache)
+  (cache/reset! workflow-cache)
+  (cache/reset! blacklist-cache))
 
 (defn empty-injection-cache!
   "Sometimes another part of REMS invalidates the injections. While the caches
@@ -91,23 +91,22 @@
 
   NB: only the necessary invalidations have been implemented"
   [cache-key]
-  (swap! (case cache-key
-           :blacklisted? blacklist-cache
-           :get-workflow workflow-cache)
-         empty))
+  (cache/reset! (case cache-key
+                  :blacklisted? blacklist-cache
+                  :get-workflow workflow-cache)))
 
 (def fetcher-injections
   {:get-attachments-for-application attachments/get-attachments-for-application
-   :get-form-template #(cache/lookup-or-miss form-template-cache % form/get-form-template)
-   :get-catalogue-item #(cache/lookup-or-miss catalogue-item-cache % (fn [id] (catalogue/get-localized-catalogue-item id {:expand-names? true
-                                                                                                                          :expand-resource-data? true})))
+   :get-form-template #(cache/lookup-or-miss! form-template-cache % form/get-form-template)
+   :get-catalogue-item #(cache/lookup-or-miss! catalogue-item-cache % (fn [id] (catalogue/get-localized-catalogue-item id {:expand-names? true
+                                                                                                                           :expand-resource-data? true})))
    :get-config (fn [] env)
-   :get-license #(cache/lookup-or-miss license-cache % licenses/get-license)
-   :get-user #(cache/lookup-or-miss user-cache % users/get-user)
-   :get-users-with-role #(cache/lookup-or-miss users-with-role-cache % users/get-users-with-role)
-   :get-workflow #(cache/lookup-or-miss workflow-cache % workflow/get-workflow)
-   :blacklisted? #(cache/lookup-or-miss blacklist-cache [%1 %2] (fn [[userid resource]]
-                                                                  (blacklist/blacklisted? userid resource)))
+   :get-license #(cache/lookup-or-miss! license-cache % licenses/get-license)
+   :get-user #(cache/lookup-or-miss! user-cache % users/get-user)
+   :get-users-with-role #(cache/lookup-or-miss! users-with-role-cache % users/get-users-with-role)
+   :get-workflow #(cache/lookup-or-miss! workflow-cache % workflow/get-workflow)
+   :blacklisted? #(cache/lookup-or-miss! blacklist-cache [%1 %2] (fn [[userid resource]]
+                                                                   (blacklist/blacklisted? userid resource)))
    ;; TODO: no caching for these, but they're only used by command handlers currently
    :get-attachment-metadata attachments/get-attachment-metadata
    :get-catalogue-item-licenses get-catalogue-item-licenses})
