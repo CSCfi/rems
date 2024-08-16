@@ -10,4 +10,4 @@
 (defn migrate-up [config]
   (binding [*db* (:conn config)]
     (assert (= [{:test 1}] (jdbc/query *db* ["select 1 as test"])))
-    (assert (workflow/get-workflows {}))))
+    (assert (workflow/get-workflows))))

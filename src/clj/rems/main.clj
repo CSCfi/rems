@@ -21,6 +21,7 @@
             [rems.handler :as handler]
             [rems.json :as json]
             [rems.locales]
+            [rems.service.caches]
             [rems.service.fix-userid]
             [rems.service.test-data :as test-data]
             [rems.validate :as validate])
@@ -86,6 +87,7 @@
 
 (defn- refresh-caches []
   (log/info "Refreshing caches")
+  (rems.service.caches/start-all-caches!)
   (applications/refresh-all-applications-cache!)
   (search/refresh!)
   (log/info "Caches refreshed"))

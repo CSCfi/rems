@@ -79,7 +79,7 @@
               (not (:invitation/accepted invitation))
               (do
                 (workflow/edit-workflow! {:id workflow-id
-                                          :handlers (conj handlers userid)})
+                                          :handlers (vec (conj handlers userid))})
                 (invitation/accept-invitation! userid token)
                 (applications/reload-cache!)
                 {:success true

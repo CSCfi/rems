@@ -47,7 +47,7 @@
          :when (some? (val (first dep)))] ; remove nil dependencies, e.g. optional formid
      {:from {:catalogue-item/id (:id cat)} :to dep})
 
-   (for [workflow (workflow/get-workflows {})
+   (for [workflow (workflow/get-workflows)
          dep (concat
               (->> (get-in workflow [:workflow :licenses])
                    (mapv #(select-keys % [:license/id])))
