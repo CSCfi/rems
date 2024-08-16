@@ -13,7 +13,7 @@
             [rems.db.roles :as roles]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.db.test-data-users :refer :all]
-            [rems.db.users :as users]
+            [rems.db.users]
             [rems.db.workflow :as workflow]
             [rems.db.user-settings :as user-settings]
             [rems.service.form :as form]
@@ -37,7 +37,7 @@
   ;; users provided by the fake login
   (create-users-and-roles! +fake-users+ +fake-user-data+)
   ;; invalid user for tests
-  (db/add-user! {:user "invalid" :userattrs nil}))
+  (rems.db.users/add-user! "invalid" {}))
 
 (defn create-bots! []
   (doseq [attr (vals +bot-user-data+)]
@@ -691,9 +691,8 @@
                        (for [n (range-1 user-count)]
                          (fn []
                            (let [user-id (str "perftester" n)]
-                             (users/add-user-raw! user-id {:userid user-id
-                                                           :email (str user-id "@example.com")
-                                                           :name (str "Performance Tester " n)})
+                             (rems.db.users/add-user! user-id {:email (str user-id "@example.com")
+                                                               :name (str "Performance Tester " n)})
                              user-id)))))]
     (with-redefs [rems.config/env (assoc rems.config/env
                                          :enable-save-compaction false  ; generate more events without compaction

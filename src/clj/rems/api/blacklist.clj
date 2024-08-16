@@ -9,9 +9,9 @@
             [rems.common.roles :refer [+admin-read-roles+]]
             [rems.common.util :refer [getx-in]]
             [rems.db.resource :as resource]
-            [rems.db.users :as users]
             [rems.db.user-mappings :as user-mappings]
             [rems.schema-base :as schema-base]
+            [rems.service.users]
             [rems.util :refer [getx-user-id]]
             [ring.util.http-response :refer [ok]]
             [schema.core :as s])
@@ -29,12 +29,14 @@
          :blacklist/added-at DateTime))
 
 (defn- user-not-found-error [command]
-  (when-not (users/user-exists? (get-in command [:blacklist/user :userid]))
+  (when-not (rems.service.users/user-exists? (get-in command [:blacklist/user :userid]))
     (unprocessable-entity-json-response "user not found")))
 
 (defn- resource-not-found-error [command]
   (when-not (resource/ext-id-exists? (get-in command [:blacklist/resource :resource/ext-id]))
     (unprocessable-entity-json-response "resource not found")))
+
+(defn- get-blockable-users [] (rems.service.users/get-users))
 
 (def blacklist-api
   (context "/blacklist" []
@@ -53,7 +55,7 @@
       :summary "Existing REMS users available for adding to the blacklist"
       :roles  #{:owner :handler}
       :return [schema-base/UserWithAttributes]
-      (ok (users/get-users)))
+      (ok (get-blockable-users)))
 
     ;; TODO write access to blacklist for organization-owner
 

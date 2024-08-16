@@ -7,7 +7,7 @@
             [rems.auth.oidc :as oidc]
             [rems.config :refer [env]]
             [rems.db.api-key :as api-key]
-            [rems.db.users :as users]
+            [rems.db.users]
             [rems.db.user-mappings :as user-mappings]
             [ring.util.response :refer [redirect]]))
 
@@ -30,9 +30,7 @@
     (-authenticate [_ request _]
       (when (:uses-valid-api-key? request)
         (when-let [uid (get-api-user request)]
-          (merge {:userid uid}
-                 ;; we need the raw user attrs here to emulate other login methods
-                 (users/get-raw-user-attributes uid)))))))
+          (rems.db.users/get-user uid))))))
 
 (defn- auth-backends []
   [(api-key-backend) (session-backend)])

@@ -26,7 +26,6 @@
             [rems.context :as context]
             [rems.db.applications :as applications]
             [rems.db.test-data-helpers :as test-helpers]
-            [rems.db.users :as users]
             [rems.db.user-settings :as user-settings]
             [rems.main]
             [rems.testing-util :refer [with-user with-fake-login-users]]
@@ -2846,7 +2845,7 @@
   (btu/with-postmortem
     (testing "set up resource & user"
       (test-helpers/create-resource! {:resource-ext-id "blacklist-test"})
-      (users/add-user! {:userid "baddie" :name "Bruce Baddie" :email "bruce@example.com"}))
+      (test-helpers/create-user! {:userid "baddie" :name "Bruce Baddie" :email "bruce@example.com"}))
     (testing "add blacklist entry via resource page"
       (login-as "owner")
       (go-to-admin "Resources")

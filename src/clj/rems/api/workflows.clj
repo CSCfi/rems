@@ -1,11 +1,12 @@
 (ns rems.api.workflows
   (:require [compojure.api.sweet :refer :all]
             [rems.api.schema :as schema]
-            [rems.service.workflow :as workflow]
-            [rems.api.util :refer [not-found-json-response extended-logging]] ; required for route :roles
-            [rems.common.application-util :as application-util]
+            [rems.api.util :refer [not-found-json-response extended-logging]]
+            [rems.common.application-util :as application-util] ; required for route :roles
             [rems.common.roles :refer [+admin-read-roles+ +admin-write-roles+]]
             [rems.schema-base :as schema-base]
+            [rems.service.users]
+            [rems.service.workflow :as workflow]
             [ring.util.http-response :refer [ok]]
             [schema.core :as s]))
 
@@ -40,6 +41,8 @@
 ; TODO: deduplicate or decouple with /api/applications/reviewers API?
 (s/defschema AvailableActor schema-base/UserWithAttributes)
 (s/defschema AvailableActors [AvailableActor])
+
+(defn- get-available-actors [] (rems.service.users/get-users))
 
 (def workflows-api
   (context "/workflows" []
@@ -90,7 +93,7 @@
       :summary "List of available actors"
       :roles +admin-write-roles+
       :return AvailableActors
-      (ok (workflow/get-available-actors)))
+      (ok (get-available-actors)))
 
     (GET "/:workflow-id" []
       :summary "Get workflow by id"

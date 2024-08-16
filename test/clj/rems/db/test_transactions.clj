@@ -18,9 +18,8 @@
   reset-db-fixture)
 
 (defn- create-dummy-user []
-  (let [user-id "user"]
-    (users/add-user! {:userid user-id})
-    user-id))
+  (rems.db.users/add-user! "user" {})
+  "user")
 
 (defn- transaction-conflict? [^Exception e]
   (cond

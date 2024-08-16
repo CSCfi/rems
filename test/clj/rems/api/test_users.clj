@@ -3,12 +3,13 @@
             [rems.api.testing :refer :all]
             [rems.testing-util :refer [with-fake-login-users]]
             [rems.db.roles :as roles]
-            [rems.service.test-data :as test-data]
             [rems.db.testing :refer [owners-fixture +test-api-key+]]
             [rems.db.users :as users]
             [rems.db.user-mappings :as user-mappings]
             [rems.handler :refer [handler]]
             [rems.middleware :as middleware]
+            [rems.service.test-data :as test-data]
+            [rems.service.users]
             [ring.mock.request :refer :all]))
 
 (use-fixtures
@@ -103,7 +104,7 @@
         (is (= "forbidden" (read-body response))))))
 
   (testing "user with user-owner role"
-    (users/add-user! {:userid "user-owner"})
+    (rems.service.users/add-user! {:userid "user-owner"})
     (roles/add-role! "user-owner" :user-owner)
     (-> (request :post (str "/api/users/create"))
         (json-body {:userid "test1"

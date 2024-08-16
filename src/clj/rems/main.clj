@@ -17,13 +17,13 @@
             [rems.db.events]
             [rems.db.roles :as roles]
             [rems.db.user-settings]
-            [rems.db.users :as users]
             [rems.handler :as handler]
             [rems.json :as json]
             [rems.locales]
             [rems.service.caches]
             [rems.service.fix-userid]
             [rems.service.test-data :as test-data]
+            [rems.service.users]
             [rems.validate :as validate])
   (:import [sun.misc Signal SignalHandler]
            [org.eclipse.jetty.server.handler.gzip GzipHandler])
@@ -258,7 +258,7 @@
           "list-users"
           (do
             (mount/start #'rems.config/env #'rems.db.core/*db*)
-            (doseq [u (users/get-all-users)]
+            (doseq [u (rems.service.users/get-users)]
               (-> u
                   (assoc :roles (roles/get-roles (:userid u)))
                   json/generate-string

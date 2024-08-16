@@ -233,7 +233,7 @@
           old-mappings (rems.db.user-mappings/get-user-mappings {:userid old-userid})]
       (apply prn #'fix-user old-user old-settings old-mappings)
       (when-not simulate?
-        (rems.db.users/add-user! (assoc old-user :userid new-userid))
+        (rems.db.users/add-user! new-userid old-user)
         (rems.db.user-settings/update-user-settings! new-userid old-settings)
         (rems.db.user-mappings/delete-user-mapping! {:userid old-userid})
         (doseq [old-mapping old-mappings

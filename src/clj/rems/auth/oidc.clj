@@ -8,11 +8,11 @@
             [rems.common.util :refer [getx]]
             [rems.config :refer [env oidc-configuration]]
             [rems.db.user-mappings :as user-mappings]
-            [rems.db.users :as users]
             [rems.ga4gh :as ga4gh]
             [rems.json :as json]
             [rems.jwt :as jwt]
             [rems.plugins :as plugins]
+            [rems.service.users]
             [ring.util.response :refer [redirect]])
   (:import [java.time Instant]))
 
@@ -84,12 +84,7 @@
                              (let [mappings (user-mappings/get-user-mappings {:ext-id-attribute attribute :ext-id-value value})]
                                (:userid (first mappings))))] ; should be at most one by kv search
     (or (some user-mapping-match userid-attrs)
-        (find-first users/user-exists? (map second userid-attrs)))))
-
-(defn- upsert-user! [user]
-  (let [userid (:userid user)]
-    (users/add-user-raw! userid user)
-    user))
+        (find-first rems.service.users/user-exists? (map second userid-attrs)))))
 
 (defn- get-user-attributes [user-data]
   ;; XXX: consider using a plugin for the renaming
@@ -124,7 +119,7 @@
 (defn find-or-create-user! [user-data]
   (let [user (get-user-attributes user-data)
         _ (validate-user! user)
-        user (upsert-user! user)]
+        user (rems.service.users/add-user! user)] ; effectively upserts user
     (save-user-mappings! user-data (:userid user))
     user))
 

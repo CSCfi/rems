@@ -19,7 +19,7 @@
             [rems.db.roles :as roles]
             [rems.db.organizations]
             [rems.db.test-data-users :refer [+fake-user-data+]]
-            [rems.db.users :as users]
+            [rems.db.users]
             [rems.db.user-mappings :as user-mappings]
             [rems.testing-util :refer [with-user]])
   (:import [java.util UUID]))
@@ -59,7 +59,7 @@
   (let [mappings (:mappings user-attributes-and-mappings)
         user-attributes (dissoc user-attributes-and-mappings :mappings)
         user (:userid user-attributes)]
-    (users/add-user-raw! user user-attributes)
+    (rems.db.users/add-user! user user-attributes)
     (doseq [[k v] mappings]
       (user-mappings/create-user-mapping! {:userid user :ext-id-attribute k :ext-id-value v}))
     (doseq [role roles]

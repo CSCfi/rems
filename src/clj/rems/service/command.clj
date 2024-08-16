@@ -11,7 +11,7 @@
             [rems.db.core :as db]
             [rems.db.events :as events]
             [rems.db.entitlements :as entitlements]
-            [rems.db.users :as users]
+            [rems.db.users]
             [rems.db.user-mappings :as user-mappings]
             [rems.email.core :as email]
             [rems.event-notification :as event-notification]
@@ -38,7 +38,7 @@
          {:secure-token secure-token
           :allocate-application-ids! applications/allocate-application-ids!
           :copy-attachment! attachments/copy-attachment!
-          :valid-user? users/user-exists?
+          :valid-user? rems.db.users/user-exists?
           :find-userid user-mappings/find-userid}))
 
 (def ^:dynamic *fail-on-process-manager-errors* false)

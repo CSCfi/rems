@@ -4,7 +4,7 @@
             [rems.context :as context]
             [rems.db.applications :as applications]
             [rems.db.roles :as roles]
-            [rems.db.users :as users]
+            [rems.db.users]
             [rems.db.organizations :as organizations]
             [rems.locales]
             [rems.text])
@@ -54,7 +54,7 @@
     f))
 
 (defmacro with-user [user & body]
-  `(binding [context/*user* (users/get-raw-user-attributes ~user)
+  `(binding [context/*user* (rems.db.users/get-user ~user)
              context/*roles* (set/union (roles/get-roles ~user)
                                         (organizations/get-all-organization-roles ~user)
                                         (applications/get-all-application-roles ~user))]

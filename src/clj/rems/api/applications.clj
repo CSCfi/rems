@@ -9,17 +9,15 @@
             [rems.service.command :as command]
             [rems.service.licenses :as licenses]
             [rems.service.todos :as todos]
+            [rems.service.users]
             [rems.api.util :as api-util :refer [extended-logging]] ; required for route :roles
             [rems.application.commands :as commands]
             [rems.application.search :as search]
-            [rems.auth.auth :as auth]
             [rems.common.roles :refer [+admin-read-roles+]]
-            [rems.config :as config]
             [rems.context :as context]
             [rems.db.applications :as applications]
             [rems.db.csv :as csv]
             [rems.db.user-settings :as user-settings]
-            [rems.db.users :as users]
             [rems.pdf :as pdf]
             [rems.schema-base :as schema-base]
             [rems.text :refer [with-language]]
@@ -143,6 +141,10 @@
      true (sort-by last-activity >)
      limit (take limit))))
 
+(defn get-applicants [] (rems.service.users/get-users))
+(defn get-reviewers [] (rems.service.users/get-users))
+(defn get-deciders [] (rems.service.users/get-users))
+
 (def my-applications-api
   (context "/my-applications" []
     :tags ["applications"]
@@ -213,7 +215,7 @@
       :summary "Available reviewers"
       :roles #{:handler}
       :return Reviewers
-      (ok (users/get-reviewers)))
+      (ok (get-reviewers)))
 
     (GET "/export" []
       :summary "Export all submitted applications of a given form as CSV"
@@ -229,13 +231,13 @@
       :summary "Existing REMS users available for application membership"
       :roles #{:handler}
       :return [Applicant]
-      (ok (users/get-applicants)))
+      (ok (get-applicants)))
 
     (GET "/deciders" []
       :summary "Available deciders"
       :roles #{:handler}
       :return Deciders
-      (ok (users/get-deciders)))
+      (ok (get-deciders)))
 
     (GET "/attachment/:attachment-id" []
       :summary "Get an attachment"

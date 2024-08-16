@@ -2,7 +2,7 @@
   (:require [clojure.test :refer :all]
             [rems.db.roles :as roles]
             [rems.db.testing :refer [rollback-db-fixture test-db-fixture]]
-            [rems.db.users :as users]))
+            [rems.db.users]))
 
 (use-fixtures :once test-db-fixture)
 (use-fixtures :each rollback-db-fixture)
@@ -10,7 +10,7 @@
 (deftest test-roles
   (testing "get-roles for unknown user"
     (is (= #{:logged-in} (roles/get-roles "unknown-user"))))
-  (users/add-user! {:userid "user"})
+  (rems.db.users/add-user! "user" {})
   (testing "add role"
     (testing "as keyword"
       (roles/add-role! "user" :reporter)

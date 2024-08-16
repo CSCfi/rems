@@ -5,7 +5,7 @@
             [rems.db.form :as form]
             [rems.db.licenses :as licenses]
             [rems.db.organizations :as organizations]
-            [rems.db.users :as users]
+            [rems.db.users]
             [rems.db.workflow :as workflow]
             [rems.service.dependencies :as dependencies]
             [rems.service.util :as util]))
@@ -17,7 +17,7 @@
                :forms invalid}]}))
 
 (defn invalid-users-error [userids]
-  (when-some [invalid (seq (remove users/user-exists? userids))]
+  (when-some [invalid (seq (remove rems.db.users/user-exists? userids))]
     {:success false
      :errors [{:type :invalid-user
                :users invalid}]}))
@@ -114,8 +114,6 @@
        (apply-filters filters)
        (mapv join-dependencies)))
 
-(defn get-available-actors [] (users/get-users))
-
 (defn get-handlers []
   (let [workflows (->> (workflow/get-workflows)
                        (apply-filters {:enabled true
@@ -124,4 +122,3 @@
                            (get-in wf [:workflow :handlers]))
                          workflows)]
     (->> handlers distinct (sort-by :userid))))
-

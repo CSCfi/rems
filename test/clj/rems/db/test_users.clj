@@ -1,111 +1,89 @@
 (ns ^:integration rems.db.test-users
-  (:require [clojure.test :refer :all]
+  (:require [clojure.test :refer [deftest is testing use-fixtures]]
+            [rems.cache :as cache]
             [rems.db.core :as db]
-            [rems.db.roles :as roles]
             [rems.db.testing :refer [rollback-db-fixture test-db-fixture]]
-            [rems.db.users :as users]
-            [rems.db.user-settings :as user-settings]))
+            [rems.db.users]
+            [rems.db.user-settings]
+            [rems.json :as json]))
 
 (use-fixtures :once test-db-fixture)
 (use-fixtures :each rollback-db-fixture)
 
 (deftest test-users
-  ;; TODO: enforce that userid must be same?
-  (users/add-user-raw! "user1" {:userid "whatever"
-                                :name "What Ever"
-                                :some-attr "some value"})
-  (users/add-user-raw! "user-with-org" {:userid "user-with-org"
-                                        :name "User Org"
-                                        :email "user@org"
-                                        ;;:notification-email "user@alt"
-                                        :organizations [{:organization/id "org"}]})
+  (testing "get users"
+    (rems.db.users/add-user! "user1" {:userid "whatever" ; userid is ignored
+                                      :name "What Ever"
+                                      :some-attr "some value"})
+    (is (= {:userid "user1"
+            :name "What Ever"
+            :email nil
+            :some-attr "some value"}
+           (rems.db.users/get-user "user1")))
+
+    (rems.db.users/add-user! "user-with-org" {:name "User Org"
+                                              :email "user@org"
+                                              :organizations [{:organization/id "org"}]})
+    (is (= {:userid "user-with-org"
+            :name "User Org"
+            :email "user@org"
+            :organizations [{:organization/id "org"}]}
+           (rems.db.users/get-user "user-with-org")))
+
+    (testing "user has different userid in userattrs"
+      (db/add-user! {:user "different-userid" :userattrs (json/generate-string {:userid "bad"})})
+      (cache/reset! rems.db.users/user-cache)
+      (is (= {:userid "bad"
+              :name nil
+              :email nil}
+             (rems.db.users/get-user "different-userid"))))
+
+    (testing "non-existent user gets default attributes but is not persisted"
+      (is (= {:userid "nonexistent"
+              :name nil
+              :email nil}
+             (rems.db.users/get-user "nonexistent")))
+
+      (is (= [{:userid "bad" :name nil :email nil}
+              {:userid "user-with-org" :name "User Org" :email "user@org" :organizations [{:organization/id "org"}]}
+              {:userid "user1" :name "What Ever" :email nil :some-attr "some value"}]
+             (sort-by :userid (rems.db.users/get-users))))))
 
   (testing "survives partial user settings"
-    (user-settings/update-user-settings! "user1" {:language :fi}) ; missing notification-email
+    (rems.db.user-settings/update-user-settings! "user1" {:language :fi}) ; missing notification-email
 
     (is (= {:userid "user1"
             :name "What Ever"
-            :email nil}
-           (users/get-user "user1")))
+            :email nil
+            :some-attr "some value"}
+           (rems.db.users/get-user "user1")))
 
-    (is (= {:language :fi :notification-email nil} (user-settings/get-user-settings "user1"))
+    (is (= {:language :fi :notification-email nil} (rems.db.user-settings/get-user-settings "user1"))
         "default is returned for notification-email")
 
     (is (= {:success true}
-           (user-settings/update-user-settings! "user1" {:language :en}))
+           (rems.db.user-settings/update-user-settings! "user1" {:language :en}))
         "settings can be updated")
 
     (is (= {:userid "user1"
             :name "What Ever"
-            :email nil}
-           (users/get-user "user1")))
+            :email nil
+            :some-attr "some value"}
+           (rems.db.users/get-user "user1")))
 
-    (is (= {:language :en :notification-email nil} (user-settings/get-user-settings "user1"))
+    (is (= {:language :en :notification-email nil} (rems.db.user-settings/get-user-settings "user1"))
         "default is returned for notification-email"))
 
-  (testing "get-raw-user-attributes"
-    (is (= {:userid "whatever"
-            :name "What Ever"
-            :some-attr "some value"}
-           (users/get-raw-user-attributes "user1")))
-    (is (= {:userid "user-with-org"
-            :name "User Org"
-            :email "user@org"
-            :organizations [{:organization/id "org"}]}
-           (users/get-raw-user-attributes "user-with-org"))))
-
-  (testing "get-user"
-    (is (= {:userid "user1"
-            :name "What Ever"
-            :email nil}
-           (users/get-user "user1")))
-    (is (= {:userid "user-with-org"
-            :name "User Org"
-            :email "user@org"
-            :organizations [{:organization/id "org"}]}
-           (users/get-user "user-with-org"))))
-
-  (testing "get-all-users"
-    (is (= [{:userid "user-with-org"
-             :name "User Org"
-             :email "user@org"
-             :organizations [{:organization/id "org"}]}
-            {:userid "whatever"
-             :name "What Ever"
-             :email nil}]
-           (sort-by :userid (users/get-all-users)))))
-
-  (testing "get-users-with-role"
-    (roles/add-role! "user1" :owner)
-    (is (= ["user1"] (users/get-users-with-role :owner)))
-    (is (= [] (users/get-users-with-role :reporter))))
-
-  (testing "get-deciders"
-    (is (= #{{:userid "whatever", :name "What Ever", :email nil}
-             {:userid "user-with-org",
-              :name "User Org",
-              :email "user@org",
-              :organizations [#:organization{:id "org"}]}} (set (users/get-deciders)))))
-
-  (testing "update user with add-user-raw!"
-    (users/add-user-raw! "user1" {:userid "user1"
-                                  :name "new name"})
+  (testing "update user"
+    (rems.db.users/add-user! "user1" {:name "new name"})
     (is (= {:userid "user1"
             :name "new name"
             :email nil}
-           (users/get-user "user1"))))
+           (rems.db.users/get-user "user1")))
 
-  (testing "update user with add-user!"
-    (users/add-user! {:userid "user1"
-                      :name "newer name"
-                      :email "foo@example.com"})
+    (rems.db.users/edit-user! "user1" {:name "newer name"
+                                       :email "foo@example.com"})
     (is (= {:userid "user1"
             :name "newer name"
             :email "foo@example.com"}
-           (users/get-user "user1")))))
-
-(deftest test-nonexistent-user
-  (is (= {:userid "nonexistent"
-          :name nil
-          :email nil}
-         (users/get-user "nonexistent"))))
+           (rems.db.users/get-user "user1")))))

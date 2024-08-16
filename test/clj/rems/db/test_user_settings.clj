@@ -1,5 +1,5 @@
 (ns ^:integration rems.db.test-user-settings
-  (:require [clojure.test :refer :all]
+  (:require [clojure.test :refer [deftest is testing use-fixtures]]
             [rems.db.testing :refer [rollback-db-fixture test-db-fixture]]
             [rems.db.user-settings :as user-settings]
             [rems.db.users]
@@ -9,8 +9,8 @@
 (use-fixtures :each rollback-db-fixture)
 
 (deftest test-user-settings
-  (rems.db.users/add-user! {:userid "user"})
-  (rems.db.users/add-user! {:userid "unrelated"})
+  (rems.db.users/add-user! "user" {})
+  (rems.db.users/add-user! "unrelated" {})
 
   (testing "default settings for a new user"
     (is (= {:language :en
