@@ -1,10 +1,12 @@
 (ns rems.service.caches
   (:require [rems.cache :as cache]
+            [rems.db.user-settings]
             [rems.db.workflow]))
 
 (def db-caches
   "Caches that use existing database."
-  #{#'rems.db.workflow/workflow-cache})
+  #{#'rems.db.user-settings/user-settings-cache
+    #'rems.db.workflow/workflow-cache})
 
 (defn start-caches! [& caches]
   (->> caches
