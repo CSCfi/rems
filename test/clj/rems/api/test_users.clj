@@ -144,7 +144,7 @@
                                                                                 {:attribute "old_sub"}])]
     (with-fake-login-users {"alice" {:sub "alice" :name "Alice Applicant" :email "alice@example.com" :nickname "In Wonderland"}
                             "elixir-alice" {:sub "elixir-alice" :old_sub "alice" :name "Elixir Alice" :email "alice@elixir-europe.org"}}
-      (is (nil? (user-mappings/get-user-mappings {:ext-id-attribute "elixirId" :ext-id-value "elixir-alice"})) "user mapping should not exist")
+      (is (= [] (user-mappings/get-user-mappings {:ext-id-attribute "elixirId" :ext-id-value "elixir-alice"})) "user mapping should not exist")
 
       (testing "log in alice"
         (let [cookie (login-with-cookies "alice")]
@@ -161,7 +161,7 @@
               "alice shows as active")))
 
       (testing "log in elixir-alice and create user mapping"
-        (is (nil? (user-mappings/get-user-mappings {:ext-id-attribute "elixirId" :ext-id-value "elixir-alice"})) "user mapping should not exist")
+        (is (= [] (user-mappings/get-user-mappings {:ext-id-attribute "elixirId" :ext-id-value "elixir-alice"})) "user mapping should not exist")
         (let [cookie (login-with-cookies "elixir-alice")]
           (assert-can-make-a-request! cookie)
           (is (= [{:userid "alice"
@@ -200,15 +200,15 @@
                                            :ext-id-value "alice-alt-id"
                                            :ext-id-attribute "alt-id2"})
       (is (= [{:userid "alice"
-               :ext-id-value "elixir-alice"
-               :ext-id-attribute "elixirId"}
-              {:userid "alice"
                :ext-id-value "alice-alt-id"
                :ext-id-attribute "alt-id"}
               {:userid "alice"
                :ext-id-value "alice-alt-id"
-               :ext-id-attribute "alt-id2"}]
-             (user-mappings/get-user-mappings {:userid "alice"})))
+               :ext-id-attribute "alt-id2"}
+              {:userid "alice"
+               :ext-id-value "elixir-alice"
+               :ext-id-attribute "elixirId"}]
+             (sort-by :ext-id-attribute (user-mappings/get-user-mappings {:userid "alice"}))))
       (is (= [{:userid "alice"
                :ext-id-value "elixir-alice"
                :ext-id-attribute "elixirId"}]
@@ -219,20 +219,20 @@
               {:userid "alice"
                :ext-id-value "alice-alt-id"
                :ext-id-attribute "alt-id2"}]
-             (user-mappings/get-user-mappings {:ext-id-value "alice-alt-id"})))
+             (sort-by :ext-id-attribute (user-mappings/get-user-mappings {:ext-id-value "alice-alt-id"}))))
 
-      (user-mappings/delete-user-mapping! "unrelated") ; should not affect tested data
+      (user-mappings/delete-user-mapping! {:userid "unrelated"}) ; should not affect tested data
 
       (is (= [{:userid "alice"
-               :ext-id-value "elixir-alice"
-               :ext-id-attribute "elixirId"}
-              {:userid "alice"
                :ext-id-value "alice-alt-id"
                :ext-id-attribute "alt-id"}
               {:userid "alice"
                :ext-id-value "alice-alt-id"
-               :ext-id-attribute "alt-id2"}]
-             (user-mappings/get-user-mappings {:userid "alice"})))
+               :ext-id-attribute "alt-id2"}
+              {:userid "alice"
+               :ext-id-value "elixir-alice"
+               :ext-id-attribute "elixirId"}]
+             (sort-by :ext-id-attribute (user-mappings/get-user-mappings {:userid "alice"}))))
       (is (= [{:userid "alice"
                :ext-id-value "elixir-alice"
                :ext-id-attribute "elixirId"}]
@@ -243,13 +243,13 @@
               {:userid "alice"
                :ext-id-value "alice-alt-id"
                :ext-id-attribute "alt-id2"}]
-             (user-mappings/get-user-mappings {:ext-id-value "alice-alt-id"})))
+             (sort-by :ext-id-attribute (user-mappings/get-user-mappings {:ext-id-value "alice-alt-id"}))))
 
-      (user-mappings/delete-user-mapping! "alice")
+      (user-mappings/delete-user-mapping! {:userid "alice"})
 
-      (is (= nil (user-mappings/get-user-mappings {:userid "alice"})))
-      (is (= nil (user-mappings/get-user-mappings {:ext-id-value "elixir-alice"})))
-      (is (= nil (user-mappings/get-user-mappings {:ext-id-value "alice-alt-id"}))))))
+      (is (= [] (user-mappings/get-user-mappings {:userid "alice"})))
+      (is (= [] (user-mappings/get-user-mappings {:ext-id-value "elixir-alice"})))
+      (is (= [] (user-mappings/get-user-mappings {:ext-id-value "alice-alt-id"}))))))
 
 
 (deftest test-user-name

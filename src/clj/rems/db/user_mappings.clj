@@ -1,6 +1,7 @@
 (ns rems.db.user-mappings
   (:require [clojure.string :as str]
-            [rems.common.util :refer [apply-filters conj-vec]]
+            [rems.cache :as cache]
+            [rems.common.util :refer [apply-filters]]
             [rems.db.core :as db]
             [schema.core :as s]))
 
@@ -12,55 +13,51 @@
 (def ^:private validate-user-mapping
   (s/validator UserMappings))
 
-(defn- format-user-mapping [mapping]
-  {:userid (:userid mapping)
-   :ext-id-attribute (:extidattribute mapping)
-   :ext-id-value (:extidvalue mapping)})
+(defn- format-user-mapping-raw [x]
+  (-> {:userid (:userid x)
+       :ext-id-attribute (:extidattribute x)
+       :ext-id-value (:extidvalue x)}
+      validate-user-mapping))
 
-(defn- load-user-mappings []
-  (->> (db/get-user-mappings {})
-       (mapv format-user-mapping)
-       (mapv validate-user-mapping)
-       (group-by :ext-id-value)))
+(def user-mappings-cache
+  (cache/basic {:id ::user-mappings-cache
+                :miss-fn (fn [userid]
+                           (if-let [mappings (not-empty (db/get-user-mappings {:userid userid}))]
+                             (mapv format-user-mapping-raw mappings)
+                             cache/absent))
+                :reload-fn (fn []
+                             (->> (db/get-user-mappings {})
+                                  (eduction (map format-user-mapping-raw))
+                                  (group-by :userid)))}))
 
-;; NB: user mappings are always cached
-;; XXX: consider if this should rather be mount state eventually?
-(def ^:private user-mappings-by-value (atom nil))
+(def ^:private by-extidattribute
+  (cache/basic {:id ::by-extidattribute-cache
+                :depends-on [::user-mappings-cache]
+                :reload-fn #(group-by :ext-id-attribute (mapcat val (cache/entries! user-mappings-cache)))}))
 
-(defn- ensure-cached! []
-  (when (nil? @user-mappings-by-value)
-    (reset! user-mappings-by-value (load-user-mappings))))
+(def ^:private by-extidvalue
+  (cache/basic {:id ::by-extidvalue-cache
+                :depends-on [::user-mappings-cache]
+                :reload-fn #(group-by :ext-id-value (mapcat val (cache/entries! user-mappings-cache)))}))
 
-;; TODO: external API or process to reset cache if needed (db updated)
-(defn reset-cache! []
-  (reset! user-mappings-by-value nil))
-
-(defn get-user-mappings [params]
-  (ensure-cached!)
-  (->> (if (:ext-id-value params) ; can use index?
-         (get @user-mappings-by-value (:ext-id-value params))
-         (mapcat val @user-mappings-by-value))
-       (apply-filters (dissoc params :ext-id-value))
-       not-empty))
+(defn get-user-mappings [{:keys [ext-id-attribute ext-id-value userid] :as filters}]
+  (let [from-caches [(some->> ext-id-attribute (cache/lookup! by-extidattribute))
+                     (some->> ext-id-value (cache/lookup! by-extidvalue))
+                     (some->> userid (cache/lookup-or-miss! user-mappings-cache))]]
+    (->> from-caches
+         (eduction (mapcat seq)
+                   (apply-filters filters)
+                   (distinct))
+         (into []))))
 
 (defn create-user-mapping! [user-mapping]
-  (ensure-cached!)
-  (let [mapping (-> user-mapping
-                    validate-user-mapping)]
+  (let [{:keys [userid] :as mapping} (validate-user-mapping user-mapping)]
     (db/create-user-mapping! mapping)
-    (swap! user-mappings-by-value
-           (fn [mappings]
-             (update mappings (:ext-id-value mapping) (comp vec distinct conj-vec) mapping)))))
+    (cache/miss! user-mappings-cache userid)))
 
-(defn delete-user-mapping! [userid]
-  (ensure-cached!)
+(defn delete-user-mapping! [{:keys [userid]}]
   (db/delete-user-mapping! {:userid userid})
-  (swap! user-mappings-by-value
-         (fn [mappings]
-           (->> mappings
-                (mapcat val)
-                (remove #(= userid (:userid %)))
-                (group-by :ext-id-value)))))
+  (cache/evict! user-mappings-cache userid))
 
 (defn find-userid
   "Figures out the `userid` of a user reference.

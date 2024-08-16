@@ -9,8 +9,8 @@
 (use-fixtures :each rollback-db-fixture)
 
 (deftest test-user-settings
-  (rems.db.users/add-user! "user" {:userid "user"})
-  (rems.db.users/add-user! "unrelated" {:userid "unrelated"})
+  (rems.db.users/add-user! {:userid "user"})
+  (rems.db.users/add-user! {:userid "unrelated"})
 
   (testing "default settings for a new user"
     (is (= {:language :en
