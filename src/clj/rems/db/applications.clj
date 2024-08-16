@@ -22,6 +22,7 @@
             [rems.db.events :as events]
             [rems.db.form :as form]
             [rems.db.licenses :as licenses]
+            [rems.db.roles]
             [rems.db.users]
             [rems.db.workflow :as workflow]
             [rems.permissions :as permissions]
@@ -70,14 +71,12 @@
 (def ^:private form-template-cache (cache/ttl {:id ::form-template-cache}))
 (def ^:private catalogue-item-cache (cache/ttl {:id ::catalogue-item-cache}))
 (def ^:private license-cache (cache/ttl {:id ::license-cache}))
-(def ^:private users-with-role-cache (cache/ttl {:id ::users-with-role-cache}))
 (def ^:private blacklist-cache (cache/ttl {:id ::blacklist-cache}))
 
 (defn empty-injections-cache! []
   (cache/reset! form-template-cache)
   (cache/reset! catalogue-item-cache)
   (cache/reset! license-cache)
-  (cache/reset! users-with-role-cache)
   (cache/reset! blacklist-cache))
 
 (defn empty-injection-cache!
@@ -98,7 +97,7 @@
    :get-config (fn [] env)
    :get-license #(cache/lookup-or-miss! license-cache % licenses/get-license)
    :get-user rems.db.users/get-user
-   :get-users-with-role #(cache/lookup-or-miss! users-with-role-cache % rems.db.users/get-users-with-role)
+   :get-users-with-role rems.db.roles/get-users-with-role
    :get-workflow rems.db.workflow/get-workflow
    :blacklisted? #(cache/lookup-or-miss! blacklist-cache [%1 %2] (fn [[userid resource]]
                                                                    (blacklist/blacklisted? userid resource)))

@@ -1,7 +1,6 @@
 
 (ns rems.service.fix-userid
-  (:require rems.service.dependencies
-            [rems.db.api-key]
+  (:require [rems.db.api-key]
             [rems.db.applications]
             [rems.db.attachments]
             [rems.db.blacklist]
@@ -16,7 +15,8 @@
             [rems.db.user-mappings]
             [rems.db.user-settings]
             [rems.db.users]
-            [rems.db.workflow]))
+            [rems.db.workflow]
+            [rems.service.dependencies]))
 
 (defn fix-apikey [old-userid new-userid simulate?]
   (doall
@@ -206,19 +206,13 @@
 
 
 (defn fix-roles [old-userid new-userid simulate?]
-  (doall
-   (for [old (rems.db.roles/get-all-roles)
-         :let [new (if (= old-userid (:userid old))
-                     (assoc old :userid new-userid)
-                     old)]
-         :when (not= new old)
-         :let [params [new]]]
-     (do
-       (apply prn #'fix-roles old params)
-       (when-not simulate?
-         (rems.db.roles/remove-roles! old-userid)
-         (apply rems.db.roles/update-roles! params))
-       {:old old :params params}))))
+  (when-let [old-roles (rems.db.roles/get-roles old-userid)]
+    (apply prn #'fix-roles old-userid old-roles)
+    (when-not simulate?
+      (rems.db.roles/remove-roles! old-userid)
+      (rems.db.roles/update-roles! new-userid old-roles))
+    {:old {:userid old-userid :roles old-roles}
+     :params [new-userid old-roles]}))
 
 (comment
   (fix-roles "frank" "owner" false))
