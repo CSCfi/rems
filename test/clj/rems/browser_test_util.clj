@@ -104,7 +104,8 @@
     (reset-window-size!)))
 
 (def ^:private driver-defaults
-  {:args ["--lang=en-US"]
+  {:args ["--lang=en-US"
+          "--disable-search-engine-choice-screen"] ; https://stackoverflow.com/a/78800001
    :prefs {:intl.accept_languages "en-US"
            :download.directory_upgrade true
            :safebrowsing.enabled false
