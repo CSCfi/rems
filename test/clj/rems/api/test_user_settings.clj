@@ -8,7 +8,7 @@
   (:import [java.util UUID]))
 
 (use-fixtures
-  :once
+  :each
   api-fixture)
 
 (deftest user-settings-api-test

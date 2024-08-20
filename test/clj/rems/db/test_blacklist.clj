@@ -5,10 +5,8 @@
             [rems.db.test-data-helpers :as test-helpers]
             [rems.db.testing :refer [test-db-fixture rollback-db-fixture]]))
 
-(use-fixtures
-  :each
-  test-db-fixture
-  rollback-db-fixture)
+(use-fixtures :once test-db-fixture)
+(use-fixtures :each rollback-db-fixture)
 
 (deftest test-blacklist-event-storage
   (test-helpers/create-user! {:userid "user1"})

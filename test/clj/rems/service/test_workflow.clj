@@ -2,15 +2,11 @@
   (:require [clojure.test :refer :all]
             [rems.db.applications :as applications]
             [rems.db.test-data-helpers :as test-helpers]
-            [rems.db.testing :refer [reset-caches-fixture rollback-db-fixture test-db-fixture]]
+            [rems.db.testing :refer [rollback-db-fixture test-db-fixture]]
             [rems.service.workflow :as workflow]
             [rems.testing-util :refer [with-user]]))
 
-(use-fixtures
-  :once
-  test-db-fixture
-  reset-caches-fixture)
-
+(use-fixtures :once test-db-fixture)
 (use-fixtures :each rollback-db-fixture)
 
 (defn- create-users []

@@ -13,7 +13,7 @@
             [schema.core :as s]))
 
 (use-fixtures
-  :once
+  :each
   api-fixture)
 
 (deftest jwk-api

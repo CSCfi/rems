@@ -6,19 +6,31 @@
             [mount.core :as mount]
             [rems.application.search]
             [rems.config :refer [env]]
-            [rems.db.applications :as applications]
-            [rems.db.catalogue :as catalogue]
-            [rems.db.category :as category]
+            [rems.db.applications]
+            [rems.db.catalogue]
+            [rems.db.category]
             [rems.db.core :as db]
-            [rems.db.events :as events]
-            [rems.db.user-mappings :as user-mappings]
+            [rems.db.events]
+            [rems.db.user-mappings]
             [rems.db.user-settings]
             [rems.locales]
-            [rems.service.dependencies :as dependencies]
+            [rems.service.caches]
+            [rems.service.dependencies]
             [rems.service.test-data :as test-data]))
+
+(defn- reset-caches! []
+  (rems.service.caches/reset-all-caches!)
+  (rems.db.applications/reset-cache!)
+  (rems.db.applications/empty-injections-cache!)
+  (rems.db.catalogue/reset-cache!)
+  (rems.db.category/reset-cache!)
+  (rems.service.dependencies/reset-cache!)
+  (rems.db.user-mappings/reset-cache!)
+  (rems.db.events/empty-event-cache!))
 
 (defn reset-db-fixture [f]
   (try
+    (reset-caches!)
     (f)
     (finally
       (migrations/migrate ["reset"] {:database-url (:test-database-url env)}))))
@@ -30,42 +42,27 @@
                          #'rems.locales/translations
                          #'rems.db.core/*db*)
   (db/assert-test-database!)
-
-  ;; these are db level caches and tests use db rollback
-  ;; it's best for us to start from scratch here
-  (applications/empty-injections-cache!)
-
   (migrations/migrate ["migrate"] {:database-url (:test-database-url env)})
   ;; need DB to start these
   (mount/start #'rems.db.events/low-level-events-cache
-               #'rems.db.user-settings/low-level-user-settings-cache)
-  (f)
-  (mount/stop))
+               #'rems.db.user-settings/low-level-user-settings-cache
+               #'rems.db.applications/all-applications-cache)
+  (reset-caches!)
+  (f))
 
 (defn search-index-fixture [f]
   ;; no specific teardown. relies on the teardown of test-db-fixture.
   (mount/start #'rems.application.search/search-index)
   (f))
 
-(defn reset-caches-fixture [f]
-  (try
-    (mount/start #'applications/all-applications-cache)
-    (f)
-    (finally
-      (applications/reset-cache!)
-      (catalogue/reset-cache!)
-      (category/reset-cache!)
-      (dependencies/reset-cache!)
-      (user-mappings/reset-cache!)
-      (events/empty-event-cache!))))
-(def +test-api-key+ test-data/+test-api-key+) ;; re-exported for convenience
+(def +test-api-key+ test-data/+test-api-key+) ; re-exported for convenience
 
 (defn owners-fixture [f]
   (test-data/create-owners!)
   (f))
 
 (defn rollback-db-fixture [f]
+  (reset-caches!)
   (conman/with-transaction [db/*db* {:isolation :serializable}]
     (jdbc/db-set-rollback-only! db/*db*)
-    (events/empty-event-cache!) ; NB can't rollback this cache so reset
     (f)))
