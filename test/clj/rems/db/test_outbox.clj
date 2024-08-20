@@ -5,10 +5,8 @@
             [rems.db.outbox :as outbox])
   (:import [org.joda.time DateTime Duration DateTimeUtils]))
 
-(use-fixtures
-  :once
-  test-db-fixture
-  rollback-db-fixture)
+(use-fixtures :once test-db-fixture)
+(use-fixtures :each rollback-db-fixture)
 
 (deftest test-outbox
   (let [deadline (-> (time/now) (.plusMinutes 1))

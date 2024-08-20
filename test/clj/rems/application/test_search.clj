@@ -9,8 +9,9 @@
 (use-fixtures
   :once
   test-db-fixture
-  rollback-db-fixture
   search-index-fixture)
+
+(use-fixtures :each rollback-db-fixture)
 
 (deftest test-application-search
   ;; generate users with full names and emails

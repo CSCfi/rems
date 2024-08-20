@@ -7,7 +7,7 @@
             [rems.handler :refer [handler]]
             [ring.mock.request :refer :all]))
 
-(use-fixtures :once api-fixture)
+(use-fixtures :each api-fixture)
 
 (deftest test-api-not-found
   (testing "unknown endpoint"
