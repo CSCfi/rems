@@ -1059,7 +1059,7 @@
     (testing "handler should see application after clicking on View"
       (wait-page-title (format "Application %s: test-handling – REMS" (btu/context-getx :external-id))))
     (testing "handler should see the applicant info"
-      (open-collapsible :applicants-info-collapsible)
+      (open-collapsible :applicant-info-collapsible)
       (btu/screenshot "after-opening-applicant-info")
       (is (= {"Name" "Alice Applicant"
               "Accepted terms of use" true
