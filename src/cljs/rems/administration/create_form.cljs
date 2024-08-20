@@ -693,7 +693,7 @@
   (let [fields (indexed @(rf/subscribe [::fields]))
         field-count (count fields)]
     (into [:<>
-           [:div.new-form-field
+           [:div.new-form-field {:data-field-index 0}
             [add-form-field-button 0]]]
           (for [[idx field] fields]
             ^{:key (get-field-key field idx)}
@@ -701,7 +701,7 @@
              [:div.form-field {:data-field-id (:field/id field)
                                :data-field-index idx}
               [field-editor idx field field-count]]
-             [:div.new-form-field
+             [:div.new-form-field {:data-field-index (inc idx)}
               [add-form-field-button (inc idx)]]]))))
 
 (defn- render-preview-hidden []

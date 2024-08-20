@@ -153,10 +153,18 @@
   (btu/wait-visible [{:id (name id)}
                      {:css ".collapse-open"}]))
 
-(defn aria-controls [id] (format "[aria-controls='%s']" (name id)))
+(defn aria-controls [& [id]]
+  (if id
+    (format "[aria-controls='%s']" (name id))
+    "[aria-controls]"))
+
+(defn aria-expanded [& [value]]
+  (if (some? value)
+    (format "[aria-expanded='%s']" (true? value))
+    "[aria-expanded]"))
 
 (defn open-external-collapsible [id]
-  (btu/scroll-and-click {:css (str "a.show-more-link" (aria-controls id))})
+  (btu/scroll-and-click {:css (str (aria-controls id) (aria-expanded false))})
   (btu/wait-visible [{:id (name id)}
                      {:css ".collapse-open"}]))
 
@@ -2143,30 +2151,31 @@
 ;; NB: admin components use 0-base index (for both data and id)
 (defn field-component [attr] {:id (format "fields-%s-%s" (btu/context-getx :field-index) (name attr))})
 (defn preview-component [attr] {:id (format "form-1-field-%s-%s" (btu/context-getx :field-id) (name attr))})
+
 (defn field-settings-collapsible [] {:id (format "field-collapsible-%s-settings" (btu/context-getx :field-id))})
 (defn field-placeholder-collapsible [] {:id (format "field-collapsible-%s-placeholder" (btu/context-getx :field-id))})
 (defn field-description-collapsible [] {:id (format "field-collapsible-%s-description" (btu/context-getx :field-id))})
 
-(defn field-editor [& [{:keys [id index]}]]
+(defn field-editor [& [id index]]
   {:css (str ".form-field"
              (format "[data-field-id='%s']" (name (or id (btu/context-getx :field-id))))
              (format "[data-field-index='%s']" (or index (btu/context-getx :field-index))))})
 
-(defn field-preview [& [{:keys [id index]}]]
+(defn field-preview [& [id index]]
   {:css (str ".field-preview"
              (format "[data-field-id='%s']" (name (or id (btu/context-getx :field-id))))
              (format "[data-field-index='%s']" (or index (btu/context-getx :field-index))))})
 
-(defn check-data-attribute! [elem k v]
-  (is (= (str v) (btu/get-element-attr-el elem (str "data-" (name k)))))
-  v)
-
-(defn add-form-field! [{:keys [expected-field-id expected-field-index]}]
-  (btu/scroll-and-click-el (nth (btu/query-all {:class :add-form-field}) expected-field-index))
-  (btu/wait-visible {:css ".form-field"})
-  (let [new-field (nth (btu/query-all {:css ".form-field"}) expected-field-index)]
-    (btu/context-assoc! :field-id (check-data-attribute! new-field :field-id expected-field-id)
-                        :field-index (check-data-attribute! new-field :field-index expected-field-index))))
+(defn add-form-field! [& [{:keys [expected-field-id expected-field-index]}]]
+  (btu/context-assoc! :field-index (or expected-field-index
+                                       (some-> (btu/context-get :field-index) inc)
+                                       0))
+  (btu/context-assoc! :field-id (or expected-field-id
+                                    (str "fld" (inc (btu/context-getx :field-index)))))
+  (let [idx (btu/context-getx :field-index)]
+    (btu/scroll-and-click [{:css (format ".new-form-field[data-field-index='%s']" idx)}
+                           {:fn/text "Add field"}])
+    (btu/wait-visible (field-editor))))
 
 (defn fill-localized-title! [fmt]
   (btu/fill-human (field-component :title-en) (format fmt "EN"))
@@ -2183,7 +2192,7 @@
   (btu/fill-human (field-component :info-text-fi) (format fmt "FI"))
   (btu/fill-human (field-component :info-text-sv) (format fmt "SV"))
   ;; check preview as well
-  (btu/scroll-and-click [{:css (aria-controls (:id (preview-component :collapsible)))}])
+  (btu/scroll-and-click {:css (aria-controls (:id (preview-component :collapsible)))})
   (is (btu/eventually-visible? (preview-component :collapsible)))
   (is (= (btu/value-of (preview-component :collapsible))
          (format fmt "EN"))))
@@ -2205,7 +2214,7 @@
       (fill-form-field "SV" "Form Editor Test (SV)")
 
       (testing "add and remove a field"
-        (add-form-field! {:expected-field-id "fld1" :expected-field-index 0})
+        (add-form-field! {:expected-field-index 0})
         (btu/scroll-and-click [(field-editor) {:css ".form-field-controls .remove"}])
         (btu/wait-has-alert)
         (btu/accept-alert)
@@ -2215,7 +2224,7 @@
       (testing "create all field types"
 
         (testing "create text field"
-          (add-form-field! {:expected-field-id "fld1" :expected-field-index 0})
+          (add-form-field! {:expected-field-index 0})
           (testing "fill localized title"
             (fill-localized-title! "Text field (%s)"))
           (testing "fill localized placeholder"
@@ -2231,7 +2240,7 @@
             (btu/fill-human (field-component :max-length) "127")))
 
         (testing "create text area"
-          (add-form-field! {:expected-field-id "fld2" :expected-field-index 1})
+          (add-form-field!)
           (btu/scroll-and-click (field-component :type-texta))
           (testing "fill localized title"
             (fill-localized-title! "Text area (%s)"))
@@ -2248,7 +2257,7 @@
             (btu/fill-human (field-component :max-length) "127")))
 
         (testing "create option field"
-          (add-form-field! {:expected-field-id "fld3" :expected-field-index 2})
+          (add-form-field!)
           (btu/scroll-and-click (field-component :type-option))
           (testing "fill localized title"
             (fill-localized-title! "Option list (%s)"))
@@ -2271,7 +2280,7 @@
             (btu/fill-human (field-component :options-1-label-sv) "Nej")))
 
         (testing "create multi-select field"
-          (add-form-field! {:expected-field-id "fld4" :expected-field-index 3})
+          (add-form-field!)
           (btu/scroll-and-click (field-component :type-multiselect))
           (testing "fill localized title"
             (fill-localized-title! "Multi-select list (%s)"))
@@ -2297,7 +2306,7 @@
                     "multi-select-option-2"]))))
 
         (testing "create table field"
-          (add-form-field! {:expected-field-id "fld5" :expected-field-index 4})
+          (add-form-field!)
           (btu/scroll-and-click (field-component :type-table))
           (testing "fill localized title"
             (fill-localized-title! "Table (%s)"))
@@ -2320,7 +2329,7 @@
                       "Actions"])))))
 
         (testing "create date field"
-          (add-form-field! {:expected-field-id "fld6" :expected-field-index 5})
+          (add-form-field!)
           (btu/scroll-and-click (field-component :type-date))
           (testing "fill localized title"
             (fill-localized-title! "Date (%s)"))
@@ -2329,7 +2338,7 @@
             (fill-localized-description! "Date description (%s)")))
 
         (testing "create email address field"
-          (add-form-field! {:expected-field-id "fld7" :expected-field-index 6})
+          (add-form-field!)
           (btu/scroll-and-click (field-component :type-email))
           (testing "fill localized title"
             (fill-localized-title! "Email (%s)"))
@@ -2338,7 +2347,7 @@
             (fill-localized-description! "Email description (%s)")))
 
         (testing "create phone number field"
-          (add-form-field! {:expected-field-id "fld8" :expected-field-index 7})
+          (add-form-field!)
           (btu/scroll-and-click (field-component :type-phone-number))
           (testing "fill localized title"
             (fill-localized-title! "Phone number (%s)"))
@@ -2347,7 +2356,7 @@
             (fill-localized-description! "Phone number description (%s)")))
 
         (testing "create ip address field"
-          (add-form-field! {:expected-field-id "fld9" :expected-field-index 8})
+          (add-form-field!)
           (btu/scroll-and-click (field-component :type-ip-address))
           (testing "fill localized title"
             (fill-localized-title! "IP address (%s)"))
@@ -2356,7 +2365,7 @@
             (fill-localized-description! "IP address description (%s)")))
 
         (testing "create attachment field"
-          (add-form-field! {:expected-field-id "fld10" :expected-field-index 9})
+          (add-form-field!)
           (btu/scroll-and-click (field-component :type-attachment))
           (testing "fill localized title"
             (fill-localized-title! "Attachment (%s)"))
@@ -2370,14 +2379,14 @@
             (is (btu/eventually-visible? {:id (btu/context-getx ::attachment-collapsible)}))))
 
         (testing "create label field"
-          (add-form-field! {:expected-field-id "fld11" :expected-field-index 10})
+          (add-form-field!)
           (btu/scroll-and-click (field-component :type-label))
           (testing "fill localized title"
             (fill-localized-title! "Label (%s)")
             (is (btu/eventually-visible? [(field-preview) {:tag :label :fn/text "Label (EN)"}]))))
 
         (testing "create header field"
-          (add-form-field! {:expected-field-id "fld12" :expected-field-index 11})
+          (add-form-field!)
           (btu/scroll-and-click (field-component :type-header))
           (testing "fill localized title"
             (fill-localized-title! "Header (%s)")
@@ -2442,7 +2451,7 @@
       (wait-page-title "Edit form – REMS")
 
       (testing "add description field"
-        (add-form-field! {:expected-field-id "fld13" :expected-field-index 0})
+        (add-form-field! {:expected-field-index 0 :expected-field-id "fld13"})
         (btu/scroll-and-click (field-component :type-description))
         (testing "fill localized title"
           (fill-localized-title! "Description (%s)"))
@@ -2611,7 +2620,7 @@
       (fill-form-field "SV" "Conditional field test (SV)")
 
       (testing "create option field"
-        (add-form-field! {:expected-field-id "fld1" :expected-field-index 0})
+        (add-form-field!)
         (btu/scroll-and-click (field-component :type-option))
         (testing "fill localized title"
           (fill-localized-title! "Option (%s)"))
@@ -2631,7 +2640,7 @@
           (btu/fill-human (field-component :options-1-label-sv) "Nej")))
 
       (testing "create multiselect field"
-        (add-form-field! {:expected-field-id "fld2" :expected-field-index 1})
+        (add-form-field!)
         (btu/scroll-and-click (field-component :type-multiselect))
         (testing "fill localized title"
           (fill-localized-title! "Multiselect (%s)"))
@@ -2655,7 +2664,7 @@
           (btu/fill-human (field-component :options-2-label-sv) "Z")))
 
       (testing "create conditional text field"
-        (add-form-field! {:expected-field-id "fld3" :expected-field-index 2})
+        (add-form-field!)
         (testing "fill localized title"
           (fill-localized-title! "Text (%s)"))
         (testing "set visibility to only if field 1 has true selected"
@@ -2668,7 +2677,7 @@
           (btu/fill (field-component :visibility-value) "Yes\n")))
 
       (testing "create conditional email field"
-        (add-form-field! {:expected-field-id "fld4" :expected-field-index 3})
+        (add-form-field!)
         (btu/scroll-and-click :fields-3-type-email)
         (testing "fill localized title"
           (fill-localized-title! "Email (%s)"))
