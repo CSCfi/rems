@@ -14,10 +14,12 @@
 
 (use-fixtures
   :once
-  test-db-fixture
-  reset-caches-fixture)
+  test-db-fixture)
 
-(use-fixtures :each rollback-db-fixture)
+(use-fixtures
+  :each
+  reset-caches-fixture
+  rollback-db-fixture)
 
 (defn- status-flags [item-id]
   (-> (catalogue/get-localized-catalogue-item item-id)
