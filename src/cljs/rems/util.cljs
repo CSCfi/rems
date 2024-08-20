@@ -202,11 +202,6 @@
       nil {}
       nil [])))
 
-(defn react-strict-mode
-  "Wrapper around React <StrictMode> component. See more https://react.dev/reference/react/StrictMode#strictmode"
-  [body]
-  [:> react/StrictMode body])
-
 (defn- log-profiler-event [id phase actual-duration base-duration start-time commit-time]
   (js/console.count (str phase " → " id))
   (js/console.debug "\t"
