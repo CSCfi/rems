@@ -146,21 +146,6 @@
          :mode mode
          :seed (random-seed)))
 
-(defn- recreate-session! [driver]
-  (et/delete-session driver)
-  (let [driver (dissoc driver :session)
-        session (et/create-session driver)]
-    (assoc driver :session session)))
-
-(defn refresh-driver!
-  "Re-creates session on an existing driver and sets default values."
-  []
-  (assert (get-driver) "must have initialized driver already!")
-  (et/with-wait-timeout 60
-    (-> (get-driver)
-        recreate-session!
-        init-session!)))
-
 (defn init-driver-fixture
   "Executes a test running a fresh driver except when in development."
   [f]
@@ -173,21 +158,6 @@
       (catch SocketException e
         (log/warn e "WebDriver failed to start, retrying...")
         (run)))))
-
-(defn refresh-driver-fixture
-  "Executes a test running with a re-used but clean and refreshed driver."
-  [f]
-  (try
-    (refresh-driver!)
-    (f)
-    (catch clojure.lang.ExceptionInfo e
-      ;; could need a restart
-      (let [data (ex-data e)]
-        (if (= "invalid session id" (get-in data [:response :value :error]))
-          (do
-            (log/warn e "Unexpected problem, need to restart driver" data)
-            (init-driver-fixture f))
-          (throw e))))))
 
 (defn reset-context-fixture [f]
   (reset-context!)
