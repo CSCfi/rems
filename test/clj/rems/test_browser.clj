@@ -1443,14 +1443,18 @@
       (btu/scroll-and-click :request-review-dropdown)
       (is (btu/eventually-visible? :request-review-action-button))
       (btu/scroll-and-click :request-review-action-button)
-
       (is (btu/eventually-visible? :actions-request-review))
+
+      (Thread/sleep 500) ; wait for /reviewers api request
+
       (btu/scroll-and-click [:actions-request-review
                              {:css ".form-group > .dropdown-container"}])
       (is (btu/eventually-visible? {:css ".dropdown-select__menu"}))
 
-      (btu/scroll-and-click [{:css ".dropdown-select__menu"}
-                             {:tag :div :fn/has-text "Carl Reviewer"}])
+      (btu/scroll-and-click [:actions-request-review
+                             {:css ".form-group > .dropdown-container"}
+                             {:css ".dropdown-select__menu"}
+                             {:fn/has-text "Carl Reviewer"}])
 
       (btu/scroll-and-click :request-review-button)
       (is (btu/eventually-visible? {:css ".alert-success"}))
