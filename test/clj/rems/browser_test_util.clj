@@ -447,41 +447,10 @@
   (wait-for-idle)
   (no-timeout? #(apply wait-invisible args)))
 
-;; TODO our input fields process every character through re-frame.
-;; Etaoin's fill-human almost works, but very rarely loses characters,
-;; probably due to the lack of a _minimum_ delay between keypresses.
-;; This is a reimplementation.
-(def +character-delay+ 0.01)
-(def +typo-probability+ 0.05)
-(def +typoable-chars+
-  (clojure.set/union (set "0123456789")
-                     (set "abcdefghijklmnopqrstuvwxyzåäö")
-                     (set "ABCDEFGHIJKLMONPQRSTUVWXYZÅÄÖ")))
-
-(defn- wait-delay-and-idle [seconds]
-  (et/wait seconds) ; minimum wait
-  (wait-for-idle)) ; extra wait, in case browser is in middle of something
-
 (defn fill-human [q text]
   (wait-for-idle)
-  (wait-visible q)
-
-  (doseq [c text
-          :let [elem (query q)]]
-    (et/wait (* 0.05 (rand))) ; max 50ms
-    (when (and (contains? +typoable-chars+ c)
-               (< (rand) +typo-probability+))
-      (fill-el elem (char (inc (int c))))
-      (wait-delay-and-idle +character-delay+)
-      (fill-el elem etaoin.keys/backspace)
-      (wait-delay-and-idle +character-delay+))
-    (fill-el elem c))
-
-  (wait-delay-and-idle 0.1)
-
-  (let [value (get-element-attr q "value")]
-    (when (not= text value)
-      (log/warn "Failed to fill field" (pr-str {:expected text :actual value})))))
+  (et/fill-human (get-driver) q text {:pause-max 0.03
+                                      :mistake-prob 0.05}))
 
 (defn visible-el?
   "Checks whether an element is visible on the page."
