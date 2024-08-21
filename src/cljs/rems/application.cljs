@@ -932,7 +932,8 @@
       :footer (let [element-id (str id "-operations")]
                 [:div {:id element-id}
                  [collapsible/toggle-control {:collapsible-id (str id "-collapsible")}]
-                 [:div.commands
+                 [:div.commands {:class (when (or can-change? can-remove? can-uninvite?)
+                                          "mt-2")}
                   (when can-change?
                     [change-applicant-action-button element-id])
                   (when (or can-remove? can-uninvite?)
