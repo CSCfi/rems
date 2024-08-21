@@ -3169,7 +3169,7 @@
   (btu/with-postmortem
     (login-as "alice")
     (go-to-catalogue)
-    (btu/set-window-size 400 600) ; small enough for mobile
+    (btu/set-window-rect {:width 400 :height 600}) ; small enough for mobile
     (btu/wait-invisible :small-navbar)
     (btu/scroll-and-click {:css ".navbar-toggler"})
     (is (btu/eventually-visible? :small-navbar))

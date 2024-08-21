@@ -96,7 +96,7 @@
 (defn- reset-window-size!
   "Sets window size big enough to show the whole page in the screenshots."
   [driver]
-  (et/set-window-size driver 1400 7000))
+  (et/set-window-rect driver {:width 1400 :height 7000}))
 
 (defn- init-session! [driver]
   (doto driver
@@ -355,7 +355,7 @@
         full-filename (str (get-file-base) filename ".png")
         file (io/file (:reporting-dir @test-context) full-filename)
 
-        window-size (et/get-window-size driver)
+        window-size (et/get-window-rect driver)
         empty-space (if (et/exists? driver :empty-space) ; if page has not rendered, screenshot can fail due to missing element
                       (parse-int (et/get-element-attr driver :empty-space "clientHeight"))
                       0)
@@ -368,14 +368,14 @@
 
     ;; adjust window to correct size
     (when need-to-adjust?
-      (et/set-window-size driver {:width (:width window-size)
+      (et/set-window-rect driver {:width (:width window-size)
                                   :height without-extra-height}))
 
     (et/screenshot driver file)
 
     ;; restore (big) size
     (when need-to-adjust?
-      (et/set-window-size driver window-size))))
+      (et/set-window-rect driver window-size))))
 
 (defn screenshot-element [filename q]
   (let [full-filename (format "%03d-%s-%s"
@@ -414,7 +414,7 @@
 (defn wrap-etaoin [f]
   (fn [& args] (apply f (get-driver) args)))
 
-(def set-window-size (wrap-etaoin et/set-window-size))
+(def set-window-rect (wrap-etaoin et/set-window-rect))
 (def go (wrap-etaoin et/go))
 (def wait-visible (wrap-etaoin et/wait-visible))
 (def wait-invisible (wrap-etaoin et/wait-invisible))
