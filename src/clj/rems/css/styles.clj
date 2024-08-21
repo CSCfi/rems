@@ -740,13 +740,13 @@
 
    [:#preview-form {:position :sticky ;; TODO seems to work on Chrome and Firefox. check Edge?
                     :top "100px"}
-    [:#preview-form-contents {:overflow-y :scroll
+    [:#preview-form-contents {:overflow-y :auto
                               :overflow-x :hidden
+                              :padding "0 0.5rem"
                               ;; subtract #preview-form top value plus a margin here to stay inside the viewbox
                               :max-height "calc(100vh - 220px)"}]]
 
-   [:.field-preview {:position :relative
-                     :margin-left (u/rem 1)}]
+   [:.field-preview {:position :relative}]
    [:.full {:width "100%"}]
    [:.intro {:margin-bottom (u/rem 2)}]
    [:.rectangle {:width (u/px 50)
