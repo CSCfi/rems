@@ -1111,19 +1111,18 @@
   (let [config @rems.globals/config
         duos (get-in resource [:resource/duo :duo/codes])
         language @rems.config/current-language
-        resource-header [:p
-                         (localized (:catalogue-item/title resource))
-                         (when-let [url (catalogue-item-more-info-url resource language config)]
-                           [:<>
-                            " – "
-                            [:a {:href url :target :_blank}
-                             (text :t.catalogue/more-info) " " [external-link]]])]]
+        title (localized (:catalogue-item/title resource))
+        more-info-url (when-let [url (catalogue-item-more-info-url resource language config)]
+                        [:<>
+                         " - "
+                         [:a {:href url :target :_blank}
+                          (text :t.catalogue/more-info) " " [external-link]]])]
     [:div.application-resource
      (if-not (and (:enable-duo @rems.globals/config) (seq duos))
-       resource-header
+       [:p title more-info-url]
        [collapsible/expander
         {:id (str "resource-" (:resource/id resource) "-duos-collapsible")
-         :title resource-header
+         :title [:<> title more-info-url]
          :collapse [collapsible/component
                     {:id (str "resource-" (:resource/id resource) "-duos")
                      :title (text :t.duo/title)
