@@ -397,9 +397,9 @@
   (when external-links
     (btu/scroll-and-click :licensetype-link)
     (btu/eventually-visible? :localizations-en-link)
-    (btu/fill-human :localizations-en-link (:en external-links))
-    (btu/fill-human :localizations-fi-link (:fi external-links))
-    (btu/fill-human :localizations-sv-link (:sv external-links)))
+    (some->> (:en external-links) (btu/fill-human :localizations-en-link))
+    (some->> (:fi external-links) (btu/fill-human :localizations-fi-link))
+    (some->> (:sv external-links) (btu/fill-human :localizations-sv-link)))
   (when inline-text
     (btu/scroll-and-click :licensetype-text)
     (btu/eventually-visible? :localizations-en-text)
