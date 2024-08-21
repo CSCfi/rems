@@ -96,7 +96,7 @@
 (defn- reset-window-size!
   "Sets window size big enough to show the whole page in the screenshots."
   [driver]
-  (et/set-window-size driver 1400 7000))
+  (et/set-window-rect driver {:width 1400 :height 7000}))
 
 (defn- init-session! [driver]
   (doto driver
@@ -104,7 +104,8 @@
     (reset-window-size!)))
 
 (def ^:private driver-defaults
-  {:args ["--lang=en-US"]
+  {:args ["--lang=en-US"
+          "--disable-search-engine-choice-screen"] ; https://stackoverflow.com/a/78800001
    :prefs {:intl.accept_languages "en-US"
            :download.directory_upgrade true
            :safebrowsing.enabled false
@@ -145,21 +146,6 @@
          :mode mode
          :seed (random-seed)))
 
-(defn- recreate-session! [driver]
-  (et/delete-session driver)
-  (let [driver (dissoc driver :session)
-        session (et/create-session driver)]
-    (assoc driver :session session)))
-
-(defn refresh-driver!
-  "Re-creates session on an existing driver and sets default values."
-  []
-  (assert (get-driver) "must have initialized driver already!")
-  (et/with-wait-timeout 60
-    (-> (get-driver)
-        recreate-session!
-        init-session!)))
-
 (defn init-driver-fixture
   "Executes a test running a fresh driver except when in development."
   [f]
@@ -172,21 +158,6 @@
       (catch SocketException e
         (log/warn e "WebDriver failed to start, retrying...")
         (run)))))
-
-(defn refresh-driver-fixture
-  "Executes a test running with a re-used but clean and refreshed driver."
-  [f]
-  (try
-    (refresh-driver!)
-    (f)
-    (catch clojure.lang.ExceptionInfo e
-      ;; could need a restart
-      (let [data (ex-data e)]
-        (if (= "invalid session id" (get-in data [:response :value :error]))
-          (do
-            (log/warn e "Unexpected problem, need to restart driver" data)
-            (init-driver-fixture f))
-          (throw e))))))
 
 (defn reset-context-fixture [f]
   (reset-context!)
@@ -355,7 +326,7 @@
         full-filename (str (get-file-base) filename ".png")
         file (io/file (:reporting-dir @test-context) full-filename)
 
-        window-size (et/get-window-size driver)
+        window-size (et/get-window-rect driver)
         empty-space (if (et/exists? driver :empty-space) ; if page has not rendered, screenshot can fail due to missing element
                       (parse-int (et/get-element-attr driver :empty-space "clientHeight"))
                       0)
@@ -368,14 +339,14 @@
 
     ;; adjust window to correct size
     (when need-to-adjust?
-      (et/set-window-size driver {:width (:width window-size)
+      (et/set-window-rect driver {:width (:width window-size)
                                   :height without-extra-height}))
 
     (et/screenshot driver file)
 
     ;; restore (big) size
     (when need-to-adjust?
-      (et/set-window-size driver window-size))))
+      (et/set-window-rect driver window-size))))
 
 (defn screenshot-element [filename q]
   (let [full-filename (format "%03d-%s-%s"
@@ -414,7 +385,7 @@
 (defn wrap-etaoin [f]
   (fn [& args] (apply f (get-driver) args)))
 
-(def set-window-size (wrap-etaoin et/set-window-size))
+(def set-window-rect (wrap-etaoin et/set-window-rect))
 (def go (wrap-etaoin et/go))
 (def wait-visible (wrap-etaoin et/wait-visible))
 (def wait-invisible (wrap-etaoin et/wait-invisible))
@@ -476,41 +447,10 @@
   (wait-for-idle)
   (no-timeout? #(apply wait-invisible args)))
 
-;; TODO our input fields process every character through re-frame.
-;; Etaoin's fill-human almost works, but very rarely loses characters,
-;; probably due to the lack of a _minimum_ delay between keypresses.
-;; This is a reimplementation.
-(def +character-delay+ 0.01)
-(def +typo-probability+ 0.05)
-(def +typoable-chars+
-  (clojure.set/union (set "0123456789")
-                     (set "abcdefghijklmnopqrstuvwxyzåäö")
-                     (set "ABCDEFGHIJKLMONPQRSTUVWXYZÅÄÖ")))
-
-(defn- wait-delay-and-idle [seconds]
-  (et/wait seconds) ; minimum wait
-  (wait-for-idle)) ; extra wait, in case browser is in middle of something
-
 (defn fill-human [q text]
   (wait-for-idle)
-  (wait-visible q)
-
-  (doseq [c text
-          :let [elem (query q)]]
-    (et/wait (* 0.05 (rand))) ; max 50ms
-    (when (and (contains? +typoable-chars+ c)
-               (< (rand) +typo-probability+))
-      (fill-el elem (char (inc (int c))))
-      (wait-delay-and-idle +character-delay+)
-      (fill-el elem etaoin.keys/backspace)
-      (wait-delay-and-idle +character-delay+))
-    (fill-el elem c))
-
-  (wait-delay-and-idle 0.1)
-
-  (let [value (get-element-attr q "value")]
-    (when (not= text value)
-      (log/warn "Failed to fill field" (pr-str {:expected text :actual value})))))
+  (et/fill-human (get-driver) q text {:pause-max 0.03
+                                      :mistake-prob 0.05}))
 
 (defn visible-el?
   "Checks whether an element is visible on the page."

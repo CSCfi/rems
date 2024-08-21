@@ -118,7 +118,7 @@
                                 [criterium "0.4.6"]
                                 [lambdaisland/kaocha "1.91.1392"]
                                 [lambdaisland/kaocha-junit-xml "1.17.101"]
-                                [etaoin "1.0.40"]
+                                [etaoin "1.1.41"]
                                 [ring/ring-mock "0.4.0" :exclusions [cheshire]]
                                 [se.haleby/stub-http "0.2.14"]
                                 [com.icegreen/greenmail "1.6.15"]
