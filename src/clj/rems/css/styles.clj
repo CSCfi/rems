@@ -342,12 +342,10 @@
    [(s/descendant :.card-header :a) {:color :inherit}]
    [".collapsible-contents:not(:empty)" {:margin (u/rem 1)}]
    [(s/> :.collapsible.info-collapsible ".collapsible-contents:not(:empty)") {:margin [[0 (u/rem 1) (u/rem 0.5) 0]]}]
-   [:.page-create-form
-    ;; form editor fields have inner collapsibles with fields that don't align nicely when margin is double applied
-    [(s/descendant :#create-form :.collapsible-contents :.collapsible-contents) {:margin 0}]
-    ;; improves form editor preview readability on smaller screens
-    [(s/> :#preview-form.collapsible :.collapsible-contents) {:margin-left 0}]]
 
+   ;; form editor fields have inner collapsibles with fields that don't align nicely when margin is double applied
+   [(s/descendant :#create-form :.collapsible-contents :.collapsible-contents) {:margin 0}]
+   [:.btn.expander-toggle {:padding 0}]))
 
 (defn build-screen []
   (list
@@ -890,13 +888,13 @@
    [:.select-attachments {:display :flex
                           :flex-direction :column
                           :align-items :flex-start
-                          :gap (u/rem 0.5)}
-    [:.select-attachments-row {:display :grid
-                               :grid "auto-flow / [checkbox] auto [content] minmax(0, 1fr)"
-                               :column-gap (u/rem 0.5)
-                               :align-items :center}
-     [(s/> ":first-child") {:grid-column :checkbox}]
-     [(s/> ":not(:first-child)") {:grid-column :content}]]]
+                          :gap (u/rem 0.5)}]
+   [:.select-attachments-row {:display :grid
+                              :grid "auto-flow / [checkbox] auto [content] minmax(0, 1fr)"
+                              :column-gap (u/rem 0.5)
+                              :align-items :center}]
+   [(s/> :.select-attachments-row ":first-child") {:grid-column :checkbox}]
+   [(s/> :.select-attachments-row ":not(:first-child)") {:grid-column :content}]
 
    [:.color-pre {:color "#212529"}] ; same color as bootstrap's default for [:pre]
 
