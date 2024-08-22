@@ -204,7 +204,7 @@
    (example "no hide controls"
             [component {:id "standard-collapsible-2"
                         :title "Focus on show"
-                        :always [:p "Hidden input receives focus on show"]
+                        :always [:p "Collapsed input receives focus when opened"]
                         :collapse [:input]}])
    (example "no collapse content"
             [component {:id "standard-collapsible-3"
@@ -221,7 +221,7 @@
                         :on-close #(js/console.log "bye")
                         :always [:div.solid-group
                                  [:b "Custom controls:"]
-                                 [rems.collapsible/toggle-control "standard-collapsible-4"]]
+                                 [rems.collapsible/toggle-control {:collapsible-id "standard-collapsible-4"}]]
                         :collapse (into [:div] (repeat 3 [:p "I am long content that you can hide"]))
                         :collapse-hidden [:p "I am content that is only visible when collapsed"]
                         :footer [:div.solid-group "I am the footer that is always visible"]}])
@@ -229,19 +229,19 @@
    (component-info minimal)
    (example "default use"
             [minimal {:id "minimal-collapsible-1"
-                      :always [rems.collapsible/toggle-control "minimal-collapsible-1"]
+                      :always [rems.collapsible/toggle-control {:collapsible-id "minimal-collapsible-1"}]
                       :collapse [:p "I am content that you can hide"]}])
    (example "footer controls"
             [minimal {:id "minimal-collapsible-2"
-                      :footer [rems.collapsible/toggle-control "minimal-collapsible-2"]
+                      :footer [rems.collapsible/toggle-control {:collapsible-id "minimal-collapsible-2"}]
                       :collapse [:p "I am content that you can hide"]}])
    (example "all options"
             [minimal {:id "minimal-collapsible-3"
                       :open? true
-                      :always [rems.collapsible/toggle-control "minimal-collapsible-3"]
+                      :always [rems.collapsible/toggle-control {:collapsible-id "minimal-collapsible-3"}]
                       :collapse (into [:div] (repeat 3 [:p "I am long content that you can hide"]))
                       :collapse-hidden [:p "I am content that is only visible when collapsed"]
-                      :footer [rems.collapsible/toggle-control "minimal-collapsible-3"]}])
+                      :footer [rems.collapsible/toggle-control {:collapsible-id "minimal-collapsible-3"}]}])
 
    (component-info expander)
    (example "defaults"

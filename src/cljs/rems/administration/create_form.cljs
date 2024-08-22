@@ -644,7 +644,7 @@
     [:div.form-group.field
      [:label.administration-field-label.d-flex.align-items-center
       (text :t.create-form/additional-settings)
-      [collapsible/toggle-control collapsible-id]]
+      [collapsible/toggle-control {:collapsible-id collapsible-id}]]
      [collapsible/minimal
       {:id collapsible-id
        :collapse [:div.solid-group
@@ -664,7 +664,7 @@
     [collapsible/minimal
      {:id collapsible-id
       :always [field-controls idx (:field/title field) field-count]
-      :footer [collapsible/toggle-control collapsible-id]
+      :footer [collapsible/toggle-control {:collapsible-id collapsible-id}]
       :collapse [:<>
                  [form-field-title-field idx]
                  [form-field-type-radio-group idx]

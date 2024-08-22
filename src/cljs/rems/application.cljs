@@ -931,7 +931,7 @@
                  [user/attributes attributes invited-user?]]
       :footer (let [element-id (str id "-operations")]
                 [:div {:id element-id}
-                 [collapsible/toggle-control (str id "-collapsible")]
+                 [collapsible/toggle-control {:collapsible-id (str id "-collapsible")}]
                  [:div.commands
                   (when can-change?
                     [change-applicant-action-button element-id])
