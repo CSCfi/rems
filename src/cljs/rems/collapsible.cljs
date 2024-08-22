@@ -122,13 +122,17 @@
       always
       (when collapse
         [:<>
-         (when top-less-button? [hide-control id {:on-click on-close}])
-         [collapse-block id collapse collapse-hidden]
-         [show-control id {:on-click on-open}]
-         (when bottom-less-button? [hide-control id {:on-click on-close}])])
-      footer]]
-    (finally
-      (rf/dispatch [::reset-expanded id]))))
+         (when top-less-button? [toggle-control {:collapsible-id id
+                                                 :on-close on-close
+                                                 :on-open false}])
+         [collapse-block id {:content-closed collapse-hidden
+                             :content-open collapse}]
+         [toggle-control {:collapsible-id id
+                          :on-close (if bottom-less-button?
+                                      on-close
+                                      false)
+                          :on-open on-open}]])
+      footer]]))
 
 (defn minimal
   "Collapsible variation that does not have border or title, and controls
@@ -155,10 +159,9 @@
      (when title [:h2.card-header title])
      [:div.collapsible-contents
       always
-      [collapse-block id collapse collapse-hidden]
-      footer]]
-    (finally
-      (rf/dispatch [::reset-expanded id]))))
+      [collapse-block id {:content-open collapse
+                          :content-hidden collapse-hidden}]
+      footer]]))
 
 (defn expander
   "Collapsible variation where simple title is the toggle control.
@@ -185,9 +188,7 @@
                                          title]
                                  :url "#")]
        [:div.collapsible-contents
-        [collapse-block id collapse]]])
-    (finally
-      (rf/dispatch [::reset-expanded id]))))
+        [collapse-block id {:content-open collapse}]]])))
 
 (defn guide
   []
