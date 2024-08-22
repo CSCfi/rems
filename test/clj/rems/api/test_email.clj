@@ -38,7 +38,7 @@
   (testing "sends emails"
     (let [outbox-emails (atom [])]
       (with-redefs [outbox/puts! (fn [emails]
-                                  (swap! outbox-emails concat emails))]
+                                   (swap! outbox-emails concat emails))]
         (let [body (-> (request :post "/api/email/send-handler-reminder")
                        (authenticate test-data/+test-api-key+ "developer")
                        handler
