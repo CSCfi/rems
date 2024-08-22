@@ -530,13 +530,6 @@
                      :negate? true
                      :label (text :t.create-form/required-table)}])
 
-(defn- add-form-field-button [index]
-  [:a.add-form-field {:href "#"
-                      :on-click (fn [event]
-                                  (.preventDefault event)
-                                  (rf/dispatch [::add-form-field index]))}
-   [atoms/add-symbol] " " (text :t.create-form/add-form-field)])
-
 (defn- format-validation-link [target content]
   [:li [:a {:href "#" :on-click (focus-input-field target)}
         content]])
@@ -689,20 +682,25 @@
   (or (not-blank (:field/id field))
       (str "new-field-" idx)))
 
+(defn- add-form-field-button [idx]
+  [:div.new-form-field {:data-field-index idx}
+   [atoms/action-link
+    (atoms/new-action {:class "add-form-field"
+                       :label (text :t.create-form/add-form-field)
+                       :on-click #(rf/dispatch [::add-form-field idx])})]])
+
 (defn- form-fields []
   (let [fields (indexed @(rf/subscribe [::fields]))
         field-count (count fields)]
     (into [:<>
-           [:div.new-form-field {:data-field-index 0}
-            [add-form-field-button 0]]]
+           [add-form-field-button 0]]
           (for [[idx field] fields]
             ^{:key (get-field-key field idx)}
             [:<>
              [:div.form-field {:data-field-id (:field/id field)
                                :data-field-index idx}
               [field-editor idx field field-count]]
-             [:div.new-form-field {:data-field-index (inc idx)}
-              [add-form-field-button (inc idx)]]]))))
+             [add-form-field-button (inc idx)]]))))
 
 (defn- render-preview-hidden []
   [:div {:style {:position :absolute

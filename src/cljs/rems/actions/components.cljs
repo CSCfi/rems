@@ -8,7 +8,7 @@
             [rems.fields :as fields]
             [rems.flash-message :as flash-message]
             [rems.text :refer [text text-format]]
-            [rems.util :refer [event-value post!]]))
+            [rems.util :refer [class-names event-value post!]]))
 
 (defn- action-collapse-id [action-id]
   (str "actions-" action-id))
@@ -17,16 +17,14 @@
   (str action-id "-action-button"))
 
 (defn collapse-action-form [id]
-  (.collapse (js/$ (str "#" (action-collapse-id id))) "hide"))
+  (rf/dispatch [:rems.collapsible/set-expanded (action-collapse-id id) false]))
 
 (defn cancel-action-button [id]
-  [:button.btn.btn-secondary
-   {:type :button
-    :id (str "cancel-" id)
-    :data-toggle "collapse"
-    :data-target (str "#" (action-collapse-id id))
-    :on-click #(.focus (.querySelector js/document (str "#" (action-button-id id))))}
-   (text :t.actions/cancel)])
+  [atoms/action-button
+   (-> (collapsible/hide-action {:collapsible-id (action-collapse-id id)
+                                 :id (str "cancel-" id)
+                                 :on-close #(.focus (.querySelector js/document (str "#" (action-button-id id))))})
+       atoms/cancel-action)])
 
 (rf/reg-sub
  ::selected-attachments
@@ -199,24 +197,21 @@
                                    content
                                    (into [:div.col.commands [cancel-action-button id]] buttons)]}])
 
-(defn action-button [{:keys [id text class on-click]}]
-  [:button.btn
-   {:id (action-button-id id)
-    :class (str (or class "btn-secondary")
-                " btn-opens-more")
-    :data-toggle "collapse"
-    :data-target (str "#" (action-collapse-id id))
-    :on-click on-click}
-   text])
+(defn action-button [{:keys [class id on-click] :as action}]
+  [atoms/action-button
+   (collapsible/toggle-action (assoc action
+                                     :class (class-names "btn-opens-more" class)
+                                     :collapsible-id (action-collapse-id id)
+                                     :id (str id "-action-button")
+                                     :on-open on-click))])
 
-(defn action-link [{:keys [id text on-click]}]
-  [:a.dropdown-item.btn.btn-link
-   {:id (action-button-id id)
-    :href "#"
-    :data-toggle "collapse"
-    :data-target (str "#" (action-collapse-id id))
-    :on-click on-click}
-   text])
+(defn action-link [{:keys [class id on-click] :as action}]
+  [atoms/action-link
+   (collapsible/toggle-action (assoc action
+                                     :class (class-names "dropdown-item" class)
+                                     :collapsible-id (action-collapse-id id)
+                                     :id (str id "-action-button")
+                                     :on-open on-click))])
 
 (defn command! [command params {:keys [description collapse on-finished]}]
   (assert (qualified-keyword? command)

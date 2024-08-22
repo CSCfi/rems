@@ -16,7 +16,6 @@
             :assign-external-id "Tildel ekstern id"
             :assign-external-id-info "Ekstern id"
             :bundling-intro [:div.intro [:p "NB: Kun ressourcer med samme ansøgningsarbejdsgang kan lægges sammen."]]
-            :cancel "Afbryd"
             :change-applicant "Gør til ansøger"
             :change-resources "Rediger ressourcer"
             :change-processing-state nil

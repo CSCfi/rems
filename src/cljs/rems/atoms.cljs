@@ -1,11 +1,12 @@
 (ns rems.atoms
   (:require [clojure.string :as str]
             [komponentit.autosize :as autosize]
-            [medley.core :refer [remove-vals update-existing]]
+            [medley.core :refer [assoc-some remove-vals update-existing]]
             [reagent.core :as r]
             [reagent.impl.util]
             [rems.guide-util :refer [component-info example]]
-            [rems.text :refer [text text-format localized localize-attachment]]))
+            [rems.text :refer [text text-format localized localize-attachment]]
+            [rems.util :refer [class-names]]))
 
 (defn external-link []
   [:i {:class "fa fa-external-link-alt"}
@@ -22,7 +23,7 @@
          (:label opts)))
   ([opts href label]
    (when-not (str/blank? label)
-     (let [button? (not (str/includes? (str (reagent.impl.util/class-names (:class opts)))
+     (let [button? (not (str/includes? (class-names (:class opts))
                                        "btn-link"))]
        [:a (->> {:href href}
                 (merge (when button? {:role :button}))
@@ -266,22 +267,25 @@
 (defn action-button
   "Takes an `action` description and creates a button that triggers it."
   [{:keys [class id label on-click url] :as action}]
-  [link (merge (dissoc action :class :id :label :on-click :url)
-               {:id id
-                :label label
-                :href url
-                :on-click on-click
-                :class (str/trim (str "btn btn-secondary " class))})])
+  [link (-> action
+            (dissoc :on-click :text :url)
+            (assoc-some :on-click on-click)
+            (assoc :id id
+                   :label (:text action label) ; XXX: consider refactoring :text -> :label
+                   :href (or url "#")
+                   :class (class-names :btn :btn-secondary class)))])
 
 (defn action-link
   "Takes an `action` description and creates a link that triggers it."
   [{:keys [class id label on-click url] :as action}]
-  [link (merge (dissoc action :class :id :label :on-click :url)
-               {:id id
-                :label label
-                :href url
-                :on-click on-click
-                :class (str/trim (str "btn btn-link " class))})])
+  [link (-> action
+            (dissoc :on-click :text :url)
+            (assoc-some :on-click on-click)
+            (assoc :id id
+                   :label (:text action label) ; XXX: consider refactoring :text -> :label
+                   :href (or url "#")
+                   :class (class-names :btn :btn-link class)
+                   :role :button))])
 
 (defn rate-limited-action-button
   "Takes an `action` description and creates a button that triggers it.
@@ -293,6 +297,12 @@
                         :on-click on-click
                         :text label ; XXX: button and rate-limited-button could use label instead
                         }])
+
+(defn new-action
+  "Standard new action helper, to use with e.g. `action-button` or `action-link`."
+  [{:keys [label] :as action}]
+  (assoc action
+         :label [:<> [add-symbol] " " (or label (text :t.administration/add))]))
 
 (defn cancel-action
   "Standard cancel action helper, to use with e.g. `action-button` or `action-link`."
