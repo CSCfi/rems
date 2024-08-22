@@ -567,7 +567,7 @@
                                        (str (text :t.create-form/type-visibility) ": " (text-format (-> field-errors :field/visibility :visibility/values) (text :t.create-form.visibility/has-value))))])
             (if (= :t.form.validation/options-required (:field/options field-errors))
               [[:li
-                [:a {:href "#" :on-click #(focus/focus-selector (str "#fields-" field-index "-add-option"))}
+                [:a {:href "#" :on-click #(focus/focus (str "#fields-" field-index "-add-option"))}
                  (text :t.form.validation/options-required)]]]
               (for [[option-id option-errors] (into (sorted-map) (:field/options field-errors))]
                 [:li (text-format :t.create-form/option-n (inc option-id))
@@ -581,7 +581,7 @@
                                                   (format-error-for-localized-field error :t.create-form/option-label lang))))]]))
             (if (= :t.form.validation/columns-required (:field/columns field-errors))
               [[:li
-                [:a {:href "#" :on-click #(focus/focus-selector (str "#fields-" field-index "-add-column"))}
+                [:a {:href "#" :on-click #(focus/focus (str "#fields-" field-index "-add-column"))}
                  (text :t.form.validation/columns-required)]]]
               (for [[column-id column-errors] (into (sorted-map) (:field/columns field-errors))]
                 [:li (text-format :t.create-form/column-n (inc column-id))

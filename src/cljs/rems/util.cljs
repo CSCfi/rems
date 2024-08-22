@@ -282,3 +282,11 @@
       distinct
       reagent.impl.util/class-names
       str))
+
+(defn get-dom-element [el-or-selector]
+  (cond->> el-or-selector
+    (string? el-or-selector) (.querySelector js/document)))
+
+(defn get-bounding-client-rect [el-or-selector]
+  (some-> (get-dom-element el-or-selector)
+          (.getBoundingClientRect)))
