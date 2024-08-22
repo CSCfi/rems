@@ -6,6 +6,7 @@
             [reagent.impl.util]
             [re-frame.core :as rf]
             [rems.atoms :as atoms]
+            [rems.focus :as focus]
             [rems.guide-util :refer [component-info example]]
             [rems.text :refer [text]]
             [rems.util :refer [class-names]]))
@@ -47,13 +48,17 @@
                                  state (text :t.collapse/hide)
                                  :else (text :t.collapse/show))))))
 
+(defn focus-on-first-input [id]
+  (focus/scroll-into-view-and-focus (rfmt/format "#%s .collapse-open :is(textarea, input)" id)))
+
 (defn show-action
   "Action that shows collapsible on click. Use together with `action-link` or `action-button` atom."
   [{:keys [collapsible-id on-open] :as action}]
   (-> (base-action action)
       (assoc :on-click (fn [^js event]
                          (rf/dispatch [::set-expanded collapsible-id true])
-                         (when on-open (on-open event))))))
+                         (when on-open (on-open event))
+                         (focus-on-first-input collapsible-id)))))
 
 (defn hide-action
   "Action that hides collapsible on click. Use together with `action-link` or `action-button` atom."

@@ -88,7 +88,7 @@
                 (rf/dispatch [:rems.collapsible/set-expanded (field-collapsible-id field-id) true])
                 (on-element-appear-async {:selector "textarea"
                                           :target element})))
-       (.then focus/focus-without-scroll))))
+       (.then focus/scroll-into-view-and-focus))))
 
 (rf/reg-event-fx
  ::add-form-field

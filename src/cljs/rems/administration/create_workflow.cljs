@@ -2,6 +2,7 @@
   (:require [better-cond.core :as b]
             [medley.core :refer [indexed remove-nth update-existing]]
             [re-frame.core :as rf]
+            [reagent.format :as rfmt]
             [rems.administration.administration :as administration]
             [rems.administration.components :refer [localized-text-field organization-field radio-button-group text-field]]
             [rems.administration.items :as items]
@@ -413,12 +414,14 @@
        :on-change (comp on-change (partial mapv ::value))}]]))
 
 (defn- workflow-disable-commands []
-  (let [id "disable-commands"]
+  (let [id "disable-commands"
+        rules (indexed @(rf/subscribe [::disable-commands]))
+        rule-count (count rules)]
     [:<>
      [:div.form-group {:id id}
       (into [:div.fields.disable-commands]
-            (for [[index value] (indexed @(rf/subscribe [::disable-commands]))]
-              [:div.form-field.field
+            (for [[index value] rules]
+              [:div.form-field.field {:data-field-index index}
                [:div.form-field-header
                 [:h4 (text :t.create-workflow/rule)]
                 [:div.form-field-controls
@@ -442,7 +445,9 @@
                      :on-click (fn [event]
                                  (.preventDefault event)
                                  (rf/dispatch [::new-disable-command])
-                                 (focus/scroll-into-view (str "#" id " .new-rule") {:block :end}))}
+                                 (focus/scroll-into-view-and-focus
+                                  (rfmt/format ".disable-commands .form-field[data-field-index='%s'] :is(textarea, input)"
+                                               rule-count)))}
         (text :t.create-workflow/create-new-rule)]]]]))
 
 (rf/reg-sub ::processing-states (fn [db _] (get-in db [::form :processing-states])))
@@ -454,12 +459,14 @@
       (text :t.administration/processing-state)))
 
 (defn- workflow-processing-states []
-  (let [id "processing-states"]
+  (let [id "processing-states"
+        rules (indexed @(rf/subscribe [::processing-states]))
+        rule-count (count rules)]
     [:<>
      [:div.form-group {:id id}
       (into [:div.fields.processing-states]
-            (for [[index value] (indexed @(rf/subscribe [::processing-states]))]
-              [:div.form-field.field
+            (for [[index value] rules]
+              [:div.form-field.field {:data-field-index index}
                [:div.form-field-header
                 [:h4 (get-processing-state-title value)]
                 [:div.form-field-controls
@@ -474,7 +481,9 @@
                      :on-click (fn [event]
                                  (.preventDefault event)
                                  (rf/dispatch [::new-processing-state])
-                                 (focus/scroll-into-view (str "#" id " .new-rule") {:block :end}))}
+                                 (focus/scroll-into-view-and-focus
+                                  (rfmt/format ".processing-states .form-field[data-field-index='%s'] :is(textarea, input)"
+                                               rule-count)))}
         (text :t.create-workflow/create-new-processing-state)]]]]))
 
 ;;;; page component
