@@ -184,9 +184,11 @@
                                                  :on-open on-open})
                                  :class "expander-toggle"
                                  :label [:div.d-flex.align-items-center.gap-1.pointer
-                                         [:i.fa.fa-chevron-down.animate-transform {:class (when expanded? "rotate-180")}]
-                                         title]
-                                 :url "#")]
+                                         title
+                                         [:div
+                                          [:i.fa {:class (if expanded?
+                                                           "fa-chevron-up"
+                                                           "fa-chevron-down")}]]])]
        [:div.collapsible-contents
         [collapse-block id {:content-open collapse}]]])))
 
