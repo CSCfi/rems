@@ -1,5 +1,8 @@
 (ns rems.collapsible
-  (:require [reagent.core :as r]
+  (:require [better-cond.core :as b]
+            [medley.core :refer [assoc-some]]
+            [reagent.core :as r]
+            [reagent.format :as rfmt]
             [reagent.impl.util]
             [re-frame.core :as rf]
             [rems.atoms :as atoms]
@@ -8,24 +11,6 @@
 
 (rf/reg-sub ::expanded (fn [db [_ id]] (true? (get-in db [::id id]))))
 
-(rf/reg-event-db ::reset-expanded (fn [db [_ id]] (update db ::id dissoc id)))
-(rf/reg-event-db ::toggle (fn [db [_ id]] (update-in db [::id id] not)))
-
-(rf/reg-event-fx ::show-and-focus (fn [{:keys [db]} [_ id]]
-                                    (when-not (get-in db [::id id])
-                                      {:db (assoc-in db [::id id] true)
-                                       :dispatch [:rems.focus/focus-input {:selector ".collapse-open"
-                                                                           :target (.getElementById js/document id)}]})))
-
-(defn- base-action [id]
-  (let [state @(rf/subscribe [::expanded id])]
-    {:aria-controls id
-     :aria-expanded (if state
-                      "true"
-                      "false")
-     :label (if state
-              (text :t.collapse/hide)
-              (text :t.collapse/show))}))
 (defn- close-others-in-group
   "Finds all collapsibles that are in same group as collapsible with `id`. Returns
    re-frame update map that hides the _other_ collapsibles."
@@ -47,53 +32,64 @@
      expanded?
      (update-in [:db ::id] merge (close-others-in-group id)))))
 
+(defn- base-action
+  "Base attributes for collapsible action."
+  [{:keys [collapsible-id label] :as action}]
+  (let [state @(rf/subscribe [::expanded collapsible-id])]
+    (-> action
+        (dissoc :collapsible-id :hide? :on-close :on-open :show?)
+        (assoc :aria-controls collapsible-id
+               :aria-expanded (if state
+                                "true"
+                                "false"))
+        (assoc-some :label (cond label nil
+                                 state (text :t.collapse/hide)
+                                 :else (text :t.collapse/show))))))
+
+(defn show-action
+  "Action that shows collapsible on click. Use together with `action-link` or `action-button` atom."
+  [{:keys [collapsible-id on-open] :as action}]
+  (-> (base-action action)
+      (assoc :on-click (fn [^js event]
+                         (rf/dispatch [::set-expanded collapsible-id true])
+                         (when on-open (on-open event))))))
+
+(defn hide-action
+  "Action that hides collapsible on click. Use together with `action-link` or `action-button` atom."
+  [{:keys [collapsible-id on-close] :as action}]
+  (-> (base-action action)
+      (assoc :on-click (fn [^js event]
+                         (rf/dispatch [::set-expanded collapsible-id false])
+                         (when on-close (on-close event))))))
+
 (defn toggle-action
-  "Action that toggles collapsible state."
-  [id & [on-click]]
-  (assoc (base-action id)
-         :on-click (fn [& args]
-                     (rf/dispatch [::toggle id])
-                     (some-> on-click (apply args)))))
-
-(defn- show-and-focus! [id]
-  (fn [^js event]
-    (rf/dispatch [::show-and-focus id])
-    (doto event (.preventDefault))))
-
-(defn- show-control [id & [{:keys [label on-click]}]]
-  (when (not @(rf/subscribe [::expanded id]))
-    [:div.text-center
-     [atoms/action-link (-> (base-action id)
-                            (assoc :on-click (comp (or on-click identity) (show-and-focus! id))
-                                   :label (or label (text :t.collapse/show))
-                                   :class "show-more-link"
-                                   :url "#"))]]))
-
-(defn- hide-control [id & [{:keys [label on-click]}]]
-  (when @(rf/subscribe [::expanded id])
-    [:div.text-center
-     [atoms/action-link (-> (base-action id)
-                            (assoc :on-click (fn [& args]
-                                               (rf/dispatch [::set-expanded id false])
-                                               (some-> on-click (apply args)))
-                                   :label (or label (text :t.collapse/hide))
-                                   :class "show-less-link"
-                                   :url "#"))]]))
+  "Action that toggles collapsible state. Use together with `action-link` or `action-button` atom."
+  [{:keys [collapsible-id on-close on-open] :as action}]
+  (if @(rf/subscribe [::expanded collapsible-id])
+    (hide-action action)
+    (show-action action)))
 
 (defn toggle-control
-  "A hide/show button that externally toggles the visibility of a collapsible.
+  "Action link that opens and/or hides collapsible. Sets focus on first input when opened, if exists.
+   
+   `action` is a map that supports following keys:
+   - `:collapse-id` (required) string or keyword, id of controlled collapsible
+   - `:on-close` function, invoked when collapsible is toggled hidden. false disables hide control 
+   - `:on-open` function, invoked when collapsible is toggled open. false disables open control"
+  [{:keys [on-close on-open] :as action}]
+  (let [hide (not (false? on-close))
+        open (not (false? on-open))]
+    [:div.text-center
+     (cond
+       (and hide open) [atoms/action-link (toggle-action action)]
+       hide [atoms/action-link (hide-action action)]
+       open [atoms/action-link (show-action action)])]))
 
-   - `:id` id of the controlled collapsible"
-  [id & [on-click]]
+
+(defn- collapse-block [id {:keys [content-closed content-open]}]
   (if @(rf/subscribe [::expanded id])
-    [hide-control id {:on-click on-click}]
-    [show-control id {:on-click on-click}]))
-
-(defn- collapse-block [id collapse & [collapse-hidden]]
-  (when (some? collapse)
-    (if @(rf/subscribe [::expanded id])
-      [:div.collapse-open collapse]
-      [:div.collapse-closed collapse-hidden])))
+    (when content-open [:div.collapse-open content-open])
+    (when content-closed [:div.collapse-closed content-closed])))
 
 (defn component
   "Collapsible content block that can show hidden content on click.
