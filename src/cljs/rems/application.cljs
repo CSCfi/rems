@@ -53,7 +53,7 @@
             [rems.spinner :as spinner]
             [rems.text :refer [localize-attachment localize-decision localize-event localized localize-state localize-processing-states localize-time localize-time-with-seconds text text-format]]
             [rems.user :as user]
-            [rems.util :refer [navigate! fetch post! focus-input-field format-file-size]]))
+            [rems.util :refer [navigate! fetch post! format-file-size]]))
 
 ;;;; Helpers
 
@@ -78,13 +78,13 @@
          (for [{:keys [type form-id field-id]} validations]
            [:li (if-some [field (get-in fields [form-id field-id])]
                   [:a {:href "#"
-                       :on-click (case (:field/type field)
-                                   ;; workaround for tables: there's no single input to focus
-                                   :table #(focus/focus (str "#container-"
-                                                             (fields/field-name field)))
-                                   :attachment (focus-input-field (str "upload-"
-                                                                       (fields/field-name field)))
-                                   (focus-input-field (fields/field-name field)))}
+                       :on-click (fn [event]
+                                   (.preventDefault event)
+                                   (focus/focus (case (:field/type field)
+                                                  ;; workaround for tables: there's no single input to focus
+                                                  :table (str "#container-" (fields/field-name field))
+                                                  :attachment (str "#upload-" (fields/field-name field))
+                                                  (fields/field-name field))))}
                    (text-format type (localized (:field/title field)))]
                   (text type))]))])
 

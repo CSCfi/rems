@@ -33,7 +33,7 @@
             [rems.focus :as focus]
             [rems.spinner :as spinner]
             [rems.text :refer [localized text text-format]]
-            [rems.util :refer [event-value focus-input-field navigate! on-element-appear on-element-appear-async post! put! trim-when-string visibility-ratio]]))
+            [rems.util :refer [event-value get-bounding-client-rect navigate! on-element-appear on-element-appear-async post! put! trim-when-string visibility-ratio]]))
 
 (rf/reg-event-fx
  ::enter-page
@@ -106,12 +106,10 @@
    (update-in db [::form :data :form/fields] items/remove field-index)))
 
 (defn- track-moved-field-editor [field-id field-index button-selector]
-  (when-some [before (some-> js/document
-                             (.querySelector (field-selector field-id))
-                             (.getBoundingClientRect))]
+  (when-some [before (get-bounding-client-rect (field-selector field-id))]
     (on-element-appear {:selector (field-selector field-id field-index)
                         :on-resolve (fn [element]
-                                      (let [after (.getBoundingClientRect element)]
+                                      (let [after (get-bounding-client-rect element)]
                                         (focus/scroll-offset before after)
                                         (focus/focus-without-scroll (.querySelector element button-selector))))})))
 
@@ -531,7 +529,10 @@
                      :label (text :t.create-form/required-table)}])
 
 (defn- format-validation-link [target content]
-  [:li [:a {:href "#" :on-click (focus-input-field target)}
+  [:li [:a {:href "#"
+            :on-click (fn [event]
+                        (.preventDefault event)
+                        (focus/focus target))}
         content]])
 
 (defn- format-error-for-localized-field [error label lang]

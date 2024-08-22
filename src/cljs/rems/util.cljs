@@ -148,13 +148,6 @@
               %)
            splitted))))
 
-(defn focus-input-field [id]
-  (fn [event]
-    (.preventDefault event)
-    ;; focusing input fields requires JavaScript; <a href="#id"> links don't work
-    (when-let [element (.getElementById js/document id)]
-      (.focus element))))
-
 (defn visibility-ratio
   "Given a DOM node, return a number from 0.0 to 1.0 describing how much of an element is inside the viewport."
   [element]
