@@ -2,6 +2,7 @@
   (:require [re-frame.core :as rf]
             [rems.atoms :as atoms :refer [attachment-link checkbox enrich-user textarea]]
             [rems.common.attachment-util :as attachment-util]
+            [rems.collapsible :as collapsible]
             [rems.dropdown :as dropdown]
             [rems.fetcher :as fetcher]
             [rems.fields :as fields]
@@ -191,15 +192,12 @@
   `buttons` - the actions that can be executed
   `:collapse-id` - optionally the collapse group the action is part of"
   [id title buttons content & [{:keys [collapse-id]}]]
-  [:div.collapse {:id (action-collapse-id id)
-                  :data-parent (if collapse-id (str "#" collapse-id) "#actions-forms")
-                  :tab-index "-1"
-                  :ref (fn [elem]
-                         (when elem
-                           (.on (js/$ elem) "shown.bs.collapse" #(.focus elem))))}
-   [:h3.mt-3 title]
-   content
-   (into [:div.col.commands [cancel-action-button id]] buttons)])
+  [collapsible/minimal {:id (action-collapse-id id)
+                        :group (or collapse-id "action-form")
+                        :collapse [:<>
+                                   [:h3.mt-3 title]
+                                   content
+                                   (into [:div.col.commands [cancel-action-button id]] buttons)]}])
 
 (defn action-button [{:keys [id text class on-click]}]
   [:button.btn

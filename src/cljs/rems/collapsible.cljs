@@ -8,7 +8,6 @@
 
 (rf/reg-sub ::expanded (fn [db [_ id]] (true? (get-in db [::id id]))))
 
-(rf/reg-event-db ::set-expanded (fn [db [_ id expanded?]] (assoc-in db [::id id] (true? expanded?))))
 (rf/reg-event-db ::reset-expanded (fn [db [_ id]] (update db ::id dissoc id)))
 (rf/reg-event-db ::toggle (fn [db [_ id]] (update-in db [::id id] not)))
 
@@ -27,6 +26,26 @@
      :label (if state
               (text :t.collapse/hide)
               (text :t.collapse/show))}))
+(defn- close-others-in-group
+  "Finds all collapsibles that are in same group as collapsible with `id`. Returns
+   re-frame update map that hides the _other_ collapsibles."
+  [id]
+  (b/when-let [elem (.getElementById js/document id)
+               group (.. elem -dataset -group)
+               nodes-in-group (.querySelectorAll js/document (rfmt/format ".collapsible[data-group='%s']" group))
+               ids (keep #(.-id %) nodes-in-group)
+               update-map (into {} (mapv vector ids (repeat false)))]
+    (dissoc update-map id)))
+
+(rf/reg-event-fx
+ ::set-expanded
+ (fn [{:keys [db]} [_ id expanded?]]
+   (cond-> {:db db}
+     :always
+     (assoc-in [:db ::id id] (true? expanded?))
+
+     expanded?
+     (update-in [:db ::id] merge (close-others-in-group id)))))
 
 (defn toggle-action
   "Action that toggles collapsible state."
@@ -89,13 +108,19 @@
   - `:id` unique string
   - `:on-close` triggers the function callback given as an argument when show less is clicked
   - `:on-open` triggers the function callback given as an argument when collapse is toggled open
+  - `:class` string/keyword/vector, for wrapping element
+  - `:group` string, only one collapsible in group can be open at a time
   - `:open?` should the collapsible be initially open?
   - `:title` component or text displayed in title area
   - `:top-less-button?` should top show less button be shown?"
-  [{:keys [always bottom-less-button? collapse collapse-hidden footer id on-close on-open open? title top-less-button?]
+  [{:keys [always bottom-less-button? class collapse collapse-hidden footer group id on-close on-open open? title top-less-button?]
     :or {bottom-less-button? true}}]
-  (r/with-let [_ (when (some? open?) (rf/dispatch-sync [::set-expanded id open?]))]
-    [:div.collapsible.bordered-collapsible {:id id}
+  (when collapse
+    (assert id))
+  (r/with-let [_ (rf/dispatch-sync [::set-expanded id open?])]
+    [:div.collapsible.bordered-collapsible (assoc-some {:id id}
+                                                       :class class
+                                                       :data-group group)
      [:h2.card-header title]
      [:div.collapsible-contents
       always
@@ -120,11 +145,17 @@
   - `:class` optional class for wrapping element
   - `:footer` component displayed always after collapsible area
   - `:id` (required) unique id
+  - `:class` string/keyword/vector, for wrapping element
+  - `:group` string, only one collapsible in group can be open at a time
   - `:open?` should the collapsible be initially open?
   - `:title` component or text displayed in title area"
-  [{:keys [always class collapse collapse-hidden footer id open? title]}]
-  (r/with-let [_ (when (some? open?) (rf/dispatch-sync [::set-expanded id open?]))]
-    [:div.collapsible (merge {:id id} (when class {:class class}))
+  [{:keys [always class collapse collapse-hidden footer group id open? title]}]
+  (when collapse
+    (assert id))
+  (r/with-let [_ (rf/dispatch-sync [::set-expanded id open?])]
+    [:div.collapsible (assoc-some {:id id}
+                                  :class class
+                                  :data-group group)
      (when title [:h2.card-header title])
      [:div.collapsible-contents
       always
@@ -139,13 +170,19 @@
   Pass a map of options with the following keys:
   - `:collapse` component that is toggled displayed or not
   - `:id` (required) unique id
+  - `:class` string/keyword/vector, for wrapping element
+  - `:group` string, only one collapsible in group can be open at a time
   - `:open?` should the collapsible be initially open?
   - `:title` component or text displayed in title area"
-  [{:keys [collapse id open? title]}]
-  (r/with-let [_ (when (some? open?) (rf/dispatch-sync [::set-expanded id open?]))]
+  [{:keys [class collapse id group on-close on-open open? title]}]
+  (r/with-let [_ (rf/dispatch-sync [::set-expanded id open?])]
     (let [expanded? @(rf/subscribe [::expanded id])]
-      [:div.collapsible.expander-collapsible {:id id}
-       [atoms/action-link (assoc (toggle-action id)
+      [:div.collapsible.expander-collapsible (assoc-some {:id id}
+                                                         :class class
+                                                         :data-group group)
+       [atoms/action-link (assoc (toggle-action {:collapsible-id id
+                                                 :on-close on-close
+                                                 :on-open on-open})
                                  :class "expander-toggle"
                                  :label [:div.d-flex.align-items-center.gap-1.pointer
                                          [:i.fa.fa-chevron-down.animate-transform {:class (when expanded? "rotate-180")}]
