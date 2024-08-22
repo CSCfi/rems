@@ -7,7 +7,8 @@
             [re-frame.core :as rf]
             [rems.atoms :as atoms]
             [rems.guide-util :refer [component-info example]]
-            [rems.text :refer [text]]))
+            [rems.text :refer [text]]
+            [rems.util :refer [class-names]]))
 
 (rf/reg-sub ::expanded (fn [db [_ id]] (true? (get-in db [::id id]))))
 
@@ -85,6 +86,17 @@
        hide [atoms/action-link (hide-action action)]
        open [atoms/action-link (show-action action)])]))
 
+(defn info-toggle-control
+  "Toggle control that uses simple icon as label.
+   
+   `action` is a map that supports following keys:
+   - `:collapse-id` (required) string or keyword, id of controlled collapsible
+   - `:on-close` function, invoked when collapsible is toggled hidden
+   - `:on-open` function, invoked when collapsible is toggled open"
+  [action]
+  [atoms/action-link (-> (toggle-action action)
+                         (update :class class-names :info-collapsible-toggle)
+                         (assoc :label [atoms/info-symbol]))])
 
 (defn- collapse-block [id {:keys [content-closed content-open]}]
   (if @(rf/subscribe [::expanded id])

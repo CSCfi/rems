@@ -7,6 +7,7 @@
             [goog.string :refer [format]]
             [medley.core :refer [assoc-some]]
             [re-frame.core :as rf]
+            [reagent.impl.util]
             ["react" :as react]))
 
 (defn replace-url!
@@ -278,3 +279,11 @@
 
 (defn event-checked [^js event]
   (.. event -target -checked))
+
+(defn class-names
+  "Returns `classes` as string of space-separated, deduplicated CSS classes."
+  [& classes]
+  (-> (flatten classes)
+      distinct
+      reagent.impl.util/class-names
+      str))

@@ -1,14 +1,12 @@
 (ns rems.administration.duo
   (:require [goog.functions :refer [debounce]]
             [re-frame.core :as rf]
-            [rems.atoms :as atoms]
             [rems.administration.components :refer [date-field inline-info-field input-field textarea-autosize text-field]]
             [rems.collapsible :as collapsible]
             [rems.common.duo :refer [duo-restriction-label duo-validation-summary]]
             [rems.common.util :refer [escape-element-id]]
             [rems.dropdown :as dropdown]
             [rems.fetcher :as fetcher]
-            [rems.fields :as fields]
             [rems.text :refer [localized text text-format]]
             [rems.util :refer [linkify]]))
 
@@ -91,11 +89,11 @@
                     [:p (localized (:description duo))]
                     [:div.mb-2
                      [:span (localized (:description duo))]
-                     [fields/info-collapsible-toggle {:id (str collapsible-id "-more-infos")
-                                                      :aria-label (localized (:description duo))}]
-                     [fields/info-collapsible {:id (str collapsible-id "-more-infos")
-                                               :collapse (into [:<>] (for [info more-infos]
-                                                                       [duo-more-info info]))}]])
+                     [collapsible/info-toggle-control {:collapsible-id (str collapsible-id "-more-infos")
+                                                       :aria-label (localized (:description duo))}]
+                     [collapsible/minimal {:id (str collapsible-id "-more-infos")
+                                           :collapse (into [:<>] (for [info more-infos]
+                                                                   [duo-more-info info]))}]])
                   (for [restriction (:restrictions duo)
                         :when (seq (:values restriction))]
                     ^{:key (:type restriction)}
