@@ -53,19 +53,23 @@
             :outbox/deadline deadline})
          outbox/puts!)))
 
+(defn generate-reviewer-reminder-outbox [reviewer deadline]
+  (let [userid (:userid reviewer)
+        lang (:language (user-settings/get-user-settings userid))
+        apps (->> (todos/get-todos userid)
+                  (filter (comp #{:waiting-for-your-review} :application/todo)))
+        email (template/reviewer-reminder-email lang reviewer apps)]
+
+    (when email
+      {:outbox/type :email
+       :outbox/email email
+       :outbox/deadline deadline})))
+
 (defn generate-reviewer-reminder-emails! []
   (let [deadline (-> (time/now) (.plus ^Period (:email-retry-period env)))]
-    (->> (for [email (->> (applications/get-users-with-role :reviewer)
-                          (map users/get-user)
-                          (map (fn [reviewer]
-                                 (let [lang (:language (user-settings/get-user-settings (:userid reviewer)))
-                                       apps (->> (todos/get-todos (:userid reviewer))
-                                                 (map #(= :waiting-for-your-review (:application/todo %))))]
-                                   (template/reviewer-reminder-email lang reviewer apps))))
-                          (remove nil?))]
-           {:outbox/type :email
-            :outbox/email email
-            :outbox/deadline deadline})
+    (->> (applications/get-users-with-role :reviewer)
+         (map users/get-user)
+         (keep #(generate-reviewer-reminder-outbox % deadline))
          outbox/puts!)))
 
 (defn- render-invitation-template [invitation]
