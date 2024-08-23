@@ -40,17 +40,21 @@
          outbox/puts!)
     nil)) ; no new events
 
+(defn generate-handler-reminder-outbox [handler deadline]
+  (let [userid (:userid handler)
+        lang (:language (user-settings/get-user-settings userid))
+        apps (todos/get-todos userid)
+        email (template/handler-reminder-email lang handler apps)]
+
+    (when email
+      {:outbox/type :email
+       :outbox/email email
+       :outbox/deadline deadline})))
+
 (defn generate-handler-reminder-emails! []
   (let [deadline (-> (time/now) (.plus ^Period (:email-retry-period env)))]
-    (->> (for [email (->> (workflow/get-handlers)
-                          (map (fn [handler]
-                                 (let [lang (:language (user-settings/get-user-settings (:userid handler)))
-                                       apps (todos/get-todos (:userid handler))]
-                                   (template/handler-reminder-email lang handler apps))))
-                          (remove nil?))]
-           {:outbox/type :email
-            :outbox/email email
-            :outbox/deadline deadline})
+    (->> (workflow/get-handlers)
+         (keep #(generate-handler-reminder-outbox % deadline))
          outbox/puts!)))
 
 (defn generate-reviewer-reminder-outbox [reviewer deadline]
