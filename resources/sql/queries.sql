@@ -663,6 +663,11 @@ INSERT INTO outbox (outboxData)
 VALUES (:outboxdata::jsonb)
 RETURNING id;
 
+-- :name puts-to-outbox! :returning-execute
+INSERT INTO outbox (outboxData)
+SELECT * FROM jsonb_to_recordset(:outboxdatas::jsonb) AS tmp(outboxdata jsonb)
+RETURNING id;
+
 -- :name get-outbox :? :*
 SELECT id, outboxData::text
 FROM outbox

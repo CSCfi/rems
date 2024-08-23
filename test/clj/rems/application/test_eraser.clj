@@ -73,7 +73,7 @@
         outbox-emails (atom [])]
 
     (testing "does not process applications when expirer-bot user does not exist"
-      (with-redefs [outbox/put! (fn [email] (swap! outbox-emails conj email))
+      (with-redefs [outbox/puts! (fn [emails] (swap! outbox-emails concat emails))
                     env {:application-expiration {:application.state/draft {:delete-after "P90D"}}}]
         (log-test/with-log
           (testing "processing applications does not delete applications"
@@ -92,7 +92,7 @@
           (is (log-test/logged? "rems.application.eraser" :warn "Cannot process applications, because user expirer-bot does not exist")))))
 
     (testing "does not delete applications when configuration is not valid"
-      (with-redefs [outbox/put! (fn [email] (swap! outbox-emails conj email))
+      (with-redefs [outbox/puts! (fn [emails] (swap! outbox-emails concat emails))
                     env {}]
         (test-helpers/create-user! {:userid expirer-bot/bot-userid})
         (roles/add-role! expirer-bot/bot-userid :expirer)
@@ -116,7 +116,7 @@
           (is (log-test/logged? "rems.application.eraser" :info "No applications to process")))))
 
     (testing "cannot remove other than draft applications"
-      (with-redefs [outbox/put! (fn [email] (swap! outbox-emails conj email))
+      (with-redefs [outbox/puts! (fn [emails] (swap! outbox-emails concat emails))
                     env {:application-expiration {:application.state/submitted {:delete-after "P90D"}}}]
         (log-test/with-log
           (testing "processing applications does not delete applications"
@@ -146,7 +146,7 @@
             (is (not (log-test/logged? "rems.db.applications" :info #"Finished deleting application")))))))
 
     (testing "deletes expired draft application"
-      (with-redefs [outbox/put! (fn [email] (swap! outbox-emails conj email))
+      (with-redefs [outbox/puts! (fn [emails] (swap! outbox-emails concat emails))
                     env {:application-expiration {:application.state/draft {:delete-after "P90D"}}}]
         (with-fixed-time test-time
           (log-test/with-log
@@ -198,7 +198,7 @@
       (doseq [expiration [{:application.state/draft {:delete-after "P90D"}}
                           {:application.state/draft {:reminder-before "P7D"}}
                           nil]]
-        (with-redefs [outbox/put! (fn [email] (swap! outbox-emails conj email))
+        (with-redefs [outbox/puts! (fn [emails] (swap! outbox-emails concat emails))
                       env {:application-id-column :id
                            :public-url "localhost/"
                            :application-expiration expiration}]
@@ -218,7 +218,7 @@
                 (is (empty? @outbox-emails))))))))
 
     (testing "send expiration notifications"
-      (with-redefs [outbox/put! (fn [email] (swap! outbox-emails conj email))
+      (with-redefs [outbox/puts! (fn [emails] (swap! outbox-emails concat emails))
                     user-settings/get-user-settings (constantly {:language :en})
                     env {:application-id-column :id
                          :public-url "localhost/"

@@ -78,7 +78,7 @@
 (defn- overview-only-active-handlers [app]
   (update-in app
              [:application/workflow :workflow.dynamic/handlers]
-             #(filterv :handler/active? %)))
+             #(filter :handler/active? %)))
 
 ;; Api implementation
 
@@ -135,6 +135,14 @@
     (merge {:success true}
            (commands/validate-application application (:field-values request)))))
 
+(defn- get-handled-applications [{:keys [query only-active-handlers limit]}]
+  (time
+   (cond->> (todos/get-handled-todos (getx-user-id))
+     only-active-handlers (map overview-only-active-handlers)
+     query (filter-with-search query)
+     true (sort-by last-activity >)
+     limit (take limit))))
+
 (def my-applications-api
   (context "/my-applications" []
     :tags ["applications"]
@@ -176,15 +184,14 @@
     (GET "/handled" []
       :summary "Get all applications that the current user no more needs to act on."
       :roles #{:logged-in}
+      ;; XXX: checking this schema can be mighty slow (thousands of applications to check individually)
       :return [schema/ApplicationOverview]
       :query-params [{query :- (describe s/Str "search query [documentation](https://github.com/CSCfi/rems/blob/master/docs/search.md)") nil}
                      {only-active-handlers :- (describe s/Bool "return only workflow handlers that are active making a smaller result") false}
                      {limit :- (describe s/Int "how many results to return") nil}]
-      (ok (cond->> (todos/get-handled-todos (getx-user-id))
-            only-active-handlers (map overview-only-active-handlers)
-            query (filter-with-search query)
-            true (sort-by last-activity >)
-            limit (take limit))))
+      (ok (get-handled-applications {:query query
+                                     :only-active-handlers only-active-handlers
+                                     :limit limit})))
 
     (POST "/create" request
       :summary "Create a new application"
