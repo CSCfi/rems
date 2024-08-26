@@ -1,13 +1,14 @@
 (ns ^:integration rems.api.test-forms
-  (:require [clojure.test :refer :all]
+  (:require [clojure.test :refer [deftest is testing use-fixtures]]
             [medley.core :refer [dissoc-in]]
             [rems.api.schema :as schema]
-            [rems.api.testing :refer :all]
+            [rems.api.testing :refer [api-call api-fixture api-response assert-response-is-ok authenticate coll-is-not-empty? read-body read-ok-body response-is-bad-request? response-is-forbidden? response-is-ok? response-is-unauthorized?]]
             [rems.handler :refer [handler]]
-            [rems.db.core :as db]
+            [rems.db.form]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.db.testing :refer [owners-fixture]]
-            [ring.mock.request :refer :all])
+            [rems.service.form]
+            [ring.mock.request :refer [json-body request]])
   (:import (java.util UUID)))
 
 (use-fixtures
@@ -645,18 +646,20 @@
                      (:form/fields form))))))))))
 
 (deftest forms-api-filtering-test
-  (db/set-form-template-archived! {:id (test-helpers/create-form! {:form/internal-name "archived 1"
-                                                                   :form/external-title {:en "en archived 1"
-                                                                                         :fi "fi archived 1"
-                                                                                         :sv "sv archived 1"}
-                                                                   :form/keys []})
-                                   :archived true})
-  (db/set-form-template-archived! {:id (test-helpers/create-form! {:form/internal-name "archived 2"
-                                                                   :form/external-title {:en "en archived 2"
-                                                                                         :fi "fi archived 2"
-                                                                                         :sv "sv archived 2"}
-                                                                   :form/keys []})
-                                   :archived true})
+  (as-> (test-helpers/create-form! {:form/internal-name "archived 1"
+                                    :form/external-title {:en "en archived 1"
+                                                          :fi "fi archived 1"
+                                                          :sv "sv archived 1"}
+                                    :form/keys []})
+        id (rems.db.form/set-archived! id true))
+
+  (as-> (test-helpers/create-form! {:form/internal-name "archived 2"
+                                    :form/external-title {:en "en archived 2"
+                                                          :fi "fi archived 2"
+                                                          :sv "sv archived 2"}
+                                    :form/keys []})
+        id (rems.db.form/set-archived! id true))
+
   (test-helpers/create-form! {:form/internal-name "unarchived 1"
                               :form/external-title {:en "en unarchived 1"
                                                     :fi "fi unarchived 1"
