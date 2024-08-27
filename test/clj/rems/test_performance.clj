@@ -192,24 +192,29 @@
                                (mapv (juxt :handler-count mean low high)))})]
         (println row)))))
 
+(defn- format-memory-size [size]
+  ((var-get #'mm/convert-to-human-readable) size))
+
 (defn- get-cache-sizes []
   (doall
-   (for [s ['rems.db.applications/all-applications-cache
-            'rems.db.events/event-cache
-            'rems.db.user-settings/user-settings-cache
-            'rems.db.category/categories-cache
-            'rems.db.catalogue/cached
-            'rems.db.user-mappings/user-mappings-by-value
-            'rems.ext.duo/code-by-id
-            'rems.ext.mondo/code-by-id
-            'rems.ext.mondo/codes-dag
-            'rems.service.dependencies/dependencies-cache
-            'rems.text/cached-tr]
-         :let [size (mm/measure (-> s requiring-resolve var-get)
-                                {:bytes true})]]
-     {:name (str s)
-      :bytes size
-      :size ((var-get #'mm/convert-to-human-readable) size)})))
+   (concat (for [c (rems.service.caches/get-all-caches)
+                 :let [size (mm/measure c {:bytes true})]]
+             {:name (str (:id c "unknown cache?"))
+              :bytes size
+              :size (format-memory-size size)})
+
+           (for [s ['rems.db.applications/all-applications-cache
+                    'rems.db.events/event-cache
+                    'rems.db.catalogue/cached
+                    'rems.ext.duo/code-by-id
+                    'rems.ext.mondo/code-by-id
+                    'rems.ext.mondo/codes-dag
+                    'rems.service.dependencies/dependencies-cache
+                    'rems.text/cached-tr]
+                 :let [size (mm/measure (var-get (requiring-resolve s)) {:bytes true})]]
+             {:name s
+              :bytes size
+              :size (format-memory-size size)}))))
 
 (defn- get-all-translations []
   (let [key-paths (recursive-keys rems.locales/translations)
@@ -298,15 +303,16 @@
 
   (def cache-stats (get-cache-sizes))
   ;; additional table formatting
-  (do (println "")
-      (println "cache sizes")
-      (println "---")
-      (doseq [row (rems.markdown/markdown-table
-                   {:header ["cache" "size"]
-                    :rows (->> cache-stats
-                               (sort-by :bytes >)
-                               (mapv (juxt :name :size)))})]
-        (println row)))
+  (let [total-size (format-memory-size (reduce + 0 (mapv :bytes cache-stats)))]
+    (println "")
+    (println "cache sizes")
+    (println "---")
+    (doseq [row (rems.markdown/markdown-table
+                 {:header ["cache" (format "size (total: %s)" total-size)]
+                  :rows (->> (or cache-stats (get-cache-sizes))
+                             (sort-by :bytes >)
+                             (mapv (juxt :name :size)))})]
+      (println row)))
 
   (prof/clear-results)
   (prof/serve-ui 8080))

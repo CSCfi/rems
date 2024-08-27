@@ -1,5 +1,6 @@
 (ns rems.service.caches
-  (:require [rems.cache :as cache]
+  (:require [medley.core :refer [distinct-by]]
+            [rems.cache :as cache]
             [rems.db.form]
             [rems.db.licenses]
             [rems.db.organizations]
@@ -22,6 +23,18 @@
     #'rems.db.user-settings/user-settings-cache
     #'rems.db.users/user-cache
     #'rems.db.workflow/workflow-cache})
+
+(defn get-all-caches
+  "Returns all REMS caches, including dependent caches."
+  []
+  (let [dependent-caches (map (comp cache/get-dependent-caches :id var-get) db-caches)
+        caches (map var-get db-caches)]
+    (into caches
+          (distinct-by :id)
+          dependent-caches)))
+
+(comment
+  (get-all-caches))
 
 (defn start-caches! [& caches]
   (->> caches
