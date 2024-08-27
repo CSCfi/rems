@@ -2,11 +2,8 @@
   "Serving licenses for API."
   (:require [rems.service.dependencies :as dependencies]
             [rems.service.util :as util]
-            [rems.db.applications :as applications]
-            [rems.db.attachments :as attachments]
             [rems.db.licenses :as licenses]
-            [rems.db.organizations :as organizations]
-            [rems.util :refer [file-to-bytes]]))
+            [rems.db.organizations :as organizations]))
 
 (defn create-license! [{:keys [licensetype organization localizations]}]
   (util/check-allowed-organization! organization)
@@ -17,32 +14,6 @@
     (dependencies/reset-cache!)
     {:success (some? id)
      :id id}))
-
-(defn create-license-attachment! [{:keys [tempfile filename content-type] :as file} userid]
-  (attachments/check-size file)
-  (attachments/check-allowed-attachment filename)
-  (let [byte-array (file-to-bytes tempfile)]
-    (attachments/check-for-malware-if-enabled byte-array)
-    {:id (attachments/create-license-attachment! {:userid userid
-                                                  :filename filename
-                                                  :content-type content-type
-                                                  :data byte-array})}))
-
-(defn remove-license-attachment! [attachment-id]
-  (attachments/remove-license-attachment! attachment-id))
-
-(defn get-license-attachment [attachment-id]
-  (when-let [attachment (attachments/get-license-attachment attachment-id)]
-    (attachments/check-allowed-attachment attachment)
-    attachment))
-
-(defn get-application-license-attachment [user-id application-id license-id language]
-  (when-let [app (applications/get-application-for-user user-id application-id)]
-    (when-let [license (some #(when (= license-id (:license/id %)) %)
-                             (:application/licenses app))]
-      (when-let [attachment-id (get-in license [:license/attachment-id language])]
-        (when-let [attachment (get-license-attachment attachment-id)]
-          attachment)))))
 
 (defn get-license
   "Get a single license by id"

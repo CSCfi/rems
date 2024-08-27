@@ -35,7 +35,7 @@
         attachments-in-use (set (attachment/get-attachments-in-use application))
         all-attachments (set (map :attachment/id (:application/attachments application)))]
     (doseq [attachment-id (difference all-attachments attachments-in-use)]
-      (attachments/delete-attachment! attachment-id))))
+      (rems.db.attachments/delete-attachment! attachment-id))))
 
 (defn delete-orphan-attachments-on-submit
   "When an application is submitted, we delete its unused attachments, if any."
@@ -51,4 +51,4 @@
   (doseq [event new-events
           :when (= :application.event/attachments-redacted (:event/type event))
           attachment (:event/redacted-attachments event)]
-    (attachments/redact-attachment! (:attachment/id attachment))))
+    (rems.db.attachments/redact-attachment! (:attachment/id attachment))))

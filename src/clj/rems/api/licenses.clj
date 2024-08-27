@@ -29,8 +29,9 @@
    :organization schema-base/OrganizationId
    :localizations LicenseLocalizations})
 
-(s/defschema AttachmentMetadata
-  {:id s/Int})
+(s/defschema AddLicenseAttachmentResponse
+  {:success s/Bool
+   :id s/Int})
 
 (s/defschema CreateLicenseResponse
   {:success s/Bool
@@ -87,9 +88,10 @@
       :summary "Add an attachment file that will be used in a license"
       :roles +admin-write-roles+
       :multipart-params [file :- schema/FileUpload]
-      :return AttachmentMetadata
+      :return AddLicenseAttachmentResponse
       (extended-logging request)
-      (ok (licenses/create-license-attachment! file (getx-user-id))))
+      (ok (rems.service.attachment/create-license-attachment! {:file file
+                                                               :user-id (getx-user-id)})))
 
     (POST "/remove_attachment" request
       :summary "Remove an attachment that could have been used in a license."
@@ -97,12 +99,12 @@
       :query-params [attachment-id :- (describe s/Int "attachment id")]
       :return schema/SuccessResponse
       (extended-logging request)
-      (ok {:success (some? (licenses/remove-license-attachment! attachment-id))}))
+      (ok (rems.service.attachment/remove-license-attachment! attachment-id)))
 
     (GET "/attachments/:attachment-id" []
       :summary "Get a license's attachment"
       :roles +admin-write-roles+
       :path-params [attachment-id :- (describe s/Int "attachment id")]
-      (if-let [attachment (licenses/get-license-attachment attachment-id)]
-        (attachment/download attachment)
+      (if-let [attachment (rems.service.attachment/get-license-attachment attachment-id)]
+        (rems.service.attachment/download attachment)
         (not-found-json-response)))))

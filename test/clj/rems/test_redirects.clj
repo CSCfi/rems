@@ -120,9 +120,9 @@
 (deftest test-license-attachment-download
   (api-key/add-api-key! "42" {})
   (test-helpers/create-user! {:userid "alice"})
-  (with-redefs [licenses/get-application-license-attachment (fn [& args]
-                                                              (is (= ["alice" 1023 3 :en] args))
-                                                              dummy-attachment)]
+  (with-redefs [rems.service.attachment/get-application-license-attachment (fn [& args]
+                                                                             (is (= ["alice" 1023 3 :en] args))
+                                                                             dummy-attachment)]
     (testing "download attachment when logged in"
       (let [response (-> (request :get "/applications/1023/license-attachment/3/en")
                          (authenticate "42" "alice")
@@ -138,7 +138,7 @@
                (get-in response [:headers "Location"]))))))
 
   (testing "attachment not found"
-    (with-redefs [licenses/get-application-license-attachment (constantly nil)]
+    (with-redefs [rems.service.attachment/get-application-license-attachment (constantly nil)]
       (let [response (-> (request :get "/applications/1023/license-attachment/3/en")
                          (authenticate "42" "alice")
                          handler)]

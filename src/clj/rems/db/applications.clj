@@ -100,7 +100,7 @@
    :blacklisted? #(cache/lookup-or-miss! blacklist-cache [%1 %2] (fn [[userid resource]]
                                                                    (blacklist/blacklisted? userid resource)))
    ;; TODO: no caching for these, but they're only used by command handlers currently
-   :get-attachment-metadata rems.db.attachments/get-attachment-metadata
+   :get-attachment-metadata rems.db.attachments/get-attachment
    :get-catalogue-item-licenses get-catalogue-item-licenses})
 
 (defn get-application-internal
@@ -453,7 +453,7 @@
   (assert (application-util/draft? (get-application app-id))
           (str "Tried to delete application " app-id " which is not a draft!"))
   (delete-from-all-applications-cache! app-id)
-  (db/delete-application-attachments! {:application app-id})
+  (rems.db.attachments/delete-application-attachments! app-id)
   (events/delete-application-events! app-id)
   (let [result (db/delete-application! {:application app-id})]
     (log/infof "Finished deleting application %s" app-id)

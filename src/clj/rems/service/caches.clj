@@ -1,6 +1,7 @@
 (ns rems.service.caches
   (:require [medley.core :refer [distinct-by]]
             [rems.cache :as cache]
+            [rems.db.attachments]
             [rems.db.form]
             [rems.db.licenses]
             [rems.db.organizations]
@@ -13,7 +14,9 @@
 
 (def db-caches
   "Caches that use existing database."
-  #{#'rems.db.form/form-template-cache
+  #{#'rems.db.attachments/attachment-cache
+    #'rems.db.attachments/license-attachments-cache
+    #'rems.db.form/form-template-cache
     #'rems.db.licenses/license-cache
     #'rems.db.licenses/license-localizations-cache
     #'rems.db.organizations/organization-cache

@@ -78,8 +78,8 @@
           license-id (Long/parseLong license-id)
           language (keyword language)]
       (api-util/check-user)
-      (if-let [attachment (licenses/get-application-license-attachment (getx-user-id) application-id license-id language)]
-        (attachment/download attachment)
+      (if-let [attachment (rems.service.attachment/get-application-license-attachment (getx-user-id) application-id license-id language)]
+        (rems.service.attachment/download attachment)
         (api-util/not-found-text-response)))))
 
 (defn wrap-login-redirect [handler]

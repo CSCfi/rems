@@ -361,6 +361,6 @@
       :path-params [application-id :- (describe s/Int "application id")
                     license-id :- (describe s/Int "license id")
                     language :- (describe s/Keyword "language code")]
-      (if-let [attachment (licenses/get-application-license-attachment (getx-user-id) application-id license-id language)]
-        (attachment/download attachment)
+      (if-let [attachment (rems.service.attachment/get-application-license-attachment (getx-user-id) application-id license-id language)]
+        (rems.service.attachment/download attachment)
         (api-util/not-found-json-response)))))

@@ -4,15 +4,15 @@
             [clojure.test :refer [deftest is]]
             [com.rpl.specter :refer [ALL must transform]]
             [clojure.string]
+            [rems.service.attachment]
             [rems.service.catalogue :as catalogue]
             [rems.service.category :as category]
             [rems.service.command :as command]
-            [rems.service.form :as form]
-            [rems.service.licenses :as licenses]
-            [rems.service.organizations :as organizations]
-            [rems.service.resource :as resource]
-            [rems.service.workflow :as workflow]
-            [rems.common.util :refer [fix-filename]]
+            [rems.service.form]
+            [rems.service.licenses]
+            [rems.service.organizations]
+            [rems.service.resource]
+            [rems.service.workflow]
             [rems.config]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
@@ -20,8 +20,8 @@
             [rems.db.organizations]
             [rems.db.test-data-users :refer [+fake-user-data+]]
             [rems.db.users]
-            [rems.db.user-mappings :as user-mappings]
-            [rems.testing-util :refer [with-user]])
+            [rems.db.user-mappings]
+            [rems.testing-util :refer [copy-temp-file with-user]])
   (:import [java.util UUID]))
 
 (defn select-config-langs [m]
@@ -116,22 +116,20 @@
     (assert (:success result) {:command command :result result})
     (:id result)))
 
-(defn create-attachment-license! [{:keys [actor organization]}]
+(defn create-license-attachment! [{:keys [actor organization]}]
   (let [langs (set (:languages rems.config/env))
         fi-attachment (when (:fi langs)
-                        (:id (db/create-license-attachment!
-                              {:user (or actor "owner")
-                               :filename "license-fi.txt"
-                               :type "text/plain"
-                               :data (.getBytes "Suomenkielinen lisenssi.")
-                               :start (time/now)})))
+                        (:id (rems.service.attachment/create-license-attachment!
+                              {:user-id (or actor "owner")
+                               :file {:filename "license-fi.txt"
+                                      :content-type "text/plain"
+                                      :tempfile (copy-temp-file "Suomenkielinen lisenssi." "license-fi.txt")}})))
         en-attachment (when (:en langs)
-                        (:id (db/create-license-attachment!
-                              {:user (or actor "owner")
-                               :filename "license-en.txt"
-                               :type "text/plain"
-                               :data (.getBytes "License in English.")
-                               :start (time/now)})))]
+                        (:id (rems.service.attachment/create-license-attachment!
+                              {:user-id (or actor "owner")
+                               :file {:filename "license-en.txt"
+                                      :content-type "text/plain"
+                                      :tempfile (copy-temp-file "License in English." "license-en.txt")}})))]
     (with-user actor
       (create-license! {:actor actor
                         :license/type :attachment
@@ -333,14 +331,11 @@
     app-id))
 
 (defn create-attachment! [{:keys [actor application-id filename filetype data]}]
-  (let [previous-attachments (db/get-attachments-for-application {:application-id application-id})
-        filename (->> (mapv :filename previous-attachments)
-                      (fix-filename (or filename "attachment.pdf")))
-        attachment (db/save-attachment! {:application application-id
-                                         :user actor
-                                         :filename filename
-                                         :type (or filetype "application/pdf")
-                                         :data (.getBytes (or data ""))})]
+  (let [filename (or filename "attachment.pdf")
+        file {:filename filename
+              :content-type (or filetype "application/pdf")
+              :tempfile (copy-temp-file (or data "") filename)}
+        attachment (rems.service.attachment/add-application-attachment actor application-id file)]
     (:id attachment)))
 
 (defn assert-no-existing-data! []

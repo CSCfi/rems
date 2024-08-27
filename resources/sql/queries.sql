@@ -316,12 +316,11 @@ SET data = decode('', 'hex')
 WHERE id = :id;
 
 -- :name get-attachment :? :1
-SELECT id, appid, filename, userId, type, data FROM attachment
+SELECT data FROM attachment
 WHERE id = :id;
 
--- :name get-attachments :? :*
-SELECT id, appid, filename, userId, type
-FROM attachment;
+-- :name get-attachments-metadata :? :*
+SELECT id, appid, filename, userId, type FROM attachment;
 
 -- :name get-attachment-metadata :? :1
 SELECT id, appid, filename, userId, type FROM attachment
@@ -370,8 +369,15 @@ VALUES
 DELETE FROM license_attachment WHERE id = :id;
 
 -- :name get-license-attachment :? :1
-SELECT filename, type, data FROM license_attachment
-WHERE id = :attachmentId;
+SELECT data FROM license_attachment
+WHERE id = :id;
+
+-- :name get-license-attachment-metadata :? :1
+SELECT id, userid, filename, type, start FROM license_attachment
+WHERE id = :id;
+
+-- :name get-license-attachments-metadata :? :*
+SELECT id, userid, filename, type, start FROM license_attachment;
 
 -- :name create-license-localization! :insert
 INSERT INTO license_localization

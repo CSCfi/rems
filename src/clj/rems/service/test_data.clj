@@ -785,7 +785,7 @@
 
         _ (create-disabled-license! {:actor owner
                                      :organization {:organization/id "nbn"}})
-        attachment-license (test-helpers/create-attachment-license! {:actor owner
+        attachment-license (test-helpers/create-license-attachment! {:actor owner
                                                                      :organization {:organization/id "nbn"}})
 
         ;; Create resources

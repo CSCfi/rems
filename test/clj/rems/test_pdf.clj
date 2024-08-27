@@ -372,16 +372,14 @@
                                                           :time (time/date-time 2000)})
         handler "developer"]
     (testing "fill and submit"
-      (let [attachment-1 (:id (db/save-attachment! {:application application-id
-                                                    :user handler
-                                                    :filename "attachment.pdf"
-                                                    :type "application/pdf"
-                                                    :data (byte-array 0)}))
-            attachment-2 (:id (db/save-attachment! {:application application-id
-                                                    :user handler
-                                                    :filename "picture.png"
-                                                    :type "image/png"
-                                                    :data (byte-array 0)}))]
+      (let [attachment-1 (test-helpers/create-attachment! {:application-id application-id
+                                                           :actor applicant
+                                                           :filename "attachment.pdf"
+                                                           :filetype "application/pdf"})
+            attachment-2 (test-helpers/create-attachment! {:application-id application-id
+                                                           :actor applicant
+                                                           :filename "picture.png"
+                                                           :filetype "image/png"})]
         ;; two draft-saved events
         (test-helpers/fill-form! {:time (time/date-time 2000)
                                   :actor applicant
