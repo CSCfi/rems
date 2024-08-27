@@ -8,7 +8,7 @@
             [rems.db.organizations :as organizations]
             [rems.locales]
             [rems.text])
-  (:import [ch.qos.logback.classic Level Logger]
+  (:import [ch.qos.logback.classic Level]
            [java.nio.file Files]
            [java.nio.file.attribute FileAttribute]
            [org.joda.time DateTime DateTimeZone DateTimeUtils]
@@ -32,13 +32,19 @@
     (with-fixed-time date
       (f))))
 
-(defn suppress-logging-fixture [^String logger-name]
+(defmacro with-suppress-logging [logger-names & body]
+  `(let [loggers# (for [logger-name# (flatten (list ~logger-names))
+                        :let [logger# (LoggerFactory/getLogger logger-name#)]]
+                    {:logger logger#
+                     :original-level (.getLevel logger#)})]
+     (run! #(.setLevel (:logger %) Level/OFF) loggers#)
+     ~@body
+     (run! #(.setLevel (:logger %) (:original-level %)) loggers#)))
+
+(defn suppress-logging-fixture [& logger-names]
   (fn [f]
-    (let [^Logger logger (LoggerFactory/getLogger logger-name)
-          original-level (.getLevel logger)]
-      (.setLevel logger Level/OFF)
-      (f)
-      (.setLevel logger original-level))))
+    (with-suppress-logging logger-names
+      (f))))
 
 (defn create-temp-dir []
   (.toFile (Files/createTempDirectory (.toPath (io/file "target"))

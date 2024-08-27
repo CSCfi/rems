@@ -18,7 +18,7 @@
             [rems.db.user-settings :as user-settings]
             [rems.service.form :as form]
             [rems.service.organizations :as organizations]
-            [rems.testing-util :refer [with-user]])
+            [rems.testing-util :refer [with-suppress-logging with-user]])
   (:import [java.util UUID]
            [java.util.concurrent Executors Future]))
 
@@ -600,15 +600,8 @@
 
 (defn random-word [] (rand-nth words))
 
-(defn create-performance-test-data! []
-  (log/info "Creating performance test data")
-  (let [start-time (System/currentTimeMillis)
-        resource-count 1000
-        application-count 3000
-        user-count 1000
-        handler-count 100
-
-        owner (+fake-users+ :owner)
+(defn- create-lots-of-test-data! [{:keys [application-count handler-count resource-count user-count]}]
+  (let [owner (+fake-users+ :owner)
 
         ;; create handlers
         handlers-data (for [i (range handler-count)
@@ -731,11 +724,23 @@
              (test-helpers/command! {:type :application.command/approve
                                      :application-id app-id
                                      :actor handler
-                                     :comment ""}))))))
-    (let [delta-time (/ (- (System/currentTimeMillis) start-time) 1000.0)]
-      (log/infof "Performance test applications created in %.2fs (%.2f/s)"
-                 delta-time
-                 (/ application-count delta-time)))))
+                                     :comment ""}))))))))
+
+(defn create-performance-test-data! []
+  (let [start-time (System/currentTimeMillis)
+        application-count 3000]
+    (with-suppress-logging ["rems.cache"
+                            "rems.db.entitlements"
+                            "rems.service.entitlements"]
+      (log/info "Creating performance test data")
+      (create-lots-of-test-data! {:application-count application-count
+                                  :handler-count 100
+                                  :resource-count 1000
+                                  :user-count 1000})
+      (let [delta-time (/ (- (System/currentTimeMillis) start-time) 1000.0)]
+        (log/infof "Performance test applications created in %.2fs (%.2f/s)"
+                   delta-time
+                   (/ application-count delta-time))))))
 
 (defn- create-items! [users users-data]
   (let [owner (users :owner)
