@@ -47,8 +47,8 @@
       :query-params [{disabled :- (describe s/Bool "whether to include disabled licenses") false}
                      {archived :- (describe s/Bool "whether to include archived licenses") false}]
       :return schema/Licenses
-      (ok (licenses/get-all-licenses (merge (when-not disabled {:enabled true})
-                                            (when-not archived {:archived false})))))
+      (ok (rems.service.licenses/get-all-licenses (merge (when-not disabled {:enabled true})
+                                                         (when-not archived {:archived false})))))
 
     (GET "/:license-id" []
       :summary "Get license"

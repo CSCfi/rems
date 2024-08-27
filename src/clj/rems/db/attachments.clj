@@ -1,5 +1,5 @@
 (ns rems.db.attachments
-  (:require [clojure.test :refer [deftest is]]
+  (:require [clj-time.core :as time]
             [clojure.tools.logging :as log]
             [rems.common.attachment-util :as attachment-util]
             [rems.common.util :refer [fix-filename]]
@@ -15,9 +15,12 @@
     (throw (PayloadTooLargeException. (str "File is too large")))))
 
 (defn check-allowed-attachment
-  [filename]
-  (when-not (attachment-util/allowed-extension? filename)
-    (throw (UnsupportedMediaTypeException. (str "Unsupported extension: " filename)))))
+  [x]
+  (let [filename (or (:attachment/filename x)
+                     (:filename x)
+                     x)]
+    (when-not (attachment-util/allowed-extension? filename)
+      (throw (UnsupportedMediaTypeException. (str "Unsupported extension: " filename))))))
 
 (defn get-attachment [attachment-id]
   (when-let [{:keys [id userid type appid filename data]} (db/get-attachment {:id attachment-id})]
@@ -110,3 +113,18 @@
 (defn delete-attachment! [attachment-id]
   (db/delete-attachment! {:id attachment-id}))
 
+(defn create-license-attachment! [{:keys [userid filename content-type data]}]
+  (:id (db/create-license-attachment! {:user userid
+                                       :filename filename
+                                       :type content-type
+                                       :data data
+                                       :start (time/now)})))
+
+(defn remove-license-attachment! [attachment-id]
+  (db/remove-license-attachment! {:id attachment-id}))
+
+(defn get-license-attachment [attachment-id]
+  (when-let [attachment (db/get-license-attachment {:attachmentId attachment-id})]
+    {:attachment/filename (:filename attachment)
+     :attachment/data (:data attachment)
+     :attachment/type (:type attachment)}))

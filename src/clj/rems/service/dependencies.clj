@@ -23,7 +23,7 @@
 (defn- list-dependencies []
   (concat
 
-   (for [lic (licenses/get-all-licenses nil)
+   (for [lic (rems.db.licenses/get-licenses nil)
          dep [{:organization/id (:organization lic)}]]
      {:from {:license/id (:id lic)} :to dep})
 

@@ -445,6 +445,7 @@ SELECT
   wf.workflowBody::TEXT as workflow, wf.enabled, wf.archived
 FROM workflow wf;
 
+-- XXX: deprecate?
 -- :name get-licenses :? :*
 -- :doc
 -- - Gets application licenses by catalogue item ids
@@ -473,7 +474,12 @@ WHERE lic.id = :id;
 
 -- :name get-license-localizations :? :*
 SELECT licid, langcode, title, textcontent, attachmentid
-FROM license_localization;
+FROM license_localization
+WHERE 1=1
+/*~ (when (:id params) */
+  AND licid = :id
+/*~ ) ~*/
+;
 
 -- :name get-resources-for-license :? :*
 SELECT resid FROM resource_licenses WHERE licid = :id;

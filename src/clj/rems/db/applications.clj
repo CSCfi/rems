@@ -12,7 +12,7 @@
             [rems.auth.util :refer [throw-forbidden]]
             [rems.cache :as cache]
             [rems.common.application-util :as application-util]
-            [rems.common.util :refer [conj-set keep-keys]]
+            [rems.common.util :refer [conj-set]]
             [rems.config :refer [env]]
             [rems.db.attachments :as attachments]
             [rems.db.blacklist :as blacklist]
@@ -22,6 +22,7 @@
             [rems.db.events :as events]
             [rems.db.form :as form]
             [rems.db.licenses :as licenses]
+            [rems.db.resource]
             [rems.db.roles]
             [rems.db.users]
             [rems.db.workflow :as workflow]
@@ -56,12 +57,13 @@
 
 (defn get-catalogue-item-licenses [catalogue-item-id]
   (let [item (catalogue/get-localized-catalogue-item catalogue-item-id {})
-        workflow-licenses (-> (workflow/get-workflow (:wfid item))
+        resource-licenses (:licenses (rems.db.resource/get-resource (:resource-id item)))
+        workflow-licenses (-> (rems.db.workflow/get-workflow (:wfid item))
                               (get-in [:workflow :licenses]))]
-    (->> (licenses/get-licenses {:items [catalogue-item-id]})
-         (keep-keys {:id :license/id})
-         (into workflow-licenses)
-         (distinct-by :license/id))))
+    (->> (concat resource-licenses workflow-licenses)
+         (eduction (map #(clojure.set/rename-keys % {:id :license/id}))
+                   (distinct-by :license/id))
+         (into []))))
 
 (defn get-application-by-invitation-token [invitation-token]
   (:id (db/get-application-by-invitation-token {:token invitation-token})))
@@ -70,13 +72,11 @@
 
 (def ^:private form-template-cache (cache/ttl {:id ::form-template-cache}))
 (def ^:private catalogue-item-cache (cache/ttl {:id ::catalogue-item-cache}))
-(def ^:private license-cache (cache/ttl {:id ::license-cache}))
 (def ^:private blacklist-cache (cache/ttl {:id ::blacklist-cache}))
 
 (defn empty-injections-cache! []
   (cache/reset! form-template-cache)
   (cache/reset! catalogue-item-cache)
-  (cache/reset! license-cache)
   (cache/reset! blacklist-cache))
 
 (defn empty-injection-cache!
@@ -95,7 +95,7 @@
    :get-catalogue-item #(cache/lookup-or-miss! catalogue-item-cache % (fn [id] (catalogue/get-localized-catalogue-item id {:expand-names? true
                                                                                                                            :expand-resource-data? true})))
    :get-config (fn [] env)
-   :get-license #(cache/lookup-or-miss! license-cache % licenses/get-license)
+   :get-license licenses/get-license
    :get-user rems.db.users/get-user
    :get-users-with-role rems.db.roles/get-users-with-role
    :get-workflow rems.db.workflow/get-workflow

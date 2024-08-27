@@ -44,7 +44,7 @@
     (doseq [resource (resources/get-resources nil)]
       (when-not (valid-organization? (:organization resource))
         (log/warn "Unrecognized organization in resource:" (pr-str resource))))
-    (doseq [license (licenses/get-all-licenses {})]
+    (doseq [license (rems.service.licenses/get-all-licenses {})]
       (when-not (valid-organization? (:organization license))
         (log/warn "Unrecognized organization in license:" (pr-str license))))
     (doseq [item (catalogue/get-localized-catalogue-items)]
