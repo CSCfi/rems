@@ -134,6 +134,7 @@ INSERT INTO resource
 (resid, organization, resourcedata)
 VALUES (:resid, :organization, :resourcedata::jsonb);
 
+-- XXX: unused function?
 -- :name update-resource! :!
 UPDATE resource
 SET (resid, organization, resourcedata) = (:resid, :organization, :resourcedata::jsonb)

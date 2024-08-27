@@ -1,5 +1,6 @@
 (ns rems.service.caches
   (:require [rems.cache :as cache]
+            [rems.db.resource]
             [rems.db.roles]
             [rems.db.users]
             [rems.db.user-mappings]
@@ -8,7 +9,8 @@
 
 (def db-caches
   "Caches that use existing database."
-  #{#'rems.db.roles/role-cache
+  #{#'rems.db.resource/resource-cache
+    #'rems.db.roles/role-cache
     #'rems.db.users/user-cache
     #'rems.db.user-mappings/user-mappings-cache
     #'rems.db.user-settings/user-settings-cache

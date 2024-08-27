@@ -8,9 +8,9 @@
             [rems.application.rejecter-bot :as rejecter-bot]
             [rems.common.roles :refer [+admin-read-roles+]]
             [rems.common.util :refer [getx-in]]
-            [rems.db.resource :as resource]
-            [rems.db.user-mappings :as user-mappings]
+            [rems.db.user-mappings]
             [rems.schema-base :as schema-base]
+            [rems.service.resource]
             [rems.service.users]
             [rems.util :refer [getx-user-id]]
             [ring.util.http-response :refer [ok]]
@@ -33,7 +33,7 @@
     (unprocessable-entity-json-response "user not found")))
 
 (defn- resource-not-found-error [command]
-  (when-not (resource/ext-id-exists? (get-in command [:blacklist/resource :resource/ext-id]))
+  (when-not (rems.service.resource/ext-id-exists? (get-in command [:blacklist/resource :resource/ext-id]))
     (unprocessable-entity-json-response "resource not found")))
 
 (defn- get-blockable-users [] (rems.service.users/get-users))
