@@ -729,7 +729,8 @@ ORDER BY time ASC;
 SELECT id, data::text as data FROM organization;
 
 -- :name get-organization-by-id :? :1
-SELECT id, data::text as data FROM organization WHERE id = :id;
+SELECT id, data::text as data FROM organization
+WHERE id = :id;
 
 -- :name add-organization! :insert
 INSERT INTO organization(id, data) VALUES (:id, :data::jsonb)

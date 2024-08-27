@@ -11,37 +11,31 @@
             [rems.service.dependencies :as dependencies]
             [rems.service.util]))
 
-(defn- apply-user-permissions [userid organizations]
-  (let [user-roles (set/union (roles/get-roles userid)
-                              (organizations/get-all-organization-roles userid)
-                              (applications/get-all-application-roles userid))
-        can-see-all? (some? (some #{:owner :organization-owner :handler :reporter} user-roles))]
-    (for [org organizations]
-      (if (or (nil? userid) can-see-all?)
-        org
-        (dissoc org
-                :organization/review-emails
-                :organization/owners
-                :enabled
-                :archived)))))
-
-(defn- owner-filter-match? [owner org]
-  (or (nil? owner) ; return all when not specified
-      (contains? (roles/get-roles owner) :owner) ; implicitly owns all
-      (contains? (set (map :userid (:organization/owners org))) owner)))
-
-(defn- organization-filters [userid owner organizations]
-  (->> organizations
-       (apply-user-permissions userid)
-       (filter (partial owner-filter-match? owner))
-       (doall)))
+(defn- can-see-all [userid]
+  (let [all-roles (set/union (roles/get-roles userid)
+                             (organizations/get-all-organization-roles userid)
+                             (applications/get-all-application-roles userid))]
+    (some #{:owner :organization-owner :handler :reporter}
+          all-roles)))
 
 (defn get-organizations [& [{:keys [userid owner enabled archived]}]]
-  (->> (organizations/get-organizations)
-       (apply-filters (assoc-some {}
+  (let [check-org-owner? (and (some? owner)
+                              (not (contains? (rems.db.roles/get-roles owner) :owner))) ; implicitly owns all
+        apply-permissions? (and (some? userid)
+                                (not (can-see-all userid)))
+        query-filters (assoc-some nil
                                   :enabled enabled
-                                  :archived archived))
-       (organization-filters userid owner)))
+                                  :archived archived)]
+
+    (cond->> (rems.db.organizations/get-organizations)
+      query-filters (apply-filters query-filters)
+      apply-permissions? (map (fn organization-overview [org]
+                                (select-keys org [:organization/id
+                                                  :organization/name
+                                                  :organization/short-name])))
+      check-org-owner? (filter (fn is-organization-owner [org]
+                                 (contains? (set (map :userid (:organization/owners org))) owner)))
+      true (into []))))
 
 (defn get-organization [userid org]
   (->> (get-organizations {:userid userid})
