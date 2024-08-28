@@ -29,6 +29,32 @@
 (def ^:private validate-outbox-data
   (s/validator OutboxData))
 
+(defn puts!
+  "Puts multiple `datas` into outbox in one go.
+
+  One JSON is generated with an array of the individual outbox datas."
+  [datas]
+  (let [now (time/now)
+        amended (mapv (fn [data]
+                        {:outboxdata (-> data
+                                         (assoc :outbox/created now
+                                                :outbox/next-attempt now
+                                                :outbox/latest-error nil
+                                                :outbox/latest-attempt nil
+                                                :outbox/backoff initial-backoff)
+                                         validate-outbox-data)})
+                      datas)]
+    (mapv :id (db/puts-to-outbox! {:outboxdatas (json/generate-string amended)}))))
+
+(comment
+  ;; this is what the use of `puts!` should look like
+  (puts! [{:outbox/type :email
+           :outbox/email "first@example.com"
+           :outbox/deadline (time/now)}
+          {:outbox/type :email
+           :outbox/email "second@example.com"
+           :outbox/deadline (time/now)}]))
+
 (defn put! [data]
   (let [amended (assoc data
                        :outbox/created (DateTime/now)
