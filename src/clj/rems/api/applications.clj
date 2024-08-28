@@ -5,10 +5,10 @@
             [compojure.api.sweet :refer :all]
             [medley.core :refer [update-existing]]
             [rems.api.schema :as schema]
-            [rems.service.attachment :as attachment]
+            [rems.service.attachment]
             [rems.service.command :as command]
-            [rems.service.licenses :as licenses]
-            [rems.service.todos :as todos]
+            [rems.service.licenses]
+            [rems.service.todos]
             [rems.service.users]
             [rems.api.util :as api-util :refer [extended-logging]] ; required for route :roles
             [rems.application.commands :as commands]
@@ -135,7 +135,7 @@
 
 (defn- get-handled-applications [{:keys [query only-active-handlers limit]}]
   (time
-   (cond->> (todos/get-handled-todos (getx-user-id))
+   (cond->> (rems.service.todos/get-handled-todos (getx-user-id))
      only-active-handlers (map overview-only-active-handlers)
      query (filter-with-search query)
      true (sort-by last-activity >)
@@ -174,14 +174,14 @@
       :roles #{:logged-in}
       :return [schema/ApplicationOverview]
       :query-params [{query :- (describe s/Str "search query [documentation](https://github.com/CSCfi/rems/blob/master/docs/search.md)") nil}]
-      (ok (->> (todos/get-todos (getx-user-id))
+      (ok (->> (rems.service.todos/get-todos (getx-user-id))
                (filter-with-search query))))
 
     (GET "/handled/count" []
       :summary "Get count of all applications that the current user no more needs to act on."
       :roles #{:logged-in}
       :return Count
-      (ok (todos/get-handled-todos-count (getx-user-id))))
+      (ok (rems.service.todos/get-handled-todos-count (getx-user-id))))
 
     (GET "/handled" []
       :summary "Get all applications that the current user no more needs to act on."
@@ -243,8 +243,8 @@
       :summary "Get an attachment"
       :roles #{:logged-in}
       :path-params [attachment-id :- (describe s/Int "attachment id")]
-      (if-let [attachment (attachment/get-application-attachment (getx-user-id) attachment-id)]
-        (attachment/download attachment)
+      (if-let [attachment (rems.service.attachment/get-application-attachment (getx-user-id) attachment-id)]
+        (rems.service.attachment/download attachment)
         (api-util/not-found-json-response)))
 
     (POST "/add-attachment" request
@@ -254,7 +254,7 @@
       :query-params [application-id :- (describe s/Int "application id")]
       :return SaveAttachmentResponse
       (extended-logging request)
-      (ok (attachment/add-application-attachment (getx-user-id) application-id file)))
+      (ok (rems.service.attachment/add-application-attachment (getx-user-id) application-id file)))
 
     (POST "/accept-invitation" request
       :summary "Accept an invitation by token"
@@ -336,7 +336,7 @@
       :responses {200 {}
                   404 {:schema s/Str :description "Not found"}}
       (if-let [app (rems.db.applications/get-application-for-user (getx-user-id) application-id)]
-        (attachment/zip-attachments app all)
+        (rems.service.attachment/zip-attachments app all)
         (api-util/not-found-json-response)))
 
     (GET "/:application-id/pdf" []

@@ -5,8 +5,8 @@
             [clojure.tools.logging :as log]
             [mount.core :as mount]
             [postal.core :as postal]
-            [rems.service.todos :as todos]
-            [rems.service.workflow :as workflow]
+            [rems.service.todos]
+            [rems.service.workflow]
             [rems.application.model]
             [rems.config :refer [env]]
             [rems.db.applications]
@@ -43,7 +43,7 @@
 (defn generate-handler-reminder-outbox [handler deadline]
   (let [userid (:userid handler)
         lang (:language (rems.db.user-settings/get-user-settings userid))
-        apps (todos/get-todos userid)
+        apps (rems.service.todos/get-todos userid)
         email (template/handler-reminder-email lang handler apps)]
 
     (when email
@@ -53,14 +53,14 @@
 
 (defn generate-handler-reminder-emails! []
   (let [deadline (-> (time/now) (.plus ^Period (:email-retry-period env)))]
-    (->> (workflow/get-handlers)
+    (->> (rems.service.workflow/get-handlers)
          (keep #(generate-handler-reminder-outbox % deadline))
          rems.db.outbox/puts!)))
 
 (defn generate-reviewer-reminder-outbox [reviewer deadline]
   (let [userid (:userid reviewer)
         lang (:language (rems.db.user-settings/get-user-settings userid))
-        apps (->> (todos/get-todos userid)
+        apps (->> (rems.service.todos/get-todos userid)
                   (filter (comp #{:waiting-for-your-review} :application/todo)))
         email (template/reviewer-reminder-email lang reviewer apps)]
 
@@ -79,7 +79,7 @@
 (defn- render-invitation-template [invitation]
   (let [lang (:default-language env)] ; we don't know the preferred languages here since there is no user
     (cond (:invitation/workflow invitation)
-          (let [workflow (workflow/get-workflow (get-in invitation [:invitation/workflow :workflow/id]))]
+          (let [workflow (rems.service.workflow/get-workflow (get-in invitation [:invitation/workflow :workflow/id]))]
             (assert workflow "Can't send invitation, missing workflow")
             (template/workflow-handler-invitation-email lang invitation workflow)))))
 

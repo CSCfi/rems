@@ -3,7 +3,7 @@
             [rems.db.applications]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.db.testing :refer [rollback-db-fixture test-db-fixture]]
-            [rems.service.workflow :as workflow]
+            [rems.service.workflow]
             [rems.testing-util :refer [with-user]]))
 
 (use-fixtures :once test-db-fixture)
@@ -48,7 +48,7 @@
                            :licenses []}
                 :enabled true
                 :archived false}
-               (workflow/get-workflow wf-id)))))
+               (rems.service.workflow/get-workflow wf-id)))))
 
     (testing "decider workflow"
       (let [wf-id (test-helpers/create-workflow! {:organization {:organization/id "abc"}
@@ -65,7 +65,7 @@
                            :licenses []}
                 :enabled true
                 :archived false}
-               (workflow/get-workflow wf-id)))))
+               (rems.service.workflow/get-workflow wf-id)))))
 
     (testing "master workflow"
       (let [wf-id (test-helpers/create-workflow! {:organization {:organization/id "abc"}
@@ -82,7 +82,7 @@
                            :licenses []}
                 :enabled true
                 :archived false}
-               (workflow/get-workflow wf-id)))))))
+               (rems.service.workflow/get-workflow wf-id)))))))
 
 (deftest test-edit-workflow
   (create-users)
@@ -96,15 +96,15 @@
                                                   :title "original title"
                                                   :handlers ["user1"]
                                                   :licenses [licid]})]
-        (workflow/edit-workflow! {:id wf-id
-                                  :title "changed title"})
+        (rems.service.workflow/edit-workflow! {:id wf-id
+                                               :title "changed title"})
         (is (= {:id wf-id
                 :title "changed title"
                 :workflow {:type :workflow/master
                            :handlers [{:userid "user1" :name "User 1" :email "user1@example.com"}]
                            :forms []
                            :licenses [{:license/id licid}]}}
-               (-> (workflow/get-workflow wf-id)
+               (-> (rems.service.workflow/get-workflow wf-id)
                    (select-keys [:id :title :workflow])
                    (update-in [:workflow :licenses]
                               (partial map #(select-keys % [:license/id]))))))))
@@ -130,8 +130,8 @@
           (is (= [app-id] (mapv :application/id (rems.db.applications/get-all-applications "user1"))))
           (is (= [] (rems.db.applications/get-all-applications "user2"))))
 
-        (workflow/edit-workflow! {:id wf-id
-                                  :handlers ["user2"]})
+        (rems.service.workflow/edit-workflow! {:id wf-id
+                                               :handlers ["user2"]})
 
         (testing "handlers should have changed"
           (let [app (rems.db.applications/get-application app-id)]
@@ -147,7 +147,7 @@
                            :handlers [{:userid "user2" :name "User 2" :email "user2@example.com"}]
                            :forms []
                            :licenses []}}
-               (-> (workflow/get-workflow wf-id)
+               (-> (rems.service.workflow/get-workflow wf-id)
                    (select-keys [:id :title :workflow]))))))))
 
 
@@ -155,7 +155,7 @@
   (create-users)
   (with-user "owner"
     (testing "not found"
-      (is (nil? (workflow/get-workflow 123))))))
+      (is (nil? (rems.service.workflow/get-workflow 123))))))
 
 (deftest test-get-handlers
   (create-users)
@@ -172,14 +172,14 @@
 
       (testing "returns distinct handlers from all workflows"
         (is (= ["user1" "user2" "user3"]
-               (simplify (workflow/get-handlers)))))
+               (simplify (rems.service.workflow/get-handlers)))))
 
       (testing "ignores disabled workflows"
-        (workflow/set-workflow-enabled! {:id wf1 :enabled false})
+        (rems.service.workflow/set-workflow-enabled! {:id wf1 :enabled false})
         (is (= ["user2" "user3"]
-               (simplify (workflow/get-handlers)))))
+               (simplify (rems.service.workflow/get-handlers)))))
 
       (testing "ignores archived workflows"
-        (workflow/set-workflow-archived! {:id wf2 :archived true})
+        (rems.service.workflow/set-workflow-archived! {:id wf2 :archived true})
         (is (= []
-               (simplify (workflow/get-handlers))))))))
+               (simplify (rems.service.workflow/get-handlers))))))))

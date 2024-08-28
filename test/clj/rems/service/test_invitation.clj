@@ -1,6 +1,6 @@
 (ns ^:integration rems.service.test-invitation
   (:require [clojure.test :refer :all]
-            [rems.service.invitation :as invitation]
+            [rems.service.invitation]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.db.testing :refer [rollback-db-fixture test-db-fixture]]
             [rems.db.outbox]
@@ -23,39 +23,39 @@
   (let [workflow-id (test-helpers/create-workflow! {})]
     (with-user "owner"
       (testing "before creating invitations"
-        (is (= [] (invitation/get-invitations nil))))
+        (is (= [] (rems.service.invitation/get-invitations nil))))
 
       (testing "creating invitations"
         (testing "without any type"
           (is (= {:success false
                   :errors
                   [{:type :t.accept-invitation.errors/invalid-invitation-type :workflow-id nil}]}
-                 (invitation/create-invitation! {:userid "owner"
-                                                 :name "Dorothy Vaughan"
-                                                 :email "dorothy.vaughan@nasa.gov"}))))
+                 (rems.service.invitation/create-invitation! {:userid "owner"
+                                                              :name "Dorothy Vaughan"
+                                                              :email "dorothy.vaughan@nasa.gov"}))))
 
         (testing "with invalid workflow"
           (is (= {:success false
                   :errors [{:type :t.accept-invitation.errors/invalid-workflow :workflow-id 100042}]}
-                 (invitation/create-invitation! {:userid "owner"
-                                                 :name "Dorothy Vaughan"
-                                                 :email "dorothy.vaughan@nasa.gov"
-                                                 :workflow-id 100042}))))
+                 (rems.service.invitation/create-invitation! {:userid "owner"
+                                                              :name "Dorothy Vaughan"
+                                                              :email "dorothy.vaughan@nasa.gov"
+                                                              :workflow-id 100042}))))
 
         (testing "success"
           (let [sent-emails (atom nil)]
             (with-redefs [rems.db.outbox/puts! (fn [emails] (reset! sent-emails emails))]
-              (let [invitation (invitation/create-invitation! {:userid "owner"
-                                                               :name "Dorothy Vaughan"
-                                                               :email "dorothy.vaughan@nasa.gov"
-                                                               :workflow-id workflow-id})
+              (let [invitation (rems.service.invitation/create-invitation! {:userid "owner"
+                                                                            :name "Dorothy Vaughan"
+                                                                            :email "dorothy.vaughan@nasa.gov"
+                                                                            :workflow-id workflow-id})
                     invitation-id (:invitation/id invitation)]
                 (is (= {:success true} (dissoc invitation :invitation/id)))
                 (is (number? invitation-id))
                 (is (= "dorothy.vaughan@nasa.gov" (:to (:outbox/email (first @sent-emails)))))
 
                 (testing "after creating invitations"
-                  (let [invitations (invitation/get-invitations nil)]
+                  (let [invitations (rems.service.invitation/get-invitations nil)]
                     (is (= [{:invitation/name "Dorothy Vaughan"
                              :invitation/email "dorothy.vaughan@nasa.gov"
                              :invitation/invited-by {:userid "owner"
@@ -70,8 +70,8 @@
                     (is (= :not-present (:invitation/token (first invitations) :not-present)) "must not reveal token")
 
                     (testing "accept invitation with fake code"
-                      (let [response (invitation/accept-invitation! {:userid "new-handler"
-                                                                     :token "doesnotexist"})]
+                      (let [response (rems.service.invitation/accept-invitation! {:userid "new-handler"
+                                                                                  :token "doesnotexist"})]
                         (is (= {:success false
                                 :errors [{:key :t.accept-invitation.errors/invalid-token :token "doesnotexist"}]}
                                response))))
@@ -79,15 +79,15 @@
                     (DateTimeUtils/setCurrentMillisFixed (.getMillis acceptance-time))
 
                     (testing "accept invitation"
-                      (let [token (-> invitation-id invitation/get-invitation-full first :invitation/token)
-                            response (invitation/accept-invitation! {:userid "new-handler"
-                                                                     :token token})]
+                      (let [token (-> invitation-id rems.service.invitation/get-invitation-full first :invitation/token)
+                            response (rems.service.invitation/accept-invitation! {:userid "new-handler"
+                                                                                  :token token})]
                         (is (= {:success true
                                 :invitation/workflow {:workflow/id workflow-id}}
                                response))))
 
                     (testing "after accepting invitation"
-                      (let [invitations (invitation/get-invitations nil)]
+                      (let [invitations (rems.service.invitation/get-invitations nil)]
                         (is (= [{:invitation/name "Dorothy Vaughan"
                                  :invitation/email "dorothy.vaughan@nasa.gov"
                                  :invitation/invited-user {:userid "new-handler"
@@ -104,9 +104,9 @@
                                      invitations)))))
 
                     (testing "accept invitation again"
-                      (let [token (-> invitation-id invitation/get-invitation-full first :invitation/token)
-                            response (invitation/accept-invitation! {:userid "new-handler"
-                                                                     :token token})]
+                      (let [token (-> invitation-id rems.service.invitation/get-invitation-full first :invitation/token)
+                            response (rems.service.invitation/accept-invitation! {:userid "new-handler"
+                                                                                  :token token})]
                         (is (= {:success false
                                 :errors [{:type :already-joined :workflow/id workflow-id}]}
                                response))))))))))))))

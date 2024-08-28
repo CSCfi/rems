@@ -1,6 +1,6 @@
 (ns ^:integration rems.application.test-rejecter-bot
   (:require [clojure.test :refer :all]
-            [rems.service.blacklist :as blacklist]
+            [rems.service.blacklist]
             [rems.service.command :as command]
             [rems.application.rejecter-bot :as rejecter-bot]
             [rems.db.applications]
@@ -35,9 +35,9 @@
                                                      :workflow-id wf
                                                      :resource-id res2})]
       (testing "rejecting submitted applications:"
-        (blacklist/add-user-to-blacklist! "handler"
-                                          {:blacklist/user {:userid "user1"}
-                                           :blacklist/resource {:resource/ext-id "res1"}})
+        (rems.service.blacklist/add-user-to-blacklist! "handler"
+                                                       {:blacklist/user {:userid "user1"}
+                                                        :blacklist/resource {:resource/ext-id "res1"}})
         (testing "blacklisted user"
           (let [app-id (test-helpers/create-application! {:actor "user1"
                                                           :catalogue-item-ids [cat1]})]

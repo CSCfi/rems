@@ -7,8 +7,8 @@
             [rems.common.application-util :as application-util]
             [rems.db.applications]
             [rems.db.attachments]
-            [rems.service.attachment :as attachment]
-            [rems.service.blacklist :as blacklist]))
+            [rems.service.attachment]
+            [rems.service.blacklist]))
 
 (defn revokes-to-blacklist
   "Revokation causes the users to be blacklisted."
@@ -18,10 +18,10 @@
           :let [application (rems.db.applications/get-application-internal (:application/id event))]
           user (application-util/applicant-and-members application)
           resource (:application/resources application)]
-    (blacklist/add-user-to-blacklist! (:event/actor event)
-                                      {:blacklist/user {:userid (:userid user)}
-                                       :blacklist/resource {:resource/ext-id (:resource/ext-id resource)}
-                                       :comment (:application/comment event)})))
+    (rems.service.blacklist/add-user-to-blacklist! (:event/actor event)
+                                                   {:blacklist/user {:userid (:userid user)}
+                                                    :blacklist/resource {:resource/ext-id (:resource/ext-id resource)}
+                                                    :comment (:application/comment event)})))
 
 (defn delete-applications
   "The deleted event causes a side-effect that completely deletes the application."
@@ -32,7 +32,7 @@
 
 (defn delete-orphan-attachments [application-id]
   (let [application (rems.db.applications/get-application-internal application-id)
-        attachments-in-use (set (attachment/get-attachments-in-use application))
+        attachments-in-use (set (rems.service.attachment/get-attachments-in-use application))
         all-attachments (set (map :attachment/id (:application/attachments application)))]
     (doseq [attachment-id (difference all-attachments attachments-in-use)]
       (rems.db.attachments/delete-attachment! attachment-id))))

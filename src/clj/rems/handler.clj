@@ -5,9 +5,9 @@
             [compojure.route :as route]
             [mount.core :as mount]
             [rems.api :refer [api-routes]]
-            [rems.service.attachment :as attachment]
-            [rems.service.invitation :as invitation]
-            [rems.service.licenses :as licenses]
+            [rems.service.attachment]
+            [rems.service.invitation]
+            [rems.service.licenses]
             [rems.api.util :as api-util]
             [rems.context :as context]
             [rems.auth.auth :as auth]
@@ -46,7 +46,7 @@
 
 (defroutes redirects
   (GET "/accept-invitation" [token]
-    (if-let [invitation (first (invitation/get-invitations {:token token}))]
+    (if-let [invitation (first (rems.service.invitation/get-invitations {:token token}))]
       (cond (:invitation/workflow invitation)
             (redirect (str "/invitation/accept-invitation?type=workflow&token=" token)))
       (redirect (str "/application/accept-invitation/" token))))
@@ -69,8 +69,8 @@
   (GET "/applications/attachment/:attachment-id" [attachment-id]
     (let [attachment-id (Long/parseLong attachment-id)]
       (api-util/check-user)
-      (if-let [attachment (attachment/get-application-attachment (getx-user-id) attachment-id)]
-        (attachment/download attachment)
+      (if-let [attachment (rems.service.attachment/get-application-attachment (getx-user-id) attachment-id)]
+        (rems.service.attachment/download attachment)
         (api-util/not-found-text-response))))
 
   (GET "/applications/:application-id/license-attachment/:license-id/:language" [application-id license-id language]

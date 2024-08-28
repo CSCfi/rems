@@ -7,10 +7,10 @@
             [rems.common.form :as common-form]
             [rems.config :refer [env]]
             [rems.api.schema]
-            [rems.service.catalogue :as catalogue]
-            [rems.service.form :as form]
-            [rems.service.licenses :as licenses]
-            [rems.service.resource :as resources]
+            [rems.service.catalogue]
+            [rems.service.form]
+            [rems.service.licenses]
+            [rems.service.resource]
             [rems.db.events]
             [rems.db.organizations]
             [rems.ext.duo]
@@ -21,7 +21,7 @@
   (s/validator rems.api.schema/FormTemplate))
 
 (defn validate-forms []
-  (doseq [template (form/get-form-templates {})]
+  (doseq [template (rems.service.form/get-form-templates {})]
     (validate-form-template template)
     (when-let [errors (common-form/validate-form-template template [])] ;; we don't want errors for missing languages
       (throw (ex-info "Form template validation failed"
@@ -38,16 +38,16 @@
   ;; NB: do not validate user organizations, they come from the idp
   (let [organizations (->> (rems.db.organizations/get-organizations-raw) (map :organization/id) set)
         valid-organization? (fn [organization] (contains? organizations (:organization/id organization)))]
-    (doseq [form (form/get-form-templates {})]
+    (doseq [form (rems.service.form/get-form-templates {})]
       (when-not (valid-organization? (:organization form))
         (log/warn "Unrecognized organization in form:" (pr-str form))))
-    (doseq [resource (resources/get-resources nil)]
+    (doseq [resource (rems.service.resource/get-resources nil)]
       (when-not (valid-organization? (:organization resource))
         (log/warn "Unrecognized organization in resource:" (pr-str resource))))
     (doseq [license (rems.service.licenses/get-all-licenses {})]
       (when-not (valid-organization? (:organization license))
         (log/warn "Unrecognized organization in license:" (pr-str license))))
-    (doseq [item (catalogue/get-localized-catalogue-items)]
+    (doseq [item (rems.service.catalogue/get-localized-catalogue-items)]
       (when-not (valid-organization? (:organization item))
         (log/warn "Unrecognized organization in catalogue item:" (pr-str item))))))
 

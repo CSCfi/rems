@@ -5,8 +5,8 @@
             [com.rpl.specter :refer [ALL must transform]]
             [clojure.string]
             [rems.service.attachment]
-            [rems.service.catalogue :as catalogue]
-            [rems.service.category :as category]
+            [rems.service.catalogue]
+            [rems.service.category]
             [rems.service.command :as command]
             [rems.service.form]
             [rems.service.licenses]
@@ -74,7 +74,7 @@
                              :organization/keys [id name short-name owners review-emails]
                              :as command}]
   (let [actor (or actor (create-owner!))
-        result (organizations/add-organization!
+        result (rems.service.organizations/add-organization!
                 {:organization/id (or id "default")
                  :organization/name (select-config-langs
                                      (or name {:fi "Oletusorganisaatio"
@@ -106,7 +106,7 @@
                         :as command}]
   (let [actor (or actor (create-owner!))
         result (with-user actor
-                 (licenses/create-license!
+                 (rems.service.licenses/create-license!
                   {:licensetype (name (or type :text))
                    :organization (or organization (ensure-default-organization!))
                    :localizations (select-config-langs
@@ -145,7 +145,7 @@
                      :as command}]
   (let [actor (or actor (create-owner!))
         result (with-user actor
-                 (form/create-form!
+                 (rems.service.form/create-form!
                   {:organization (or organization (ensure-default-organization!))
                    :form/internal-name (or internal-name "FORM")
                    :form/external-title (select-config-langs
@@ -167,7 +167,7 @@
                       (transform [:resource/duo (must :duo/codes) ALL (must :more-info)]
                                  select-config-langs))
         result (with-user actor
-                 (resource/create-resource!
+                 (rems.service.resource/create-resource!
                   (merge {:resid (or resource-ext-id (str "urn:uuid:" (UUID/randomUUID)))
                           :organization (or organization (ensure-default-organization!))
                           :licenses (or license-ids [])}
@@ -189,7 +189,7 @@
                          :as command}]
   (let [actor (or actor (create-owner!))
         result (with-user actor
-                 (workflow/create-workflow!
+                 (rems.service.workflow/create-workflow!
                   {:organization (or organization (ensure-default-organization!))
                    :title (or title "")
                    :type (or type :workflow/master)
@@ -209,7 +209,7 @@
                          :as command}]
   (let [actor (or actor (create-owner!))
         result (with-user actor
-                 (category/create-category!
+                 (rems.service.category/create-category!
                   (merge {:category/title (select-config-langs
                                            (or title {:en "Category"
                                                       :fi "Kategoria"
@@ -239,7 +239,7 @@
                               [lang {:title (get title lang)
                                      :infourl (get infourl lang)}]))
         result (with-user actor
-                 (catalogue/create-catalogue-item!
+                 (rems.service.catalogue/create-catalogue-item!
                   (-> {:start (or start (time/now))
                        :resid (or resource-id (create-resource! {:organization organization}))
                        :form (if (contains? command :form-id) ; support :form-id nil

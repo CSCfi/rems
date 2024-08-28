@@ -16,8 +16,8 @@
             [rems.db.users]
             [rems.db.workflow]
             [rems.db.user-settings]
-            [rems.service.form :as form]
-            [rems.service.organizations :as organizations]
+            [rems.service.form]
+            [rems.service.organizations]
             [rems.testing-util :refer [with-suppress-logging with-user]])
   (:import [java.util UUID]
            [java.util.concurrent Executors Future]))
@@ -52,7 +52,7 @@
                                          :form/external-title {:en "Archived form, should not be seen by applicants"
                                                                :fi "Archived form, should not be seen by applicants"
                                                                :sv "Archived form, should not be seen by applicants"}})]
-      (form/set-form-archived! {:id id :archived true}))))
+      (rems.service.form/set-form-archived! {:id id :archived true}))))
 
 (defn- create-disabled-license! [{:keys [actor organization]}]
   (let [id (test-helpers/create-license! {:actor actor
@@ -622,11 +622,11 @@
                            (str "perf-test-handler-" i)))
 
         ;; create domain data
-        _perf (organizations/add-organization! {:organization/id "perf"
-                                                :organization/name {:fi "Suorituskykytestiorganisaatio" :en "Performance Test Organization" :sv "Organisationen för utvärderingsprov"}
-                                                :organization/short-name {:fi "Suorituskyky" :en "Performance" :sv "Uvärderingsprov"}
-                                                :organization/owners [{:userid (+fake-users+ :organization-owner1)}]
-                                                :organization/review-emails []})
+        _perf (rems.service.organizations/add-organization! {:organization/id "perf"
+                                                             :organization/name {:fi "Suorituskykytestiorganisaatio" :en "Performance Test Organization" :sv "Organisationen för utvärderingsprov"}
+                                                             :organization/short-name {:fi "Suorituskyky" :en "Performance" :sv "Uvärderingsprov"}
+                                                             :organization/owners [{:userid (+fake-users+ :organization-owner1)}]
+                                                             :organization/review-emails []})
         workflow-id (test-helpers/create-workflow! {:actor owner
                                                     :organization {:organization/id "perf"}
                                                     :title "Performance tests"
@@ -649,7 +649,7 @@
                                                                               :field/placeholder {:en "The purpose of the project is to..."
                                                                                                   :fi "Projektin tarkoitus on..."
                                                                                                   :sv "Det här projekt..."}})]})
-        form (form/get-form-template form-id)
+        form (rems.service.form/get-form-template form-id)
         category {:category/id (test-helpers/create-category! {:actor owner
                                                                :category/title {:en "Performance"
                                                                                 :fi "Suorituskyky"

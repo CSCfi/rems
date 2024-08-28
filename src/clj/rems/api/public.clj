@@ -1,7 +1,7 @@
 (ns rems.api.public
   (:require [compojure.api.sweet :refer :all]
             [rems.api.util] ; required for route :roles
-            [rems.service.public :as public]
+            [rems.service.public]
             [ring.util.http-response :refer :all]
             [schema.core :as s]))
 
@@ -59,7 +59,7 @@
     (GET "/" []
       :summary "Get translations"
       :return GetTranslationsResponse
-      (ok (public/get-translations)))))
+      (ok (rems.service.public/get-translations)))))
 
 (def theme-api
   (context "/theme" []
@@ -68,7 +68,7 @@
     (GET "/" []
       :summary "Get current layout theme"
       :return GetThemeResponse
-      (ok (public/get-theme)))))
+      (ok (rems.service.public/get-theme)))))
 
 (def config-api
   (context "/config" []
@@ -77,13 +77,13 @@
     (GET "/" []
       :summary "Get configuration that is relevant to UI"
       :return GetConfigResponse
-      (ok (public/get-config)))
+      (ok (rems.service.public/get-config)))
 
     (GET "/full" []
       :summary "Get (almost) full configuration"
       :roles #{:owner}
       :return s/Any
-      (ok (public/get-config-full)))))
+      (ok (rems.service.public/get-config-full)))))
 
 (def keepalive-api
   (context "/keepalive" []

@@ -15,12 +15,12 @@
             [com.rpl.specter :refer [select ALL]]
             [etaoin.keys]
             [medley.core :refer [find-first]]
-            [rems.service.catalogue :as catalogue]
-            [rems.service.form :as forms]
-            [rems.service.invitation :as invitations]
-            [rems.service.organizations :as organizations]
-            [rems.service.resource :as resources]
-            [rems.service.workflow :as workflows]
+            [rems.service.catalogue]
+            [rems.service.form]
+            [rems.service.invitation]
+            [rems.service.organizations]
+            [rems.service.resource]
+            [rems.service.workflow]
             [rems.browser-test-util :as btu]
             [rems.common.util :refer [getx]]
             [rems.context :as context]
@@ -30,7 +30,7 @@
             [rems.main]
             [rems.testing-util :refer [with-user with-fake-login-users]]
             [rems.text :refer [localize-time text with-language]]
-            [rems.service.todos :as todos]))
+            [rems.service.todos]))
 
 (comment ; convenience for development testing
   (btu/init-driver! :chrome "http://localhost:3000/" :development))
@@ -1043,7 +1043,7 @@
     (testing "disabling the 2nd item"
       (binding [context/*user* {:userid "owner"}
                 context/*roles* #{:owner}]
-        (catalogue/set-catalogue-item-enabled! {:id (btu/context-getx :catalogue-id2) :enabled false}))))
+        (rems.service.catalogue/set-catalogue-item-enabled! {:id (btu/context-getx :catalogue-id2) :enabled false}))))
 
   (btu/with-postmortem
     (login-as "developer")
@@ -1163,7 +1163,7 @@
       ;; NB: other tests may process applications too
       ;; the created 100 applications will be the latest
       (create-processed-application! 0 100)
-      (btu/context-assoc! :todos (todos/get-handled-todos "developer")) ; check against API
+      (btu/context-assoc! :todos (rems.service.todos/get-handled-todos "developer")) ; check against API
       (btu/reload)
       (btu/wait-visible {:fn/text (str "There are " (count (btu/context-getx :todos)) " processed applications.")})
       (btu/screenshot "processed-applications-closed")
@@ -1346,13 +1346,13 @@
                                                                             :workflow-id (btu/context-getx :workflow-id)}))
     (test-helpers/create-user! {:userid "invited-person-id" :name "Invited Person Name" :email "invited-person-id@example.com"})
     (with-user "owner"
-      (btu/context-assoc! :invitation-id (getx (invitations/create-invitation! {:userid "owner"
-                                                                                :name "Dorothy Vaughan"
-                                                                                :email "dorothy.vaughan@nasa.gov"
-                                                                                :workflow-id (btu/context-getx :workflow-id)}) :invitation/id))))
+      (btu/context-assoc! :invitation-id (getx (rems.service.invitation/create-invitation! {:userid "owner"
+                                                                                            :name "Dorothy Vaughan"
+                                                                                            :email "dorothy.vaughan@nasa.gov"
+                                                                                            :workflow-id (btu/context-getx :workflow-id)}) :invitation/id))))
   (btu/with-postmortem
     (testing "get invitation token"
-      (let [invitation (-> (btu/context-getx :invitation-id) invitations/get-invitation-full)
+      (let [invitation (-> (btu/context-getx :invitation-id) rems.service.invitation/get-invitation-full)
             token (:invitation/token invitation)]
         (is (string? token))
         (btu/context-assoc! :token token)))
@@ -1910,7 +1910,7 @@
     (testing "check that catalogue item is not visible before enabling"
       ;; technically we could check this from
       ;; the catalogue page but we'd need to search
-      (let [public-catalogue-items-by-name (->> (catalogue/get-catalogue-table {:enabled true})
+      (let [public-catalogue-items-by-name (->> (rems.service.catalogue/get-catalogue-table {:enabled true})
                                                 (group-by (comp :title :en :localizations)))]
         (is (= nil (public-catalogue-items-by-name (btu/context-getx :catalogue-item-name))))))
     (testing "enable catalogue item"
@@ -1993,10 +1993,10 @@
            (dissoc (slurp-fields :catalogue-item) "Start")))
     (testing "after disabling the components"
       (with-user "owner"
-        (organizations/set-organization-enabled! {:enabled false :organization/id (btu/context-getx :organization-id)})
-        (forms/set-form-enabled! {:id (btu/context-getx :form) :enabled false})
-        (resources/set-resource-enabled! {:id (btu/context-getx :resource) :enabled false})
-        (workflows/set-workflow-enabled! {:id (btu/context-getx :workflow) :enabled false}))
+        (rems.service.organizations/set-organization-enabled! {:enabled false :organization/id (btu/context-getx :organization-id)})
+        (rems.service.form/set-form-enabled! {:id (btu/context-getx :form) :enabled false})
+        (rems.service.resource/set-resource-enabled! {:id (btu/context-getx :resource) :enabled false})
+        (rems.service.workflow/set-workflow-enabled! {:id (btu/context-getx :workflow) :enabled false}))
       (testing "editing"
         (btu/go (str (btu/get-server-url) "administration/catalogue-items/edit/" (btu/context-getx :catalogue-item)))
         (btu/wait-page-loaded)
@@ -3337,7 +3337,7 @@
 
       (binding [context/*user* {:userid "owner"}
                 context/*roles* #{:owner}]
-        (catalogue/set-catalogue-item-enabled! {:id (btu/context-getx :catalogue-id) :enabled true}))
+        (rems.service.catalogue/set-catalogue-item-enabled! {:id (btu/context-getx :catalogue-id) :enabled true}))
 
       ;; must reload to see
       (btu/reload)

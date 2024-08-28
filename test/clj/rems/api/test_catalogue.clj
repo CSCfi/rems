@@ -1,6 +1,6 @@
 (ns ^:integration rems.api.test-catalogue
   (:require [clojure.test :refer :all]
-            [rems.service.catalogue :as catalogue]
+            [rems.service.catalogue]
             [rems.api.testing :refer :all]
             [rems.db.category]
             [rems.service.test-data :as test-data]
@@ -58,7 +58,7 @@
   (test-data/create-test-users-and-roles!)
 
   (let [get-item (fn [id]
-                   (-> (catalogue/get-localized-catalogue-item id)
+                   (-> (rems.service.catalogue/get-localized-catalogue-item id)
                        (update :start format-utc-datetime)
                        (dissoc :resource-name :form-name :workflow-name)))
         get-category (fn [category]
@@ -97,8 +97,8 @@
 
       (testing "even after disabling more"
         (with-user "owner"
-          (catalogue/set-catalogue-item-enabled! {:id (:id item1) :enabled false}) ; top level
-          (catalogue/set-catalogue-item-enabled! {:id (:id item4) :enabled false})) ; inside category
+          (rems.service.catalogue/set-catalogue-item-enabled! {:id (:id item1) :enabled false}) ; top level
+          (rems.service.catalogue/set-catalogue-item-enabled! {:id (:id item4) :enabled false})) ; inside category
 
         (is (= {:roots [(-> (get-category parent)
                             (assoc :category/items [item7])

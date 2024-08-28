@@ -6,7 +6,7 @@
             [rems.common.roles :refer [+admin-read-roles+ +admin-write-roles+]]
             [rems.schema-base :as schema-base]
             [rems.service.users]
-            [rems.service.workflow :as workflow]
+            [rems.service.workflow]
             [ring.util.http-response :refer [ok]]
             [schema.core :as s]))
 
@@ -54,8 +54,8 @@
       :query-params [{disabled :- (describe s/Bool "whether to include disabled workflows") false}
                      {archived :- (describe s/Bool "whether to include archived workflows") false}]
       :return [schema/Workflow]
-      (ok (workflow/get-workflows (merge (when-not disabled {:enabled true})
-                                         (when-not archived {:archived false})))))
+      (ok (rems.service.workflow/get-workflows (merge (when-not disabled {:enabled true})
+                                                      (when-not archived {:archived false})))))
 
     (POST "/create" request
       :summary "Create workflow"
@@ -63,7 +63,7 @@
       :body [command CreateWorkflowCommand]
       :return CreateWorkflowResponse
       (extended-logging request)
-      (ok (workflow/create-workflow! command)))
+      (ok (rems.service.workflow/create-workflow! command)))
 
     (PUT "/edit" request
       :summary "Edit workflow title and handlers"
@@ -71,7 +71,7 @@
       :body [command EditWorkflowCommand]
       :return schema/SuccessResponse
       (extended-logging request)
-      (ok (workflow/edit-workflow! command)))
+      (ok (rems.service.workflow/edit-workflow! command)))
 
     (PUT "/archived" request
       :summary "Archive or unarchive workflow"
@@ -79,7 +79,7 @@
       :body [command schema/ArchivedCommand]
       :return schema/SuccessResponse
       (extended-logging request)
-      (ok (workflow/set-workflow-archived! command)))
+      (ok (rems.service.workflow/set-workflow-archived! command)))
 
     (PUT "/enabled" request
       :summary "Enable or disable workflow"
@@ -87,7 +87,7 @@
       :body [command schema/EnabledCommand]
       :return schema/SuccessResponse
       (extended-logging request)
-      (ok (workflow/set-workflow-enabled! command)))
+      (ok (rems.service.workflow/set-workflow-enabled! command)))
 
     (GET "/actors" []
       :summary "List of available actors"
@@ -100,6 +100,6 @@
       :roles +admin-read-roles+
       :path-params [workflow-id :- (describe s/Int "workflow-id")]
       :return schema/Workflow
-      (if-some [wf (workflow/get-workflow workflow-id)]
+      (if-some [wf (rems.service.workflow/get-workflow workflow-id)]
         (ok wf)
         (not-found-json-response)))))

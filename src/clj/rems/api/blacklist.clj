@@ -3,7 +3,7 @@
             [compojure.api.sweet :refer :all]
             [rems.api.schema :as schema]
             [rems.service.command :as command]
-            [rems.service.blacklist :as blacklist]
+            [rems.service.blacklist]
             [rems.api.util :refer [extended-logging unprocessable-entity-json-response]] ; required for route :roles
             [rems.application.rejecter-bot :as rejecter-bot]
             [rems.common.roles :refer [+admin-read-roles+]]
@@ -48,8 +48,8 @@
       :query-params [{user :- schema-base/UserId nil}
                      {resource :- s/Str nil}]
       :return [BlacklistEntryWithDetails]
-      (ok (blacklist/get-blacklist {:userid (rems.db.user-mappings/find-userid user)
-                                    :resource/ext-id resource})))
+      (ok (rems.service.blacklist/get-blacklist {:userid (rems.db.user-mappings/find-userid user)
+                                                 :resource/ext-id resource})))
 
     (GET "/users" []
       :summary "Existing REMS users available for adding to the blacklist"
@@ -69,7 +69,7 @@
             command (assoc-in command [:blacklist/user :userid] userid)]
         (or (user-not-found-error command)
             (resource-not-found-error command)
-            (do (blacklist/add-user-to-blacklist! (getx-user-id) command)
+            (do (rems.service.blacklist/add-user-to-blacklist! (getx-user-id) command)
                 (doseq [cmd (rejecter-bot/reject-all-applications-by userid)]
                   (let [result (command/command! cmd)]
                     (when (:errors result)
@@ -87,5 +87,5 @@
             command (assoc-in command [:blacklist/user :userid] userid)]
         (or (user-not-found-error command)
             (resource-not-found-error command)
-            (do (blacklist/remove-user-from-blacklist! (getx-user-id) command)
+            (do (rems.service.blacklist/remove-user-from-blacklist! (getx-user-id) command)
                 (ok {:success true})))))))

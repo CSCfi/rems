@@ -16,7 +16,7 @@
             [rems.markdown]
             [rems.service.caches]
             [rems.service.test-data :as test-data]
-            [rems.service.todos :as todos]
+            [rems.service.todos]
             [rems.tempura]
             [rems.text])
   (:import [java.util Locale]))
@@ -64,7 +64,7 @@
         test-get-all-application-roles #(doall (rems.db.applications/get-all-application-roles "developer"))
         test-get-my-applications #(doall (rems.db.applications/get-my-applications "alice"))
         ;; developer can view much more applications than alice, so it takes longer to filter reviews from all apps
-        test-get-todos #(doall (todos/get-todos "developer"))
+        test-get-todos #(doall (rems.service.todos/get-todos "developer"))
         no-cache (fn []
                    (mount/stop #'rems.db.applications/all-applications-cache
                                #'rems.db.events/low-level-events-cache)

@@ -1,8 +1,8 @@
 (ns rems.api.licenses
   (:require [compojure.api.sweet :refer :all]
             [rems.api.schema :as schema]
-            [rems.service.attachment :as attachment]
-            [rems.service.licenses :as licenses]
+            [rems.service.attachment]
+            [rems.service.licenses]
             [rems.api.util :refer [extended-logging not-found-json-response]] ; required for route :roles
             [rems.common.roles :refer [+admin-read-roles+ +admin-write-roles+]]
             [rems.schema-base :as schema-base]
@@ -56,7 +56,7 @@
       :roles +admin-read-roles+
       :path-params [license-id :- (describe s/Int "license id")]
       :return schema/License
-      (if-let [license (licenses/get-license license-id)]
+      (if-let [license (rems.service.licenses/get-license license-id)]
         (ok license)
         (not-found-json-response)))
 
@@ -66,7 +66,7 @@
       :body [command CreateLicenseCommand]
       :return CreateLicenseResponse
       (extended-logging request)
-      (ok (licenses/create-license! command)))
+      (ok (rems.service.licenses/create-license! command)))
 
     (PUT "/archived" request
       :summary "Archive or unarchive license"
@@ -74,7 +74,7 @@
       :body [command schema/ArchivedCommand]
       :return schema/SuccessResponse
       (extended-logging request)
-      (ok (licenses/set-license-archived! command)))
+      (ok (rems.service.licenses/set-license-archived! command)))
 
     (PUT "/enabled" request
       :summary "Enable or disable license"
@@ -82,7 +82,7 @@
       :body [command schema/EnabledCommand]
       :return schema/SuccessResponse
       (extended-logging request)
-      (ok (licenses/set-license-enabled! command)))
+      (ok (rems.service.licenses/set-license-enabled! command)))
 
     (POST "/add_attachment" request
       :summary "Add an attachment file that will be used in a license"

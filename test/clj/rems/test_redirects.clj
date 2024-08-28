@@ -1,7 +1,7 @@
 (ns ^:integration rems.test-redirects
   (:require [clojure.test :refer :all]
-            [rems.service.attachment :as attachment]
-            [rems.service.licenses :as licenses]
+            [rems.service.attachment]
+            [rems.service.licenses]
             [rems.api.testing :refer :all]
             [rems.db.api-key]
             [rems.db.core :as db]
@@ -92,9 +92,9 @@
 (deftest test-attachment-download
   (rems.db.api-key/add-api-key! "42" {})
   (test-helpers/create-user! {:userid "alice"})
-  (with-redefs [attachment/get-application-attachment (fn [& args]
-                                                        (is (= ["alice" 123] args))
-                                                        dummy-attachment)]
+  (with-redefs [rems.service.attachment/get-application-attachment (fn [& args]
+                                                                     (is (= ["alice" 123] args))
+                                                                     dummy-attachment)]
     (testing "download attachment when logged in"
       (let [response (-> (request :get "/applications/attachment/123")
                          (authenticate "42" "alice")
@@ -110,7 +110,7 @@
                (get-in response [:headers "Location"]))))))
 
   (testing "attachment not found"
-    (with-redefs [attachment/get-application-attachment (constantly nil)]
+    (with-redefs [rems.service.attachment/get-application-attachment (constantly nil)]
       (let [response (-> (request :get "/applications/attachment/123")
                          (authenticate "42" "alice")
                          handler)]

@@ -3,8 +3,8 @@
             [clojure.java.io :as io]
             [clojure.string :as str]
             [clojure.test :refer [deftest is testing use-fixtures]]
-            [rems.service.attachment :as attachment]
-            [rems.service.catalogue :as catalogue]
+            [rems.service.attachment]
+            [rems.service.catalogue]
             [rems.api.testing :refer [api-call api-fixture api-response assert-response-is-ok authenticate get-csrf-token login-with-cookies read-body read-ok-body response-is-forbidden? response-is-not-found? response-is-ok? response-is-payload-too-large? response-is-unauthorized? response-is-unsupported-media-type? transit-body]]
             [rems.config]
             [rems.db.applications]
@@ -742,8 +742,8 @@
 
     (testing "can't create application for disabled catalogue item"
       (with-user "owner"
-        (catalogue/set-catalogue-item-enabled! {:id cat-id
-                                                :enabled false}))
+        (rems.service.catalogue/set-catalogue-item-enabled! {:id cat-id
+                                                             :enabled false}))
       (rems.db.applications/reload-cache!)
       (is (= {:success false
               :errors [{:type "disabled-catalogue-item" :catalogue-item-id cat-id}]}
@@ -852,11 +852,11 @@
         form-id (test-helpers/create-form! {})
         cat-id (test-helpers/create-catalogue-item! {:form-id form-id})
         enable-catalogue-item! #(with-user owner
-                                  (catalogue/set-catalogue-item-enabled! {:id cat-id
-                                                                          :enabled %}))
+                                  (rems.service.catalogue/set-catalogue-item-enabled! {:id cat-id
+                                                                                       :enabled %}))
         archive-catalogue-item! #(with-user owner
-                                   (catalogue/set-catalogue-item-archived! {:id cat-id
-                                                                            :archived %}))]
+                                   (rems.service.catalogue/set-catalogue-item-archived! {:id cat-id
+                                                                                         :archived %}))]
     (testing "submit with archived & disabled catalogue item succeeds"
       ;; draft needs to be created before disabling & archiving
       (let [app-id (test-helpers/create-application! {:catalogue-item-ids [cat-id] :actor user-id})]
@@ -2851,7 +2851,7 @@
         app-id (test-helpers/create-application! {:time (time/date-time 2010)
                                                   :actor applicant
                                                   :catalogue-item-ids [cat-id]})
-        att-id (:id (attachment/add-application-attachment applicant app-id filecontent))]
+        att-id (:id (rems.service.attachment/add-application-attachment applicant app-id filecontent))]
     (test-helpers/fill-form! {:time (time/date-time 2010)
                               :application-id app-id
                               :actor applicant
