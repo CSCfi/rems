@@ -1115,7 +1115,7 @@
         title (localized (:catalogue-item/title resource))
         more-info-url (when-let [url (catalogue-item-more-info-url resource language config)]
                         [:<>
-                         " - "
+                         " – "
                          [:a {:href url :target :_blank}
                           (text :t.catalogue/more-info) " " [external-link]]])]
     [:div.application-resource
