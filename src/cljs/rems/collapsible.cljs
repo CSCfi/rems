@@ -1,80 +1,112 @@
 (ns rems.collapsible
-  (:require [reagent.core :as r]
+  (:require [better-cond.core :as b]
+            [medley.core :refer [assoc-some]]
+            [reagent.core :as r]
+            [reagent.format :as rfmt]
             [reagent.impl.util]
             [re-frame.core :as rf]
             [rems.atoms :as atoms]
+            [rems.focus :as focus]
             [rems.guide-util :refer [component-info example]]
-            [rems.text :refer [text]]))
+            [rems.text :refer [text]]
+            [rems.util :refer [class-names]]))
 
 (rf/reg-sub ::expanded (fn [db [_ id]] (true? (get-in db [::id id]))))
 
-(rf/reg-event-db ::set-expanded (fn [db [_ id expanded?]] (assoc-in db [::id id] (true? expanded?))))
-(rf/reg-event-db ::reset-expanded (fn [db [_ id]] (update db ::id dissoc id)))
-(rf/reg-event-db ::toggle (fn [db [_ id]] (update-in db [::id id] not)))
+(defn- close-others-in-group
+  "Finds all collapsibles that are in same group as collapsible with `id`. Returns
+   re-frame update map that hides the _other_ collapsibles."
+  [id]
+  (b/when-let [elem (.getElementById js/document id)
+               group (.. elem -dataset -group)
+               nodes-in-group (.querySelectorAll js/document (rfmt/format ".collapsible[data-group='%s']" group))
+               ids (keep #(.-id %) nodes-in-group)
+               update-map (into {} (mapv vector ids (repeat false)))]
+    (dissoc update-map id)))
 
-(rf/reg-event-fx ::show-and-focus (fn [{:keys [db]} [_ id]]
-                                    (when-not (get-in db [::id id])
-                                      {:db (assoc-in db [::id id] true)
-                                       :dispatch [:rems.focus/focus-input {:selector ".collapse-open"
-                                                                           :target (.getElementById js/document id)}]})))
+(rf/reg-event-fx
+ ::set-expanded
+ (fn [{:keys [db]} [_ id expanded?]]
+   (cond-> {:db db}
+     :always
+     (assoc-in [:db ::id id] (true? expanded?))
 
-(defn- base-action [id]
-  (let [state @(rf/subscribe [::expanded id])]
-    {:aria-controls id
-     :aria-expanded (if state
-                      "true"
-                      "false")
-     :label (if state
-              (text :t.collapse/hide)
-              (text :t.collapse/show))}))
+     expanded?
+     (update-in [:db ::id] merge (close-others-in-group id)))))
+
+(defn- base-action
+  "Base attributes for collapsible action."
+  [{:keys [collapsible-id label] :as action}]
+  (let [state @(rf/subscribe [::expanded collapsible-id])]
+    (-> action
+        (dissoc :collapsible-id :hide? :on-close :on-open :show?)
+        (assoc :aria-controls collapsible-id
+               :aria-expanded (if state
+                                "true"
+                                "false"))
+        (assoc-some :label (cond label nil
+                                 state (text :t.collapse/hide)
+                                 :else (text :t.collapse/show))))))
+
+(defn focus-on-first-input [id]
+  (focus/scroll-into-view-and-focus (rfmt/format "#%s .collapse-open :is(textarea, input)" id)))
+
+(defn show-action
+  "Action that shows collapsible on click. Use together with `action-link` or `action-button` atom."
+  [{:keys [collapsible-id on-open] :as action}]
+  (-> (base-action action)
+      (assoc :on-click (fn [^js event]
+                         (rf/dispatch [::set-expanded collapsible-id true])
+                         (when on-open (on-open event))
+                         (focus-on-first-input collapsible-id)))))
+
+(defn hide-action
+  "Action that hides collapsible on click. Use together with `action-link` or `action-button` atom."
+  [{:keys [collapsible-id on-close] :as action}]
+  (-> (base-action action)
+      (assoc :on-click (fn [^js event]
+                         (rf/dispatch [::set-expanded collapsible-id false])
+                         (when on-close (on-close event))))))
 
 (defn toggle-action
-  "Action that toggles collapsible state."
-  [id & [on-click]]
-  (assoc (base-action id)
-         :on-click (fn [& args]
-                     (rf/dispatch [::toggle id])
-                     (some-> on-click (apply args)))))
-
-(defn- show-and-focus! [id]
-  (fn [^js event]
-    (rf/dispatch [::show-and-focus id])
-    (doto event (.preventDefault))))
-
-(defn- show-control [id & [{:keys [label on-click]}]]
-  (when (not @(rf/subscribe [::expanded id]))
-    [:div.text-center
-     [atoms/action-link (-> (base-action id)
-                            (assoc :on-click (comp (or on-click identity) (show-and-focus! id))
-                                   :label (or label (text :t.collapse/show))
-                                   :class "show-more-link"
-                                   :url "#"))]]))
-
-(defn- hide-control [id & [{:keys [label on-click]}]]
-  (when @(rf/subscribe [::expanded id])
-    [:div.text-center
-     [atoms/action-link (-> (base-action id)
-                            (assoc :on-click (fn [& args]
-                                               (rf/dispatch [::set-expanded id false])
-                                               (some-> on-click (apply args)))
-                                   :label (or label (text :t.collapse/hide))
-                                   :class "show-less-link"
-                                   :url "#"))]]))
+  "Action that toggles collapsible state. Use together with `action-link` or `action-button` atom."
+  [{:keys [collapsible-id on-close on-open] :as action}]
+  (if @(rf/subscribe [::expanded collapsible-id])
+    (hide-action action)
+    (show-action action)))
 
 (defn toggle-control
-  "A hide/show button that externally toggles the visibility of a collapsible.
+  "Action link that opens and/or hides collapsible. Sets focus on first input when opened, if exists.
+   
+   `action` is a map that supports following keys:
+   - `:collapse-id` (required) string or keyword, id of controlled collapsible
+   - `:on-close` function, invoked when collapsible is toggled hidden. false disables hide control 
+   - `:on-open` function, invoked when collapsible is toggled open. false disables open control"
+  [{:keys [on-close on-open] :as action}]
+  (let [hide (not (false? on-close))
+        open (not (false? on-open))]
+    [:div.text-center
+     (cond
+       (and hide open) [atoms/action-link (toggle-action action)]
+       hide [atoms/action-link (hide-action action)]
+       open [atoms/action-link (show-action action)])]))
 
-   - `:id` id of the controlled collapsible"
-  [id & [on-click]]
+(defn info-toggle-control
+  "Toggle control that uses simple icon as label.
+   
+   `action` is a map that supports following keys:
+   - `:collapse-id` (required) string or keyword, id of controlled collapsible
+   - `:on-close` function, invoked when collapsible is toggled hidden
+   - `:on-open` function, invoked when collapsible is toggled open"
+  [action]
+  [atoms/action-link (-> (toggle-action action)
+                         (update :class class-names :info-collapsible-toggle)
+                         (assoc :label [atoms/info-symbol]))])
+
+(defn- collapse-block [id {:keys [content-closed content-open]}]
   (if @(rf/subscribe [::expanded id])
-    [hide-control id {:on-click on-click}]
-    [show-control id {:on-click on-click}]))
-
-(defn- collapse-block [id collapse & [collapse-hidden]]
-  (when (some? collapse)
-    (if @(rf/subscribe [::expanded id])
-      [:div.collapse-open collapse]
-      [:div.collapse-closed collapse-hidden])))
+    (when content-open [:div.collapse-open content-open])
+    (when content-closed [:div.collapse-closed content-closed])))
 
 (defn component
   "Collapsible content block that can show hidden content on click.
@@ -89,25 +121,35 @@
   - `:id` unique string
   - `:on-close` triggers the function callback given as an argument when show less is clicked
   - `:on-open` triggers the function callback given as an argument when collapse is toggled open
+  - `:class` string/keyword/vector, for wrapping element
+  - `:group` string, only one collapsible in group can be open at a time
   - `:open?` should the collapsible be initially open?
   - `:title` component or text displayed in title area
   - `:top-less-button?` should top show less button be shown?"
-  [{:keys [always bottom-less-button? collapse collapse-hidden footer id on-close on-open open? title top-less-button?]
+  [{:keys [always bottom-less-button? class collapse collapse-hidden footer group id on-close on-open open? title top-less-button?]
     :or {bottom-less-button? true}}]
-  (r/with-let [_ (when (some? open?) (rf/dispatch-sync [::set-expanded id open?]))]
-    [:div.collapsible.bordered-collapsible {:id id}
+  (when collapse
+    (assert id))
+  (r/with-let [_ (rf/dispatch-sync [::set-expanded id open?])]
+    [:div.collapsible.bordered-collapsible (assoc-some {:id id}
+                                                       :class class
+                                                       :data-group group)
      [:h2.card-header title]
      [:div.collapsible-contents
       always
       (when collapse
         [:<>
-         (when top-less-button? [hide-control id {:on-click on-close}])
-         [collapse-block id collapse collapse-hidden]
-         [show-control id {:on-click on-open}]
-         (when bottom-less-button? [hide-control id {:on-click on-close}])])
-      footer]]
-    (finally
-      (rf/dispatch [::reset-expanded id]))))
+         (when top-less-button? [toggle-control {:collapsible-id id
+                                                 :on-close on-close
+                                                 :on-open false}])
+         [collapse-block id {:content-closed collapse-hidden
+                             :content-open collapse}]
+         [toggle-control {:collapsible-id id
+                          :on-close (if bottom-less-button?
+                                      on-close
+                                      false)
+                          :on-open on-open}]])
+      footer]]))
 
 (defn minimal
   "Collapsible variation that does not have border or title, and controls
@@ -120,18 +162,23 @@
   - `:class` optional class for wrapping element
   - `:footer` component displayed always after collapsible area
   - `:id` (required) unique id
+  - `:class` string/keyword/vector, for wrapping element
+  - `:group` string, only one collapsible in group can be open at a time
   - `:open?` should the collapsible be initially open?
   - `:title` component or text displayed in title area"
-  [{:keys [always class collapse collapse-hidden footer id open? title]}]
-  (r/with-let [_ (when (some? open?) (rf/dispatch-sync [::set-expanded id open?]))]
-    [:div.collapsible (merge {:id id} (when class {:class class}))
+  [{:keys [always class collapse collapse-hidden footer group id open? title]}]
+  (when collapse
+    (assert id))
+  (r/with-let [_ (rf/dispatch-sync [::set-expanded id open?])]
+    [:div.collapsible (assoc-some {:id id}
+                                  :class class
+                                  :data-group group)
      (when title [:h2.card-header title])
      [:div.collapsible-contents
       always
-      [collapse-block id collapse collapse-hidden]
-      footer]]
-    (finally
-      (rf/dispatch [::reset-expanded id]))))
+      [collapse-block id {:content-open collapse
+                          :content-hidden collapse-hidden}]
+      footer]]))
 
 (defn expander
   "Collapsible variation where simple title is the toggle control.
@@ -139,22 +186,28 @@
   Pass a map of options with the following keys:
   - `:collapse` component that is toggled displayed or not
   - `:id` (required) unique id
+  - `:class` string/keyword/vector, for wrapping element
+  - `:group` string, only one collapsible in group can be open at a time
   - `:open?` should the collapsible be initially open?
   - `:title` component or text displayed in title area"
-  [{:keys [collapse id open? title]}]
-  (r/with-let [_ (when (some? open?) (rf/dispatch-sync [::set-expanded id open?]))]
+  [{:keys [class collapse id group on-close on-open open? title]}]
+  (r/with-let [_ (rf/dispatch-sync [::set-expanded id open?])]
     (let [expanded? @(rf/subscribe [::expanded id])]
-      [:div.collapsible.expander-collapsible {:id id}
-       [atoms/action-link (assoc (toggle-action id)
+      [:div.collapsible.expander-collapsible (assoc-some {:id id}
+                                                         :class class
+                                                         :data-group group)
+       [atoms/action-link (assoc (toggle-action {:collapsible-id id
+                                                 :on-close on-close
+                                                 :on-open on-open})
                                  :class "expander-toggle"
                                  :label [:div.d-flex.align-items-center.gap-1.pointer
-                                         [:i.fa.fa-chevron-down.animate-transform {:class (when expanded? "rotate-180")}]
-                                         title]
-                                 :url "#")]
+                                         title
+                                         [:div
+                                          [:i.fa {:class (if expanded?
+                                                           "fa-chevron-up"
+                                                           "fa-chevron-down")}]]])]
        [:div.collapsible-contents
-        [collapse-block id collapse]]])
-    (finally
-      (rf/dispatch [::reset-expanded id]))))
+        [collapse-block id {:content-open collapse}]]])))
 
 (defn guide
   []
@@ -168,7 +221,7 @@
    (example "no hide controls"
             [component {:id "standard-collapsible-2"
                         :title "Focus on show"
-                        :always [:p "Hidden input receives focus on show"]
+                        :always [:p "Collapsed input receives focus when opened"]
                         :collapse [:input]}])
    (example "no collapse content"
             [component {:id "standard-collapsible-3"
@@ -185,7 +238,7 @@
                         :on-close #(js/console.log "bye")
                         :always [:div.solid-group
                                  [:b "Custom controls:"]
-                                 [rems.collapsible/toggle-control "standard-collapsible-4"]]
+                                 [rems.collapsible/toggle-control {:collapsible-id "standard-collapsible-4"}]]
                         :collapse (into [:div] (repeat 3 [:p "I am long content that you can hide"]))
                         :collapse-hidden [:p "I am content that is only visible when collapsed"]
                         :footer [:div.solid-group "I am the footer that is always visible"]}])
@@ -193,19 +246,19 @@
    (component-info minimal)
    (example "default use"
             [minimal {:id "minimal-collapsible-1"
-                      :always [rems.collapsible/toggle-control "minimal-collapsible-1"]
+                      :always [rems.collapsible/toggle-control {:collapsible-id "minimal-collapsible-1"}]
                       :collapse [:p "I am content that you can hide"]}])
    (example "footer controls"
             [minimal {:id "minimal-collapsible-2"
-                      :footer [rems.collapsible/toggle-control "minimal-collapsible-2"]
+                      :footer [rems.collapsible/toggle-control {:collapsible-id "minimal-collapsible-2"}]
                       :collapse [:p "I am content that you can hide"]}])
    (example "all options"
             [minimal {:id "minimal-collapsible-3"
                       :open? true
-                      :always [rems.collapsible/toggle-control "minimal-collapsible-3"]
+                      :always [rems.collapsible/toggle-control {:collapsible-id "minimal-collapsible-3"}]
                       :collapse (into [:div] (repeat 3 [:p "I am long content that you can hide"]))
                       :collapse-hidden [:p "I am content that is only visible when collapsed"]
-                      :footer [rems.collapsible/toggle-control "minimal-collapsible-3"]}])
+                      :footer [rems.collapsible/toggle-control {:collapsible-id "minimal-collapsible-3"}]}])
 
    (component-info expander)
    (example "defaults"

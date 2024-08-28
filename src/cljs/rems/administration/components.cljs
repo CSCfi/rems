@@ -207,7 +207,7 @@
       [:div.form-group.field.localized-field
        [:label.administration-field-label.d-flex.align-items-center
         label
-        [collapsible/toggle-control collapsible-id]]
+        [collapsible/toggle-control {:collapsible-id collapsible-id}]]
        [collapsible/minimal {:id collapsible-id
                              :collapse fields}]]
       [:div.form-group.localized-field

@@ -48,11 +48,10 @@
 
       (when info
         [atoms/action-link
-         (assoc (collapsible/toggle-action collapse-id)
-                :class "application-search-tips"
-                :label [atoms/search-symbol]
-                :aria-label (text :t.search/example-searches)
-                :url "#")])
+         (collapsible/toggle-action {:aria-label (text :t.search/example-searches)
+                                     :class "application-search-tips"
+                                     :collapsible-id collapse-id
+                                     :label [atoms/search-symbol]})])
       (when searching?
         [spinner/small])]
      (when info

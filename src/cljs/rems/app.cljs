@@ -61,7 +61,7 @@
             [rems.text :refer [text text-format]]
             [rems.theme]
             [rems.user-settings]
-            [rems.util :refer [fetch navigate! read-transit replace-url! set-location! react-strict-mode]]
+            [rems.util :refer [fetch navigate! read-transit replace-url! set-location!]]
             [secretary.core :as secretary])
   (:import goog.history.Html5History))
 

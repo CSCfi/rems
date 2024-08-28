@@ -324,14 +324,11 @@
 
 (defn collapsible-styles []
   (list
-   ;;; main collapsible styles
    [:.collapsible.bordered-collapsible {:border-radius (u/rem 0.4)
                                         :border "1px solid #ccc"
                                         :background-color (theme-getx :collapse-bgcolor)
                                         :box-shadow (theme-getx :collapse-shadow :table-shadow)}]
-   [:.collapsible.info-collapsible {:white-space :pre-wrap}]
 
-   ;;; collapsible header, bootstrap customization
    [(s/> :.collapsible :.card-header) {:border-bottom "none"
                                        :border-radius (u/rem 0.4)
                                        :font-weight 400
@@ -340,25 +337,15 @@
                                        :font-family (theme-getx :font-family)
                                        :color (theme-getx :table-heading-color :collapse-color)
                                        :background-color (theme-getx :table-heading-bgcolor :color3)
-                                       ;; make sure header overlaps container border
+                                       ;; "stretches" header just so that collapsible background does not leak from borders
                                        :margin (u/px -1)}]
    [(s/descendant :.card-header :a) {:color :inherit}]
-
-   ;;; collapsible contents, aka everything after header
    [".collapsible-contents:not(:empty)" {:margin (u/rem 1)}]
    [(s/> :.collapsible.info-collapsible ".collapsible-contents:not(:empty)") {:margin [[0 (u/rem 1) (u/rem 0.5) 0]]}]
-   [(s/> :.collapsible.expander-collapsible :a.expander-toggle.btn-link) {:text-decoration :none
-                                                                          :white-space :normal
-                                                                          :color (link-color)}]
-   ;;; customizations
-   [:.page-create-form
-    ;; form editor fields have inner collapsibles with fields that don't align nicely when margin is double applied
-    [(s/descendant :#create-form :.collapsible-contents :.collapsible-contents) {:margin 0}]
-    ;; improves form editor preview readability on smaller screens
-    [(s/> :#preview-form.collapsible :.collapsible-contents) {:margin-left 0}]]
 
-   [(s/descendant :.page-application :.license-panel :.expander-toggle) {:padding-left 0
-                                                                         :padding-top 0}]))
+   ;; form editor fields have inner collapsibles with fields that don't align nicely when margin is double applied
+   [(s/descendant :#create-form :.collapsible-contents :.collapsible-contents) {:margin 0}]
+   [:.btn.expander-toggle {:padding 0}]))
 
 (defn build-screen []
   (list
@@ -753,13 +740,13 @@
 
    [:#preview-form {:position :sticky ;; TODO seems to work on Chrome and Firefox. check Edge?
                     :top "100px"}
-    [:#preview-form-contents {:overflow-y :scroll
+    [:#preview-form-contents {:overflow-y :auto
                               :overflow-x :hidden
+                              :padding "0 0.5rem"
                               ;; subtract #preview-form top value plus a margin here to stay inside the viewbox
                               :max-height "calc(100vh - 220px)"}]]
 
-   [:.field-preview {:position :relative
-                     :margin-left (u/rem 1)}]
+   [:.field-preview {:position :relative}]
    [:.full {:width "100%"}]
    [:.intro {:margin-bottom (u/rem 2)}]
    [:.rectangle {:width (u/px 50)
@@ -901,13 +888,13 @@
    [:.select-attachments {:display :flex
                           :flex-direction :column
                           :align-items :flex-start
-                          :gap (u/rem 0.5)}
-    [:.select-attachments-row {:display :grid
-                               :grid "auto-flow / [checkbox] auto [content] minmax(0, 1fr)"
-                               :column-gap (u/rem 0.5)
-                               :align-items :center}
-     [(s/> ":first-child") {:grid-column :checkbox}]
-     [(s/> ":not(:first-child)") {:grid-column :content}]]]
+                          :gap (u/rem 0.5)}]
+   [:.select-attachments-row {:display :grid
+                              :grid "auto-flow / [checkbox] auto [content] minmax(0, 1fr)"
+                              :column-gap (u/rem 0.5)
+                              :align-items :center}]
+   [(s/> :.select-attachments-row ":first-child") {:grid-column :checkbox}]
+   [(s/> :.select-attachments-row ":not(:first-child)") {:grid-column :content}]
 
    [:.color-pre {:color "#212529"}] ; same color as bootstrap's default for [:pre]
 

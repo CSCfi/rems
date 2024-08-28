@@ -7,6 +7,7 @@
             [goog.string :refer [format]]
             [medley.core :refer [assoc-some]]
             [re-frame.core :as rf]
+            [reagent.impl.util]
             ["react" :as react]))
 
 (defn replace-url!
@@ -147,13 +148,6 @@
               %)
            splitted))))
 
-(defn focus-input-field [id]
-  (fn [event]
-    (.preventDefault event)
-    ;; focusing input fields requires JavaScript; <a href="#id"> links don't work
-    (when-let [element (.getElementById js/document id)]
-      (.focus element))))
-
 (defn visibility-ratio
   "Given a DOM node, return a number from 0.0 to 1.0 describing how much of an element is inside the viewport."
   [element]
@@ -200,11 +194,6 @@
       nil nil
       nil {}
       nil [])))
-
-(defn react-strict-mode
-  "Wrapper around React <StrictMode> component. See more https://react.dev/reference/react/StrictMode#strictmode"
-  [body]
-  [:> react/StrictMode body])
 
 (defn- log-profiler-event [id phase actual-duration base-duration start-time commit-time]
   (js/console.count (str phase " → " id))
@@ -278,3 +267,19 @@
 
 (defn event-checked [^js event]
   (.. event -target -checked))
+
+(defn class-names
+  "Returns `classes` as string of space-separated, deduplicated CSS classes."
+  [& classes]
+  (-> (flatten classes)
+      distinct
+      reagent.impl.util/class-names
+      str))
+
+(defn get-dom-element [el-or-selector]
+  (cond->> el-or-selector
+    (string? el-or-selector) (.querySelector js/document)))
+
+(defn get-bounding-client-rect [el-or-selector]
+  (some-> (get-dom-element el-or-selector)
+          (.getBoundingClientRect)))

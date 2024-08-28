@@ -2,15 +2,13 @@
   "UI components for form fields"
   (:require [clojure.string :as str]
             ["diff-match-patch" :refer [diff_match_patch]]
-            [medley.core :refer [assoc-some]]
             [rems.administration.items :as items]
             [rems.atoms :as atoms :refer [add-symbol attachment-link download-button close-symbol failure-symbol textarea]]
             [rems.collapsible :as collapsible]
             [rems.common.attachment-util :as attachment-util]
             [rems.common.form :as common-form]
-            [rems.common.util :refer [assoc-not-present build-index getx]]
+            [rems.common.util :refer [assoc-not-present build-index getx not-blank]]
             [rems.globals]
-            [rems.flash-message]
             [rems.guide-util :refer [component-info example lipsum-short lipsum-paragraphs]]
             [rems.spinner :as spinner]
             [rems.text :refer [localized text text-format]]
@@ -71,20 +69,6 @@
   (readonly-field-raw {:id id
                        :value (linkify (str/trim (str value)))}))
 
-(defn info-collapsible-toggle [{:keys [aria-label id]}]
-  [atoms/action-link
-   (assoc-some (collapsible/toggle-action id)
-               :class "info-collapsible-toggle"
-               :label [atoms/info-symbol]
-               :aria-label aria-label
-               :url "#")])
-
-(defn info-collapsible [{:keys [id collapse]}]
-  [collapsible/minimal
-   {:id id
-    :class "info-collapsible"
-    :collapse [:div.mb-2 collapse]}])
-
 (defn- field-label [{info-text :field/info-text
                      max-length :field/max-length
                      title :field/title
@@ -100,23 +84,19 @@
                            (text :t.form/optional)
                            (text :t.form/required)))
                    (interpose " "))
-        collapsible-id (str (field-name opts) "-collapsible")
-        info-text? (not (str/blank? info-text))]
+        the-field-name (field-name opts)
+        info-toggle (when (not-blank info-text)
+                      [collapsible/info-toggle-control {:aria-label (str (text :t.create-form/collapse-aria-label) raw-title)
+                                                        :collapsible-id (str the-field-name "-collapsible")}])
+        info-collapsible (when (not-blank info-text)
+                           [collapsible/minimal {:id (str the-field-name "-collapsible")
+                                                 :class "info-collapsible"
+                                                 :collapse [:div.mb-2 (linkify info-text)]}])]
     [:<>
      (if fieldset ; XXX: currently only used by multiselect-field
-       [:legend.application-field-label
-        label
-        (when info-text? [info-collapsible-toggle {:id collapsible-id
-                                                   :aria-label (str (text :t.create-form/collapse-aria-label) raw-title)}])]
-
-       [:label.application-field-label {:for (field-name opts)}
-        label
-        (when info-text? [info-collapsible-toggle {:id collapsible-id
-                                                   :aria-label (str (text :t.create-form/collapse-aria-label) raw-title)}])])
-
-     (when info-text?
-       [info-collapsible {:id collapsible-id
-                          :collapse [:div.mb-2 (linkify info-text)]}])]))
+       [:legend.application-field-label label info-toggle]
+       [:label.application-field-label {:for the-field-name} label info-toggle])
+     info-collapsible]))
 
 (defn field-wrapper
   "Common parts of a form field.
@@ -335,11 +315,12 @@
          :success nil ; the new attachment row appearing is confirmation enough
          :error [failure-symbol]
          nil)]
-      [info-collapsible-toggle
-       {:id (str id "-info-collapsible")
-        :aria-label (text-format :t.form/upload-extensions attachment-util/allowed-extensions-string)}]]
-     [info-collapsible
+      [collapsible/info-toggle-control
+       {:aria-label (text-format :t.form/upload-extensions attachment-util/allowed-extensions-string)
+        :collapsible-id (str id "-info-collapsible")}]]
+     [collapsible/minimal
       {:id (str id "-info-collapsible")
+       :class "info-collapsible"
        :collapse [:div
                   [:p [text-format :t.form/upload-extensions attachment-util/allowed-extensions-string]]
                   [:p (text-format :t.form/attachment-max-size

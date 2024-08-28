@@ -33,7 +33,7 @@
             [rems.focus :as focus]
             [rems.spinner :as spinner]
             [rems.text :refer [localized text text-format]]
-            [rems.util :refer [event-value focus-input-field navigate! on-element-appear on-element-appear-async post! put! trim-when-string visibility-ratio]]))
+            [rems.util :refer [event-value get-bounding-client-rect navigate! on-element-appear on-element-appear-async post! put! trim-when-string visibility-ratio]]))
 
 (rf/reg-event-fx
  ::enter-page
@@ -88,7 +88,7 @@
                 (rf/dispatch [:rems.collapsible/set-expanded (field-collapsible-id field-id) true])
                 (on-element-appear-async {:selector "textarea"
                                           :target element})))
-       (.then focus/focus-without-scroll))))
+       (.then focus/scroll-into-view-and-focus))))
 
 (rf/reg-event-fx
  ::add-form-field
@@ -106,12 +106,10 @@
    (update-in db [::form :data :form/fields] items/remove field-index)))
 
 (defn- track-moved-field-editor [field-id field-index button-selector]
-  (when-some [before (some-> js/document
-                             (.querySelector (field-selector field-id))
-                             (.getBoundingClientRect))]
+  (when-some [before (get-bounding-client-rect (field-selector field-id))]
     (on-element-appear {:selector (field-selector field-id field-index)
                         :on-resolve (fn [element]
-                                      (let [after (.getBoundingClientRect element)]
+                                      (let [after (get-bounding-client-rect element)]
                                         (focus/scroll-offset before after)
                                         (focus/focus-without-scroll (.querySelector element button-selector))))})))
 
@@ -530,15 +528,11 @@
                      :negate? true
                      :label (text :t.create-form/required-table)}])
 
-(defn- add-form-field-button [index]
-  [:a.add-form-field {:href "#"
-                      :on-click (fn [event]
-                                  (.preventDefault event)
-                                  (rf/dispatch [::add-form-field index]))}
-   [atoms/add-symbol] " " (text :t.create-form/add-form-field)])
-
 (defn- format-validation-link [target content]
-  [:li [:a {:href "#" :on-click (focus-input-field target)}
+  [:li [:a {:href "#"
+            :on-click (fn [event]
+                        (.preventDefault event)
+                        (focus/focus target))}
         content]])
 
 (defn- format-error-for-localized-field [error label lang]
@@ -574,7 +568,7 @@
                                        (str (text :t.create-form/type-visibility) ": " (text-format (-> field-errors :field/visibility :visibility/values) (text :t.create-form.visibility/has-value))))])
             (if (= :t.form.validation/options-required (:field/options field-errors))
               [[:li
-                [:a {:href "#" :on-click #(focus/focus-selector (str "#fields-" field-index "-add-option"))}
+                [:a {:href "#" :on-click #(focus/focus (str "#fields-" field-index "-add-option"))}
                  (text :t.form.validation/options-required)]]]
               (for [[option-id option-errors] (into (sorted-map) (:field/options field-errors))]
                 [:li (text-format :t.create-form/option-n (inc option-id))
@@ -588,7 +582,7 @@
                                                   (format-error-for-localized-field error :t.create-form/option-label lang))))]]))
             (if (= :t.form.validation/columns-required (:field/columns field-errors))
               [[:li
-                [:a {:href "#" :on-click #(focus/focus-selector (str "#fields-" field-index "-add-column"))}
+                [:a {:href "#" :on-click #(focus/focus (str "#fields-" field-index "-add-column"))}
                  (text :t.form.validation/columns-required)]]]
               (for [[column-id column-errors] (into (sorted-map) (:field/columns field-errors))]
                 [:li (text-format :t.create-form/column-n (inc column-id))
@@ -644,7 +638,7 @@
     [:div.form-group.field
      [:label.administration-field-label.d-flex.align-items-center
       (text :t.create-form/additional-settings)
-      [collapsible/toggle-control collapsible-id]]
+      [collapsible/toggle-control {:collapsible-id collapsible-id}]]
      [collapsible/minimal
       {:id collapsible-id
        :collapse [:div.solid-group
@@ -664,7 +658,7 @@
     [collapsible/minimal
      {:id collapsible-id
       :always [field-controls idx (:field/title field) field-count]
-      :footer [collapsible/toggle-control collapsible-id]
+      :footer [collapsible/toggle-control {:collapsible-id collapsible-id}]
       :collapse [:<>
                  [form-field-title-field idx]
                  [form-field-type-radio-group idx]
@@ -689,20 +683,25 @@
   (or (not-blank (:field/id field))
       (str "new-field-" idx)))
 
+(defn- add-form-field-button [idx]
+  [:div.new-form-field {:data-field-index idx}
+   [atoms/action-link
+    (atoms/new-action {:class "add-form-field"
+                       :label (text :t.create-form/add-form-field)
+                       :on-click #(rf/dispatch [::add-form-field idx])})]])
+
 (defn- form-fields []
   (let [fields (indexed @(rf/subscribe [::fields]))
         field-count (count fields)]
     (into [:<>
-           [:div.new-form-field {:data-field-index 0}
-            [add-form-field-button 0]]]
+           [add-form-field-button 0]]
           (for [[idx field] fields]
             ^{:key (get-field-key field idx)}
             [:<>
              [:div.form-field {:data-field-id (:field/id field)
                                :data-field-index idx}
               [field-editor idx field field-count]]
-             [:div.new-form-field {:data-field-index (inc idx)}
-              [add-form-field-button (inc idx)]]]))))
+             [add-form-field-button (inc idx)]]))))
 
 (defn- render-preview-hidden []
   [:div {:style {:position :absolute

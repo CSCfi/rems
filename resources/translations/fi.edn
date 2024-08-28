@@ -16,7 +16,6 @@
             :assign-external-id "Aseta tunniste"
             :assign-external-id-info "Tunniste"
             :bundling-intro [:div.intro [:p "Huomaa, että vain resursseja, joilla on sama työvuo, voidaan liittää yhteen."]]
-            :cancel "Peruuta"
             :change-applicant "Tee hakija"
             :change-resources "Muuta resursseja"
             :change-processing-state "Muuta alitilaa"

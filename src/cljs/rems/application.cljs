@@ -53,7 +53,7 @@
             [rems.spinner :as spinner]
             [rems.text :refer [localize-attachment localize-decision localize-event localized localize-state localize-processing-states localize-time localize-time-with-seconds text text-format]]
             [rems.user :as user]
-            [rems.util :refer [navigate! fetch post! focus-input-field format-file-size]]))
+            [rems.util :refer [navigate! fetch post! format-file-size]]))
 
 ;;;; Helpers
 
@@ -78,13 +78,13 @@
          (for [{:keys [type form-id field-id]} validations]
            [:li (if-some [field (get-in fields [form-id field-id])]
                   [:a {:href "#"
-                       :on-click (case (:field/type field)
-                                   ;; workaround for tables: there's no single input to focus
-                                   :table #(focus/focus-selector (str "#container-"
-                                                                      (fields/field-name field)))
-                                   :attachment (focus-input-field (str "upload-"
-                                                                       (fields/field-name field)))
-                                   (focus-input-field (fields/field-name field)))}
+                       :on-click (fn [event]
+                                   (.preventDefault event)
+                                   (focus/focus (case (:field/type field)
+                                                  ;; workaround for tables: there's no single input to focus
+                                                  :table (str "#container-" (fields/field-name field))
+                                                  :attachment (str "#upload-" (fields/field-name field))
+                                                  (fields/field-name field))))}
                    (text-format type (localized (:field/title field)))]
                   (text type))]))])
 
@@ -931,8 +931,9 @@
                  [user/attributes attributes invited-user?]]
       :footer (let [element-id (str id "-operations")]
                 [:div {:id element-id}
-                 [collapsible/toggle-control (str id "-collapsible")]
-                 [:div.commands
+                 [collapsible/toggle-control {:collapsible-id (str id "-collapsible")}]
+                 [:div.commands {:class (when (or can-change? can-remove? can-uninvite?)
+                                          "mt-2")}
                   (when can-change?
                     [change-applicant-action-button element-id])
                   (when (or can-remove? can-uninvite?)
@@ -1111,19 +1112,18 @@
   (let [config @rems.globals/config
         duos (get-in resource [:resource/duo :duo/codes])
         language @rems.config/current-language
-        resource-header [:p
-                         (localized (:catalogue-item/title resource))
-                         (when-let [url (catalogue-item-more-info-url resource language config)]
-                           [:<>
-                            " – "
-                            [:a {:href url :target :_blank}
-                             (text :t.catalogue/more-info) " " [external-link]]])]]
+        title (localized (:catalogue-item/title resource))
+        more-info-url (when-let [url (catalogue-item-more-info-url resource language config)]
+                        [:<>
+                         " – "
+                         [:a {:href url :target :_blank}
+                          (text :t.catalogue/more-info) " " [external-link]]])]
     [:div.application-resource
      (if-not (and (:enable-duo @rems.globals/config) (seq duos))
-       resource-header
+       [:p title more-info-url]
        [collapsible/expander
         {:id (str "resource-" (:resource/id resource) "-duos-collapsible")
-         :title resource-header
+         :title [:<> title more-info-url]
          :collapse [collapsible/component
                     {:id (str "resource-" (:resource/id resource) "-duos")
                      :title (text :t.duo/title)
