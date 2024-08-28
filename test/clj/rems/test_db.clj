@@ -3,9 +3,9 @@
   (:require [clojure.test :refer :all]
             [rems.config]
             [rems.context :as context]
-            [rems.db.applications :as applications]
+            [rems.db.applications]
             [rems.db.core :as db]
-            [rems.db.roles :as roles]
+            [rems.db.roles]
             [rems.service.test-data :as test-data]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.db.testing :refer [test-db-fixture rollback-db-fixture]])
@@ -47,7 +47,7 @@
                             :application-id app-id
                             :actor "handler"
                             :comment ""})
-    (is (= :application.state/approved (:application/state (applications/get-application-for-user applicant app-id))))
+    (is (= :application.state/approved (:application/state (rems.db.applications/get-application-for-user applicant app-id))))
 
     (is (= ["resid111" "resid222"] (sort (map :resid (db/get-entitlements {:application app-id}))))
         "should create entitlements for both resources")))
@@ -55,12 +55,12 @@
 (deftest test-roles
   (db/add-user! {:user "pekka", :userattrs nil})
   (db/add-user! {:user "simo", :userattrs nil})
-  (roles/add-role! "pekka" :owner)
-  (roles/add-role! "pekka" :owner) ;; add should be idempotent
-  (is (= #{:logged-in :owner} (roles/get-roles "pekka")))
-  (is (= #{:logged-in} (roles/get-roles "simo")))
-  (is (= #{:logged-in} (roles/get-roles "juho"))) ;; default role
-  (is (thrown? RuntimeException (roles/add-role! "pekka" :unknown-role))))
+  (rems.db.roles/add-role! "pekka" :owner)
+  (rems.db.roles/add-role! "pekka" :owner) ;; add should be idempotent
+  (is (= #{:logged-in :owner} (rems.db.roles/get-roles "pekka")))
+  (is (= #{:logged-in} (rems.db.roles/get-roles "simo")))
+  (is (= #{:logged-in} (rems.db.roles/get-roles "juho"))) ;; default role
+  (is (thrown? RuntimeException (rems.db.roles/add-role! "pekka" :unknown-role))))
 
 (deftest test-create-demo-data!
   ;; just a smoke test, check that create-demo-data doesn't fail

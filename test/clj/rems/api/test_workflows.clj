@@ -4,7 +4,7 @@
             [rems.service.workflow :as workflows]
             [rems.api.testing :refer [api-call api-fixture api-response assert-response-is-ok assert-success authenticate coll-is-not-empty? read-body read-ok-body response-is-forbidden? response-is-not-found? response-is-unauthorized?]]
             [rems.common.util :refer [replace-key]]
-            [rems.db.applications :as applications]
+            [rems.db.applications]
             [rems.db.test-data-users :refer [+fake-user-data+]]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.db.testing :refer [owners-fixture +test-api-key+]]
@@ -213,7 +213,7 @@
         application->handler-user-ids
         (fn [app] (set (mapv :userid (get-in app [:application/workflow :workflow.dynamic/handlers]))))]
     (testing "application is initialized with the correct set of handlers"
-      (let [app (applications/get-application app-id)]
+      (let [app (rems.db.applications/get-application app-id)]
         (is (= #{"handler" "carl"}
                (application->handler-user-ids app)))))
 
@@ -272,7 +272,7 @@
                                       handler))))
 
     (testing "application is updated when handlers are changed"
-      (let [app (applications/get-application app-id)]
+      (let [app (rems.db.applications/get-application app-id)]
         (is (= #{"owner" "alice"}
                (application->handler-user-ids app)))))
 

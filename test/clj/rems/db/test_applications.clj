@@ -3,9 +3,9 @@
             [clojure.test :refer :all]
             [clojure.test.check.generators :as generators]
             [rems.application.events :as events]
-            [rems.db.applications :as applications]
+            [rems.db.applications]
             [rems.db.core :as db]
-            [rems.db.events :as db-events]
+            [rems.db.events]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.db.testing :refer [test-db-fixture rollback-db-fixture]]
             [rems.util :refer [try-catch-ex]]
@@ -25,29 +25,29 @@
           ;; space when generating DraftSavedEvent
           max-size 30]
       (doseq [event (take 100 (generators/sample-seq (sg/generator events/Event generators) max-size))]
-        (is (= event (-> event db-events/event->json db-events/specter-json->event))))))
+        (is (= event (-> event rems.db.events/event->json rems.db.events/specter-json->event))))))
 
   (testing "event->json validates events"
     (is (not
          (:rems.event/validate-event
-          (try-catch-ex (db-events/event->json {}))))))
+          (try-catch-ex (rems.db.events/event->json {}))))))
 
   (testing "json->event variants validate events"
     (is (thrown-with-msg? ExceptionInfo #"Value cannot be coerced to match schema"
-                          (db-events/schema-json->event "{}")))
+                          (rems.db.events/schema-json->event "{}")))
     (is (thrown-with-msg? AssertionError #"\QAssert failed: (:event/type event)\E"
-                          (db-events/manual-json->event "{}")))
+                          (rems.db.events/manual-json->event "{}")))
     (is (thrown-with-msg? AssertionError #"\QAssert failed: (:event/time event)\E"
-                          (db-events/specter-json->event "{\"event/type\": \"nonexistent\"}")))
+                          (rems.db.events/specter-json->event "{\"event/type\": \"nonexistent\"}")))
     (is (thrown-with-msg? IllegalArgumentException #"Invalid format"
-                          (db-events/specter-json->event "{\"event/type\": \"nonexistent\",\"event/time\": \"1-2-3\"}"))))
+                          (rems.db.events/specter-json->event "{\"event/type\": \"nonexistent\",\"event/time\": \"1-2-3\"}"))))
 
   (testing "json data format"
     (let [event {:event/type :application.event/submitted
                  :event/time (DateTime. 2020 1 1 12 0 0 (DateTimeZone/forID "Europe/Helsinki"))
                  :event/actor "foo"
                  :application/id 123}
-          json (db-events/event->json event)]
+          json (rems.db.events/event->json event)]
       (is (str/includes? json "\"event/time\":\"2020-01-01T10:00:00.000Z\"")))))
 
 (deftest test-get-catalogue-item-licenses
@@ -61,7 +61,7 @@
                                                          :form-id form-id
                                                          :workflow-id wf-id})]
         (is (= [lic-id]
-               (map :license/id (applications/get-catalogue-item-licenses cat-id))))))
+               (map :license/id (rems.db.applications/get-catalogue-item-licenses cat-id))))))
 
     (testing "workflow licenses"
       (let [lic-id (test-helpers/create-license! {})
@@ -71,10 +71,10 @@
                                                          :form-id form-id
                                                          :workflow-id wf-id})]
         (is (= [lic-id]
-               (map :license/id (applications/get-catalogue-item-licenses cat-id))))))))
+               (map :license/id (rems.db.applications/get-catalogue-item-licenses cat-id))))))))
 
 (deftest test-application-external-id!
-  (let [application-external-id! @#'applications/application-external-id!]
+  (let [application-external-id! @#'rems.db.applications/application-external-id!]
     (is (= [] (db/get-external-ids {:prefix "1981"})))
     (is (= [] (db/get-external-ids {:prefix "1980"})))
     (is (= "1981/1" (application-external-id! (DateTime. #inst "1981-03-02"))))
@@ -90,25 +90,25 @@
         _ (test-helpers/create-user! {:userid "unrelated"})
         app-id1 (test-helpers/create-application! {:actor "applicant1"})
         _ (test-helpers/create-application! {:actor "applicant2"})]
-    (is (applications/get-application app-id1))
-    (is (= [app-id1] (map :application/id (applications/get-my-applications "applicant1"))))
-    (is (= #{:applicant} (applications/get-all-application-roles "applicant1")))
-    (is (= #{"applicant1" "applicant2"} (applications/get-users-with-role :applicant)))
+    (is (rems.db.applications/get-application app-id1))
+    (is (= [app-id1] (map :application/id (rems.db.applications/get-my-applications "applicant1"))))
+    (is (= #{:applicant} (rems.db.applications/get-all-application-roles "applicant1")))
+    (is (= #{"applicant1" "applicant2"} (rems.db.applications/get-users-with-role :applicant)))
 
-    (applications/delete-application! app-id1)
+    (rems.db.applications/delete-application! app-id1)
 
     (testing "application disappears from my applications"
-      (is (= [] (applications/get-my-applications "applicant1"))))
+      (is (= [] (rems.db.applications/get-my-applications "applicant1"))))
     (testing "application disappears from all-applications-cache (apps-by-user)"
-      (is (= [] (applications/get-all-applications "applicant1"))))
+      (is (= [] (rems.db.applications/get-all-applications "applicant1"))))
     (testing "application disappears from all-applications-cache (roles-by-user)"
-      (is (= #{} (applications/get-all-application-roles "applicant1"))))
+      (is (= #{} (rems.db.applications/get-all-application-roles "applicant1"))))
     (testing "application disappears from all-applications-cache (users-by-role)"
-      (is (= #{"applicant2"} (applications/get-users-with-role :applicant))))
+      (is (= #{"applicant2"} (rems.db.applications/get-users-with-role :applicant))))
     (testing "deleted draft is gone"
-      (is (not (applications/get-application app-id1))))
+      (is (not (rems.db.applications/get-application app-id1))))
     (testing "events are gone from event cache"
-      (is (empty? (db-events/get-application-events app-id1))))
+      (is (empty? (rems.db.events/get-application-events app-id1))))
     (testing "events are gone from DB"
       (is (empty? (db/get-application-events {:application app-id1}))))
     (testing "db entry for application is gone"
@@ -120,27 +120,27 @@
       (test-helpers/command! {:application-id app-id2
                               :type :application.command/submit
                               :actor "applicant1"})
-      (is (applications/get-application app-id1))
-      (is (applications/get-application app-id2))
-      (is (= [app-id1 app-id2] (sort (map :application/id (applications/get-my-applications "applicant1")))))
-      (is (= #{:applicant} (applications/get-all-application-roles "applicant1")))
-      (is (= #{"applicant1" "applicant2"} (applications/get-users-with-role :applicant)))
+      (is (rems.db.applications/get-application app-id1))
+      (is (rems.db.applications/get-application app-id2))
+      (is (= [app-id1 app-id2] (sort (map :application/id (rems.db.applications/get-my-applications "applicant1")))))
+      (is (= #{:applicant} (rems.db.applications/get-all-application-roles "applicant1")))
+      (is (= #{"applicant1" "applicant2"} (rems.db.applications/get-users-with-role :applicant)))
 
-      (applications/delete-application! app-id1)
+      (rems.db.applications/delete-application! app-id1)
 
       (testing "application disappears from my applications"
-        (is (= [app-id2] (map :application/id (applications/get-my-applications "applicant1")))))
+        (is (= [app-id2] (map :application/id (rems.db.applications/get-my-applications "applicant1")))))
       (testing "application disappears from all-applications-cache (apps-by-user)"
-        (is (= [app-id2] (map :application/id (applications/get-all-applications "applicant1")))))
+        (is (= [app-id2] (map :application/id (rems.db.applications/get-all-applications "applicant1")))))
       (testing "role persists in roles-by-user"
-        (is (= #{:applicant} (applications/get-all-application-roles "applicant1"))))
+        (is (= #{:applicant} (rems.db.applications/get-all-application-roles "applicant1"))))
       (testing "role persists in users-by-role"
-        (is (= #{"applicant1" "applicant2"} (applications/get-users-with-role :applicant))))
+        (is (= #{"applicant1" "applicant2"} (rems.db.applications/get-users-with-role :applicant))))
       (testing "deleted draft is gone"
-        (is (not (applications/get-application app-id1))))
-      (is (applications/get-application app-id2))
+        (is (not (rems.db.applications/get-application app-id1))))
+      (is (rems.db.applications/get-application app-id2))
       (testing "events are gone from event cache"
-        (is (empty? (db-events/get-application-events app-id1))))
+        (is (empty? (rems.db.events/get-application-events app-id1))))
       (testing "events are gone from DB"
         (is (empty? (db/get-application-events {:application app-id1}))))
       (testing "db entry for application is gone"
@@ -151,12 +151,12 @@
                             :type :application.command/submit
                             :actor "applicant1"})
     (testing "can't delete submitted application"
-      (is (thrown? AssertionError (applications/delete-application! app-id1))))
+      (is (thrown? AssertionError (rems.db.applications/delete-application! app-id1))))
     (test-helpers/command! {:application-id app-id1
                             :type :application.command/return
                             :actor "developer"})
     (testing "can't delete returned application"
-      (is (thrown? AssertionError (applications/delete-application! app-id1))))))
+      (is (thrown? AssertionError (rems.db.applications/delete-application! app-id1))))))
 
 (deftest test-cache-reload
   (let [_ (test-helpers/create-user! {:userid "applicant1"})
@@ -167,48 +167,48 @@
         catalogue-item (test-helpers/create-catalogue-item! {:workflow-id workflow})
         app-id1 (test-helpers/create-application! {:actor "applicant1" :catalogue-item-ids [catalogue-item]})
         _ (test-helpers/submit-application {:actor "applicant1" :application-id app-id1})]
-    (is (applications/get-application app-id1))
-    (is (= [app-id1] (map :application/id (applications/get-my-applications "applicant1"))))
-    (is (= #{:applicant} (applications/get-all-application-roles "applicant1")))
-    (is (= #{"applicant1"} (applications/get-users-with-role :applicant)))
-    (is (= #{"handler"} (applications/get-users-with-role :handler)))
+    (is (rems.db.applications/get-application app-id1))
+    (is (= [app-id1] (map :application/id (rems.db.applications/get-my-applications "applicant1"))))
+    (is (= #{:applicant} (rems.db.applications/get-all-application-roles "applicant1")))
+    (is (= #{"applicant1"} (rems.db.applications/get-users-with-role :applicant)))
+    (is (= #{"handler"} (rems.db.applications/get-users-with-role :handler)))
 
     (test-helpers/command! {:type :application.command/add-member
                             :application-id app-id1
                             :member {:userid "applicant2"}
                             :actor "handler"})
 
-    (is (= #{"applicant1"} (applications/get-users-with-role :applicant)))
-    (is (= #{"applicant2"} (applications/get-users-with-role :member)))
-    (is (= #{"handler"} (applications/get-users-with-role :handler)))
+    (is (= #{"applicant1"} (rems.db.applications/get-users-with-role :applicant)))
+    (is (= #{"applicant2"} (rems.db.applications/get-users-with-role :member)))
+    (is (= #{"handler"} (rems.db.applications/get-users-with-role :handler)))
 
     (test-helpers/command! {:type :application.command/change-applicant
                             :application-id app-id1
                             :member {:userid "applicant2"}
                             :actor "handler"})
 
-    (is (= #{"applicant2"} (applications/get-users-with-role :applicant)))
-    (is (= #{"applicant1"} (applications/get-users-with-role :member)))
-    (is (= #{"handler"} (applications/get-users-with-role :handler)))
+    (is (= #{"applicant2"} (rems.db.applications/get-users-with-role :applicant)))
+    (is (= #{"applicant1"} (rems.db.applications/get-users-with-role :member)))
+    (is (= #{"handler"} (rems.db.applications/get-users-with-role :handler)))
 
     (test-helpers/command! {:type :application.command/remove-member
                             :application-id app-id1
                             :member {:userid "applicant1"}
                             :actor "handler"})
 
-    (is (= #{"applicant2"} (applications/get-users-with-role :applicant)))
-    (is (= #{} (applications/get-users-with-role :member)))
-    (is (= #{"handler"} (applications/get-users-with-role :handler)))
+    (is (= #{"applicant2"} (rems.db.applications/get-users-with-role :applicant)))
+    (is (= #{} (rems.db.applications/get-users-with-role :member)))
+    (is (= #{"handler"} (rems.db.applications/get-users-with-role :handler)))
 
     (testing "application disappears from my applications"
-      (is (= [] (applications/get-my-applications "applicant1"))))
+      (is (= [] (rems.db.applications/get-my-applications "applicant1"))))
     (testing "application disappears from all-applications-cache (apps-by-user)"
-      (is (= [] (applications/get-all-applications "applicant1"))))
+      (is (= [] (rems.db.applications/get-all-applications "applicant1"))))
     (testing "role disappears from all-applications-cache (roles-by-user)"
-      (is (= #{} (applications/get-all-application-roles "applicant1"))))
+      (is (= #{} (rems.db.applications/get-all-application-roles "applicant1"))))
     (testing "applicant1 disappears from all-applications-cache (users-by-role)"
-      (is (= #{"applicant2"} (applications/get-users-with-role :applicant))))
+      (is (= #{"applicant2"} (rems.db.applications/get-users-with-role :applicant))))
     (testing "applicant1 disappears from all-applications-cache (users-by-role)"
-      (is (= #{} (applications/get-users-with-role :member))))
+      (is (= #{} (rems.db.applications/get-users-with-role :member))))
     (testing "db entry for application is not gone"
       (is (contains? (set (map :id (db/get-application-ids {}))) app-id1)))))

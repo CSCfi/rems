@@ -1,6 +1,6 @@
 (ns ^:integration rems.service.test-workflow
   (:require [clojure.test :refer :all]
-            [rems.db.applications :as applications]
+            [rems.db.applications]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.db.testing :refer [rollback-db-fixture test-db-fixture]]
             [rems.service.workflow :as workflow]
@@ -117,29 +117,29 @@
             cat-id (test-helpers/create-catalogue-item! {:actor "owner" :workflow-id wf-id})
             app-id (test-helpers/create-application! {:catalogue-item-ids [cat-id] :actor "alice"})]
 
-        (let [app (applications/get-application app-id)]
+        (let [app (rems.db.applications/get-application app-id)]
           (is (= {"alice" #{:applicant} "user1" #{:handler}} (:application/user-roles app)))
           (is (= [{:userid "user1" :name "User 1" :email "user1@example.com"}] (get-in app [:application/workflow :workflow.dynamic/handlers]))))
 
         (testing "before changing handlers"
-          (is (= [] (mapv :application/id (applications/get-all-applications "user1"))) "handler can't see draft")
-          (is (= [] (applications/get-all-applications "user2")))
+          (is (= [] (mapv :application/id (rems.db.applications/get-all-applications "user1"))) "handler can't see draft")
+          (is (= [] (rems.db.applications/get-all-applications "user2")))
 
           (test-helpers/submit-application {:application-id app-id :actor "alice"})
 
-          (is (= [app-id] (mapv :application/id (applications/get-all-applications "user1"))))
-          (is (= [] (applications/get-all-applications "user2"))))
+          (is (= [app-id] (mapv :application/id (rems.db.applications/get-all-applications "user1"))))
+          (is (= [] (rems.db.applications/get-all-applications "user2"))))
 
         (workflow/edit-workflow! {:id wf-id
                                   :handlers ["user2"]})
 
         (testing "handlers should have changed"
-          (let [app (applications/get-application app-id)]
+          (let [app (rems.db.applications/get-application app-id)]
             (is (= {"alice" #{:applicant} "user2" #{:handler}} (:application/user-roles app)))
             (is (= [{:userid "user2" :name "User 2" :email "user2@example.com"}] (get-in app [:application/workflow :workflow.dynamic/handlers]))))
 
-          (is (= [] (applications/get-all-applications "user1")))
-          (is (= [app-id] (mapv :application/id (applications/get-all-applications "user2")))))
+          (is (= [] (rems.db.applications/get-all-applications "user1")))
+          (is (= [app-id] (mapv :application/id (rems.db.applications/get-all-applications "user2")))))
 
         (is (= {:id wf-id
                 :title "original title"

@@ -14,9 +14,9 @@
             [rems.service.resource]
             [rems.service.workflow]
             [rems.config]
-            [rems.db.applications :as applications]
+            [rems.db.applications]
             [rems.db.core :as db]
-            [rems.db.roles :as roles]
+            [rems.db.roles]
             [rems.db.organizations]
             [rems.db.test-data-users :refer [+fake-user-data+]]
             [rems.db.users]
@@ -61,9 +61,9 @@
         user (:userid user-attributes)]
     (rems.db.users/add-user! user user-attributes)
     (doseq [[k v] mappings]
-      (user-mappings/create-user-mapping! {:userid user :ext-id-attribute k :ext-id-value v}))
+      (rems.db.user-mappings/create-user-mapping! {:userid user :ext-id-attribute k :ext-id-value v}))
     (doseq [role roles]
-      (roles/add-role! user role))
+      (rems.db.roles/add-role! user role))
     user))
 
 (defn- create-owner! []
@@ -273,7 +273,7 @@
    :time (or time (time/now))})
 
 (defn fill-form! [{:keys [application-id actor field-value optional-fields attachment multiselect] :as command}]
-  (let [app (applications/get-application-for-user actor application-id)]
+  (let [app (rems.db.applications/get-application-for-user actor application-id)]
     (command! (assoc (base-command command)
                      :type :application.command/save-draft
                      :field-values (for [form (:application/forms app)
@@ -300,7 +300,7 @@
                                                (or field-value "x"))})))))
 
 (defn fill-duo-codes! [{:keys [application-id actor duos] :as command}]
-  (let [app (applications/get-application-for-user actor application-id)]
+  (let [app (rems.db.applications/get-application-for-user actor application-id)]
     (command! (assoc (base-command command)
                      :type :application.command/save-draft
                      ;; copy existing forms so as to not override
@@ -312,7 +312,7 @@
                      :duo-codes duos))))
 
 (defn accept-licenses! [{:keys [application-id actor] :as command}]
-  (let [app (applications/get-application-for-user actor application-id)]
+  (let [app (rems.db.applications/get-application-for-user actor application-id)]
     (command! (assoc (base-command command)
                      :type :application.command/accept-licenses
                      :accepted-licenses (map :license/id (:application/licenses app))))))

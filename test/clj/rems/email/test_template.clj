@@ -5,7 +5,7 @@
             [rems.application.model :as model]
             [rems.common.application-util :as application-util]
             [rems.config]
-            [rems.db.user-settings :as user-settings]
+            [rems.db.user-settings]
             [rems.email.template :as template]
             [rems.locales]
             [rems.text]
@@ -116,9 +116,9 @@
                                                         :get-users-with-role get-nothing
                                                         :get-attachments-for-application get-nothing}))]
      (with-redefs [rems.config/env (assoc rems.config/env :public-url "http://example.com/")
-                   user-settings/get-user-settings (fn [userid]
-                                                     (assert (string? userid))
-                                                     {:language lang})]
+                   rems.db.user-settings/get-user-settings (fn [userid]
+                                                             (assert (string? userid))
+                                                             {:language lang})]
        (sort-emails (template/event-to-emails
                      (model/enrich-event event get-user #{})
                      application)))))

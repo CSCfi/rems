@@ -9,11 +9,11 @@
             [rems.service.workflow :as workflow]
             [rems.application.model]
             [rems.config :refer [env]]
-            [rems.db.applications :as applications]
-            [rems.db.invitation :as invitation]
-            [rems.db.outbox :as outbox]
-            [rems.db.user-settings :as user-settings]
-            [rems.db.users :as users]
+            [rems.db.applications]
+            [rems.db.invitation]
+            [rems.db.outbox]
+            [rems.db.user-settings]
+            [rems.db.users]
             [rems.email.template :as template]
             [rems.scheduler :as scheduler]
             [clojure.string :as str])
@@ -27,8 +27,8 @@
                          :application.event/draft-saved}
                        (:event/type event))
     (when-let [app-id (:application/id event)]
-      (template/event-to-emails (rems.application.model/enrich-event event users/get-user (constantly nil))
-                                (applications/get-application app-id)))))
+      (template/event-to-emails (rems.application.model/enrich-event event rems.db.users/get-user (constantly nil))
+                                (rems.db.applications/get-application app-id)))))
 
 (defn generate-event-emails! [new-events]
   (let [deadline (-> (time/now) (.plus ^Period (:email-retry-period env)))]
@@ -37,12 +37,12 @@
            {:outbox/type :email
             :outbox/email email
             :outbox/deadline deadline})
-         outbox/puts!)
+         rems.db.outbox/puts!)
     nil)) ; no new events
 
 (defn generate-handler-reminder-outbox [handler deadline]
   (let [userid (:userid handler)
-        lang (:language (user-settings/get-user-settings userid))
+        lang (:language (rems.db.user-settings/get-user-settings userid))
         apps (todos/get-todos userid)
         email (template/handler-reminder-email lang handler apps)]
 
@@ -55,11 +55,11 @@
   (let [deadline (-> (time/now) (.plus ^Period (:email-retry-period env)))]
     (->> (workflow/get-handlers)
          (keep #(generate-handler-reminder-outbox % deadline))
-         outbox/puts!)))
+         rems.db.outbox/puts!)))
 
 (defn generate-reviewer-reminder-outbox [reviewer deadline]
   (let [userid (:userid reviewer)
-        lang (:language (user-settings/get-user-settings userid))
+        lang (:language (rems.db.user-settings/get-user-settings userid))
         apps (->> (todos/get-todos userid)
                   (filter (comp #{:waiting-for-your-review} :application/todo)))
         email (template/reviewer-reminder-email lang reviewer apps)]
@@ -71,10 +71,10 @@
 
 (defn generate-reviewer-reminder-emails! []
   (let [deadline (-> (time/now) (.plus ^Period (:email-retry-period env)))]
-    (->> (applications/get-users-with-role :reviewer)
-         (map users/get-user)
+    (->> (rems.db.applications/get-users-with-role :reviewer)
+         (map rems.db.users/get-user)
          (keep #(generate-reviewer-reminder-outbox % deadline))
-         outbox/puts!)))
+         rems.db.outbox/puts!)))
 
 (defn- render-invitation-template [invitation]
   (let [lang (:default-language env)] ; we don't know the preferred languages here since there is no user
@@ -85,7 +85,7 @@
 
 (defn- mark-invitations-sent! [invitations]
   (doseq [invitation invitations]
-    (invitation/mail-sent! (:invitation/id invitation))))
+    (rems.db.invitation/mail-sent! (:invitation/id invitation))))
 
 (defn generate-invitation-emails! [invitations]
   (let [deadline (-> (time/now) (.plus ^Period (:email-retry-period env)))]
@@ -95,7 +95,7 @@
            {:outbox/type :email
             :outbox/email email
             :outbox/deadline deadline})
-         outbox/puts!)
+         rems.db.outbox/puts!)
     (mark-invitations-sent! invitations)))
 
 ;;; Email poller
@@ -132,8 +132,8 @@
         email (assoc email-spec
                      :from (:mail-from env)
                      :to (or (:to email-spec)
-                             (:notification-email (user-settings/get-user-settings (:to-user email-spec)))
-                             (:email (users/get-user (:to-user email-spec))))
+                             (:notification-email (rems.db.user-settings/get-user-settings (:to-user email-spec)))
+                             (:email (rems.db.users/get-user (:to-user email-spec))))
                      ;; https://tools.ietf.org/html/rfc3834
                      ;; postal turns extra keys into headers
                      "Auto-Submitted" "auto-generated")
@@ -177,12 +177,12 @@
 (defn handle-send-error! [email error]
   (if (str/includes? error "javax.mail.internet.AddressException") ; e.g. illegal character in address
     ;; give up immediately
-    (let [email (outbox/attempt-failed-fatally! email error)]
+    (let [email (rems.db.outbox/attempt-failed-fatally! email error)]
       (log/warn "all attempts to send email " (:outbox/id email) "failed")
       ::giving-up-after-fatal-error)
 
     ;; maybe keep trying
-    (let [email (outbox/attempt-failed! email error)]
+    (let [email (rems.db.outbox/attempt-failed! email error)]
       (if (:outbox/next-attempt email)
         ::failed-but-will-retry-again
 
@@ -192,13 +192,13 @@
 
 (defn try-send-emails! []
   (log/debug "Trying to send emails")
-  (let [due-emails (outbox/get-due-entries :email)]
+  (let [due-emails (rems.db.outbox/get-due-entries :email)]
     (log/debug (str "Emails due: " (count due-emails)))
     (doseq [email due-emails]
       (if-let [error (send-email! (:outbox/email email))]
         (handle-send-error! email error)
 
-        (outbox/attempt-succeeded! (:outbox/id email))))))
+        (rems.db.outbox/attempt-succeeded! (:outbox/id email))))))
 
 (mount/defstate email-poller
   :start (scheduler/start! "email-poller" try-send-emails! (Duration/standardSeconds 10))

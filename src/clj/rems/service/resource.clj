@@ -5,21 +5,21 @@
             [rems.service.dependencies :as dependencies]
             [rems.service.util :as util]
             [rems.config]
-            [rems.db.licenses :as licenses]
-            [rems.db.organizations :as organizations]
+            [rems.db.licenses]
+            [rems.db.organizations]
             [rems.db.resource]
             [rems.ext.duo :as duo])
   (:import rems.InvalidRequestException))
 
 (defn- enrich-resource-license [license]
-  (-> (licenses/join-license license)
-      organizations/join-organization
+  (-> (rems.db.licenses/join-license license)
+      rems.db.organizations/join-organization
       (clojure.set/rename-keys {:license/id :id})))
 
 (defn- join-dependencies [resource]
   (when resource
     (->> resource
-         organizations/join-organization
+         rems.db.organizations/join-organization
          (duo/join-duo-codes [:resource/duo :duo/codes])
          (transform [:licenses ALL] enrich-resource-license))))
 

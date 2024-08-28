@@ -2,11 +2,11 @@
   (:require [medley.core :refer [assoc-some]]
             [rems.service.dependencies :as dependencies]
             [rems.service.util :as util]
-            [rems.db.applications :as applications]
+            [rems.db.applications]
             [rems.db.core :as db]
-            [rems.db.catalogue :as catalogue]
-            [rems.db.category :as category]
-            [rems.db.organizations :as organizations]
+            [rems.db.catalogue]
+            [rems.db.category]
+            [rems.db.organizations]
             [rems.common.util :refer [build-dags]]))
 
 ;; TODO this bypasses the db layer
@@ -16,7 +16,7 @@
   (let [id (:id (db/create-catalogue-item! (merge {:form nil} ; SQL requires, API doesn't
                                                   {:organization (:organization/id organization "default")}
                                                   (select-keys command [:form :resid :wfid :enabled :archived :start])
-                                                  {:catalogueitemdata (catalogue/catalogueitemdata->json command)})))
+                                                  {:catalogueitemdata (rems.db.catalogue/catalogueitemdata->json command)})))
         loc-ids
         (doall
          (for [[langcode localization] localizations]
@@ -27,23 +27,23 @@
     ;; New dependencies introduced
     (dependencies/reset-cache!)
     ;; Reset cache so that next call to get localizations will get these ones.
-    (catalogue/reset-cache!)
+    (rems.db.catalogue/reset-cache!)
     {:success (not (some nil? (cons id loc-ids)))
      :id id}))
 
 (defn- join-dependencies [item query-params]
   (when item
     (cond-> item
-      (:join-organization? query-params true) organizations/join-organization
+      (:join-organization? query-params true) rems.db.organizations/join-organization
       (not (:join-organization? query-params true)) (update :organization (fn [id] {:organization/id id}))
-      true (update :categories category/enrich-categories))))
+      true (update :categories rems.db.category/enrich-categories))))
 
 (defn get-localized-catalogue-items [& [query-params]]
-  (->> (catalogue/get-localized-catalogue-items (or query-params {}))
+  (->> (rems.db.catalogue/get-localized-catalogue-items (or query-params {}))
        (mapv #(join-dependencies % query-params))))
 
 (defn get-localized-catalogue-item [id]
-  (-> (catalogue/get-localized-catalogue-item id)
+  (-> (rems.db.catalogue/get-localized-catalogue-item id)
       (join-dependencies nil)))
 
 (defn get-catalogue-tree [& [query-params]]
@@ -51,7 +51,7 @@
         has-category? (fn [item category]
                         (contains? (set (map :category/id (:categories item)))
                                    (:category/id category)))
-        categories (for [category (category/get-categories)
+        categories (for [category (rems.db.category/get-categories)
                          :let [matching-items (filterv #(has-category? % category) catalogue-items)]]
                      (assoc-some category :category/items matching-items))
         include-category? (fn [category]
@@ -89,12 +89,12 @@
      (merge {:id id
              :langcode (name langcode)}
             (select-keys localization [:title :infourl]))))
-  (when-let [catalogueitemdata (catalogue/catalogueitemdata->json item)]
+  (when-let [catalogueitemdata (rems.db.catalogue/catalogueitemdata->json item)]
     (db/set-catalogue-item-data! {:id id
                                   :catalogueitemdata catalogueitemdata}))
   ;; Reset cache so that next call to get localizations will get these ones.
-  (catalogue/reset-cache!)
-  (applications/reload-cache!)
+  (rems.db.catalogue/reset-cache!)
+  (rems.db.applications/reload-cache!)
   (dependencies/reset-cache!)
   {:success true})
 
@@ -130,7 +130,7 @@
                                                :organization (get-in item [:organization :organization/id])
                                                :resid (:resource-id item)
                                                :wfid (:wfid item)
-                                               :catalogueitemdata (catalogue/catalogueitemdata->json item)})]
+                                               :catalogueitemdata (rems.db.catalogue/catalogueitemdata->json item)})]
 
       ;; copy localizations
       (doseq [[langcode localization] (:localizations item)]
@@ -139,7 +139,7 @@
                                                  :title (:title localization)
                                                  :infourl (:infourl localization)}))
       ;; Reset cache so that next call to get localizations will get these ones.
-      (catalogue/reset-cache!)
+      (rems.db.catalogue/reset-cache!)
 
       ;; hide the old catalogue item
       (db/set-catalogue-item-enabled! {:id (:id item) :enabled false})
@@ -180,7 +180,7 @@
                                                :organization (get-in item [:organization :organization/id])
                                                :resid (:resource-id item)
                                                :wfid wfid
-                                               :catalogueitemdata (catalogue/catalogueitemdata->json item)})]
+                                               :catalogueitemdata (rems.db.catalogue/catalogueitemdata->json item)})]
 
       ;; copy localizations
       (doseq [[langcode localization] (:localizations item)]
@@ -190,7 +190,7 @@
                                                  :infourl (:infourl localization)}))
 
       ;; reset cache so that next call to get localizations will get these ones
-      (catalogue/reset-cache!)
+      (rems.db.catalogue/reset-cache!)
 
       ;; hide the old catalogue item
       (db/set-catalogue-item-enabled! {:id (:id item) :enabled false})

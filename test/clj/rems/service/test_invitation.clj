@@ -3,7 +3,7 @@
             [rems.service.invitation :as invitation]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.db.testing :refer [rollback-db-fixture test-db-fixture]]
-            [rems.db.outbox :as outbox]
+            [rems.db.outbox]
             [rems.testing-util :refer [fixed-time-fixture with-user]])
   (:import [org.joda.time DateTime DateTimeUtils DateTimeZone]))
 
@@ -44,7 +44,7 @@
 
         (testing "success"
           (let [sent-emails (atom nil)]
-            (with-redefs [outbox/puts! (fn [emails] (reset! sent-emails emails))]
+            (with-redefs [rems.db.outbox/puts! (fn [emails] (reset! sent-emails emails))]
               (let [invitation (invitation/create-invitation! {:userid "owner"
                                                                :name "Dorothy Vaughan"
                                                                :email "dorothy.vaughan@nasa.gov"

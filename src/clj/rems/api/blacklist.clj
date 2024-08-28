@@ -48,7 +48,7 @@
       :query-params [{user :- schema-base/UserId nil}
                      {resource :- s/Str nil}]
       :return [BlacklistEntryWithDetails]
-      (ok (blacklist/get-blacklist {:userid (user-mappings/find-userid user)
+      (ok (blacklist/get-blacklist {:userid (rems.db.user-mappings/find-userid user)
                                     :resource/ext-id resource})))
 
     (GET "/users" []
@@ -65,7 +65,7 @@
       :body [command BlacklistCommand]
       :return schema/SuccessResponse
       (extended-logging request)
-      (let [userid (user-mappings/find-userid (getx-in command [:blacklist/user :userid]))
+      (let [userid (rems.db.user-mappings/find-userid (getx-in command [:blacklist/user :userid]))
             command (assoc-in command [:blacklist/user :userid] userid)]
         (or (user-not-found-error command)
             (resource-not-found-error command)
@@ -83,7 +83,7 @@
       :body [command BlacklistCommand]
       :return schema/SuccessResponse
       (extended-logging request)
-      (let [userid (user-mappings/find-userid (getx-in command [:blacklist/user :userid]))
+      (let [userid (rems.db.user-mappings/find-userid (getx-in command [:blacklist/user :userid]))
             command (assoc-in command [:blacklist/user :userid] userid)]
         (or (user-not-found-error command)
             (resource-not-found-error command)

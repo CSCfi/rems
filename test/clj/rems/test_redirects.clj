@@ -3,7 +3,7 @@
             [rems.service.attachment :as attachment]
             [rems.service.licenses :as licenses]
             [rems.api.testing :refer :all]
-            [rems.db.api-key :as api-key]
+            [rems.db.api-key]
             [rems.db.core :as db]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.handler :refer [handler]]
@@ -90,7 +90,7 @@
                        :attachment/type "text/plain"})
 
 (deftest test-attachment-download
-  (api-key/add-api-key! "42" {})
+  (rems.db.api-key/add-api-key! "42" {})
   (test-helpers/create-user! {:userid "alice"})
   (with-redefs [attachment/get-application-attachment (fn [& args]
                                                         (is (= ["alice" 123] args))
@@ -118,7 +118,7 @@
         (is (= "not found" (:body response)))))))
 
 (deftest test-license-attachment-download
-  (api-key/add-api-key! "42" {})
+  (rems.db.api-key/add-api-key! "42" {})
   (test-helpers/create-user! {:userid "alice"})
   (with-redefs [rems.service.attachment/get-application-license-attachment (fn [& args]
                                                                              (is (= ["alice" 1023 3 :en] args))

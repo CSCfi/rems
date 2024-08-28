@@ -15,9 +15,9 @@
             [rems.application.search :as search]
             [rems.common.roles :refer [+admin-read-roles+]]
             [rems.context :as context]
-            [rems.db.applications :as applications]
-            [rems.db.csv :as csv]
-            [rems.db.user-settings :as user-settings]
+            [rems.db.applications]
+            [rems.db.csv]
+            [rems.db.user-settings]
             [rems.pdf :as pdf]
             [rems.schema-base :as schema-base]
             [rems.text :refer [with-language]]
@@ -121,7 +121,7 @@
        (ok (api-command ~command body#)))))
 
 (defn accept-invitation [invitation-token]
-  (if-let [application-id (applications/get-application-by-invitation-token invitation-token)]
+  (if-let [application-id (rems.db.applications/get-application-by-invitation-token invitation-token)]
     (api-command :application.command/accept-invitation
                  {:application-id application-id
                   :token invitation-token})
@@ -129,7 +129,7 @@
      :errors [{:type :t.actions.errors/invalid-token :token invitation-token}]}))
 
 (defn validate-application [request]
-  (let [application (applications/get-application-for-user (getx-user-id) (:application-id request))]
+  (let [application (rems.db.applications/get-application-for-user (getx-user-id) (:application-id request))]
     (merge {:success true}
            (commands/validate-application application (:field-values request)))))
 
@@ -154,7 +154,7 @@
       :roles #{:logged-in}
       :return [schema/ApplicationOverview]
       :query-params [{query :- (describe s/Str "search query [documentation](https://github.com/CSCfi/rems/blob/master/docs/search.md)") nil}]
-      (ok (->> (applications/get-my-applications (getx-user-id))
+      (ok (->> (rems.db.applications/get-my-applications (getx-user-id))
                (filter-with-search query))))))
 
 (def applications-api
@@ -166,7 +166,7 @@
       :roles #{:logged-in}
       :return [schema/ApplicationOverview]
       :query-params [{query :- (describe s/Str "search query [documentation](https://github.com/CSCfi/rems/blob/master/docs/search.md)") nil}]
-      (ok (->> (applications/get-all-applications (getx-user-id))
+      (ok (->> (rems.db.applications/get-all-applications (getx-user-id))
                (filter-with-search query))))
 
     (GET "/todo" []
@@ -221,10 +221,10 @@
       :summary "Export all submitted applications of a given form as CSV"
       :roles #{:owner :reporter}
       :query-params [form-id :- (describe s/Int "form id")]
-      (-> (ok (applications/export-applications-for-form-as-csv (getx-user-id)
-                                                                form-id
-                                                                (:language (user-settings/get-user-settings (getx-user-id)))))
-          (header "Content-Disposition" (str "filename=\"" (csv/applications-filename) "\""))
+      (-> (ok (rems.db.applications/export-applications-for-form-as-csv (getx-user-id)
+                                                                        form-id
+                                                                        (:language (rems.db.user-settings/get-user-settings (getx-user-id)))))
+          (header "Content-Disposition" (str "filename=\"" (rems.db.csv/applications-filename) "\""))
           (content-type "text/csv")))
 
     (GET "/members" []
@@ -314,7 +314,7 @@
       :path-params [application-id :- (describe s/Int "application id")]
       :responses {200 {:schema schema/Application}
                   404 {:schema s/Str :description "Not found"}}
-      (if-let [app (applications/get-application-for-user (getx-user-id) application-id)]
+      (if-let [app (rems.db.applications/get-application-for-user (getx-user-id) application-id)]
         (ok app)
         (api-util/not-found-json-response)))
 
@@ -324,7 +324,7 @@
       :path-params [application-id :- (describe s/Int "application id")]
       :responses {200 {:schema schema/ApplicationRaw}
                   404 {:schema s/Str :description "Not found"}}
-      (if-let [app (applications/get-application application-id)]
+      (if-let [app (rems.db.applications/get-application application-id)]
         (ok app)
         (api-util/not-found-json-response)))
 
@@ -335,7 +335,7 @@
       :query-params [{all :- (describe s/Bool "Defaults to true. If set to false, the zip will only contain latest application attachments: no previous versions of attachments, and no event attachments.") true}]
       :responses {200 {}
                   404 {:schema s/Str :description "Not found"}}
-      (if-let [app (applications/get-application-for-user (getx-user-id) application-id)]
+      (if-let [app (rems.db.applications/get-application-for-user (getx-user-id) application-id)]
         (attachment/zip-attachments app all)
         (api-util/not-found-json-response)))
 
@@ -344,7 +344,7 @@
       :roles #{:logged-in}
       :path-params [application-id :- (describe s/Int "application id")]
       :produces ["application/pdf"]
-      (if-let [app (applications/get-application-for-user (getx-user-id) application-id)]
+      (if-let [app (rems.db.applications/get-application-for-user (getx-user-id) application-id)]
         (with-language context/*lang*
           (-> app
               (pdf/application-to-pdf-bytes)

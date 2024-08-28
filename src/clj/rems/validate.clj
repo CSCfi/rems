@@ -11,8 +11,8 @@
             [rems.service.form :as form]
             [rems.service.licenses :as licenses]
             [rems.service.resource :as resources]
-            [rems.db.events :as events-db]
-            [rems.db.organizations :as organizations]
+            [rems.db.events]
+            [rems.db.organizations]
             [rems.ext.duo]
             [schema.core :as s]))
 
@@ -36,7 +36,7 @@
 (defn validate-organizations []
   ;; only warning for now
   ;; NB: do not validate user organizations, they come from the idp
-  (let [organizations (->> (organizations/get-organizations-raw) (map :organization/id) set)
+  (let [organizations (->> (rems.db.organizations/get-organizations-raw) (map :organization/id) set)
         valid-organization? (fn [organization] (contains? organizations (:organization/id organization)))]
     (doseq [form (form/get-form-templates {})]
       (when-not (valid-organization? (:organization form))
@@ -64,7 +64,7 @@
   (log/info "Validating data")
   (try
     (validate-forms)
-    (events/validate-events (events-db/get-all-events-since 0))
+    (events/validate-events (rems.db.events/get-all-events-since 0))
     (validate-organizations)
     (when (:enable-duo env)
       (when (empty? (rems.ext.duo/get-duo-codes))

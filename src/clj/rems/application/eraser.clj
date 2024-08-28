@@ -5,7 +5,7 @@
             [mount.core :as mount]
             [rems.application.expirer-bot :as expirer-bot]
             [rems.config :refer [env]]
-            [rems.db.applications :as applications]
+            [rems.db.applications]
             [rems.scheduler :as scheduler]
             [rems.service.command :as command]
             [rems.service.users]))
@@ -26,7 +26,7 @@
     (not (rems.service.users/user-exists? "expirer-bot"))
     (log/warn "Cannot process applications, because user expirer-bot does not exist")
 
-    :let [cmds (->> (applications/get-all-unrestricted-applications)
+    :let [cmds (->> (rems.db.applications/get-all-unrestricted-applications)
                     (keep expirer-bot/run-expirer-bot))]
 
     (empty? cmds)

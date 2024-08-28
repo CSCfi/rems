@@ -2,10 +2,10 @@
   (:require [clojure.test :refer :all]
             [rems.api.testing :refer :all]
             [rems.testing-util :refer [with-fake-login-users]]
-            [rems.db.roles :as roles]
+            [rems.db.roles]
             [rems.db.testing :refer [owners-fixture +test-api-key+]]
-            [rems.db.users :as users]
-            [rems.db.user-mappings :as user-mappings]
+            [rems.db.users]
+            [rems.db.user-mappings]
             [rems.handler :refer [handler]]
             [rems.middleware :as middleware]
             [rems.service.test-data :as test-data]
@@ -29,7 +29,7 @@
                   :name "David Newuser"}
         userid (:userid new-user)]
     (testing "create"
-      (is (= nil (:name (users/get-user userid))))
+      (is (= nil (:name (rems.db.users/get-user userid))))
       (-> (request :post (str "/api/users/create"))
           (json-body new-user)
           (authenticate +test-api-key+ "owner")
@@ -37,7 +37,7 @@
           assert-response-is-ok)
       (is (= {:userid "david"
               :email "d@av.id"
-              :name "David Newuser"} (users/get-user userid))))
+              :name "David Newuser"} (rems.db.users/get-user userid))))
 
     (testing "update with edit"
       (-> (request :put (str "/api/users/edit"))
@@ -49,7 +49,7 @@
           assert-response-is-ok)
       (is (= {:userid "david"
               :email "new email"
-              :name "new name"} (users/get-user userid))))
+              :name "new name"} (rems.db.users/get-user userid))))
 
     (testing "update with create (idempotent)"
       (-> (request :post (str "/api/users/create"))
@@ -61,11 +61,11 @@
           assert-response-is-ok)
       (is (= {:userid "david"
               :email "new email2"
-              :name "new name2"} (users/get-user userid)))))
+              :name "new name2"} (rems.db.users/get-user userid)))))
 
   (testing "create user with organization and nickname, without email"
     (let [userid "user-with-org"]
-      (is (= nil (:name (users/get-user userid))))
+      (is (= nil (:name (rems.db.users/get-user userid))))
       (-> (request :post (str "/api/users/create"))
           (json-body {:userid userid
                       :name "User Org"
@@ -79,7 +79,7 @@
               :email nil
               :name "User Org"
               :nickname "Orger"
-              :organizations [{:organization/id "abc"}]} (users/get-user userid))))))
+              :organizations [{:organization/id "abc"}]} (rems.db.users/get-user userid))))))
 
 (deftest test-users-api-security
   (testing "without authentication"
@@ -105,7 +105,7 @@
 
   (testing "user with user-owner role"
     (rems.service.users/add-user! {:userid "user-owner"})
-    (roles/add-role! "user-owner" :user-owner)
+    (rems.db.roles/add-role! "user-owner" :user-owner)
     (-> (request :post (str "/api/users/create"))
         (json-body {:userid "test1"
                     :email "test1@example.com"
@@ -145,7 +145,7 @@
                                                                                 {:attribute "old_sub"}])]
     (with-fake-login-users {"alice" {:sub "alice" :name "Alice Applicant" :email "alice@example.com" :nickname "In Wonderland"}
                             "elixir-alice" {:sub "elixir-alice" :old_sub "alice" :name "Elixir Alice" :email "alice@elixir-europe.org"}}
-      (is (= [] (user-mappings/get-user-mappings {:ext-id-attribute "elixirId" :ext-id-value "elixir-alice"})) "user mapping should not exist")
+      (is (= [] (rems.db.user-mappings/get-user-mappings {:ext-id-attribute "elixirId" :ext-id-value "elixir-alice"})) "user mapping should not exist")
 
       (testing "log in alice"
         (let [cookie (login-with-cookies "alice")]
@@ -154,7 +154,7 @@
                  (api-call :get "/api/users/active" nil
                            +test-api-key+ "owner")))
           (is (= {:userid "alice" :name "Alice Applicant" :email "alice@example.com" :nickname "In Wonderland"}
-                 (users/get-user "alice")
+                 (rems.db.users/get-user "alice")
                  (:identity (middleware/get-session cookie))))
           (is (= #{{:userid "alice" :name "Alice Applicant" :email "alice@example.com" :nickname "In Wonderland"}}
                  (set (api-call :get "/api/users/active" nil
@@ -162,15 +162,15 @@
               "alice shows as active")))
 
       (testing "log in elixir-alice and create user mapping"
-        (is (= [] (user-mappings/get-user-mappings {:ext-id-attribute "elixirId" :ext-id-value "elixir-alice"})) "user mapping should not exist")
+        (is (= [] (rems.db.user-mappings/get-user-mappings {:ext-id-attribute "elixirId" :ext-id-value "elixir-alice"})) "user mapping should not exist")
         (let [cookie (login-with-cookies "elixir-alice")]
           (assert-can-make-a-request! cookie)
           (is (= [{:userid "alice"
                    :ext-id-value "elixir-alice"
                    :ext-id-attribute "elixirId"}]
-                 (user-mappings/get-user-mappings {:ext-id-attribute "elixirId" :ext-id-value "elixir-alice"})))
+                 (rems.db.user-mappings/get-user-mappings {:ext-id-attribute "elixirId" :ext-id-value "elixir-alice"})))
           (is (= {:userid "alice" :name "Elixir Alice" :email "alice@elixir-europe.org"}
-                 (users/get-user "alice")
+                 (rems.db.users/get-user "alice")
                  (:identity (middleware/get-session cookie)))
               "Attributes should be updated when logging in")
           (is (= #{{:userid "alice" :name "Alice Applicant" :email "alice@example.com" :nickname "In Wonderland"}
@@ -184,7 +184,7 @@
         (is (= [{:userid "alice"
                  :ext-id-value "elixir-alice"
                  :ext-id-attribute "elixirId"}]
-               (user-mappings/get-user-mappings {:ext-id-attribute "elixirId" :ext-id-value "elixir-alice"})))
+               (rems.db.user-mappings/get-user-mappings {:ext-id-attribute "elixirId" :ext-id-value "elixir-alice"})))
         (let [cookie (login-with-cookies "elixir-alice")]
           (assert-can-make-a-request! cookie)
           (is (= #{{:userid "alice" :name "Alice Applicant" :email "alice@example.com" :nickname "In Wonderland"}
@@ -194,12 +194,12 @@
               "both alices show as active"))))
 
     (testing "mappings create, get, delete"
-      (user-mappings/create-user-mapping! {:userid "alice"
-                                           :ext-id-value "alice-alt-id"
-                                           :ext-id-attribute "alt-id"})
-      (user-mappings/create-user-mapping! {:userid "alice"
-                                           :ext-id-value "alice-alt-id"
-                                           :ext-id-attribute "alt-id2"})
+      (rems.db.user-mappings/create-user-mapping! {:userid "alice"
+                                                   :ext-id-value "alice-alt-id"
+                                                   :ext-id-attribute "alt-id"})
+      (rems.db.user-mappings/create-user-mapping! {:userid "alice"
+                                                   :ext-id-value "alice-alt-id"
+                                                   :ext-id-attribute "alt-id2"})
       (is (= [{:userid "alice"
                :ext-id-value "alice-alt-id"
                :ext-id-attribute "alt-id"}
@@ -209,20 +209,20 @@
               {:userid "alice"
                :ext-id-value "elixir-alice"
                :ext-id-attribute "elixirId"}]
-             (sort-by :ext-id-attribute (user-mappings/get-user-mappings {:userid "alice"}))))
+             (sort-by :ext-id-attribute (rems.db.user-mappings/get-user-mappings {:userid "alice"}))))
       (is (= [{:userid "alice"
                :ext-id-value "elixir-alice"
                :ext-id-attribute "elixirId"}]
-             (user-mappings/get-user-mappings {:ext-id-value "elixir-alice"})))
+             (rems.db.user-mappings/get-user-mappings {:ext-id-value "elixir-alice"})))
       (is (= [{:userid "alice"
                :ext-id-value "alice-alt-id"
                :ext-id-attribute "alt-id"}
               {:userid "alice"
                :ext-id-value "alice-alt-id"
                :ext-id-attribute "alt-id2"}]
-             (sort-by :ext-id-attribute (user-mappings/get-user-mappings {:ext-id-value "alice-alt-id"}))))
+             (sort-by :ext-id-attribute (rems.db.user-mappings/get-user-mappings {:ext-id-value "alice-alt-id"}))))
 
-      (user-mappings/delete-user-mapping! {:userid "unrelated"}) ; should not affect tested data
+      (rems.db.user-mappings/delete-user-mapping! {:userid "unrelated"}) ; should not affect tested data
 
       (is (= [{:userid "alice"
                :ext-id-value "alice-alt-id"
@@ -233,24 +233,24 @@
               {:userid "alice"
                :ext-id-value "elixir-alice"
                :ext-id-attribute "elixirId"}]
-             (sort-by :ext-id-attribute (user-mappings/get-user-mappings {:userid "alice"}))))
+             (sort-by :ext-id-attribute (rems.db.user-mappings/get-user-mappings {:userid "alice"}))))
       (is (= [{:userid "alice"
                :ext-id-value "elixir-alice"
                :ext-id-attribute "elixirId"}]
-             (user-mappings/get-user-mappings {:ext-id-value "elixir-alice"})))
+             (rems.db.user-mappings/get-user-mappings {:ext-id-value "elixir-alice"})))
       (is (= [{:userid "alice"
                :ext-id-value "alice-alt-id"
                :ext-id-attribute "alt-id"}
               {:userid "alice"
                :ext-id-value "alice-alt-id"
                :ext-id-attribute "alt-id2"}]
-             (sort-by :ext-id-attribute (user-mappings/get-user-mappings {:ext-id-value "alice-alt-id"}))))
+             (sort-by :ext-id-attribute (rems.db.user-mappings/get-user-mappings {:ext-id-value "alice-alt-id"}))))
 
-      (user-mappings/delete-user-mapping! {:userid "alice"})
+      (rems.db.user-mappings/delete-user-mapping! {:userid "alice"})
 
-      (is (= [] (user-mappings/get-user-mappings {:userid "alice"})))
-      (is (= [] (user-mappings/get-user-mappings {:ext-id-value "elixir-alice"})))
-      (is (= [] (user-mappings/get-user-mappings {:ext-id-value "alice-alt-id"}))))))
+      (is (= [] (rems.db.user-mappings/get-user-mappings {:userid "alice"})))
+      (is (= [] (rems.db.user-mappings/get-user-mappings {:ext-id-value "elixir-alice"})))
+      (is (= [] (rems.db.user-mappings/get-user-mappings {:ext-id-value "alice-alt-id"}))))))
 
 
 (deftest test-user-name
@@ -262,14 +262,14 @@
         (let [cookie (login-with-cookies "alice")]
           (assert-can-make-a-request! cookie)
           (is (= {:userid "alice" :name "Alice Applicant" :email "alice@example.com" :nickname "In Wonderland"}
-                 (users/get-user "alice")
+                 (rems.db.users/get-user "alice")
                  (:identity (middleware/get-session cookie))))))
 
       (testing "log in bob"
         (let [cookie (login-with-cookies "bob")]
           (assert-can-make-a-request! cookie)
           (is (= {:userid "bob" :name "Bob Applicant" :email "bob@example.com"}
-                 (users/get-user "bob")
+                 (rems.db.users/get-user "bob")
                  (:identity (middleware/get-session cookie))))))
 
       (testing "log in malice"
@@ -285,7 +285,7 @@
         (let [cookie (login-with-cookies "malice")]
           (assert-can-make-a-request! cookie)
           (is (= {:userid "malice" :name "Malice Nomail" :email nil}
-                 (users/get-user "malice")
+                 (rems.db.users/get-user "malice")
                  (:identity (middleware/get-session cookie)))
               "no email is ok without validation"))))
 
@@ -296,7 +296,7 @@
         (let [cookie (login-with-cookies "alice")]
           (assert-can-make-a-request! cookie)
           (is (= {:userid "alice" :name "Alice Applicant" :email "alice@example.com" :nickname "In Wonderland"}
-                 (users/get-user "alice")
+                 (rems.db.users/get-user "alice")
                  (:identity (middleware/get-session cookie)))
               "normal user is fine")))
 
@@ -304,7 +304,7 @@
         (let [cookie (login-with-cookies "bob")]
           (assert-can-make-a-request! cookie)
           (is (= {:userid "bob" :name "Bob Applicant" :email "bob@example.com"}
-                 (users/get-user "bob")
+                 (rems.db.users/get-user "bob")
                  (:identity (middleware/get-session cookie)))
               "secondary email attribute is used")))
 

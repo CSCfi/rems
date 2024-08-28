@@ -16,7 +16,7 @@
             [rems.api.testing :refer [standalone-fixture]]
             [rems.common.util :refer [conj-vec getx parse-int]]
             [rems.config :refer [env]]
-            [rems.db.api-key :as api-key]
+            [rems.db.api-key]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.db.test-data-users :as test-users]
             [rems.service.test-data :as test-data]
@@ -171,7 +171,7 @@
 
 (defn- create-test-data [f]
   (test-helpers/assert-no-existing-data!)
-  (api-key/add-api-key! 42 {:comment "test data"})
+  (rems.db.api-key/add-api-key! 42 {:comment "test data"})
   ;; Organizations
   (test-helpers/create-organization! {:actor "owner"})
   (test-helpers/create-organization! {:actor "owner"

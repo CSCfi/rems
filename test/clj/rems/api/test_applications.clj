@@ -8,7 +8,7 @@
             [rems.api.testing :refer [api-call api-fixture api-response assert-response-is-ok authenticate get-csrf-token login-with-cookies read-body read-ok-body response-is-forbidden? response-is-not-found? response-is-ok? response-is-payload-too-large? response-is-unauthorized? response-is-unsupported-media-type? transit-body]]
             [rems.config]
             [rems.db.applications]
-            [rems.db.blacklist :as blacklist]
+            [rems.db.blacklist]
             [rems.db.core :as db]
             [rems.service.test-data :as test-data :refer [+test-api-key+]]
             [rems.db.test-data-helpers :as test-helpers]
@@ -1385,10 +1385,10 @@
              (set (map #(select-keys % [:end :resid :userid])
                        (db/get-entitlements {:application app-id}))))))
     (testing "users are not blacklisted"
-      (is (not (blacklist/blacklisted? applicant-id ext1)))
-      (is (not (blacklist/blacklisted? applicant-id ext2)))
-      (is (not (blacklist/blacklisted? member-id ext1)))
-      (is (not (blacklist/blacklisted? member-id ext2))))
+      (is (not (rems.db.blacklist/blacklisted? applicant-id ext1)))
+      (is (not (rems.db.blacklist/blacklisted? applicant-id ext2)))
+      (is (not (rems.db.blacklist/blacklisted? member-id ext1)))
+      (is (not (rems.db.blacklist/blacklisted? member-id ext2))))
     (testing "revoke application"
       (is (= {:success true}
              (send-command handler-id {:type :application.command/revoke
@@ -1397,10 +1397,10 @@
     (testing "entitlements end"
       (is (every? :end (db/get-entitlements {:application app-id}))))
     (testing "users are blacklisted"
-      (is (blacklist/blacklisted? applicant-id ext1))
-      (is (blacklist/blacklisted? applicant-id ext2))
-      (is (blacklist/blacklisted? member-id ext1))
-      (is (blacklist/blacklisted? member-id ext2)))))
+      (is (rems.db.blacklist/blacklisted? applicant-id ext1))
+      (is (rems.db.blacklist/blacklisted? applicant-id ext2))
+      (is (rems.db.blacklist/blacklisted? member-id ext1))
+      (is (rems.db.blacklist/blacklisted? member-id ext2)))))
 
 (deftest test-hiding-sensitive-information
   (let [applicant-id "alice"

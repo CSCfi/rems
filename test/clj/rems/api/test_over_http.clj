@@ -4,7 +4,7 @@
             [clojure.test :refer :all]
             [rems.api.testing :refer [standalone-fixture]]
             [rems.config]
-            [rems.db.api-key :as api-key]
+            [rems.db.api-key]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.json :as json]
             [rems.event-notification :as event-notification]
@@ -14,7 +14,7 @@
 (use-fixtures :each standalone-fixture)
 
 (defn- create-test-data []
-  (api-key/add-api-key! 42 {:comment "test data"})
+  (rems.db.api-key/add-api-key! 42 {:comment "test data"})
   (test-helpers/create-user! {:userid "handler"})
   (test-helpers/create-user! {:userid "applicant"})
   (test-helpers/create-user! {:userid "developer"})

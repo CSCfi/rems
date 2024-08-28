@@ -2,7 +2,7 @@
   (:require [clojure.set :as set]
             [clojure.test :refer [deftest is]]
             [rems.application.commands :as commands]
-            [rems.db.applications :as applications]))
+            [rems.db.applications]))
 
 (def ^:private todo-roles
   #{:handler :reviewer :decider :past-reviewer :past-decider})
@@ -12,7 +12,7 @@
        (not= :application.state/draft (:application/state application))))
 
 (defn- get-potential-todos [userid]
-  (->> (applications/get-all-applications userid)
+  (->> (rems.db.applications/get-all-applications userid)
        (filter potential-todo?)))
 
 (def ^:private todo-commands

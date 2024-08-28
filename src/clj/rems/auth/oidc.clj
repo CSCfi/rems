@@ -7,7 +7,7 @@
             [medley.core :refer [find-first]]
             [rems.common.util :refer [getx]]
             [rems.config :refer [env oidc-configuration]]
-            [rems.db.user-mappings :as user-mappings]
+            [rems.db.user-mappings]
             [rems.ga4gh :as ga4gh]
             [rems.json :as json]
             [rems.jwt :as jwt]
@@ -74,14 +74,14 @@
   (let [attrs (get-userid-attributes user-data)]
     (doseq [[attr value] attrs
             :when (not= value userid)]
-      (user-mappings/create-user-mapping! {:userid userid
-                                           :ext-id-attribute attr
-                                           :ext-id-value value}))))
+      (rems.db.user-mappings/create-user-mapping! {:userid userid
+                                                   :ext-id-attribute attr
+                                                   :ext-id-value value}))))
 
 (defn- find-user [user-data]
   (let [userid-attrs (get-userid-attributes user-data)
         user-mapping-match (fn [[attribute value]]
-                             (let [mappings (user-mappings/get-user-mappings {:ext-id-attribute attribute :ext-id-value value})]
+                             (let [mappings (rems.db.user-mappings/get-user-mappings {:ext-id-attribute attribute :ext-id-value value})]
                                (:userid (first mappings))))] ; should be at most one by kv search
     (or (some user-mapping-match userid-attrs)
         (find-first rems.service.users/user-exists? (map second userid-attrs)))))

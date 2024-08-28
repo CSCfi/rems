@@ -1,23 +1,23 @@
 (ns rems.service.dependencies
   "Tracking dependencies between catalogue items, resources, forms, workflows and licenses."
   (:require [rems.common.util :refer [build-index]]
-            [rems.db.catalogue :as catalogue]
-            [rems.db.form :as form]
-            [rems.db.licenses :as licenses]
-            [rems.db.organizations :as organizations]
-            [rems.db.resource :as resource]
-            [rems.db.workflow :as workflow]
-            [rems.db.category :as categories]))
+            [rems.db.catalogue]
+            [rems.db.form]
+            [rems.db.licenses]
+            [rems.db.organizations]
+            [rems.db.resource]
+            [rems.db.workflow]
+            [rems.db.category]))
 
 (defn enrich-dependency [dep]
   (cond
-    (:license/id dep) (licenses/get-license (:license/id dep))
-    (:resource/id dep) (resource/get-resource (:resource/id dep))
-    (:workflow/id dep) (workflow/get-workflow (:workflow/id dep))
-    (:catalogue-item/id dep) (catalogue/get-localized-catalogue-item (:catalogue-item/id dep))
-    (:form/id dep) (form/get-form-template (:form/id dep))
-    (:organization/id dep) (organizations/getx-organization-by-id (:organization/id dep))
-    (:category/id dep) (categories/get-category (:category/id dep))
+    (:license/id dep) (rems.db.licenses/get-license (:license/id dep))
+    (:resource/id dep) (rems.db.resource/get-resource (:resource/id dep))
+    (:workflow/id dep) (rems.db.workflow/get-workflow (:workflow/id dep))
+    (:catalogue-item/id dep) (rems.db.catalogue/get-localized-catalogue-item (:catalogue-item/id dep))
+    (:form/id dep) (rems.db.form/get-form-template (:form/id dep))
+    (:organization/id dep) (rems.db.organizations/getx-organization-by-id (:organization/id dep))
+    (:category/id dep) (rems.db.category/get-category (:category/id dep))
     :else (assert false dep)))
 
 (defn- list-dependencies []
@@ -27,17 +27,17 @@
          dep [{:organization/id (:organization lic)}]]
      {:from {:license/id (:id lic)} :to dep})
 
-   (for [form (form/get-form-templates nil)
+   (for [form (rems.db.form/get-form-templates nil)
          dep [(:organization form)]]
      {:from {:form/id (:form/id form)} :to dep})
 
-   (for [res (resource/get-resources {})
+   (for [res (rems.db.resource/get-resources {})
          dep (concat
               (:licenses res)
               [(:organization res)])]
      {:from {:resource/id (:id res)} :to dep})
 
-   (for [cat (catalogue/get-localized-catalogue-items {:archived true :expand-catalogue-data? true})
+   (for [cat (rems.db.catalogue/get-localized-catalogue-items {:archived true :expand-catalogue-data? true})
          dep (concat [{:form/id (:formid cat)}
                       {:resource/id (:resource-id cat)}
                       {:workflow/id (:wfid cat)}
@@ -47,7 +47,7 @@
          :when (some? (val (first dep)))] ; remove nil dependencies, e.g. optional formid
      {:from {:catalogue-item/id (:id cat)} :to dep})
 
-   (for [workflow (workflow/get-workflows)
+   (for [workflow (rems.db.workflow/get-workflows)
          dep (concat
               (->> (get-in workflow [:workflow :licenses])
                    (mapv #(select-keys % [:license/id])))
@@ -55,7 +55,7 @@
               [(:organization workflow)])]
      {:from {:workflow/id (:id workflow)} :to dep})
 
-   (for [cat (categories/get-categories)
+   (for [cat (rems.db.category/get-categories)
          dep (mapv (fn [category] {:category/id (:category/id category)}) (:category/children cat))]
      {:from {:category/id (:category/id cat)} :to dep})))
 

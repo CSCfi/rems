@@ -1,7 +1,7 @@
 (ns rems.application.approver-bot
   (:require [clj-time.core :as time]
             [rems.common.application-util :as application-util]
-            [rems.db.applications :as applications]))
+            [rems.db.applications]))
 
 (def bot-userid "approver-bot")
 
@@ -19,7 +19,7 @@
 
 (defn- maybe-generate-commands [event]
   (when (= :application.event/submitted (:event/type event)) ; approver bot only reacts to fresh applications
-    (let [application (applications/get-application (:application/id event))]
+    (let [application (rems.db.applications/get-application (:application/id event))]
       (generate-commands event application))))
 
 (defn run-approver-bot [new-events]

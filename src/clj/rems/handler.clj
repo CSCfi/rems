@@ -13,7 +13,7 @@
             [rems.auth.auth :as auth]
             [rems.config :refer [env]]
             [rems.css.styles :as styles]
-            [rems.db.catalogue :as catalogue]
+            [rems.db.catalogue]
             [rems.db.events] ;; to start events cache
             [rems.email.core] ;; to enable email polling
             [rems.application.eraser] ;; to enable expired application clean-up job
@@ -26,7 +26,7 @@
   (:import [rems.auth UnauthorizedException]))
 
 (defn- resource-to-item [resource]
-  (let [items (->> (catalogue/get-localized-catalogue-items {:resource resource})
+  (let [items (->> (rems.db.catalogue/get-localized-catalogue-items {:resource resource})
                    (filter :enabled))]
     (cond
       (= 0 (count items)) :not-found

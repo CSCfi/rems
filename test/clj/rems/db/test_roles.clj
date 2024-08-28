@@ -1,6 +1,6 @@
 (ns ^:integration rems.db.test-roles
   (:require [clojure.test :refer [deftest is testing use-fixtures]]
-            [rems.db.roles :as roles]
+            [rems.db.roles]
             [rems.db.testing :refer [rollback-db-fixture test-db-fixture]]
             [rems.db.users]))
 

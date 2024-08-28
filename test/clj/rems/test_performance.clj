@@ -7,8 +7,8 @@
             [rems.application.model]
             [rems.common.util :refer [recursive-keys to-keyword]]
             [rems.config]
-            [rems.db.applications :as applications]
-            [rems.db.events :as events]
+            [rems.db.applications]
+            [rems.db.events]
             [rems.db.user-settings]
             [rems.db.test-data-users :refer [+fake-users+ +fake-user-data+]]
             [rems.email.template]
@@ -47,10 +47,10 @@
                     (map-vals #(String/format Locale/ENGLISH "%.3f ms" (to-array [(* 1000 %)]))))))))
 
 (defn benchmark-get-events []
-  (let [last-event-id (:event/id (last (events/get-all-events-since 0)))
-        test-get-all-events-since-beginning #(doall (events/get-all-events-since 0))
-        test-get-all-events-since-end #(doall (events/get-all-events-since last-event-id))
-        test-get-application-events #(doall (events/get-application-events 12))]
+  (let [last-event-id (:event/id (last (rems.db.events/get-all-events-since 0)))
+        test-get-all-events-since-beginning #(doall (rems.db.events/get-all-events-since 0))
+        test-get-all-events-since-end #(doall (rems.db.events/get-all-events-since last-event-id))
+        test-get-application-events #(doall (rems.db.events/get-application-events 12))]
     (run-benchmarks [{:name "get-all-events-since, all events"
                       :benchmark test-get-all-events-since-beginning}
                      {:name "get-all-events-since, zero new events"
@@ -59,10 +59,10 @@
                       :benchmark test-get-application-events}])))
 
 (defn benchmark-get-all-applications []
-  (let [test-get-all-unrestricted-applications #(doall (applications/get-all-unrestricted-applications))
-        test-get-all-applications #(doall (applications/get-all-applications "alice"))
-        test-get-all-application-roles #(doall (applications/get-all-application-roles "developer"))
-        test-get-my-applications #(doall (applications/get-my-applications "alice"))
+  (let [test-get-all-unrestricted-applications #(doall (rems.db.applications/get-all-unrestricted-applications))
+        test-get-all-applications #(doall (rems.db.applications/get-all-applications "alice"))
+        test-get-all-application-roles #(doall (rems.db.applications/get-all-application-roles "developer"))
+        test-get-my-applications #(doall (rems.db.applications/get-my-applications "alice"))
         ;; developer can view much more applications than alice, so it takes longer to filter reviews from all apps
         test-get-todos #(doall (todos/get-todos "developer"))
         no-cache (fn []
@@ -92,10 +92,10 @@
                      {:name "get-todos, cached"
                       :benchmark test-get-todos
                       :setup cached}])
-    (println "cache size" (mm/measure applications/all-applications-cache))))
+    (println "cache size" (mm/measure rems.db.applications/all-applications-cache))))
 
 (defn benchmark-get-application []
-  (let [test-get-application #(applications/get-application-for-user "developer" 12)]
+  (let [test-get-application #(rems.db.applications/get-application-for-user "developer" 12)]
     (run-benchmarks [{:name "get-application"
                       :benchmark test-get-application}])))
 

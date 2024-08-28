@@ -8,14 +8,14 @@
             [clojure.tools.logging :as log]
             [rems.api.schema :as schema]
             [rems.config]
-            [rems.db.api-key :as api-key]
+            [rems.db.api-key]
             [rems.db.core :as db]
-            [rems.db.roles :as roles]
+            [rems.db.roles]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.db.test-data-users :refer :all]
             [rems.db.users]
-            [rems.db.workflow :as workflow]
-            [rems.db.user-settings :as user-settings]
+            [rems.db.workflow]
+            [rems.db.user-settings]
             [rems.service.form :as form]
             [rems.service.organizations :as organizations]
             [rems.testing-util :refer [with-suppress-logging with-user]])
@@ -30,8 +30,8 @@
   (doseq [user (vals users)]
     (when-let [data (get attrs user)]
       (test-helpers/create-user! data)))
-  (roles/add-role! (users :owner) :owner)
-  (roles/add-role! (users :reporter) :reporter))
+  (rems.db.roles/add-role! (users :owner) :owner)
+  (rems.db.roles/add-role! (users :reporter) :reporter))
 
 (defn create-test-users-and-roles! []
   ;; users provided by the fake login
@@ -42,7 +42,7 @@
 (defn create-bots! []
   (doseq [attr (vals +bot-user-data+)]
     (test-helpers/create-user! attr))
-  (roles/add-role! (:expirer-bot +bot-users+) :expirer))
+  (rems.db.roles/add-role! (:expirer-bot +bot-users+) :expirer))
 
 (defn- create-archived-form! [actor]
   (with-user actor
@@ -613,8 +613,8 @@
 
         _ (doseq [handler handlers-data]
             (test-helpers/create-user! handler)
-            (user-settings/update-user-settings! (:userid handler)
-                                                 {:language (rand-nth [:en :fi :sv])}))
+            (rems.db.user-settings/update-user-settings! (:userid handler)
+                                                         {:language (rand-nth [:en :fi :sv])}))
 
         handlers (concat [(+fake-users+ :approver1)
                           (+fake-users+ :approver2)]
@@ -827,8 +827,8 @@
                                                                                      :license-ids [license2 extra-license attachment-license]})
 
         workflows (create-workflows! (merge users +bot-users+))
-        _ (workflow/edit-workflow! {:id (:organization-owner workflows)
-                                    :licenses [license-organization-owner]})
+        _ (rems.db.workflow/edit-workflow! {:id (:organization-owner workflows)
+                                            :licenses [license-organization-owner]})
 
         form (create-all-field-types-example-form! owner {:organization/id "nbn"} "Example form with all field types" {:en "Example form with all field types"
                                                                                                                        :fi "Esimerkkilomake kaikin kenttätyypein"
@@ -1310,7 +1310,7 @@
                                         :organization/review-emails []})))
 
 (defn create-test-api-key! []
-  (api-key/add-api-key! +test-api-key+ {:comment "test data"}))
+  (rems.db.api-key/add-api-key! +test-api-key+ {:comment "test data"}))
 
 (defn create-owners!
   "Create an owner, two organization owners, and their organizations."
@@ -1346,7 +1346,7 @@
   (let [[users user-data] (case (:authentication rems.config/env)
                             :oidc [+oidc-users+ +oidc-user-data+]
                             [+demo-users+ +demo-user-data+])]
-    (api-key/add-api-key! 55 {:comment "Finna"})
+    (rems.db.api-key/add-api-key! 55 {:comment "Finna"})
     (create-users-and-roles! users user-data)
     (create-organizations! users)
     (create-bots!)

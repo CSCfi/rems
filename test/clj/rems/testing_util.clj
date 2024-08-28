@@ -2,10 +2,10 @@
   (:require [clojure.java.io :as io]
             [clojure.set :as set]
             [rems.context :as context]
-            [rems.db.applications :as applications]
-            [rems.db.roles :as roles]
+            [rems.db.applications]
+            [rems.db.roles]
             [rems.db.users]
-            [rems.db.organizations :as organizations]
+            [rems.db.organizations]
             [rems.locales]
             [rems.text])
   (:import [ch.qos.logback.classic Level]
@@ -61,9 +61,9 @@
 
 (defmacro with-user [user & body]
   `(binding [context/*user* (rems.db.users/get-user ~user)
-             context/*roles* (set/union (roles/get-roles ~user)
-                                        (organizations/get-all-organization-roles ~user)
-                                        (applications/get-all-application-roles ~user))]
+             context/*roles* (set/union (rems.db.roles/get-roles ~user)
+                                        (rems.db.organizations/get-all-organization-roles ~user)
+                                        (rems.db.applications/get-all-application-roles ~user))]
      ~@body))
 
 (defmacro with-fake-login-users

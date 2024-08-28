@@ -6,7 +6,7 @@
             [rems.service.resource :as resource]
             [rems.service.workflow :as workflow]
             [rems.db.core :as db]
-            [rems.db.category :as category]
+            [rems.db.category]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.db.testing :refer [rollback-db-fixture test-db-fixture]]
             [rems.testing-util :refer [with-user]])
@@ -189,7 +189,7 @@
                    (-> (catalogue/get-localized-catalogue-item id)
                        (dissoc :resource-name :form-name :workflow-name)))
         get-category (fn [category]
-                       (-> (category/get-category (:category/id category))))
+                       (-> (rems.db.category/get-category (:category/id category))))
         child {:category/id (test-helpers/create-category! {})}
         parent {:category/id (test-helpers/create-category! {:category/children [child]})}
         _empty {:category/id (test-helpers/create-category! {})} ; should not be seen

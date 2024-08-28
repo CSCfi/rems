@@ -12,11 +12,11 @@
             [rems.common.util :refer [assoc-some-in]]
             [rems.config :refer [env]]
             [rems.context :as context]
-            [rems.db.applications :as applications]
-            [rems.db.organizations :as organizations]
-            [rems.db.roles :as roles]
-            [rems.db.user-settings :as user-settings]
-            [rems.db.workflow :as workflow]
+            [rems.db.applications]
+            [rems.db.organizations]
+            [rems.db.roles]
+            [rems.db.user-settings]
+            [rems.db.workflow]
             [rems.layout :refer [error-page]]
             [rems.logging :refer [with-mdc]]
             [rems.middleware.dev :refer [wrap-dev]]
@@ -60,10 +60,10 @@
               context/*root-path* (:app-context env)
               context/*roles* (set/union
                                (when context/*user*
-                                 (set/union (roles/get-roles (getx-user-id))
-                                            (organizations/get-all-organization-roles (getx-user-id))
-                                            (workflow/get-all-workflow-roles (getx-user-id))
-                                            (applications/get-all-application-roles (getx-user-id))))
+                                 (set/union (rems.db.roles/get-roles (getx-user-id))
+                                            (rems.db.organizations/get-all-organization-roles (getx-user-id))
+                                            (rems.db.workflow/get-all-workflow-roles (getx-user-id))
+                                            (rems.db.applications/get-all-application-roles (getx-user-id))))
                                (when (:uses-valid-api-key? request)
                                  #{:api-key}))]
       (with-mdc {:roles (str/join " " (sort context/*roles*))}
@@ -121,7 +121,7 @@
   (fn [request]
     (let [user-specified-language (or (some-> request :cookies (get "rems-user-preferred-language") :value keyword)
                                       (when context/*user*
-                                        (:language (user-settings/get-user-settings (getx-user-id)))))]
+                                        (:language (rems.db.user-settings/get-user-settings (getx-user-id)))))]
       (binding [context/*lang* (or user-specified-language
                                    (:default-language env))]
         (let [response (handler request)]

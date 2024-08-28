@@ -1,7 +1,7 @@
 (ns ^:integration rems.api.test-api
   (:require [clojure.test :refer :all]
             [rems.api.testing :refer :all]
-            [rems.db.api-key :as api-key]
+            [rems.db.api-key]
             [rems.db.core :as db]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.handler :refer [handler]]
@@ -30,7 +30,7 @@
           (is (response-is-not-found? resp)))))))
 
 (deftest test-api-key-security
-  (api-key/add-api-key! "42" {})
+  (rems.db.api-key/add-api-key! "42" {})
   (test-helpers/create-user! {:userid "alice"})
   (test-helpers/create-user! {:userid "owner"} :owner)
   (testing ":api-key role"
@@ -51,8 +51,8 @@
                      handler)]
         (is (response-is-forbidden? resp)))))
   (testing "api key user whitelist"
-    (api-key/add-api-key! "43" {:comment "all users" :users nil})
-    (api-key/add-api-key! "44" {:comment "only alice & malice" :users ["alice" "malice"]})
+    (rems.db.api-key/add-api-key! "43" {:comment "all users" :users nil})
+    (rems.db.api-key/add-api-key! "44" {:comment "only alice & malice" :users ["alice" "malice"]})
     (testing "> api key without whitelist can impersonate any user >"
       (doseq [user ["owner" "alice" "malice"]]
         (testing user
@@ -66,15 +66,15 @@
           (is (response-is-unauthorized? (api-response :get "/api/my-applications/" nil
                                                        "44" "owner")))))))
   (testing "api key path whitelist"
-    (api-key/add-api-key! "45" {:comment "all paths" :paths nil})
-    (api-key/add-api-key! "46" {:comment "limited paths" :paths [{:method "any"
-                                                                  :path "/api/applications"}
-                                                                 {:path "/api/my-applications"
-                                                                  :method "any"}]})
-    (api-key/add-api-key! "47" {:comment "regex path" :paths [{:method "any"
-                                                               :path "/api/c.*"}
-                                                              {:method "get"
-                                                               :path "/api/users/.*"}]})
+    (rems.db.api-key/add-api-key! "45" {:comment "all paths" :paths nil})
+    (rems.db.api-key/add-api-key! "46" {:comment "limited paths" :paths [{:method "any"
+                                                                          :path "/api/applications"}
+                                                                         {:path "/api/my-applications"
+                                                                          :method "any"}]})
+    (rems.db.api-key/add-api-key! "47" {:comment "regex path" :paths [{:method "any"
+                                                                       :path "/api/c.*"}
+                                                                      {:method "get"
+                                                                       :path "/api/users/.*"}]})
 
     (testing "> api key without whitelist can access any path >"
       (doseq [path ["/api/applications" "/api/my-applications"]]
@@ -121,7 +121,7 @@
   (is true))
 
 (deftest data-exception-test
-  (api-key/add-api-key! "42" {})
+  (rems.db.api-key/add-api-key! "42" {})
   (test-helpers/create-user! {:userid "owner"} :owner)
   (testing "a broken license without an organization"
     (let [license-id (:id (db/create-license! {:organization "does-not-exist"

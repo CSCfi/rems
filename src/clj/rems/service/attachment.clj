@@ -9,8 +9,8 @@
             [rems.common.attachment-util :refer [allowed-extension? getx-filename]]
             [rems.common.util :refer [fix-filename getx]]
             [rems.config :refer [env]]
-            [rems.db.applications :as applications]
-            [rems.db.attachments :as attachments]
+            [rems.db.applications]
+            [rems.db.attachments]
             [rems.multipart :refer [scan-for-malware]]
             [rems.util :refer [file-to-bytes]]
             [ring.util.http-response :refer :all])
@@ -49,19 +49,19 @@
    attachment with data with user permissions applied."
   [user-id attachment-id]
   (b/cond
-    :when-some [att (attachments/get-attachment attachment-id)]
+    :when-some [att (rems.db.attachments/get-attachment attachment-id)]
 
     ;; user owns this attachment
     (= user-id (:attachment/user att))
-    (assoc att :attachment/data (attachments/get-attachment-data attachment-id))
+    (assoc att :attachment/data (rems.db.attachments/get-attachment-data attachment-id))
 
     ;; user has permission (in application) to see this attachment
     ;; returned attachment has any possible restrictions applied to
-    :let [att (->> (applications/get-application-for-user user-id (:application/id att))
+    :let [att (->> (rems.db.applications/get-application-for-user user-id (:application/id att))
                    :application/attachments
                    (find-first (comp #{attachment-id} :attachment/id)))]
     (some? att)
-    (assoc att :attachment/data (attachments/get-attachment-data attachment-id))
+    (assoc att :attachment/data (rems.db.attachments/get-attachment-data attachment-id))
 
     :else
     (throw-forbidden)))
@@ -116,7 +116,7 @@
     (with-open [zip (ZipOutputStream. out)]
       (doseq [metadata (getx application :application/attachments)
               :let [id (getx metadata :attachment/id)
-                    data (attachments/get-attachment-data id)]
+                    data (rems.db.attachments/get-attachment-data id)]
               :when (or all? (contains? (get classes id) :field/value))]
         ;; we deduplicate filenames when uploading, but here's a
         ;; failsafe in case we have duplicate filenames in old

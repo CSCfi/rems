@@ -1,7 +1,7 @@
 (ns rems.db.blacklist
   (:require [rems.common.util :refer [getx]]
             [rems.db.core :as db]
-            [rems.db.resource :as resource]
+            [rems.db.resource]
             [rems.db.users]
             [rems.json :as json]
             [rems.schema-base :as schema-base]
@@ -43,7 +43,7 @@
   ;; TODO: These checks could be moved to the database as (1) constraint checks or (2) fields with foreign keys.
   (when-not (rems.db.users/user-exists? (:userid event))
     (throw (IllegalArgumentException. "user doesn't exist")))
-  (when-not (resource/ext-id-exists? (:resource/ext-id event))
+  (when-not (rems.db.resource/ext-id-exists? (:resource/ext-id event))
     (throw (IllegalArgumentException. "resource doesn't exist")))
   event)
 

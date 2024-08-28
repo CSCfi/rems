@@ -5,7 +5,7 @@
             [rems.common.util :refer [getx index-by]]
             [rems.db.core :as db]
             [rems.json :as json]
-            [rems.db.users :as users]
+            [rems.db.users]
             [rems.schema-base :as schema-base]
             [schema.core :as s]
             [schema.coerce :as coerce])
@@ -58,7 +58,7 @@
 
 (defn get-organizations []
   (->> (get-organizations-raw)
-       (transform [ALL :organization/owners ALL] #(users/get-user (:userid %)))
+       (transform [ALL :organization/owners ALL] #(rems.db.users/get-user (:userid %)))
        (mapv coerce-organization-full)))
 
 (defn- getx-organization-id [x]

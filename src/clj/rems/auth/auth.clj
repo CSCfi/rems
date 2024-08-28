@@ -6,9 +6,9 @@
             [rems.auth.fake-login :as fake-login]
             [rems.auth.oidc :as oidc]
             [rems.config :refer [env]]
-            [rems.db.api-key :as api-key]
+            [rems.db.api-key]
             [rems.db.users]
-            [rems.db.user-mappings :as user-mappings]
+            [rems.db.user-mappings]
             [ring.util.response :refer [redirect]]))
 
 (defn get-api-key [request]
@@ -20,7 +20,7 @@
 (defn get-api-user [request]
   (-> request
       get-api-userid
-      user-mappings/find-userid))
+      rems.db.user-mappings/find-userid))
 
 (defn- api-key-backend []
   (reify
@@ -41,10 +41,10 @@
     (handler (assoc request :uses-valid-api-key?
                     (if-some [api-key (get-api-key request)] ; don't try to check without
 
-                      (api-key/valid? api-key
-                                      (get-api-user request)
-                                      (:request-method request)
-                                      (:uri request))
+                      (rems.db.api-key/valid? api-key
+                                              (get-api-user request)
+                                              (:request-method request)
+                                              (:uri request))
                       false)))))
 
 (defn wrap-auth [handler]

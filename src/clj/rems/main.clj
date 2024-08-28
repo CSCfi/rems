@@ -11,11 +11,11 @@
             [rems.application.search :as search]
             [rems.common.git :as git]
             [rems.config :refer [env]]
-            [rems.db.api-key :as api-key]
-            [rems.db.applications :as applications]
+            [rems.db.api-key]
+            [rems.db.applications]
             [rems.db.core :as db]
             [rems.db.events]
-            [rems.db.roles :as roles]
+            [rems.db.roles]
             [rems.db.user-settings]
             [rems.handler :as handler]
             [rems.json :as json]
@@ -88,7 +88,7 @@
 (defn- refresh-caches []
   (log/info "Refreshing caches")
   (rems.service.caches/start-all-caches!)
-  (applications/refresh-all-applications-cache!)
+  (rems.db.applications/refresh-all-applications-cache!)
   (search/refresh!)
   (log/info "Caches refreshed"))
 
@@ -241,26 +241,26 @@
             (mount/start #'rems.config/env #'rems.db.core/*db*)
             (case command
               "get" (do)
-              "add" (api-key/update-api-key! api-key {:comment (str/join " " command-args)})
-              "delete" (api-key/delete-api-key! api-key)
-              "set-users" (api-key/update-api-key! api-key {:users command-args})
+              "add" (rems.db.api-key/update-api-key! api-key {:comment (str/join " " command-args)})
+              "delete" (rems.db.api-key/delete-api-key! api-key)
+              "set-users" (rems.db.api-key/update-api-key! api-key {:users command-args})
               "allow" (let [[method path] command-args
                             entry {:method method :path path}
-                            old (:paths (api-key/get-api-key api-key))]
-                        (api-key/update-api-key! api-key {:paths (conj old entry)}))
-              "allow-all" (api-key/update-api-key! api-key {:paths nil})
+                            old (:paths (rems.db.api-key/get-api-key api-key))]
+                        (rems.db.api-key/update-api-key! api-key {:paths (conj old entry)}))
+              "allow-all" (rems.db.api-key/update-api-key! api-key {:paths nil})
               (do (usage)
                   (System/exit 1)))
             (if api-key
-              (prn (api-key/get-api-key api-key))
-              (mapv prn (api-key/get-api-keys))))
+              (prn (rems.db.api-key/get-api-key api-key))
+              (mapv prn (rems.db.api-key/get-api-keys))))
 
           "list-users"
           (do
             (mount/start #'rems.config/env #'rems.db.core/*db*)
             (doseq [u (rems.service.users/get-users)]
               (-> u
-                  (assoc :roles (roles/get-roles (:userid u)))
+                  (assoc :roles (rems.db.roles/get-roles (:userid u)))
                   json/generate-string
                   println)))
 
@@ -270,7 +270,7 @@
               (do (usage)
                   (System/exit 1))
               (do (mount/start #'rems.config/env #'rems.db.core/*db*)
-                  (roles/add-role! user (keyword role)))))
+                  (rems.db.roles/add-role! user (keyword role)))))
 
           "remove-role"
           (let [[_ role user] args]
@@ -278,7 +278,7 @@
               (do (usage)
                   (System/exit 1))
               (do (mount/start #'rems.config/env #'rems.db.core/*db*)
-                  (roles/remove-role! user (keyword role)))))
+                  (rems.db.roles/remove-role! user (keyword role)))))
 
           "validate"
           (do

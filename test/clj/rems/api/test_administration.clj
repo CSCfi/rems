@@ -3,7 +3,7 @@
   (:require [clojure.test :refer :all]
             [rems.api.testing :refer :all]
             [rems.db.core :as db]
-            [rems.db.workflow :as workflow]
+            [rems.db.workflow]
             [rems.db.testing :refer [owners-fixture +test-api-key+]]))
 
 (use-fixtures

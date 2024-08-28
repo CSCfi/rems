@@ -2,7 +2,7 @@
   (:require [clojure.test :refer :all]
             [rems.service.catalogue :as catalogue]
             [rems.api.testing :refer :all]
-            [rems.db.category :as category]
+            [rems.db.category]
             [rems.service.test-data :as test-data]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.handler :refer [handler]]
@@ -62,7 +62,7 @@
                        (update :start format-utc-datetime)
                        (dissoc :resource-name :form-name :workflow-name)))
         get-category (fn [category]
-                       (-> (category/get-category (:category/id category))))
+                       (-> (rems.db.category/get-category (:category/id category))))
         child {:category/id (test-helpers/create-category! {})}
         parent {:category/id (test-helpers/create-category! {:category/children [child]})}
         _empty {:category/id (test-helpers/create-category! {})} ; should not be seen

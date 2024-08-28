@@ -14,18 +14,18 @@
             [rems.common.application-util :as application-util]
             [rems.common.util :refer [conj-set]]
             [rems.config :refer [env]]
-            [rems.db.attachments :as attachments]
-            [rems.db.blacklist :as blacklist]
-            [rems.db.catalogue :as catalogue]
+            [rems.db.attachments]
+            [rems.db.blacklist]
+            [rems.db.catalogue]
             [rems.db.core :as db]
-            [rems.db.csv :as csv]
-            [rems.db.events :as events]
-            [rems.db.form :as form]
-            [rems.db.licenses :as licenses]
+            [rems.db.csv]
+            [rems.db.events]
+            [rems.db.form]
+            [rems.db.licenses]
             [rems.db.resource]
             [rems.db.roles]
             [rems.db.users]
-            [rems.db.workflow :as workflow]
+            [rems.db.workflow]
             [rems.permissions :as permissions]
             [rems.scheduler :as scheduler])
   (:import [org.joda.time Duration]))
@@ -56,7 +56,7 @@
 ;;; Running commands
 
 (defn get-catalogue-item-licenses [catalogue-item-id]
-  (let [item (catalogue/get-localized-catalogue-item catalogue-item-id {})
+  (let [item (rems.db.catalogue/get-localized-catalogue-item catalogue-item-id {})
         resource-licenses (:licenses (rems.db.resource/get-resource (:resource-id item)))
         workflow-licenses (-> (rems.db.workflow/get-workflow (:wfid item))
                               (get-in [:workflow :licenses]))]
@@ -90,15 +90,15 @@
 (def fetcher-injections
   {:get-attachments-for-application rems.db.attachments/get-attachments-for-application
    :get-form-template rems.db.form/get-form-template
-   :get-catalogue-item #(cache/lookup-or-miss! catalogue-item-cache % (fn [id] (catalogue/get-localized-catalogue-item id {:expand-names? true
-                                                                                                                           :expand-resource-data? true})))
+   :get-catalogue-item #(cache/lookup-or-miss! catalogue-item-cache % (fn [id] (rems.db.catalogue/get-localized-catalogue-item id {:expand-names? true
+                                                                                                                                   :expand-resource-data? true})))
    :get-config (fn [] env)
    :get-license rems.db.licenses/get-license
    :get-user rems.db.users/get-user
    :get-users-with-role rems.db.roles/get-users-with-role
    :get-workflow rems.db.workflow/get-workflow
    :blacklisted? #(cache/lookup-or-miss! blacklist-cache [%1 %2] (fn [[userid resource]]
-                                                                   (blacklist/blacklisted? userid resource)))
+                                                                   (rems.db.blacklist/blacklisted? userid resource)))
    ;; TODO: no caching for these, but they're only used by command handlers currently
    :get-attachment-metadata rems.db.attachments/get-attachment
    :get-catalogue-item-licenses get-catalogue-item-licenses})
@@ -107,7 +107,7 @@
   "Returns the full application state without any user permission
    checks and filtering of sensitive information. Don't expose via APIs."
   [application-id]
-  (let [events (events/get-application-events application-id)]
+  (let [events (rems.db.events/get-application-events application-id)]
     (if (empty? events)
       nil ; application not found
       (model/build-application-view events fetcher-injections))))
@@ -405,7 +405,7 @@
 (defn export-applications-for-form-as-csv [user-id form-id language]
   (let [applications (get-all-applications-full user-id)
         filtered-applications (filter #(contains? (set (map :form/id (:application/forms %))) form-id) applications)]
-    (csv/applications-to-csv filtered-applications form-id language)))
+    (rems.db.csv/applications-to-csv filtered-applications form-id language)))
 
 (defn reload-cache! []
   (log/info "Start rems.db.applications/reload-cache!")
@@ -454,7 +454,7 @@
           (str "Tried to delete application " app-id " which is not a draft!"))
   (delete-from-all-applications-cache! app-id)
   (rems.db.attachments/delete-application-attachments! app-id)
-  (events/delete-application-events! app-id)
+  (rems.db.events/delete-application-events! app-id)
   (let [result (db/delete-application! {:application app-id})]
     (log/infof "Finished deleting application %s" app-id)
     result))

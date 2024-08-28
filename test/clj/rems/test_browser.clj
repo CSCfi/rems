@@ -24,9 +24,9 @@
             [rems.browser-test-util :as btu]
             [rems.common.util :refer [getx]]
             [rems.context :as context]
-            [rems.db.applications :as applications]
+            [rems.db.applications]
             [rems.db.test-data-helpers :as test-helpers]
-            [rems.db.user-settings :as user-settings]
+            [rems.db.user-settings]
             [rems.main]
             [rems.testing-util :refer [with-user with-fake-login-users]]
             [rems.text :refer [localize-time text with-language]]
@@ -775,7 +775,7 @@
               "Email" "john.smith@generic.name"}
              (slurp-fields :invite0-info-collapsible)))
       (is (string? (-> (btu/context-getx :application-id)
-                       applications/get-application-internal
+                       rems.db.applications/get-application-internal
                        :application/invitation-tokens
                        keys
                        first)))
@@ -783,7 +783,7 @@
               :application/member {:name "John Smith"
                                    :email "john.smith@generic.name"}}
              (-> (btu/context-getx :application-id)
-                 applications/get-application-internal
+                 rems.db.applications/get-application-internal
                  :application/invitation-tokens
                  vals
                  first)))
@@ -800,7 +800,7 @@
       (btu/wait-invisible :invite0-info-collapsible)
 
       (is (empty? (-> (btu/context-getx :application-id)
-                      applications/get-application-internal
+                      rems.db.applications/get-application-internal
                       :application/invitation-tokens)))
       (is (btu/visible? {:css "div.event-description" :fn/text "Alice Applicant removed John Smith from the application."}))
       (is (btu/visible? {:css "div.event-comment" :fn/text "sorry but no"})))
@@ -826,7 +826,7 @@
 
       (testing "get invite token"
         (let [[token invitation] (-> (btu/context-getx :application-id)
-                                     applications/get-application-internal
+                                     rems.db.applications/get-application-internal
                                      :application/invitation-tokens
                                      second)]
           (is (string? token))
@@ -866,7 +866,7 @@
 
     (testing "get invite token"
       (let [[token invitation] (-> (btu/context-getx :application-id)
-                                   applications/get-application-internal
+                                   rems.db.applications/get-application-internal
                                    :application/invitation-tokens
                                    first)]
         (is (string? token))
@@ -891,7 +891,7 @@
       (is (= {:event/type :application.event/member-joined
               :event/actor "frank"}
              (-> (btu/context-getx :application-id)
-                 applications/get-application-internal
+                 rems.db.applications/get-application-internal
                  :application/events
                  last
                  (select-keys [:event/actor :event/type])))))
@@ -1002,7 +1002,7 @@
       (is (= #{{:userid "ionna" :name "Ionna Insprucker" :email "ionna@ins.mail"}
                {:userid "kayla" :name "Kayla Kale" :email "kale@is.good"}}
              (-> (btu/context-getx :application-id)
-                 applications/get-application-internal
+                 rems.db.applications/get-application-internal
                  :application/members)))
 
       (Thread/sleep 500)
@@ -1250,7 +1250,7 @@
 
     (testing "get invite token"
       (let [[token invitation] (-> (btu/context-getx :application-id)
-                                   applications/get-application-internal
+                                   rems.db.applications/get-application-internal
                                    :application/invitation-tokens
                                    first)]
         (is (string? token))
@@ -1276,7 +1276,7 @@
       (is (= {:event/type :application.event/decider-joined
               :event/actor "new-decider"}
              (-> (btu/context-getx :application-id)
-                 applications/get-application-internal
+                 rems.db.applications/get-application-internal
                  :application/events
                  last
                  (select-keys [:event/actor :event/type])))))
@@ -1298,7 +1298,7 @@
               :event/actor "new-decider"
               :event/type :application.event/decided}
              (-> (btu/context-getx :application-id)
-                 applications/get-application-internal
+                 rems.db.applications/get-application-internal
                  :application/events
                  last
                  (select-keys [:application/decision :event/actor :event/type])))))
@@ -1491,7 +1491,7 @@
 
     (testing "accept invitation"
       (let [[token _] (-> (btu/context-getx :application-id)
-                          applications/get-application-internal
+                          rems.db.applications/get-application-internal
                           :application/invitation-tokens
                           first)]
         (btu/go (str (btu/get-server-url) "application/accept-invitation/" token))
@@ -1509,7 +1509,7 @@
 
     (testing "reviewer can use the link again"
       (let [[token _] (-> (btu/context-getx :application-id)
-                          applications/get-application-internal
+                          rems.db.applications/get-application-internal
                           :application/invitation-tokens
                           first)]
         (btu/go (str (btu/get-server-url) "application/accept-invitation/" token))
@@ -1527,7 +1527,7 @@
 
     (testing "another user can't use the invitation"
       (let [[token _] (-> (btu/context-getx :application-id)
-                          applications/get-application-internal
+                          rems.db.applications/get-application-internal
                           :application/invitation-tokens
                           first)]
         (btu/go (str (btu/get-server-url) "application/accept-invitation/" token))
@@ -1611,7 +1611,7 @@
       (btu/wait-page-loaded))
 
     (testing "wait for language change to show in the db"
-      (btu/wait-predicate #(= :fi (:language (user-settings/get-user-settings "alice")))))
+      (btu/wait-predicate #(= :fi (:language (rems.db.user-settings/get-user-settings "alice")))))
 
     (testing "changed language must have been saved for user"
       (logout)
@@ -1625,7 +1625,7 @@
       (change-language :en)
       (wait-page-title "Catalogue – REMS"))
 
-    (user-settings/delete-user-settings! "alice"))) ; clear language settings
+    (rems.db.user-settings/delete-user-settings! "alice"))) ; clear language settings
 
 (defn create-organization []
   (go-to-admin "Organizations")
@@ -3188,7 +3188,7 @@
     (btu/scroll-and-click [:small-navbar {:tag :button :fn/text "FI"}])
     (btu/wait-invisible :small-navbar) ; menu should be hidden
     (wait-page-title "Hakemukset – REMS")
-    (user-settings/delete-user-settings! "alice"))) ; clear language settings
+    (rems.db.user-settings/delete-user-settings! "alice"))) ; clear language settings
 
 (defn slurp-categories-by-title []
   (->> (map #(get % "title") (slurp-rows :categories))
@@ -3549,5 +3549,5 @@
             (is (btu/eventually-visible? {:tag :p :fn/has-text "Denna sida hittades inte."})))))
 
       (change-language :en)
-      (user-settings/delete-user-settings! "alice")
-      (user-settings/delete-user-settings! "elsa")))) ; clear language settings
+      (rems.db.user-settings/delete-user-settings! "alice")
+      (rems.db.user-settings/delete-user-settings! "elsa")))) ; clear language settings

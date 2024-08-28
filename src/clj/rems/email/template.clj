@@ -5,7 +5,7 @@
             [rems.common.util :refer [getx]]
             [rems.config :refer [env]]
             [rems.context :as context]
-            [rems.db.user-settings :as user-settings]
+            [rems.db.user-settings]
             [rems.permissions :as permissions]
             [rems.text :refer [localize-user localize-utc-date text text-no-fallback text-format-map with-language]]))
 
@@ -64,7 +64,7 @@
 (defn- emails-to-recipients [recipients event application subject-text body-text]
   (vec
    (for [recipient recipients
-         :let [email (with-language (:language (user-settings/get-user-settings (:userid recipient)))
+         :let [email (with-language (:language (rems.db.user-settings/get-user-settings (:userid recipient)))
                        (when (and body-text
                                   (not (str/blank? (text-no-fallback body-text))))
                          (let [event (apply-event-privacy event application (:userid recipient))
@@ -278,7 +278,7 @@
                          :expires-on (localize-utc-date (:application/expires-on event))
                          :last-activity (localize-utc-date last-activity)
                          :recipient (application-util/get-member-name recipient)}]]
-       (with-language (:language (user-settings/get-user-settings (:userid recipient)))
+       (with-language (:language (rems.db.user-settings/get-user-settings (:userid recipient)))
          {:to-user (:userid recipient)
           :subject (text-format-map :t.email.application-expiration-notification/subject-to-member
                                     params

@@ -5,8 +5,8 @@
   (:require [clojure.set :refer [difference]]
             [rems.application.expirer-bot :as expirer-bot]
             [rems.common.application-util :as application-util]
-            [rems.db.applications :as applications]
-            [rems.db.attachments :as attachments]
+            [rems.db.applications]
+            [rems.db.attachments]
             [rems.service.attachment :as attachment]
             [rems.service.blacklist :as blacklist]))
 
@@ -15,7 +15,7 @@
   [new-events]
   (doseq [event new-events
           :when (= :application.event/revoked (:event/type event))
-          :let [application (applications/get-application-internal (:application/id event))]
+          :let [application (rems.db.applications/get-application-internal (:application/id event))]
           user (application-util/applicant-and-members application)
           resource (:application/resources application)]
     (blacklist/add-user-to-blacklist! (:event/actor event)
@@ -28,10 +28,10 @@
   [new-events]
   (doseq [event new-events]
     (when (= :application.event/deleted (:event/type event))
-      (applications/delete-application! (:application/id event)))))
+      (rems.db.applications/delete-application! (:application/id event)))))
 
 (defn delete-orphan-attachments [application-id]
-  (let [application (applications/get-application-internal application-id)
+  (let [application (rems.db.applications/get-application-internal application-id)
         attachments-in-use (set (attachment/get-attachments-in-use application))
         all-attachments (set (map :attachment/id (:application/attachments application)))]
     (doseq [attachment-id (difference all-attachments attachments-in-use)]

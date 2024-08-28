@@ -2,8 +2,8 @@
   "Serving licenses for API."
   (:require [rems.service.dependencies :as dependencies]
             [rems.service.util :as util]
-            [rems.db.licenses :as licenses]
-            [rems.db.organizations :as organizations]))
+            [rems.db.licenses]
+            [rems.db.organizations]))
 
 (defn create-license! [{:keys [licensetype organization localizations]}]
   (util/check-allowed-organization! organization)
@@ -18,9 +18,9 @@
 (defn get-license
   "Get a single license by id"
   [id]
-  (when-let [license (licenses/get-license id)]
+  (when-let [license (rems.db.licenses/get-license id)]
     (-> license
-        organizations/join-organization)))
+        rems.db.organizations/join-organization)))
 
 (defn set-license-enabled! [{:keys [id enabled]}]
   (util/check-allowed-organization! (:organization (get-license id)))
@@ -36,5 +36,5 @@
 
 (defn get-all-licenses
   [filters]
-  (->> (licenses/get-licenses filters)
-       (mapv organizations/join-organization)))
+  (->> (rems.db.licenses/get-licenses filters)
+       (mapv rems.db.organizations/join-organization)))

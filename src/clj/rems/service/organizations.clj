@@ -3,18 +3,18 @@
             [medley.core :refer [assoc-some find-first]]
             [rems.auth.util]
             [rems.common.util :refer [apply-filters]]
-            [rems.db.applications :as applications]
-            [rems.db.organizations :as organizations]
-            [rems.db.roles :as roles]
-            [rems.db.users :as users]
-            [rems.db.workflow :as workflow]
+            [rems.db.applications]
+            [rems.db.organizations]
+            [rems.db.roles]
+            [rems.db.users]
+            [rems.db.workflow]
             [rems.service.dependencies :as dependencies]
             [rems.service.util]))
 
 (defn- can-see-all [userid]
-  (let [all-roles (set/union (roles/get-roles userid)
-                             (organizations/get-all-organization-roles userid)
-                             (applications/get-all-application-roles userid))]
+  (let [all-roles (set/union (rems.db.roles/get-roles userid)
+                             (rems.db.organizations/get-all-organization-roles userid)
+                             (rems.db.applications/get-all-application-roles userid))]
     (some #{:owner :organization-owner :handler :reporter}
           all-roles)))
 
@@ -42,7 +42,7 @@
        (find-first (comp #{(:organization/id org)} :organization/id))))
 
 (defn add-organization! [cmd]
-  (if-let [id (organizations/add-organization! cmd)]
+  (if-let [id (rems.db.organizations/add-organization! cmd)]
     {:success true
      :organization/id id}
     {:success false
@@ -52,28 +52,28 @@
 (defn edit-organization! [cmd]
   (let [id (:organization/id cmd)]
     (rems.service.util/check-allowed-organization! cmd)
-    (organizations/update-organization! id (fn [organization] (->> (dissoc cmd :organization/id)
-                                                                   (merge organization))))
+    (rems.db.organizations/update-organization! id (fn [organization] (->> (dissoc cmd :organization/id)
+                                                                           (merge organization))))
     {:success true
      :organization/id id}))
 
 (defn set-organization-enabled! [{:keys [enabled] :as cmd}]
   (let [id (:organization/id cmd)]
-    (organizations/update-organization! id (fn [organization] (assoc organization :enabled enabled)))
+    (rems.db.organizations/update-organization! id (fn [organization] (assoc organization :enabled enabled)))
     {:success true}))
 
 (defn set-organization-archived! [{:keys [archived] :as cmd}]
   (let [id (:organization/id cmd)]
     (or (dependencies/change-archive-status-error archived  {:organization/id id})
         (do
-          (organizations/update-organization! id (fn [organization] (assoc organization :archived archived)))
+          (rems.db.organizations/update-organization! id (fn [organization] (assoc organization :archived archived)))
           {:success true}))))
 
-(defn get-available-owners [] (users/get-users))
+(defn get-available-owners [] (rems.db.users/get-users))
 
 (defn get-handled-organizations [{:keys [userid]}]
-  (for [workflow (workflow/get-workflows)
+  (for [workflow (rems.db.workflow/get-workflows)
         :let [handlers (set (mapv :userid (get-in workflow [:workflow :handlers])))]
         :when (contains? handlers userid)
-        :let [organization (organizations/getx-organization-by-id (get-in workflow [:organization :organization/id]))]]
+        :let [organization (rems.db.organizations/getx-organization-by-id (get-in workflow [:organization :organization/id]))]]
     organization))

@@ -5,7 +5,7 @@
             [rems.cache :as cache]
             [rems.common.util :refer [index-by]]
             [rems.db.core :as db]
-            [rems.db.users :as users]
+            [rems.db.users]
             [rems.json :as json]
             [rems.schema-base :as schema-base]
             [schema.coerce :as coerce]
@@ -84,7 +84,7 @@
     id))
 
 (defn- enrich-workflow [wf]
-  (update-existing-in wf [:workflow :handlers] (partial mapv users/join-user)))
+  (update-existing-in wf [:workflow :handlers] (partial mapv rems.db.users/join-user)))
 
 (defn get-workflow [id]
   (-> (cache/lookup-or-miss! workflow-cache id)

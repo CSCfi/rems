@@ -4,10 +4,10 @@
             [conman.core :as conman]
             [rems.config]
             [rems.db.core :as db]
-            [rems.db.events :as events]
+            [rems.db.events]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.db.testing :refer [test-db-fixture reset-db-fixture]]
-            [rems.db.users :as users])
+            [rems.db.users])
   (:import [java.sql SQLException]
            [java.util.concurrent Executors Future TimeUnit ExecutorService]
            [org.postgresql.util PSQLException]))
@@ -91,7 +91,7 @@
                                          :enable-save-compaction true
                                          :database-lock-timeout "4s"
                                          :database-idle-in-transaction-session-timeout "8s")]
-      (let [_ (events/get-all-events-since 0) ; ensure cache is up to date when the runs start
+      (let [_ (rems.db.events/get-all-events-since 0) ; ensure cache is up to date when the runs start
             write-event (fn [_writer-id app-id x]
                           (try
                             ;; same as transaction middleware
@@ -111,7 +111,7 @@
                               ;; same as transaction middleware
                               (conman/with-transaction [db/*db* {:isolation :serializable
                                                                  :read-only? true}]
-                                (let [events (events/get-application-events app-id)]
+                                (let [events (rems.db.events/get-application-events app-id)]
                                   (assert (every? (comp number? :event/id) events))
                                   {::app-id app-id
                                    ::events events})))
@@ -119,12 +119,12 @@
                               ;; same as transaction middleware
                               (conman/with-transaction [db/*db* {:isolation :serializable
                                                                  :read-only? true}]
-                                {::events (events/get-all-events-since 0)}))
+                                {::events (rems.db.events/get-all-events-since 0)}))
             cache-invalidater (fn []
                                 ;; same as transaction middleware
                                 (conman/with-transaction [db/*db* {:isolation :serializable
                                                                    :read-only? false}]
-                                  (events/reload-event-cache!)))
+                                  (rems.db.events/reload-event-cache!)))
             thread-pool (Executors/newCachedThreadPool)
             app-events-readers (submit-all thread-pool (for [app-id app-ids]
                                                          (fn [] (sample-until-interrupted
@@ -170,7 +170,7 @@
               app-events-reader-results (flatten (map #(.get ^Future %) app-events-readers))
               all-events-reader-results (flatten (map #(.get ^Future %) all-events-readers))
               cache-invalidations (flatten (map #(.get ^Future %) cache-invalidaters))
-              final-events (events/get-all-events-since 0)
+              final-events (rems.db.events/get-all-events-since 0)
               final-events-by-app-id (group-by :application/id final-events)]
 
           (log/info "Writer attempts" (count writer-attempts))
