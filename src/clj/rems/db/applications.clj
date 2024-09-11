@@ -17,7 +17,6 @@
             [rems.db.blacklist]
             [rems.db.catalogue]
             [rems.db.core :as db]
-            [rems.db.csv]
             [rems.db.events]
             [rems.db.form]
             [rems.db.licenses]
@@ -60,8 +59,8 @@
         workflow-licenses (-> (rems.db.workflow/get-workflow (:wfid item))
                               (get-in [:workflow :licenses]))]
     (->> (concat resource-licenses workflow-licenses)
-         (eduction (map #(clojure.set/rename-keys % {:id :license/id}))
-                   (distinct-by :license/id))
+         (map #(clojure.set/rename-keys % {:id :license/id}))
+         (distinct-by :license/id)
          (into []))))
 
 (defn get-application-by-invitation-token [invitation-token]
@@ -116,12 +115,6 @@
   (if-let [app-id (:application/id event)] ; old style events don't have :application/id
     (update applications app-id model/application-view event)
     applications))
-
-(defn- ->ApplicationOverview [application]
-  (dissoc application
-          :application/events
-          :application/forms
-          :application/licenses))
 
 (mount/defstate
   ^{:doc "The cached state will contain the following keys:
@@ -263,8 +256,7 @@
   ;; - personalized - app for user (no :application/user-roles)
   ;; - updated      - only those that changed this round
   ;; - deleted      - applications that are going away
-  (let [cached-injections (map-vals memoize fetcher-injections)
-        updated-app-ids (set (into updated-app-ids deleted-app-ids)) ; let's consider deleted to be automatically an app to update
+  (let [updated-app-ids (set (into updated-app-ids deleted-app-ids)) ; let's consider deleted to be automatically an app to update
 
         old-raw-apps (::raw-apps state)
         old-enriched-apps (::enriched-apps state)
@@ -279,7 +271,7 @@
                        (apply dissoc apps deleted-app-ids)
                        (doall apps))
         new-updated-raw-apps (select-keys new-raw-apps updated-app-ids)
-        new-updated-enriched-apps (doall (map-vals #(model/enrich-with-injections % cached-injections) new-updated-raw-apps))
+        new-updated-enriched-apps (doall (map-vals #(model/enrich-with-injections % fetcher-injections) new-updated-raw-apps))
         new-enriched-apps (as-> new-updated-enriched-apps apps
                             (merge old-enriched-apps apps)
                             (apply dissoc apps deleted-app-ids)
@@ -348,21 +340,29 @@
       ::enriched-apps
       (vals)))
 
-(defn- get-all-applications-full [userid] ;; full i.e. not overview
+(defn get-all-applications-full
+  "Returns all full, personalized applications for `userid`. Optional `xf` can be applied 
+   to list of application ids before transformation, e.g. search filter."
+  [userid & [xf]] ; full i.e. not overview
   (let [cache (refresh-all-applications-cache!)
         app-ids (get-in cache [::app-ids-by-user userid])
         cached-apps (get-in cache [::enriched-apps])
         personalize-app (fn [app] ; NB: may return nil if should not see the app
-                          (model/apply-user-permissions app userid))
-        apps (->> app-ids
-                  (eduction (map cached-apps)
-                            (keep personalize-app)))]
-    apps))
+                          (model/apply-user-permissions app userid))]
+    (cond->> app-ids
+      xf (eduction xf)
+      true (eduction (map cached-apps)
+                     (keep personalize-app)))))
 
-(defn get-all-applications [userid]
-  (->> userid
-       get-all-applications-full
-       (mapv ->ApplicationOverview)))
+(defn- my-application? [app]
+  (some #{:applicant :member} (:application/roles app)))
+
+(defn get-my-applications-full
+  "Returns all full, personalized applications where `userid` is an applying user.
+   Optional `xf` can be applied to list of application ids before transformation, e.g. search filter."
+  [userid & [xf]]
+  (->> (get-all-applications-full userid xf)
+       (eduction (filter my-application?))))
 
 (defn get-all-application-roles [userid]
   (-> (refresh-all-applications-cache!)
@@ -374,18 +374,6 @@
   (-> (refresh-all-applications-cache!)
       (get-in [::users-by-role role])
       set))
-
-(defn- my-application? [application]
-  (some #{:applicant :member} (:application/roles application)))
-
-(defn get-my-applications [user-id]
-  (->> (get-all-applications user-id)
-       (filterv my-application?)))
-
-(defn export-applications-for-form-as-csv [user-id form-id language]
-  (let [applications (get-all-applications-full user-id)
-        filtered-applications (filterv #(contains? (set (map :form/id (:application/forms %))) form-id) applications)]
-    (rems.db.csv/applications-to-csv filtered-applications form-id language)))
 
 (defn reload-cache! []
   (log/info "Start rems.db.applications/reload-cache!")

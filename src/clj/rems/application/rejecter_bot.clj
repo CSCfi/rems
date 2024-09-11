@@ -27,11 +27,13 @@
 (defn reject-all-applications-by
   "Go through all applications by the given user-ids and reject any if necessary. Returns sequence of commands."
   [& user-ids]
-  (->> (mapcat rems.db.applications/get-my-applications user-ids)
-       (mapv :application/id)
-       distinct
-       (mapv rems.db.applications/get-application)
-       (mapcat consider-rejecting)))
+  (->> user-ids
+       (eduction (mapcat rems.db.applications/get-my-applications-full)
+                 (map :application/id)
+                 (distinct)
+                 (map rems.db.applications/get-application)
+                 (mapcat consider-rejecting))
+       (into [])))
 
 (defn run-rejecter-bot [new-events]
   (let [by-type (group-by :event/type new-events)

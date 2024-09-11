@@ -91,16 +91,16 @@
         app-id1 (test-helpers/create-application! {:actor "applicant1"})
         _ (test-helpers/create-application! {:actor "applicant2"})]
     (is (rems.db.applications/get-application app-id1))
-    (is (= [app-id1] (map :application/id (rems.db.applications/get-my-applications "applicant1"))))
+    (is (= [app-id1] (map :application/id (rems.db.applications/get-my-applications-full "applicant1"))))
     (is (= #{:applicant} (rems.db.applications/get-all-application-roles "applicant1")))
     (is (= #{"applicant1" "applicant2"} (rems.db.applications/get-users-with-role :applicant)))
 
     (rems.db.applications/delete-application! app-id1)
 
     (testing "application disappears from my applications"
-      (is (= [] (rems.db.applications/get-my-applications "applicant1"))))
+      (is (= [] (rems.db.applications/get-my-applications-full "applicant1"))))
     (testing "application disappears from all-applications-cache (apps-by-user)"
-      (is (= [] (rems.db.applications/get-all-applications "applicant1"))))
+      (is (= [] (rems.db.applications/get-all-applications-full "applicant1"))))
     (testing "application disappears from all-applications-cache (roles-by-user)"
       (is (= #{} (rems.db.applications/get-all-application-roles "applicant1"))))
     (testing "application disappears from all-applications-cache (users-by-role)"
@@ -122,16 +122,16 @@
                               :actor "applicant1"})
       (is (rems.db.applications/get-application app-id1))
       (is (rems.db.applications/get-application app-id2))
-      (is (= [app-id1 app-id2] (sort (map :application/id (rems.db.applications/get-my-applications "applicant1")))))
+      (is (= [app-id1 app-id2] (sort (map :application/id (rems.db.applications/get-my-applications-full "applicant1")))))
       (is (= #{:applicant} (rems.db.applications/get-all-application-roles "applicant1")))
       (is (= #{"applicant1" "applicant2"} (rems.db.applications/get-users-with-role :applicant)))
 
       (rems.db.applications/delete-application! app-id1)
 
       (testing "application disappears from my applications"
-        (is (= [app-id2] (map :application/id (rems.db.applications/get-my-applications "applicant1")))))
+        (is (= [app-id2] (map :application/id (rems.db.applications/get-my-applications-full "applicant1")))))
       (testing "application disappears from all-applications-cache (apps-by-user)"
-        (is (= [app-id2] (map :application/id (rems.db.applications/get-all-applications "applicant1")))))
+        (is (= [app-id2] (map :application/id (rems.db.applications/get-all-applications-full "applicant1")))))
       (testing "role persists in roles-by-user"
         (is (= #{:applicant} (rems.db.applications/get-all-application-roles "applicant1"))))
       (testing "role persists in users-by-role"
@@ -168,7 +168,7 @@
         app-id1 (test-helpers/create-application! {:actor "applicant1" :catalogue-item-ids [catalogue-item]})
         _ (test-helpers/submit-application {:actor "applicant1" :application-id app-id1})]
     (is (rems.db.applications/get-application app-id1))
-    (is (= [app-id1] (map :application/id (rems.db.applications/get-my-applications "applicant1"))))
+    (is (= [app-id1] (map :application/id (rems.db.applications/get-my-applications-full "applicant1"))))
     (is (= #{:applicant} (rems.db.applications/get-all-application-roles "applicant1")))
     (is (= #{"applicant1"} (rems.db.applications/get-users-with-role :applicant)))
     (is (= #{"handler"} (rems.db.applications/get-users-with-role :handler)))
@@ -201,9 +201,9 @@
     (is (= #{"handler"} (rems.db.applications/get-users-with-role :handler)))
 
     (testing "application disappears from my applications"
-      (is (= [] (rems.db.applications/get-my-applications "applicant1"))))
+      (is (= [] (rems.db.applications/get-my-applications-full "applicant1"))))
     (testing "application disappears from all-applications-cache (apps-by-user)"
-      (is (= [] (rems.db.applications/get-all-applications "applicant1"))))
+      (is (= [] (rems.db.applications/get-all-applications-full "applicant1"))))
     (testing "role disappears from all-applications-cache (roles-by-user)"
       (is (= #{} (rems.db.applications/get-all-application-roles "applicant1"))))
     (testing "applicant1 disappears from all-applications-cache (users-by-role)"

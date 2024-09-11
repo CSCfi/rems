@@ -123,13 +123,13 @@
           (is (= [{:userid "user1" :name "User 1" :email "user1@example.com"}] (get-in app [:application/workflow :workflow.dynamic/handlers]))))
 
         (testing "before changing handlers"
-          (is (= [] (mapv :application/id (rems.db.applications/get-all-applications "user1"))) "handler can't see draft")
-          (is (= [] (rems.db.applications/get-all-applications "user2")))
+          (is (= [] (mapv :application/id (rems.db.applications/get-all-applications-full "user1"))) "handler can't see draft")
+          (is (= [] (rems.db.applications/get-all-applications-full "user2")))
 
           (test-helpers/submit-application {:application-id app-id :actor "alice"})
 
-          (is (= [app-id] (mapv :application/id (rems.db.applications/get-all-applications "user1"))))
-          (is (= [] (rems.db.applications/get-all-applications "user2"))))
+          (is (= [app-id] (mapv :application/id (rems.db.applications/get-all-applications-full "user1"))))
+          (is (= [] (rems.db.applications/get-all-applications-full "user2"))))
 
         (rems.service.workflow/edit-workflow! {:id wf-id
                                                :handlers ["user2"]})
@@ -139,8 +139,8 @@
             (is (= {"alice" #{:applicant} "user2" #{:handler}} (:application/user-roles app)))
             (is (= [{:userid "user2" :name "User 2" :email "user2@example.com"}] (get-in app [:application/workflow :workflow.dynamic/handlers]))))
 
-          (is (= [] (rems.db.applications/get-all-applications "user1")))
-          (is (= [app-id] (mapv :application/id (rems.db.applications/get-all-applications "user2")))))
+          (is (= [] (rems.db.applications/get-all-applications-full "user1")))
+          (is (= [app-id] (mapv :application/id (rems.db.applications/get-all-applications-full "user2")))))
 
         (is (= {:id wf-id
                 :title "original title"

@@ -5,7 +5,8 @@
             [clojure.tools.logging :as log]
             [mount.core :as mount]
             [postal.core :as postal]
-            [rems.service.todos]
+            [rems.service.application]
+            [rems.service.user-settings]
             [rems.service.workflow]
             [rems.application.model]
             [rems.config :refer [env]]
@@ -14,7 +15,6 @@
             [rems.db.invitation]
             [rems.db.outbox]
             [rems.db.resource]
-            [rems.db.user-settings]
             [rems.db.users]
             [rems.db.workflow]
             [rems.email.template :as template]
@@ -48,8 +48,8 @@
 
 (defn generate-handler-reminder-outbox [handler deadline]
   (let [userid (:userid handler)
-        lang (:language (rems.db.user-settings/get-user-settings userid))
-        apps (rems.service.todos/get-todos userid)
+        lang (:language (rems.service.user-settings/get-user-settings userid))
+        apps (rems.service.application/get-todos userid)
         email (template/handler-reminder-email lang handler apps)]
 
     (when email
@@ -58,15 +58,17 @@
        :outbox/deadline deadline})))
 
 (defn generate-handler-reminder-emails! []
-  (let [deadline (-> (time/now) (.plus ^Period (:email-retry-period env)))]
-    (->> (rems.db.workflow/get-handlers)
+  (let [deadline (-> (time/now) (.plus ^Period (:email-retry-period env)))
+        handlers (->> (rems.db.workflow/get-handlers)
+                      (map rems.db.users/get-user))]
+    (->> handlers
          (keep #(generate-handler-reminder-outbox % deadline))
          rems.db.outbox/puts!)))
 
 (defn generate-reviewer-reminder-outbox [reviewer deadline]
   (let [userid (:userid reviewer)
-        lang (:language (rems.db.user-settings/get-user-settings userid))
-        apps (->> (rems.service.todos/get-todos userid)
+        lang (:language (rems.service.user-settings/get-user-settings userid))
+        apps (->> (rems.service.application/get-todos userid)
                   (filter (comp #{:waiting-for-your-review} :application/todo)))
         email (template/reviewer-reminder-email lang reviewer apps)]
 
@@ -138,7 +140,7 @@
         email (assoc email-spec
                      :from (:mail-from env)
                      :to (or (:to email-spec)
-                             (:notification-email (rems.db.user-settings/get-user-settings (:to-user email-spec)))
+                             (:notification-email (rems.service.user-settings/get-user-settings (:to-user email-spec)))
                              (:email (rems.db.users/get-user (:to-user email-spec))))
                      ;; https://tools.ietf.org/html/rfc3834
                      ;; postal turns extra keys into headers

@@ -15,6 +15,7 @@
             [com.rpl.specter :refer [select ALL]]
             [etaoin.keys]
             [medley.core :refer [find-first]]
+            [rems.service.application]
             [rems.service.catalogue]
             [rems.service.form]
             [rems.service.invitation]
@@ -29,8 +30,7 @@
             [rems.db.user-settings]
             [rems.main]
             [rems.testing-util :refer [with-user with-fake-login-users]]
-            [rems.text :refer [localize-time text with-language]]
-            [rems.service.todos]))
+            [rems.text :refer [localize-time text with-language]]))
 
 (comment ; convenience for development testing
   (btu/init-driver! :chrome "http://localhost:3000/" :development))
@@ -1165,7 +1165,7 @@
       ;; NB: other tests may process applications too
       ;; the created 100 applications will be the latest
       (create-processed-application! 0 100)
-      (btu/context-assoc! :todos (rems.service.todos/get-handled-todos "developer")) ; check against API
+      (btu/context-assoc! :todos (rems.service.application/get-handled-applications "developer")) ; check against API
       (btu/reload)
       (btu/wait-visible {:fn/text (str "There are " (count (btu/context-getx :todos)) " processed applications.")})
       (btu/screenshot "processed-applications-closed")

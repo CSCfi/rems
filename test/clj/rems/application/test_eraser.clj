@@ -57,8 +57,8 @@
   (= :application.event/expiration-notifications-sent (:event/type event)))
 
 (defn- get-all-application-ids [user-id]
-  (->> (rems.db.applications/get-all-applications user-id)
-       (map :application/id)))
+  (->> (rems.db.applications/get-my-applications-full user-id)
+       (mapv :application/id)))
 
 (deftest test-expire-application
   (let [_ (test-helpers/create-user! {:userid "alice"})

@@ -5,6 +5,7 @@
             [com.rpl.specter :refer [ALL select]]
             [mount.core :as mount]
             [rems.common.application-util :as application-util]
+            [rems.common.util :refer [not-blank]]
             [rems.config :refer [env]]
             [rems.db.applications]
             [rems.db.events]
@@ -142,3 +143,10 @@
         (->> (.search searcher query Integer/MAX_VALUE)
              (get-application-ids searcher)
              set)))))
+
+(defn filter-with-search [query]
+  (let [app-ids (some-> query not-blank find-applications)]
+    (cond
+      (not app-ids) (filter (constantly true))
+      (empty? app-ids) (filter (constantly false))
+      :else (filter #(contains? app-ids %)))))

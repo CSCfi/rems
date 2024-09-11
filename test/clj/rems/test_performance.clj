@@ -14,9 +14,9 @@
             [rems.email.template]
             [rems.locales]
             [rems.markdown]
+            [rems.service.application]
             [rems.service.caches]
             [rems.service.test-data :as test-data]
-            [rems.service.todos]
             [rems.tempura]
             [rems.text])
   (:import [java.util Locale]))
@@ -60,11 +60,11 @@
 
 (defn benchmark-get-all-applications []
   (let [test-get-all-unrestricted-applications #(doall (rems.db.applications/get-all-unrestricted-applications))
-        test-get-all-applications #(doall (rems.db.applications/get-all-applications "alice"))
+        test-get-all-applications #(doall (rems.db.applications/get-all-applications-full "alice"))
         test-get-all-application-roles #(doall (rems.db.applications/get-all-application-roles "developer"))
-        test-get-my-applications #(doall (rems.db.applications/get-my-applications "alice"))
+        test-get-my-applications #(doall (rems.db.applications/get-my-applications-full "alice"))
         ;; developer can view much more applications than alice, so it takes longer to filter reviews from all apps
-        test-get-todos #(doall (rems.service.todos/get-todos "developer"))
+        test-get-todos #(doall (rems.service.application/get-todos "developer"))
         no-cache (fn []
                    (mount/stop #'rems.db.applications/all-applications-cache
                                #'rems.db.events/low-level-events-cache)
