@@ -26,6 +26,7 @@
             :decide "Decide"
             :delete "Delete draft"
             :delete-intro [:div.intro [:p "Permanently delete this draft?"]]
+            :download-pdf "Download PDF"
             :errors {:handling-user-cannot-join "A handling user cannot join application as member."
                      :duplicate-id "Id is already in use."
                      ;; %1 - invitation token
