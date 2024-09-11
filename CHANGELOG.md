@@ -18,6 +18,9 @@ Changes since v2.37
 - Form editor performance has been significantly improved. To give rough numbers, the editor now works smoothly with 200 form fields in test data. (#3105)
 - The wording about experimental is removed from GA4GH API. It is already used in production. (#3299)
 
+### Fixes
+- Empty the license attachment field if the upload fails. (#3292)
+
 ## v2.37 "Laivapojankatu" 2024-05-16
 
 ### Additions

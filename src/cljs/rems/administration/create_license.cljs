@@ -77,7 +77,9 @@
          {:body form-data
           :handler (fn [response]
                      (rf/dispatch [::attachment-saved language (:id response)]))
-          :error-handler (flash-message/default-error-handler :top "Save attachment")}))
+          :error-handler (fn [response]
+                           (rf/dispatch [::set-form-field [:localizations language :attachment-filename] nil])
+                           ((flash-message/default-error-handler :top "Save attachment") response))}))
 
 (rf/reg-event-db
  ::attachment-saved
