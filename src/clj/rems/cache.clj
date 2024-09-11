@@ -3,7 +3,25 @@
   (:require [clojure.core.cache :as c]
             [clojure.core.cache.wrapped :as w]
             [clojure.tools.logging.readable :as logr]
-            [rems.common.dependency :as dep]))
+            [medley.core :refer [update-existing]]
+            [rems.common.dependency :as dep]
+            [rems.config]))
+
+(defprotocol CacheStatisticsProtocol
+  "Run-time cache statistics."
+
+  (export-statistics! [this]
+    "Retrieves runtime statistics from cache, and resets appropriate counters.")
+  (increment-get-statistic! [this]
+    "Increments cache access counter.")
+  (increment-reload-statistic! [this]
+    "Increments cache reload counter.")
+  (increment-reset-statistic! [this]
+    "Increments cache reset counter.")
+  (increment-upsert-statistic! [this]
+    "Increments cache insert/update counter.")
+  (increment-evict-statistic! [this]
+    "Increments cache evict counter."))
 
 (defprotocol RefreshableCacheProtocol
   "Protocol for cache wrapper that can refresh the underlying cache."
@@ -45,18 +63,36 @@
 
 (def ^{:doc "Value that tells cache to skip entry."} absent ::absent)
 
+(def ^:private initial-statistics {:get 0 :reload 0 :reset 0 :upsert 0 :evict 0})
+
 (defrecord RefreshableCache [id
+                             ^clojure.lang.Volatile statistics
                              ^clojure.lang.Volatile initialized?
                              ^clojure.lang.IAtom the-cache
                              ^clojure.lang.IFn miss-fn
                              ^clojure.lang.IFn reload-fn]
+  CacheStatisticsProtocol
+
+  (export-statistics! [this]
+    (let [stats @statistics]
+      (vreset! statistics (select-keys initial-statistics (keys stats)))
+      stats))
+
+  (increment-get-statistic! [this] (vswap! statistics update-existing :get inc))
+  (increment-reload-statistic! [this] (vswap! statistics update :reload inc))
+  (increment-reset-statistic! [this] (vswap! statistics update :reset inc))
+  (increment-upsert-statistic! [this] (vswap! statistics update :upsert inc))
+  (increment-evict-statistic! [this] (vswap! statistics update :evict inc))
+
   RefreshableCacheProtocol
 
   (ensure-initialized! [this]
+    (increment-get-statistic! this)
     (when-not @initialized? ; no need to acquire lock if already initialized
       (logr/debug :reload id)
       (locking id
         (when-not @initialized?
+          (increment-reload-statistic! this)
           (if-let [deps (->> (get-cache-dependencies id)
                              (into {} (map (juxt :id entries!)))
                              not-empty)]
@@ -72,6 +108,7 @@
       (logr/debug :reset id)
       (locking id
         (when @initialized?
+          (increment-reset-statistic! this)
           (w/seed the-cache {})
           (vreset! initialized? false)
           (reset-dependent-caches! id)
@@ -105,6 +142,7 @@
             skip-update? (= ::absent value)]
 
         (when-not skip-update?
+          (increment-upsert-statistic! this)
           (locking id
             (w/miss the-cache k value)
             (reset-dependent-caches! id))
@@ -112,6 +150,7 @@
 
   (evict! [this k]
     (ensure-initialized! this)
+    (increment-evict-statistic! this)
     (locking id
       (w/evict the-cache k)
       (reset-dependent-caches! id)))
@@ -122,6 +161,7 @@
           skip-update? (= ::absent value)]
 
       (when-not skip-update?
+        (increment-upsert-statistic! this)
         (locking id
           (w/miss the-cache k value)
           (reset-dependent-caches! id))
@@ -129,10 +169,14 @@
 
 (defn- make-cache! [cache-factory-fn {:keys [base depends-on id miss-fn reload-fn]} & [cache-opts]]
   (let [initialized? false
+        statistics (if (:dev rems.config/env)
+                     (select-keys initial-statistics [:reload :reset :upsert :evict]) ; get statistics can become big quickly
+                     initial-statistics)
         the-cache (if cache-opts
                     (cache-factory-fn (or base {}) cache-opts)
                     (cache-factory-fn (or base {})))
         cache (->RefreshableCache id
+                                  (volatile! statistics)
                                   (volatile! initialized?)
                                   (atom the-cache)
                                   miss-fn

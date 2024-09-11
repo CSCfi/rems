@@ -25,6 +25,7 @@
             [rems.common.util :refer [getx]]
             [rems.db.applications]
             [rems.db.test-data-helpers :as test-helpers]
+            [rems.db.testing :refer [save-cache-statistics!]]
             [rems.db.user-settings]
             [rems.main]
             [rems.testing-util :refer [with-user with-fake-login-users]]
@@ -38,7 +39,10 @@
   :each
   btu/reset-context-fixture
   btu/smoke-test-fixture
-  btu/init-driver-fixture)
+  btu/init-driver-fixture
+  (fn [f] ; XXX: currently no cache reset per each test, so just export statistics for kaocha plugin
+    (f)
+    (save-cache-statistics!)))
 
 (use-fixtures
   :once

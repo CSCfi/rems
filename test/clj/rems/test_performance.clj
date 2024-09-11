@@ -197,20 +197,17 @@
 
 (defn- get-cache-sizes []
   (doall
-   (concat (for [c (concat (rems.service.caches/get-caches)
-                           (rems.service.caches/get-all-dependent-caches))
+   (concat (for [c (rems.service.caches/get-all-caches)
                  :let [size (mm/measure c {:bytes true})]]
-             {:name (str (:id c "unknown cache?"))
+             {:name (:id c "unknown cache?")
               :bytes size
               :size (format-memory-size size)})
 
            (for [s ['rems.db.applications/all-applications-cache
                     'rems.db.events/event-cache
-                    'rems.db.catalogue/cached
                     'rems.ext.duo/code-by-id
                     'rems.ext.mondo/code-by-id
                     'rems.ext.mondo/codes-dag
-                    'rems.service.dependencies/dependencies-cache
                     'rems.text/cached-tr]
                  :let [size (mm/measure (var-get (requiring-resolve s)) {:bytes true})]]
              {:name s
@@ -309,10 +306,10 @@
     (println "cache sizes")
     (println "---")
     (doseq [row (rems.markdown/markdown-table
-                 {:header ["cache" (format "size (total: %s)" total-size)]
+                 {:header ["cache" (format "size (total: %s)" total-size) "statistics"]
                   :rows (->> (or cache-stats (get-cache-sizes))
                              (sort-by :bytes >)
-                             (mapv (juxt :name :size)))})]
+                             (mapv (juxt :name :size :statistics)))})]
       (println row)))
 
   (prof/clear-results)

@@ -14,7 +14,17 @@
             [rems.locales]
             [rems.service.caches]
             [rems.service.dependencies]
-            [rems.service.test-data :as test-data]))
+            [rems.service.test-data :as test-data]
+            [rems.testing-util :refer [get-current-test]]))
+
+(def ^:private test-cache-statistics (atom nil))
+(defn get-cache-statistics [] @test-cache-statistics)
+
+(defn save-cache-statistics! []
+  (when-let [current-test (get-current-test)]
+    (-> test-cache-statistics
+        (swap! assoc
+               (str current-test) (rems.service.caches/get-all-cache-statistics!)))))
 
 (defn- reset-caches! []
   (rems.service.caches/reset-all-caches!)
@@ -26,11 +36,12 @@
   (try
     (reset-caches!)
     (f)
+    (save-cache-statistics!)
     (finally
       (migrations/migrate ["reset"] {:database-url (:test-database-url env)}))))
 
 (defn test-db-fixture [f]
-  (mount/stop) ;; during interactive development, app might be running when tests start. we need to tear it down
+  (mount/stop) ; during interactive development, app might be running when tests start. we need to tear it down
   (mount/start-with-args {:test true}
                          #'rems.config/env
                          #'rems.locales/translations
@@ -58,4 +69,5 @@
   (reset-caches!)
   (conman/with-transaction [db/*db* {:isolation :serializable}]
     (jdbc/db-set-rollback-only! db/*db*)
-    (f)))
+    (f))
+  (save-cache-statistics!))
