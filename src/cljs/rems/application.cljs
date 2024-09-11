@@ -483,7 +483,7 @@
     [:a.btn.btn-secondary
      {:href (str "/api/applications/" (:application/id application) "/attachments?all=false")
       :target :_blank}
-     [file-download] " " (text :t.form/attachments-as-zip)]))
+     [file-download] "\u00A0" (text :t.form/attachments-as-zip)]))
 
 (defn- link-license [license]
   (let [title (localized (:license/title license))
@@ -507,7 +507,7 @@
                   "/license-attachment/" (:license/id license)
                   "/" (name @rems.config/current-language))]
     [:a.license-title {:href link :target :_blank}
-     title " " [file-download]]))
+     [file-download] "\u00A0" title]))
 
 (defn license-field [application license show-accepted-licenses?]
   [:div.license.flex-row.d-flex
