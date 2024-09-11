@@ -3,7 +3,7 @@
             [rems.db.applications]
             [rems.application.commands :as commands]
             [rems.application.search :as search]
-            [rems.db.csv]
+            [rems.csv]
             [rems.db.attachments]
             [rems.db.events]
             [rems.db.user-settings]))
@@ -36,7 +36,7 @@
         get-forms #(set (map :form/id (:application/forms %)))
         filtered-applications (->> (rems.db.applications/get-all-applications-full user-id)
                                    (filterv #(contains? (get-forms %) form-id)))]
-    (rems.db.csv/applications-to-csv filtered-applications form-id language)))
+    (rems.csv/applications-to-csv filtered-applications form-id language)))
 
 (def todo-roles
   #{:handler :reviewer :decider :past-reviewer :past-decider})

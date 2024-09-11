@@ -1,7 +1,7 @@
 (ns rems.service.entitlements
   (:require [clj-time.core :as time]
+            [rems.csv]
             [rems.db.core :as db]
-            [rems.db.csv]
             [rems.db.users]))
 
 (defn- format-entitlement [{:keys [resid catappid userid start end mail]}]
@@ -41,7 +41,7 @@
                                            :active-at (when-not expired
                                                         (time/now))})
         [column-names columns] (get-entitlement-csv-format)]
-    (rems.db.csv/print-to-csv {:column-names column-names ; XXX: consider localizing columns
-                               :rows (mapv (apply juxt columns) entitlements)
-                               :separator separator})))
+    (rems.csv/print-to-csv {:column-names column-names ; XXX: consider localizing columns
+                            :rows (mapv (apply juxt columns) entitlements)
+                            :separator separator})))
 
