@@ -1,6 +1,9 @@
 (ns rems.testing-util
   (:require [clojure.java.io :as io]
             [clojure.set :as set]
+            [clojure.test]
+            [kaocha.hierarchy]
+            [kaocha.testable]
             [rems.context :as context]
             [rems.db.applications]
             [rems.db.roles]
@@ -88,3 +91,17 @@
        ~@body)
      (finally ; clean up stale cache
        (rems.text/reset-cached-tr!))))
+
+(defn- get-kaocha-test-id []
+  (when-let [testable kaocha.testable/*current-testable*]
+    (when (kaocha.hierarchy/leaf? testable)
+      (:kaocha.testable/id testable))))
+
+(defn get-current-test []
+  (or (some-> (get-kaocha-test-id) symbol)
+      (some-> clojure.test/*testing-vars* first symbol)))
+
+(defn get-current-test-name []
+  (if-let [current-test (get-current-test)]
+    (name current-test)
+    "unknown"))

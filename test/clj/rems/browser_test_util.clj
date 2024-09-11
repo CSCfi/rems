@@ -22,6 +22,7 @@
             [rems.service.test-data :as test-data]
             [rems.json :as json]
             [rems.main]
+            [rems.testing-util :refer [get-current-test-name]]
             [rems.util :refer [ensure-empty-directory!]]
             [slingshot.slingshot :refer [try+]])
   (:import [java.net SocketException]))
@@ -289,11 +290,6 @@
 
 (defn- get-sequence-number []
   (:sequence-number (swap! test-context update :sequence-number (fnil inc 0))))
-
-(defn- get-current-test-name []
-  (if-let [test-var (first clojure.test/*testing-vars*)]
-    (name (symbol test-var))
-    "unknown"))
 
 ;;; etaoin exported
 
