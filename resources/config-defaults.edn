@@ -392,7 +392,7 @@
  ;; see also docs/ga4gh-visas.md
  :enable-permissions-api false
 
- ;; Keys for signing GA4GH Visas produced by permissions api or sent to EGA.
+ ;; Keys for signing GA4GH Visas produced by permissions API.
  ;; Format: path to file containing key in JWK (Json Web Key) format
  :ga4gh-visa-private-key nil
  :ga4gh-visa-public-key nil
@@ -407,8 +407,8 @@
  ;; Options used only for development
  :test-database-url nil
  :accessibility-report false ; should the axe accessibility tooling be included?
- :enable-doi false ; should the DOI features be shown in the UI
- :enable-duo false ; should the DUO features be shown in the UI
+ :enable-doi false ; should the DOI features be shown in the UI. See https://www.doi.org/
+ :enable-duo false ; should the DUO features be shown in the UI. See `docs/architecture/019-duo.md` and https://www.ga4gh.org/product/data-use-ontology-duo/
 
  :enable-catalogue-table true ; show catalogue page table of items
  :enable-catalogue-tree false ; show catalogue page tree of items
