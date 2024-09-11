@@ -24,9 +24,7 @@
             [rems.db.roles]
             [rems.db.users]
             [rems.db.workflow]
-            [rems.permissions :as permissions]
-            [rems.scheduler :as scheduler])
-  (:import [org.joda.time Duration]))
+            [rems.permissions :as permissions]))
 
 ;;; Creating applications
 
@@ -381,14 +379,6 @@
   (events-cache/empty! all-applications-cache)
   (refresh-all-applications-cache!)
   (log/info "Finished rems.db.applications/reload-cache!"))
-
-;; empty the cache occasionally in case some of the injected entities are changed
-(mount/defstate all-applications-cache-reloader
-  :start (scheduler/start! "all-applications-cache-reloader"
-                           reload-cache!
-                           (Duration/standardHours 1)
-                           (select-keys env [:buzy-hours]))
-  :stop (scheduler/stop! all-applications-cache-reloader))
 
 (defn reload-applications! [{:keys [by-userids by-workflow-ids]}]
   ;; NB: try make sure the cache is up to date so we have any new applications present
