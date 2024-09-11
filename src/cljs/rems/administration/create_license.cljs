@@ -187,7 +187,7 @@
                [:a.attachment-link.btn.btn-secondary.mr-2
                 {:href (str "/api/licenses/attachments/" attachment-id)
                  :target :_blank}
-                filename " " [file-download]]
+                [file-download] "\u00A0" filename]
                [:button.btn.btn-secondary.mr-2 {:type :button
                                                 :on-click (remove-attachment-event language attachment-id)}
                 (text :t.form/attachment-remove)]])
