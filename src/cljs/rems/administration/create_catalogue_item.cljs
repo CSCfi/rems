@@ -199,6 +199,7 @@
 (defn- localize-licenses [resource]
   (when-some [licenses (->> (:licenses resource)
                             (map #(get-localized-title %))
+                            sort
                             seq)]
     (text-format :t.label/default
                  (text :t.administration/licenses)

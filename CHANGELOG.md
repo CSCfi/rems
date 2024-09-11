@@ -17,6 +17,7 @@ Changes since v2.37
   avoid having many hopeless retries, if there is a typo in an email address.
 - Form editor performance has been significantly improved. To give rough numbers, the editor now works smoothly with 200 form fields in test data. (#3105)
 - The wording about experimental is removed from GA4GH API. It is already used in production. (#3299)
+- Licenses are ordered consistently (alphabetically) wherever they appear. (#3302)
 
 ### Fixes
 - Empty the license attachment field if the upload fails. (#3292)
