@@ -136,6 +136,14 @@
        :archived false
        :expired false}})
 
+(def ^:private get-resource
+  {11 {:id 11
+       :resid "urn:11"}
+   21 {:id 21
+       :resid "urn:21"}
+   31 {:id 31
+       :resid "urn:31"}})
+
 (def ^:private get-config
   (constantly {:application-deadline-days 1}))
 
@@ -243,6 +251,7 @@
                  :get-catalogue-item get-catalogue-item
                  :get-config get-config
                  :get-license get-license
+                 :get-resource get-resource
                  :get-user get-user
                  :get-users-with-role get-users-with-role
                  :get-workflow get-workflow
@@ -1373,7 +1382,7 @@
                                 :application/id 1
                                 :application/resources [{:catalogue-item/id 10 :resource/ext-id "urn:11"}
                                                         {:catalogue-item/id 20 :resource/ext-id "urn:21"}]}
-                               get-user get-catalogue-item))))
+                               get-user get-catalogue-item get-resource))))
   (testing "decision-requested"
     (is (= {:event/type :application.event/decision-requested
             :event/time (DateTime. 1)
@@ -1388,7 +1397,7 @@
                                 :event/actor "handler"
                                 :application/id 1
                                 :application/deciders ["decider" "reviewer"]}
-                               get-user get-catalogue-item))))
+                               get-user get-catalogue-item get-resource))))
   (testing "review-requested"
     (is (= {:event/type :application.event/review-requested
             :event/time (DateTime. 1)
@@ -1403,7 +1412,7 @@
                                 :event/actor "handler"
                                 :application/id 1
                                 :application/reviewers ["decider" "reviewer"]}
-                               get-user get-catalogue-item))))
+                               get-user get-catalogue-item get-resource))))
   (testing "member-added"
     (is (= {:event/type :application.event/member-added
             :event/time (DateTime. 1)
@@ -1417,7 +1426,7 @@
                                 :event/actor "handler"
                                 :application/id 1
                                 :application/member {:userid "member"}}
-                               get-user get-catalogue-item))))
+                               get-user get-catalogue-item get-resource))))
 
   (testing "member-removed"
     (is (= {:event/type :application.event/member-removed
@@ -1432,7 +1441,7 @@
                                 :event/actor "handler"
                                 :application/id 1
                                 :application/member {:userid "member"}}
-                               get-user get-catalogue-item)))))
+                               get-user get-catalogue-item get-resource)))))
 
 (deftest test-enrich-answers
   (testing "draft"

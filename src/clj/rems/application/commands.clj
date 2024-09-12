@@ -334,18 +334,17 @@
 (defn- build-forms-list [workflow catalogue-item-ids {:keys [get-catalogue-item]}]
   (->> catalogue-item-ids
        (mapv get-catalogue-item)
-       (mapv :formid)
-       (remove nil?)
-       (mapv (fn [form-id] {:form/id form-id}))
+       (keep #(assoc-some nil :form/id (:formid %)))
        (concat (get-in workflow [:workflow :forms])) ; NB: workflow forms end up first
        (distinct-by :form/id)))
 
-(defn- build-resources-list [catalogue-item-ids {:keys [get-catalogue-item]}]
+(defn- build-resources-list [catalogue-item-ids {:keys [get-catalogue-item get-resource]}]
   (->> catalogue-item-ids
-       (mapv get-catalogue-item)
-       (mapv (fn [catalogue-item]
-               {:catalogue-item/id (:id catalogue-item)
-                :resource/ext-id (:resid catalogue-item)}))))
+       (mapv (fn [id]
+               (let [catalogue-item (get-catalogue-item id)
+                     resource (get-resource (:resource-id catalogue-item))]
+                 {:catalogue-item/id (:id catalogue-item)
+                  :resource/ext-id (:resid resource)})))))
 
 (defn- build-licenses-list [catalogue-item-ids {:keys [get-catalogue-item-licenses]}]
   (->> catalogue-item-ids

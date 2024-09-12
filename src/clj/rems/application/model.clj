@@ -480,17 +480,12 @@
                          :field/value)]
     (assoc application :application/description (str description))))
 
-(def ^:private coerce-DuoCodesDb
-  (coerce/coercer! [schema-base/DuoCode] coerce/string-coercion-matcher))
-
-(defn- enrich-resources [resources get-catalogue-item]
+(defn- enrich-resources [resources get-catalogue-item get-resource]
   (->> resources
        (map (fn [resource]
               (let [item (get-catalogue-item (:catalogue-item/id resource))
-                    duo-codes (-> (:resourcedata item)
-                                  json/parse-string
-                                  (get-in [:resource/duo :duo/codes])
-                                  coerce-DuoCodesDb)]
+                    resource-id (:resource-id item) ; this is a bit backwards approach
+                    duo-codes (-> (get-resource resource-id) :resource/duo :duo/codes)]
                 (-> {:catalogue-item/id (:catalogue-item/id resource)
                      :resource/ext-id (:resource/ext-id resource)
                      :resource/id (:resource-id item)
@@ -633,14 +628,14 @@
     :else
     :visibility/public))
 
-(defn enrich-event [event get-user get-catalogue-item]
+(defn enrich-event [event get-user get-catalogue-item get-resource]
   (let [event-type (:event/type event)]
     (merge event
            {:event/actor-attributes (get-user (:event/actor event))
             :event/visibility (get-event-visibility event)}
            (case event-type
              :application.event/resources-changed
-             {:application/resources (enrich-resources (:application/resources event) get-catalogue-item)}
+             {:application/resources (enrich-resources (:application/resources event) get-catalogue-item get-resource)}
 
              :application.event/decision-requested
              {:application/deciders (mapv get-user (:application/deciders event))}
@@ -880,6 +875,7 @@
                        get-form-template
                        get-catalogue-item
                        get-license
+                       get-resource
                        get-user
                        get-users-with-role
                        get-workflow
@@ -891,12 +887,12 @@
       enrich-answers ; uses enriched form
       enrich-field-visible ; uses enriched answers
       set-application-description ; uses enriched answers
-      (update :application/resources enrich-resources get-catalogue-item)
+      (update :application/resources enrich-resources get-catalogue-item get-resource)
       (hide-duos-if-not-enabled get-config)
       enrich-duos ; uses enriched resources
       (enrich-workflow-licenses get-workflow)
       (update :application/licenses enrich-licenses get-license)
-      (update :application/events (partial mapv #(enrich-event % get-user get-catalogue-item)))
+      (update :application/events (partial mapv #(enrich-event % get-user get-catalogue-item get-resource)))
       (assoc :application/applicant (get-user (get-in application [:application/applicant :userid])))
       (update :application/attachments #(merge-lists-by :attachment/id % (get-attachments-for-application (getx application :application/id))))
       (enrich-user-attributes get-user)

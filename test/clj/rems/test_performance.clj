@@ -117,7 +117,7 @@
                      :event/type :application.event/decided
                      :event/actor (:decider +fake-users+)
                      :application/decision :approved}
-                    (rems.application.model/enrich-event (into +fake-user-data+ fake-handlers) nil))]
+                    (rems.application.model/enrich-event (into +fake-user-data+ fake-handlers) nil nil))]
     {:application application
      :event decided}))
 

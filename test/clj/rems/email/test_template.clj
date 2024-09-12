@@ -37,6 +37,9 @@
                        :fi {:langcode :fi
                             :title "fi title 21"}}}})
 
+(def ^:private get-resource
+  (constantly {}))
+
 (def ^:private get-config
   (constantly {}))
 
@@ -112,6 +115,7 @@
                                                         :get-config get-config
                                                         :get-form-template get-form-template
                                                         :get-license get-license
+                                                        :get-resource get-resource
                                                         :get-user get-user
                                                         :get-users-with-role get-nothing
                                                         :get-attachments-for-application get-nothing}))]
@@ -120,7 +124,7 @@
                                                              (assert (string? userid))
                                                              {:language lang})]
        (sort-emails (template/event-to-emails
-                     (model/enrich-event event get-user #{})
+                     (model/enrich-event event get-user get-catalogue-item get-resource)
                      application)))))
   ([base-events event]
    (emails :en base-events event)))
