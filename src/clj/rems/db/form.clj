@@ -156,3 +156,8 @@
   (assert id)
   (db/set-form-template-archived! {:id id :archived archived?})
   (cache/miss! form-template-cache id))
+
+(defn join-form-template [x]
+  (if-let [id (:form/id x)]
+    (merge x (get-form-template id))
+    x))

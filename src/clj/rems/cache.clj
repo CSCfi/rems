@@ -3,14 +3,7 @@
   (:require [clojure.core.cache :as c]
             [clojure.core.cache.wrapped :as w]
             [clojure.tools.logging.readable :as logr]
-            [com.stuartsierra.dependency :as dep]))
-
-(def ^:private caches (atom nil))
-(def ^:private caches-dag (atom (dep/graph)))
-
-(defn get-dependent-caches [id]
-  (->> (dep/immediate-dependents @caches-dag id)
-       (map #(get @caches %))))
+            [rems.common.dependency :as dep]))
 
 (defprotocol RefreshableCacheProtocol
   "Protocol for cache wrapper that can refresh the underlying cache."
@@ -18,7 +11,7 @@
   (ensure-initialized! [this]
     "Reloads the cache if it is not ready.")
   (reset! [this]
-    "Resets cache to uninitialized state. Next call to ensure-initialized will reload the cache.")
+    "Resets the cache to uninitialized state. Next call to ensure-initialized will reload the cache.")
   (has? [this k]
     "Checks if cache contains `k`.")
   (entries! [this]
@@ -32,8 +25,21 @@
   (miss! [this k]
     "Updates the cache for `k` to `(miss-fn k)` and returns the updated value."))
 
-(defn reset-dependent-caches! [id]
-  (when-let [dependents (seq (get-dependent-caches id))]
+(def ^:private caches (atom nil))
+(def ^:private caches-dag (atom (dep/make-graph)))
+
+(defn get-all-caches [] (some-> @caches vals))
+
+(defn get-cache-dependents [id]
+  (->> (dep/get-dependents @caches-dag id)
+       (map #(get @caches %))))
+
+(defn get-cache-dependencies [id]
+  (->> (dep/get-dependencies @caches-dag id)
+       (map #(get @caches %))))
+
+(defn- reset-dependent-caches! [id]
+  (when-let [dependents (seq (get-cache-dependents id))]
     (logr/debug :reset-dependents id {:dependents (mapv :id dependents)})
     (run! rems.cache/reset! dependents)))
 
@@ -51,7 +57,11 @@
       (logr/debug :reload id)
       (locking id
         (when-not @initialized?
-          (w/seed the-cache (reload-fn))
+          (if-let [deps (->> (get-cache-dependencies id)
+                             (into {} (map (juxt :id entries!)))
+                             not-empty)]
+            (w/seed the-cache (reload-fn deps))
+            (w/seed the-cache (reload-fn)))
           (vreset! initialized? true)
           (reset-dependent-caches! id)
           (logr/info :reload-finish id {:count (count @the-cache)}))))
@@ -84,6 +94,7 @@
     (ensure-initialized! this)
     (w/lookup the-cache k not-found))
 
+  ;; supports use case where cache does not have pre-determined reload function
   (lookup-or-miss! [this k] (lookup-or-miss! this k miss-fn))
   (lookup-or-miss! [this k value-fn]
     (ensure-initialized! this)
@@ -127,8 +138,7 @@
                                   miss-fn
                                   (or reload-fn (constantly {})))]
     (swap! caches assoc id cache)
-    (when (seq depends-on)
-      (run! #(swap! caches-dag dep/depend id %) depends-on))
+    (swap! caches-dag dep/depend id depends-on) ; noop when empty depends-on
     cache))
 
 (defn basic

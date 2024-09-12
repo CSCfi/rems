@@ -10,8 +10,6 @@
   (let [id (rems.db.licenses/create-license! {:license-type licensetype
                                               :organization-id (:organization/id organization)
                                               :localizations localizations})]
-    ;; reset-cache! not strictly necessary since licenses don't depend on anything, but here for consistency
-    (dependencies/reset-cache!)
     {:success (some? id)
      :id id}))
 

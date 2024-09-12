@@ -39,8 +39,6 @@
     (check-allowed-organization! organization)
     (or (validation-error form)
         (let [form-id (rems.db.form/save-form-template! (migrate-title form (:languages env)))]
-          ;; reset-cache! not strictly necessary since forms don't depend on anything, but here for consistency
-          (dependencies/reset-cache!)
           {:success (not (nil? form-id))
            :id form-id}))))
 

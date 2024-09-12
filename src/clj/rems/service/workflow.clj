@@ -51,7 +51,6 @@
       (invalid-licenses-error licenses)
       (invalid-disable-commands-error disable-commands)
       (let [id (rems.db.workflow/create-workflow! (update cmd :licenses #(map :license/id %)))]
-        (dependencies/reset-cache!)
         {:success (not (nil? id))
          :id id})))
 
@@ -90,7 +89,7 @@
 ;; TODO more systematic joining for these needed. Now we just add the title for the UI
 (defn- enrich-workflow-form [item]
   (-> item
-      dependencies/enrich-dependency
+      rems.db.form/join-form-template
       (select-keys [:form/id :form/internal-name :form/external-title])))
 
 (defn- enrich-workflow-license [item]

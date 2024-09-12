@@ -37,9 +37,8 @@
 (def ^:private by-application-id
   (cache/basic {:id ::by-application-id-cache
                 :depends-on [::attachment-cache]
-                :reload-fn (fn []
-                             (->> (vals (cache/entries! attachment-cache))
-                                  (group-by :application/id)))}))
+                :reload-fn (fn [deps]
+                             (group-by :application/id (vals (getx deps ::attachment-cache))))}))
 
 (defn get-attachment [attachment-id]
   (cache/lookup-or-miss! attachment-cache attachment-id))

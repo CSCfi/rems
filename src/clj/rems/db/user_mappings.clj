@@ -1,7 +1,7 @@
 (ns rems.db.user-mappings
   (:require [clojure.string :as str]
             [rems.cache :as cache]
-            [rems.common.util :refer [apply-filters]]
+            [rems.common.util :refer [apply-filters getx]]
             [rems.db.core :as db]
             [schema.core :as s]))
 
@@ -33,12 +33,14 @@
 (def ^:private by-extidattribute
   (cache/basic {:id ::by-extidattribute-cache
                 :depends-on [::user-mappings-cache]
-                :reload-fn #(group-by :ext-id-attribute (mapcat val (cache/entries! user-mappings-cache)))}))
+                :reload-fn (fn [deps]
+                             (group-by :ext-id-attribute (mapcat val (getx deps ::user-mappings-cache))))}))
 
 (def ^:private by-extidvalue
   (cache/basic {:id ::by-extidvalue-cache
                 :depends-on [::user-mappings-cache]
-                :reload-fn #(group-by :ext-id-value (mapcat val (cache/entries! user-mappings-cache)))}))
+                :reload-fn (fn [deps]
+                             (group-by :ext-id-value (mapcat val (getx deps ::user-mappings-cache))))}))
 
 (defn get-user-mappings [{:keys [ext-id-attribute ext-id-value userid] :as filters}]
   (let [from-caches [(some->> ext-id-attribute (cache/lookup! by-extidattribute))

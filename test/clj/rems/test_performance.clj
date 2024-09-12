@@ -197,7 +197,8 @@
 
 (defn- get-cache-sizes []
   (doall
-   (concat (for [c (rems.service.caches/get-all-caches)
+   (concat (for [c (concat (rems.service.caches/get-caches)
+                           (rems.service.caches/get-all-dependent-caches))
                  :let [size (mm/measure c {:bytes true})]]
              {:name (str (:id c "unknown cache?"))
               :bytes size

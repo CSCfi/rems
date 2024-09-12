@@ -172,7 +172,7 @@
       (is (= {:success false
               :errors [{:type :t.administration.errors/dependencies-archived
                         :resources [{:resource/id res-id :resid "ext"}]
-                        :transitive-dependencies {:licenses [{:license/id lic-id :localizations {}}]}}]}
+                        :licenses [{:license/id lic-id :localizations {}}]}]}
              (archive-catalogue-item! false)))
 
       (archive-license! false)

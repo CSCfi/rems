@@ -23,7 +23,6 @@
 (defn create-category! [command]
   (or (category-entities-not-found-error (:category/children command))
       (let [id (rems.db.category/create-category! command)]
-        (dependencies/reset-cache!)
         {:success true
          :category/id id})))
 
@@ -49,12 +48,10 @@
       (let [id (:category/id command)
             data (dissoc command :category/id)]
         (rems.db.category/update-category! id data)
-        (dependencies/reset-cache!)
         {:success true})))
 
 (defn delete-category! [command]
   (or (dependencies/in-use-error (select-keys command [:category/id]))
       (do
         (rems.db.category/delete-category! (:category/id command))
-        (dependencies/reset-cache!)
         {:success true})))

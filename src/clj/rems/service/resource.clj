@@ -45,8 +45,6 @@
   (util/check-allowed-organization! (:organization resource))
   (check-duo-codes! resource)
   (let [id (rems.db.resource/create-resource! resource)]
-    ;; reset-cache! not strictly necessary since resources don't depend on anything, but here for consistency
-    (dependencies/reset-cache!)
     {:success true
      :id id}))
 

@@ -1,6 +1,7 @@
 (ns rems.db.roles
   (:require [medley.core :refer [map-vals]]
             [rems.cache :as cache]
+            [rems.common.util :refer [getx]]
             [rems.db.core :as db]
             [rems.util :refer [errorf]]))
 
@@ -34,8 +35,8 @@
 (def ^:private users-by-role
   (cache/basic {:id ::users-by-role-cache
                 :depends-on [::role-cache]
-                :reload-fn (fn []
-                             (let [role-user-pairs (for [[userid roles] (cache/entries! role-cache)
+                :reload-fn (fn [deps]
+                             (let [role-user-pairs (for [[userid roles] (getx deps ::role-cache)
                                                          role roles]
                                                      {role #{userid}})]
                                (apply merge-with into role-user-pairs)))}))

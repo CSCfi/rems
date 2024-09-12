@@ -104,51 +104,70 @@
        (not (:expired item))
        (not (:archived item))))
 
+(defn- plus-others [item-count]
+  (when (> item-count 5)
+    [:li (str "... plus " (- item-count 5) " more")]))
+
+(defn- take-preview-sample [items]
+  (take 5 items))
+
 (defn- format-update-error [{:keys [type catalogue-items forms licenses resources workflows categories]}]
   [:<>
    [:p (text type)]
-   (into [:ul]
-         (for [ci catalogue-items]
-           [:li
-            (text :t.administration/catalogue-item) ": "
-            [:a {:target :_blank
-                 :href (str "/administration/catalogue-items/" (:id ci))}
-             (get-localized-title-for-anything ci)]]))
-   (into [:ul]
-         (for [f forms]
-           [:li
-            (text :t.administration/form) ": "
-            [:a {:target :_blank
-                 :href (str "/administration/forms/" (:id f))}
-             (get-localized-title-for-anything f)]]))
-   (into [:ul]
-         (for [lic licenses]
-           [:li
-            (text :t.administration/license) ": "
-            [:a {:target :_blank
-                 :href (str "/administration/licenses/" (:id lic))}
-             (get-localized-title-for-anything lic)]]))
-   (into [:ul]
-         (for [r resources]
-           [:li
-            (text :t.administration/resource) ": "
-            [:a {:target :_blank
-                 :href (str "/administration/resources/" (:id r))}
-             (get-localized-title-for-anything r)]]))
-   (into [:ul]
-         (for [w workflows]
-           [:li
-            (text :t.administration/workflow) ": "
-            [:a {:target :_blank
-                 :href (str "/administration/workflows/" (:id w))}
-             (get-localized-title-for-anything w)]]))
-   (into [:ul]
-         (for [cat categories]
-           [:li
-            (text :t.administration/category) ": "
-            [:a {:target :_blank
-                 :href (str "/administration/categories/" (:category/id cat))}
-             (localized (:category/title cat))]]))])
+   (when (seq catalogue-items)
+     [:ul
+      (into [:<>] (for [ci (take-preview-sample catalogue-items)]
+                    [:li
+                     (text :t.administration/catalogue-item) ": "
+                     [:a {:target :_blank
+                          :href (str "/administration/catalogue-items/" (:id ci))}
+                      (get-localized-title-for-anything ci)]]))
+      [plus-others (count catalogue-items)]])
+   (when (seq forms)
+     [:ul
+      (into [:<>] (for [f (take-preview-sample forms)]
+                    [:li
+                     (text :t.administration/form) ": "
+                     [:a {:target :_blank
+                          :href (str "/administration/forms/" (:id f))}
+                      (get-localized-title-for-anything f)]]))
+      [plus-others (count forms)]])
+   (when (seq licenses)
+     [:ul
+      (into [:<>] (for [lic (take-preview-sample licenses)]
+                    [:li
+                     (text :t.administration/license) ": "
+                     [:a {:target :_blank
+                          :href (str "/administration/licenses/" (:id lic))}
+                      (get-localized-title-for-anything lic)]]))
+      [plus-others (count licenses)]])
+   (when (seq resources)
+     [:ul
+      (into [:<>] (for [r (take-preview-sample resources)]
+                    [:li
+                     (text :t.administration/resource) ": "
+                     [:a {:target :_blank
+                          :href (str "/administration/resources/" (:id r))}
+                      (get-localized-title-for-anything r)]]))
+      [plus-others (count resources)]])
+   (when (seq workflows)
+     [:ul
+      (into [:<>] (for [w (take-preview-sample workflows)]
+                    [:li
+                     (text :t.administration/workflow) ": "
+                     [:a {:target :_blank
+                          :href (str "/administration/workflows/" (:id w))}
+                      (get-localized-title-for-anything w)]]))
+      [plus-others (count workflows)]])
+   (when (seq categories)
+     [:ul
+      (into [:<>] (for [cat (take-preview-sample categories)]
+                    [:li
+                     (text :t.administration/category) ": "
+                     [:a {:target :_blank
+                          :href (str "/administration/categories/" (:category/id cat))}
+                      (localized (:category/title cat))]]))
+      [plus-others (count categories)]])])
 
 (defn format-update-failure [{:keys [errors]}]
   (into [:div]
