@@ -2,7 +2,7 @@
   (:require [clj-time.core :as time]
             [clojure.test :refer [deftest is testing use-fixtures]]
             [rems.db.applications]
-            [rems.db.core :as db]
+            [rems.db.attachments]
             [rems.service.test-data :as test-data]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.db.testing :refer [test-db-fixture rollback-db-fixture]]
@@ -427,16 +427,14 @@
                               :decision :approved
                               :actor "david"}))
     (testing "approve"
-      (let [att1 (:id (db/save-attachment! {:application application-id
-                                            :user handler
-                                            :filename "file1.txt"
-                                            :type "text/plain"
-                                            :data (byte-array 0)}))
-            att2 (:id (db/save-attachment! {:application application-id
-                                            :user handler
-                                            :filename "file2.pdf"
-                                            :type "application/pdf"
-                                            :data (byte-array 0)}))]
+      (let [att1 (test-helpers/create-attachment! {:application-id application-id
+                                                   :actor handler
+                                                   :filename "file1.txt"
+                                                   :filetype "text/plain"})
+            att2 (test-helpers/create-attachment! {:application-id application-id
+                                                   :actor handler
+                                                   :filename "file2.pdf"
+                                                   :filetype "application/pdf"})]
         (test-helpers/command! {:time (time/date-time 2003)
                                 :application-id application-id
                                 :type :application.command/approve

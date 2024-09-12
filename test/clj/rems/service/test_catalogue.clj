@@ -9,7 +9,6 @@
             [rems.service.licenses]
             [rems.service.resource]
             [rems.service.workflow]
-            [rems.db.core :as db]
             [rems.testing-util :refer [with-user]])
   (:import org.joda.time.DateTime))
 
@@ -85,7 +84,7 @@
              (status-flags item-id))))
 
     (testing "enable unsets end time"
-      (db/set-catalogue-item-endt! {:id item-id :end (DateTime. 1)})
+      (rems.db.catalogue/set-attributes! item-id {:endt (DateTime. 1)})
       (is (:expired (get-catalogue-item item-id)))
       (enable-catalogue-item! true)
       (is (= {:enabled true

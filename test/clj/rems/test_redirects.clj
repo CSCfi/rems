@@ -4,7 +4,8 @@
             [rems.service.licenses]
             [rems.api.testing :refer :all]
             [rems.db.api-key]
-            [rems.db.core :as db]
+            [rems.config]
+            [rems.db.catalogue]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.handler :refer [handler]]
             [ring.mock.request :refer :all]))
@@ -16,9 +17,6 @@
     ;; need to set an explicit public-url since dev and test configs use different ports
     (with-redefs [rems.config/env (assoc rems.config/env :public-url "https://public.url/")]
       (f))))
-
-(defn disable-catalogue-item [catid]
-  (db/set-catalogue-item-enabled! {:id catid :enabled false}))
 
 (deftest test-redirect-to-new-application
   (testing "redirects to new application page for catalogue item matching the resource ID"
@@ -76,8 +74,7 @@
 
   (testing "redirects to active catalogue item, ignoring disabled items for the same resource ID"
     (let [resid (test-helpers/create-resource! {:resource-ext-id "urn:enabled-and-disabled-items"})
-          old-catid (test-helpers/create-catalogue-item! {:resource-id resid})
-          _ (disable-catalogue-item old-catid)
+          old-catid (test-helpers/create-catalogue-item! {:resource-id resid :enabled false})
           new-catid (test-helpers/create-catalogue-item! {:resource-id resid})
           response (-> (request :get "/apply-for?resource=urn:enabled-and-disabled-items")
                        handler)]

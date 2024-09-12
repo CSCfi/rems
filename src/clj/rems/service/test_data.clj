@@ -9,8 +9,8 @@
             [rems.api.schema :as schema]
             [rems.config]
             [rems.db.api-key]
-            [rems.db.core :as db]
             [rems.db.catalogue]
+            [rems.db.licenses]
             [rems.db.roles]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.db.test-data-users :refer :all]
@@ -63,7 +63,7 @@
                                                           :fi "Käytöstä poistettu lisenssi"}
                                           :license/link {:en "http://disabled"
                                                          :fi "http://disabled"}})]
-    (db/set-license-enabled! {:id id :enabled false})))
+    (rems.db.licenses/set-enabled! id false)))
 
 (def label-field
   {:field/type :label

@@ -2,30 +2,30 @@
   "Namespace for tests that use an actual database."
   (:require [clojure.test :refer :all]
             [rems.config]
-            [rems.context :as context]
             [rems.db.applications]
+            [rems.db.catalogue]
             [rems.db.core :as db]
             [rems.db.roles]
+            [rems.db.users]
             [rems.service.test-data :as test-data]
             [rems.db.test-data-helpers :as test-helpers]
-            [rems.db.testing :refer [test-db-fixture rollback-db-fixture]])
-  (:import (rems.auth ForbiddenException)))
+            [rems.db.testing :refer [test-db-fixture rollback-db-fixture]]))
 
 (use-fixtures :once test-db-fixture)
 (use-fixtures :each rollback-db-fixture)
 
 (deftest test-get-catalogue-items
   (testing "without catalogue items"
-    (is (empty? (db/get-catalogue-items))))
+    (is (empty? (rems.db.catalogue/get-catalogue-items))))
 
   (testing "with two items"
     (let [item1 (test-helpers/create-catalogue-item! {})
           item2 (test-helpers/create-catalogue-item! {})]
-      (is (= (set [item1 item2]) (set (map :id (db/get-catalogue-items))))
+      (is (= (set [item1 item2]) (set (map :id (rems.db.catalogue/get-catalogue-items))))
           "should find the two items")
-      (is (= item1 (:id (first (db/get-catalogue-items {:ids [item1]}))))
+      (is (= item1 (:id (rems.db.catalogue/get-catalogue-item item1)))
           "should find same catalogue item by id")
-      (is (= item2 (:id (first (db/get-catalogue-items {:ids [item2]}))))
+      (is (= item2 (:id (rems.db.catalogue/get-catalogue-item item2)))
           "should find same catalogue item by id"))))
 
 (deftest test-multi-applications
@@ -53,13 +53,13 @@
         "should create entitlements for both resources")))
 
 (deftest test-roles
-  (db/add-user! {:user "pekka", :userattrs nil})
-  (db/add-user! {:user "simo", :userattrs nil})
+  (rems.db.users/add-user! "pekka" {})
+  (rems.db.users/add-user! "simo" {})
   (rems.db.roles/add-role! "pekka" :owner)
-  (rems.db.roles/add-role! "pekka" :owner) ;; add should be idempotent
+  (rems.db.roles/add-role! "pekka" :owner) ; add should be idempotent
   (is (= #{:logged-in :owner} (rems.db.roles/get-roles "pekka")))
   (is (= #{:logged-in} (rems.db.roles/get-roles "simo")))
-  (is (= #{:logged-in} (rems.db.roles/get-roles "juho"))) ;; default role
+  (is (= #{:logged-in} (rems.db.roles/get-roles "juho"))) ; default role
   (is (thrown? RuntimeException (rems.db.roles/add-role! "pekka" :unknown-role))))
 
 (deftest test-create-demo-data!

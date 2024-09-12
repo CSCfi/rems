@@ -1,8 +1,9 @@
 (ns ^:integration rems.api.test-api
   (:require [clojure.test :refer :all]
             [rems.api.testing :refer :all]
+            [rems.common.util :refer [not-blank]]
             [rems.db.api-key]
-            [rems.db.core :as db]
+            [rems.db.licenses]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.handler :refer [handler]]
             [ring.mock.request :refer :all]))
@@ -112,8 +113,7 @@
                  handler
                  read-ok-body)]
     (is (:healthy body))
-    (is (string? (:latest-event body)))
-    (is (not (empty? (:latest-event body))))))
+    (is (not-blank (:latest-event body)))))
 
 (deftest test-keepalive-api
   (assert-response-is-ok (-> (request :get "/keepalive")
@@ -124,8 +124,8 @@
   (rems.db.api-key/add-api-key! "42" {})
   (test-helpers/create-user! {:userid "owner"} :owner)
   (testing "a broken license without an organization"
-    (let [license-id (:id (db/create-license! {:organization "does-not-exist"
-                                               :type "text"}))
+    (let [license-id (rems.db.licenses/create-license! {:organization-id "does-not-exist"
+                                                        :license-type "text"})
           response (-> (api-response :get (str "/api/licenses/" license-id)
                                      nil
                                      "42" "owner"))]
