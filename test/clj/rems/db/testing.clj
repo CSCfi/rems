@@ -19,7 +19,6 @@
 (defn- reset-caches! []
   (rems.service.caches/reset-all-caches!)
   (rems.db.applications/reset-cache!)
-  (rems.db.applications/empty-injections-cache!)
   (rems.db.category/reset-cache!)
   (rems.db.events/empty-event-cache!))
 

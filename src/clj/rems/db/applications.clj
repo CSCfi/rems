@@ -10,7 +10,6 @@
             [rems.application.events-cache :as events-cache]
             [rems.application.model :as model]
             [rems.auth.util :refer [throw-forbidden]]
-            [rems.cache :as cache]
             [rems.common.application-util :as application-util]
             [rems.common.util :refer [conj-set]]
             [rems.config :refer [env]]
@@ -69,21 +68,6 @@
   (:id (db/get-application-by-invitation-token {:token invitation-token})))
 
 ;;; Fetching applications (for API)
-
-(def ^:private blacklist-cache (cache/ttl {:id ::blacklist-cache}))
-
-(defn empty-injections-cache! []
-  (cache/reset! blacklist-cache))
-
-(defn empty-injection-cache!
-  "Sometimes another part of REMS invalidates the injections. While the caches
-  are being reimplemented, we can still offer specific support functions for
-  partial cache refreshes.
-
-  NB: only the necessary invalidations have been implemented"
-  [cache-key]
-  (cache/reset! (case cache-key
-                  :blacklisted? blacklist-cache)))
 
 (def fetcher-injections
   {:get-attachments-for-application rems.db.attachments/get-attachments-for-application
@@ -405,7 +389,6 @@
 
 (defn reload-cache! []
   (log/info "Start rems.db.applications/reload-cache!")
-  (empty-injections-cache!)
   ;; TODO: Here is a small chance that a user will experience a cache miss. Consider rebuilding the cache asynchronously and then `reset!` the cache.
   (events-cache/empty! all-applications-cache)
   (refresh-all-applications-cache!)
