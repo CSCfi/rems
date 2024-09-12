@@ -1,6 +1,5 @@
 (ns rems.db.testing
   (:require [clojure.java.jdbc :as jdbc]
-            [clojure.test :refer :all]
             [conman.core :as conman]
             [luminus-migrations.core :as migrations]
             [mount.core :as mount]

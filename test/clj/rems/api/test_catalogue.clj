@@ -1,16 +1,15 @@
 (ns ^:integration rems.api.test-catalogue
-  (:require [clojure.test :refer :all]
-            [rems.service.catalogue]
-            [rems.api.testing :refer :all]
+  (:require [clojure.test :refer [deftest is testing use-fixtures]]
+            [rems.api.testing :refer [api-call api-fixture api-response authenticate read-body read-ok-body]]
             [rems.config]
             [rems.db.category]
-            [rems.service.test-data :as test-data]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.handler :refer [handler]]
             [rems.service.catalogue]
+            [rems.service.test-data :as test-data]
             [rems.testing-util :refer [with-user]]
             [rems.text :refer [format-utc-datetime]]
-            [ring.mock.request :refer :all]))
+            [ring.mock.request :refer [request]]))
 
 (use-fixtures
   :each

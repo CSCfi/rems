@@ -488,7 +488,7 @@
                      :resource/id (:resource-id item)
                      :catalogue-item/title (localization-for :title item)
                      :catalogue-item/infourl (localization-for :infourl item)
-                 ;; TODO: remove unused keys
+                     ;; TODO: remove unused keys
                      :catalogue-item/start (:start item)
                      :catalogue-item/end (:end item)
                      :catalogue-item/enabled (:enabled item)
@@ -870,15 +870,15 @@
 
 (defn enrich-with-injections
   [application {:keys [blacklisted?
-                       get-form-template
+                       get-attachments-for-application
                        get-catalogue-item
+                       get-config
+                       get-form-template
                        get-license
                        get-resource
                        get-user
                        get-users-with-role
-                       get-workflow
-                       get-attachments-for-application
-                       get-config]
+                       get-workflow]
                 :as _injections}]
   (-> application
       (update :application/forms enrich-forms get-form-template)

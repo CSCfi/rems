@@ -23,7 +23,6 @@
             [rems.service.workflow]
             [rems.browser-test-util :as btu]
             [rems.common.util :refer [getx]]
-            [rems.context :as context]
             [rems.db.applications]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.db.user-settings]
@@ -1041,8 +1040,7 @@
                             :actor "alice"})
 
     (testing "disabling the 2nd item"
-      (binding [context/*user* {:userid "owner"}
-                context/*roles* #{:owner}]
+      (with-user "owner"
         (rems.service.catalogue/set-catalogue-item-enabled! {:id (btu/context-getx :catalogue-id2) :enabled false}))))
 
   (btu/with-postmortem
@@ -3336,8 +3334,7 @@
                       (slurp-rows :catalogue-tree)))
           "can't see root category either because it's empty")
 
-      (binding [context/*user* {:userid "owner"}
-                context/*roles* #{:owner}]
+      (with-user "owner"
         (rems.service.catalogue/set-catalogue-item-enabled! {:id (btu/context-getx :catalogue-id) :enabled true}))
 
       ;; must reload to see

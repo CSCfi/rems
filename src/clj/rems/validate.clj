@@ -7,13 +7,13 @@
             [rems.common.form :as common-form]
             [rems.config :refer [env]]
             [rems.api.schema]
-            [rems.service.form]
-            [rems.service.licenses]
-            [rems.service.resource]
             [rems.db.catalogue]
             [rems.db.events]
             [rems.db.organizations]
             [rems.ext.duo]
+            [rems.service.form]
+            [rems.service.licenses]
+            [rems.service.resource]
             [schema.core :as s]))
 
 ;; TODO: should be part of rems.db.form

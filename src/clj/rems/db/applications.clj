@@ -168,9 +168,9 @@
 
 (defn- group-apps-by-user [apps]
   (->> apps
-       (mapcat (fn [app]
-                 (for [user (keys (:application/user-roles app))]
-                   [user app])))
+       (eduction (mapcat (fn [app]
+                           (for [user (keys (:application/user-roles app))]
+                             [user app]))))
        (reduce (fn [apps-by-user [user app]]
                  (if user ; test data could have a user without permissions
                    (update apps-by-user user conj app)
@@ -192,7 +192,7 @@
 
 (defn- group-roles-by-user [apps]
   (->> apps
-       (mapcat (fn [app] (:application/user-roles app)))
+       (eduction (mapcat (fn [app] (:application/user-roles app))))
        (reduce (fn [roles-by-user [user roles]]
                  (update roles-by-user user set/union roles))
                {})))
@@ -208,10 +208,10 @@
 
 (defn- group-users-by-role [apps]
   (->> apps
-       (mapcat (fn [app]
-                 (for [[user roles] (:application/user-roles app)
-                       role roles]
-                   [user role])))
+       (eduction (mapcat (fn [app]
+                           (for [[user roles] (:application/user-roles app)
+                                 role roles]
+                             [user role]))))
        (reduce (fn [users-by-role [user role]]
                  (update users-by-role role conj-set user))
                {})))
@@ -231,13 +231,13 @@
               :let [old-user-roles (get old-roles-by-user userid {})
                     old-app-roles (->> old-updated-enriched-apps
                                        vals
-                                       (map :application/user-roles)
-                                       (mapcat #(get % userid))
+                                       (eduction (map :application/user-roles)
+                                                 (mapcat #(get % userid)))
                                        frequencies)
                     new-app-roles (->> new-updated-enriched-apps
                                        vals
-                                       (map :application/user-roles)
-                                       (mapcat #(get % userid))
+                                       (eduction (map :application/user-roles)
+                                                 (mapcat #(get % userid)))
                                        frequencies)]]
 
           [userid (as-> old-user-roles roles
@@ -372,14 +372,14 @@
         personalize-app (fn [app] ; NB: may return nil if should not see the app
                           (model/apply-user-permissions app userid))
         apps (->> app-ids
-                  (map cached-apps)
-                  (keep personalize-app))]
+                  (eduction (map cached-apps)
+                            (keep personalize-app)))]
     apps))
 
 (defn get-all-applications [userid]
   (->> userid
        get-all-applications-full
-       (map ->ApplicationOverview)))
+       (mapv ->ApplicationOverview)))
 
 (defn get-all-application-roles [userid]
   (-> (refresh-all-applications-cache!)
@@ -401,7 +401,7 @@
 
 (defn export-applications-for-form-as-csv [user-id form-id language]
   (let [applications (get-all-applications-full user-id)
-        filtered-applications (filter #(contains? (set (map :form/id (:application/forms %))) form-id) applications)]
+        filtered-applications (filterv #(contains? (set (map :form/id (:application/forms %))) form-id) applications)]
     (rems.db.csv/applications-to-csv filtered-applications form-id language)))
 
 (defn reload-cache! []
