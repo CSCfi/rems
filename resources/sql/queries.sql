@@ -688,13 +688,18 @@ WHERE prefix = :prefix
 INSERT INTO external_application_id (prefix, suffix)
 VALUES (:prefix, :suffix);
 
--- :name add-blacklist-event! :!
+-- :name add-blacklist-event! :insert
 INSERT INTO blacklist_event (eventdata)
-VALUES (:eventdata::jsonb);
+VALUES (:eventdata::jsonb)
+RETURNING id;
 
 -- :name update-blacklist-event! :!
 UPDATE blacklist_event
 SET eventdata = :eventdata::jsonb
+WHERE id = :id;
+
+-- :name get-blacklist-event :? :1
+SELECT id as "event/id", eventdata::text FROM blacklist_event
 WHERE id = :id;
 
 -- :name get-blacklist-events :? :*
@@ -706,8 +711,7 @@ WHERE 1=1
 /*~ (when (:userid params) */
   AND eventdata->>'userid' = :userid
 /*~ ) ~*/
-ORDER BY id ASC
-;
+ORDER BY id ASC;
 
 -- :name put-to-outbox! :insert
 INSERT INTO outbox (outboxData)

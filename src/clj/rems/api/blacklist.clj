@@ -1,6 +1,7 @@
 (ns rems.api.blacklist
   (:require [clojure.tools.logging :as log]
             [compojure.api.sweet :refer :all]
+            [medley.core :refer [assoc-some]]
             [rems.api.schema :as schema]
             [rems.service.command :as command]
             [rems.service.blacklist]
@@ -48,8 +49,9 @@
       :query-params [{user :- schema-base/UserId nil}
                      {resource :- s/Str nil}]
       :return [BlacklistEntryWithDetails]
-      (ok (rems.service.blacklist/get-blacklist {:userid (rems.db.user-mappings/find-userid user)
-                                                 :resource/ext-id resource})))
+      (ok (rems.service.blacklist/get-blacklist (assoc-some nil
+                                                            :userid (rems.db.user-mappings/find-userid user)
+                                                            :resource/ext-id resource))))
 
     (GET "/users" []
       :summary "Existing REMS users available for adding to the blacklist"

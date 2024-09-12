@@ -82,12 +82,4 @@
     (testing "user and resource both exist"
       (is (not (rems.db.blacklist/blacklisted? user-id resource-ext-id)))
       (rems.db.blacklist/add-event! command)
-      (is (rems.db.blacklist/blacklisted? user-id resource-ext-id)))
-
-    (testing "user doesn't exist"
-      (is (thrown? IllegalArgumentException
-                   (rems.db.blacklist/add-event! (assoc command :userid "non-existing-user")))))
-
-    (testing "resource doesn't exist"
-      (is (thrown? IllegalArgumentException
-                   (rems.db.blacklist/add-event! (assoc command :resource/ext-id "non-existing-resource")))))))
+      (is (rems.db.blacklist/blacklisted? user-id resource-ext-id)))))

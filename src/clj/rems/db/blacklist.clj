@@ -1,5 +1,6 @@
 (ns rems.db.blacklist
-  (:require [rems.common.util :refer [getx]]
+  (:require [rems.cache :as cache]
+            [rems.common.util :refer [apply-filters build-index getx]]
             [rems.db.core :as db]
             [rems.db.resource]
             [rems.db.users]
@@ -10,24 +11,17 @@
             [schema.utils])
   (:import (org.joda.time DateTime)))
 
-(def ResourceId s/Str)
-
 (s/defschema BlacklistEvent
   {(s/optional-key :event/id) s/Int
    :event/type (s/enum :blacklist.event/add :blacklist.event/remove)
    :event/time DateTime
    :event/actor schema-base/UserId
    :userid schema-base/UserId
-   :resource/ext-id ResourceId
+   :resource/ext-id s/Str
    :event/comment (s/maybe s/Str)})
 
 (def ^:private coerce-event
   (coerce/coercer! BlacklistEvent json/coercion-matcher))
-
-(defn- json->event [json]
-  (-> json
-      json/parse-string
-      coerce-event))
 
 (def ^:private validate-blacklist-event
   (s/validator BlacklistEvent))
@@ -35,45 +29,53 @@
 (defn- event->json [event]
   (json/generate-string (validate-blacklist-event event)))
 
-(defn- event-from-db [event]
-  (assoc (json->event (:eventdata event))
-         :event/id (:event/id event)))
+(defn- parse-blacklist-event-raw [x]
+  (let [data (json/parse-string (:eventdata x))
+        event {:event/id (:event/id x)
+               :event/type (:event/type data)
+               :event/time (:event/time data)
+               :event/actor (:event/actor data)
+               :event/comment (:event/comment data)
+               :resource/ext-id (:resource/ext-id data)
+               :userid (:userid data)}]
+    (coerce-event event)))
 
-(defn- check-foreign-keys [event]
-  ;; TODO: These checks could be moved to the database as (1) constraint checks or (2) fields with foreign keys.
-  (when-not (rems.db.users/user-exists? (:userid event))
-    (throw (IllegalArgumentException. "user doesn't exist")))
-  (when-not (rems.db.resource/ext-id-exists? (:resource/ext-id event))
-    (throw (IllegalArgumentException. "resource doesn't exist")))
-  event)
+(def blacklist-event-cache
+  (cache/basic {:id ::blacklist-event-cache
+                :miss-fn (fn [id]
+                           (if-let [event (db/get-blacklist-event {:id id})]
+                             (parse-blacklist-event-raw event)
+                             cache/absent))
+                :reload-fn (fn []
+                             (->> (db/get-blacklist-events)
+                                  (build-index {:keys [:event/id]
+                                                :value-fn parse-blacklist-event-raw})))}))
+
+(defn get-events [& [params]]
+  (->> (vals (cache/entries! blacklist-event-cache))
+       (apply-filters params)))
 
 (defn add-event! [event]
-  (db/add-blacklist-event! {:eventdata (-> event check-foreign-keys event->json)}))
+  (let [id (:id (db/add-blacklist-event! {:eventdata (event->json event)}))]
+    (cache/miss! blacklist-event-cache id)
+    id))
 
 (defn update-event! [event]
-  (db/update-blacklist-event! {:id (getx event :event/id)
-                               :eventdata (-> event check-foreign-keys event->json)}))
-
-(defn get-events [params]
-  (mapv event-from-db (db/get-blacklist-events (select-keys params [:userid :resource/ext-id]))))
-
-(defn- events->blacklist [events]
-  ;; TODO: move computation to db for performance
-  ;; should be enough to check latest event per user-resource pair
-  (vals
-   (reduce (fn [blacklist event]
-             (let [key (select-keys event [:userid :resource/ext-id])]
-               (case (:event/type event)
-                 :blacklist.event/add
-                 (assoc blacklist key event)
-                 :blacklist.event/remove
-                 (dissoc blacklist key))))
-           {}
-           events)))
+  (let [id (getx event :event/id)]
+    (db/update-blacklist-event! {:id id :eventdata (event->json event)})
+    (cache/miss! blacklist-event-cache id)
+    id))
 
 (defn get-blacklist [params]
-  (vec (sort-by (juxt :userid :resource/ext-id) (events->blacklist (get-events params)))))
+  (->> (get-events params)
+       (reduce (fn [blacklist event]
+                 (let [key (select-keys event [:userid :resource/ext-id])]
+                   (case (:event/type event)
+                     :blacklist.event/add (assoc blacklist key event)
+                     :blacklist.event/remove (dissoc blacklist key))))
+               {})
+       vals
+       (sort-by (juxt :userid :resource/ext-id))))
 
 (defn blacklisted? [userid resource]
-  (not (empty? (get-blacklist {:userid userid
-                               :resource/ext-id resource}))))
+  (seq (get-blacklist {:userid userid :resource/ext-id resource})))

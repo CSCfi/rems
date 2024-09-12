@@ -99,7 +99,7 @@
 
 (defn fix-blacklist-event [old-userid new-userid simulate?]
   (doall
-   (for [old-event (rems.db.blacklist/get-events nil)
+   (for [old-event (rems.db.blacklist/get-events)
          :let [new-event (cond-> old-event
                            (= old-userid (:event/actor old-event))
                            (assoc :event/actor new-userid)

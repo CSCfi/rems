@@ -97,8 +97,7 @@
    :get-user rems.db.users/get-user
    :get-users-with-role rems.db.roles/get-users-with-role
    :get-workflow rems.db.workflow/get-workflow
-   :blacklisted? #(cache/lookup-or-miss! blacklist-cache [%1 %2] (fn [[userid resource]]
-                                                                   (rems.db.blacklist/blacklisted? userid resource)))})
+   :blacklisted? rems.db.blacklist/blacklisted?})
 
 (defn get-application-internal
   "Returns the full application state without any user permission
