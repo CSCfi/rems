@@ -3,6 +3,7 @@
             [rems.db.applications]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.db.testing :refer [rollback-db-fixture test-db-fixture]]
+            [rems.db.workflow]
             [rems.service.workflow]
             [rems.testing-util :refer [with-user]]))
 
@@ -160,8 +161,7 @@
 (deftest test-get-handlers
   (create-users)
   (with-user "owner"
-    (let [simplify #(map :userid %)
-          wf1 (test-helpers/create-workflow! {:type :workflow/default
+    (let [wf1 (test-helpers/create-workflow! {:type :workflow/default
                                               :title "workflow2"
                                               :handlers ["user1"
                                                          "user2"]})
@@ -171,15 +171,15 @@
                                                          "user3"]})]
 
       (testing "returns distinct handlers from all workflows"
-        (is (= ["user1" "user2" "user3"]
-               (simplify (rems.service.workflow/get-handlers)))))
+        (is (= #{"user1" "user2" "user3"}
+               (rems.db.workflow/get-handlers))))
 
       (testing "ignores disabled workflows"
         (rems.service.workflow/set-workflow-enabled! {:id wf1 :enabled false})
-        (is (= ["user2" "user3"]
-               (simplify (rems.service.workflow/get-handlers)))))
+        (is (= #{"user2" "user3"}
+               (rems.db.workflow/get-handlers))))
 
       (testing "ignores archived workflows"
         (rems.service.workflow/set-workflow-archived! {:id wf2 :archived true})
-        (is (= []
-               (simplify (rems.service.workflow/get-handlers))))))))
+        (is (= #{}
+               (rems.db.workflow/get-handlers)))))))

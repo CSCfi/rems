@@ -236,10 +236,6 @@
        :enabled true
        :archived false}})
 
-;; XXX: no attachments here for now
-(defn ^:private get-attachments-for-application [id]
-  [])
-
 (defn blacklisted? [user resource]
   (contains? #{["applicant" "urn:11"]
                ["applicant" "urn:31"]
@@ -249,13 +245,15 @@
 (def injections {:blacklisted? blacklisted?
                  :get-form-template get-form-template
                  :get-catalogue-item get-catalogue-item
+                 :get-catalogue-item-licenses (constantly [])
                  :get-config get-config
                  :get-license get-license
                  :get-resource get-resource
                  :get-user get-user
                  :get-users-with-role get-users-with-role
                  :get-workflow get-workflow
-                 :get-attachments-for-application get-attachments-for-application})
+                 :get-attachments-for-application (constantly [])
+                 :get-attachment-metadata (constantly nil)})
 
 (deftest test-dummies-schema
   (doseq [[description schema dummies] [["form template" schema/FormTemplate get-form-template]
@@ -1490,17 +1488,19 @@
                      :application/events [{:event/actor "applicant"} ; should ignore active non-handlers
                                           {:event/actor "edward"}
                                           {:event/actor "reviewer"}]}
-        get-workflow {1 {:workflow {:handlers [{:userid "alphonse" ; should ignore inactive handlers
-                                                :name "Alphonse Elric"}
-                                               {:userid "edward"
-                                                :name "Edward Elric"}]}}}]
+        get-workflow {1 {:workflow {:handlers [{:userid "alphonse"} ; should ignore inactive handlers
+                                               {:userid "edward"}]}}}
+        get-user {"alphonse" {:userid "alphonse"
+                              :name "Alphonse Elric"}
+                  "edward" {:userid "edward"
+                            :name "Edward Elric"}}]
     (is (= {:application/workflow {:workflow/id 1
                                    :workflow.dynamic/handlers [{:userid "alphonse"
                                                                 :name "Alphonse Elric"}
                                                                {:userid "edward"
                                                                 :name "Edward Elric"
                                                                 :handler/active? true}]}}
-           (-> (model/enrich-workflow-handlers application get-workflow)
+           (-> (model/enrich-workflow-handlers application get-workflow get-user)
                (select-keys [:application/workflow]))))))
 
 (deftest test-enrich-deadline

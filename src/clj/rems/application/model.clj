@@ -10,9 +10,6 @@
             [rems.common.roles :refer [+handling-roles+]]
             [rems.common.util :refer [assoc-some-in conj-vec getx getx-in into-vec]]
             [rems.permissions :as permissions]
-            [rems.json :as json]
-            [rems.schema-base :as schema-base]
-            [schema.coerce :as coerce]
             [rems.ext.duo :as duo]))
 
 ;;;; Application
@@ -707,9 +704,10 @@
             :application/members
             enrich-members)))
 
-(defn enrich-workflow-handlers [application get-workflow]
+(defn enrich-workflow-handlers [application get-workflow get-user]
   (let [workflow (get-workflow (get-in application [:application/workflow :workflow/id]))
-        handlers (get-in workflow [:workflow :handlers])
+        handlers (->> (get-in workflow [:workflow :handlers])
+                      (mapv (comp get-user :userid)))
         active-users (set (map :event/actor (:application/events application)))
         handlers (map (fn [handler]
                         (if (contains? active-users (:userid handler))
@@ -897,7 +895,7 @@
       (update :application/attachments #(merge-lists-by :attachment/id % (get-attachments-for-application (getx application :application/id))))
       (enrich-user-attributes get-user)
       (enrich-blacklist blacklisted?) ; uses enriched users
-      (enrich-workflow-handlers get-workflow)
+      (enrich-workflow-handlers get-workflow get-user)
       (enrich-workflow-anonymize-handling get-workflow)
       (enrich-deadline get-config)
       (enrich-super-users get-users-with-role)

@@ -101,8 +101,9 @@
   (when workflow
     (-> workflow
         rems.db.organizations/join-organization
-        (update-in [:workflow :forms] (partial map enrich-workflow-form))
-        (update-in [:workflow :licenses] (partial map enrich-workflow-license)))))
+        (update-in [:workflow :handlers] (partial mapv rems.db.users/join-user))
+        (update-in [:workflow :forms] (partial mapv enrich-workflow-form))
+        (update-in [:workflow :licenses] (partial mapv enrich-workflow-license)))))
 
 (defn get-workflow [id]
   (->> (rems.db.workflow/get-workflow id)
@@ -112,12 +113,3 @@
   (->> (rems.db.workflow/get-workflows)
        (apply-filters filters)
        (mapv join-dependencies)))
-
-(defn get-handlers []
-  (let [workflows (->> (rems.db.workflow/get-workflows)
-                       (apply-filters {:enabled true
-                                       :archived false}))
-        handlers (mapcat (fn [wf]
-                           (get-in wf [:workflow :handlers]))
-                         workflows)]
-    (->> handlers distinct (sort-by :userid))))

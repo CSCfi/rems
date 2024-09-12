@@ -1,11 +1,10 @@
 (ns rems.db.workflow
   (:require [clojure.set]
-            [medley.core :refer [assoc-some update-existing-in]]
+            [medley.core :refer [assoc-some]]
             [rems.common.application-util :as application-util]
             [rems.cache :as cache]
-            [rems.common.util :refer [index-by]]
+            [rems.common.util :refer [apply-filters index-by]]
             [rems.db.core :as db]
-            [rems.db.users]
             [rems.json :as json]
             [rems.schema-base :as schema-base]
             [schema.coerce :as coerce]
@@ -83,25 +82,23 @@
     (cache/miss! workflow-cache id)
     id))
 
-(defn- enrich-workflow [wf]
-  (update-existing-in wf [:workflow :handlers] (partial mapv rems.db.users/join-user)))
-
 (defn get-workflow [id]
-  (-> (cache/lookup-or-miss! workflow-cache id)
-      enrich-workflow))
+  (cache/lookup-or-miss! workflow-cache id))
 
 (defn get-workflows []
-  (->> (vals (cache/entries! workflow-cache))
-       (mapv enrich-workflow)))
+  (vals (cache/entries! workflow-cache)))
 
-(defn- get-handlers [wf]
-  (set (map :userid (get-in wf [:workflow :handlers]))))
+(defn get-handlers []
+  (->> (get-workflows)
+       (eduction (apply-filters {:enabled true :archived false})
+                 (mapcat #(-> % :workflow :handlers))
+                 (map :userid))
+       (into #{})))
 
 (defn get-all-workflow-roles [userid]
-  (apply clojure.set/union
-         (for [wf (get-workflows)]
-           (set (concat (when (contains? (get-handlers wf) userid)
-                          #{:handler}))))))
+  (if (contains? (get-handlers) userid)
+    #{:handler}
+    #{}))
 
 (defn edit-workflow! [{:keys [anonymize-handling
                               disable-commands

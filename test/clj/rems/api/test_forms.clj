@@ -275,7 +275,7 @@
                                                    :title "wf with form"})]
           (is (= {:success false
                   :errors [{:type "t.administration.errors/in-use-by"
-                            :workflows [{:id wfid :title "wf with form"}]}]}
+                            :workflows [{:workflow/id wfid :title "wf with form"}]}]}
                  (api-call :get (str "/api/forms/" form-id "/editable") nil
                            api-key user-id)))
           (testing "even if catalogue item is archived & disabled"
@@ -285,7 +285,7 @@
                       api-key user-id)
             (is (= {:success false
                     :errors [{:type "t.administration.errors/in-use-by"
-                              :workflows [{:id wfid :title "wf with form"}]}]}
+                              :workflows [{:workflow/id wfid :title "wf with form"}]}]}
                    (api-call :get (str "/api/forms/" form-id "/editable") nil
                              api-key user-id)))))))))
 
@@ -302,15 +302,15 @@
                                  api-key user-id))]
       (testing "organization owner"
         (testing "can edit name and title in own organization"
-          (is (true? (:success (api-call :put "/api/forms/edit"
-                                         {:form/id form-id
-                                          :organization {:organization/id "organization1"}
-                                          :form/internal-name "changed name"
-                                          :form/external-title {:en "en changed title"
-                                                                :fi "fi changed title"
-                                                                :sv "sv changed title"}
-                                          :form/fields []}
-                                         api-key "organization-owner1"))))
+          (is (= {:success true} (api-call :put "/api/forms/edit"
+                                           {:form/id form-id
+                                            :organization {:organization/id "organization1"}
+                                            :form/internal-name "changed name"
+                                            :form/external-title {:en "en changed title"
+                                                                  :fi "fi changed title"
+                                                                  :sv "sv changed title"}
+                                            :form/fields []}
+                                           api-key "organization-owner1")))
           (is (= {:form/internal-name "changed name"
                   :form/external-title {:en "en changed title"
                                         :fi "fi changed title"

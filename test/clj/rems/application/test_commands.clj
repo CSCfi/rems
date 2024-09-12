@@ -1,5 +1,5 @@
 (ns rems.application.test-commands
-  (:require [clojure.test :refer :all]
+  (:require [clojure.test :refer [deftest is testing]]
             [rems.application.commands :as commands]
             [rems.application.events :as events]
             [rems.application.model :as model]
@@ -45,20 +45,21 @@
                       :fi {:title "fi title"
                            :textcontent "fi link"}}}})
 
+(defn dummy-get-user [userid]
+  (get {handler-user-id {:userid handler-user-id
+                         :name "user"
+                         :email "user@example.com"}}
+       userid
+       {:userid userid}))
+
 (def dummy-workflows
   {1 {:workflow {:type :workflow/default
-                 :handlers [{:userid handler-user-id
-                             :name "user"
-                             :email "user@example.com"}]}}
+                 :handlers [{:userid handler-user-id}]}}
    2 {:workflow {:type :workflow/default
-                 :handlers [{:userid handler-user-id
-                             :name "user"
-                             :email "user@example.com"}]
+                 :handlers [{:userid handler-user-id}]
                  :forms [{:form/id 1} {:form/id 3} {:form/id 4}]}}
    3 {:workflow {:type :workflow/decider
-                 :handlers [{:userid handler-user-id
-                             :name "user"
-                             :email "user@example.com"}]}}})
+                 :handlers [{:userid handler-user-id}]}}})
 
 (def dummy-forms
   {1 {:form/id 1
@@ -141,7 +142,7 @@
    :get-config (constantly {})
    :get-license dummy-licenses
    :get-resource dummy-resources
-   :get-user (fn [userid] {:userid userid})
+   :get-user dummy-get-user
    :get-users-with-role (fn [role] (get {:expirer #{"expirer-bot"}} role))
    :get-workflow dummy-workflows
    :blacklisted? (constantly false)

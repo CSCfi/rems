@@ -16,6 +16,7 @@
             [rems.db.resource]
             [rems.db.user-settings]
             [rems.db.users]
+            [rems.db.workflow]
             [rems.email.template :as template]
             [rems.scheduler :as scheduler]
             [clojure.string :as str])
@@ -58,7 +59,7 @@
 
 (defn generate-handler-reminder-emails! []
   (let [deadline (-> (time/now) (.plus ^Period (:email-retry-period env)))]
-    (->> (rems.service.workflow/get-handlers)
+    (->> (rems.db.workflow/get-handlers)
          (keep #(generate-handler-reminder-outbox % deadline))
          rems.db.outbox/puts!)))
 
