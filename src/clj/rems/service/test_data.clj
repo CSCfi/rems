@@ -10,6 +10,7 @@
             [rems.config]
             [rems.db.api-key]
             [rems.db.core :as db]
+            [rems.db.catalogue]
             [rems.db.roles]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.db.test-data-users :refer :all]
@@ -1032,7 +1033,7 @@
       (create-disabled-applications! default-disabled
                                      (users :applicant2)
                                      (users :approver1))
-      (db/set-catalogue-item-enabled! {:id default-disabled :enabled false}))
+      (rems.db.catalogue/set-attributes! default-disabled {:enabled false}))
     (let [default-expired (test-helpers/create-catalogue-item! {:actor owner
                                                                 :title {:en "Default workflow (expired)"
                                                                         :fi "Oletustyövuo (vanhentunut)"
@@ -1042,7 +1043,7 @@
                                                                 :organization {:organization/id "nbn"}
                                                                 :workflow-id (:default workflows)
                                                                 :categories [ordinary-category]})]
-      (db/set-catalogue-item-endt! {:id default-expired :end (time/now)}))
+      (rems.db.catalogue/set-attributes! default-expired {:endt (time/now)}))
     (test-helpers/create-catalogue-item! {:actor organization-owner1
                                           :title {:en "Owned by organization owner"
                                                   :fi "Organisaatio-omistajan omistama"

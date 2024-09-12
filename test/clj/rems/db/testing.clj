@@ -21,7 +21,6 @@
   (rems.service.caches/reset-all-caches!)
   (rems.db.applications/reset-cache!)
   (rems.db.applications/empty-injections-cache!)
-  (rems.db.catalogue/reset-cache!)
   (rems.db.category/reset-cache!)
   (rems.service.dependencies/reset-cache!)
   (rems.db.events/empty-event-cache!))

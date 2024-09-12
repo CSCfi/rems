@@ -10,8 +10,10 @@
             [rems.application.model]
             [rems.config :refer [env]]
             [rems.db.applications]
+            [rems.db.catalogue]
             [rems.db.invitation]
             [rems.db.outbox]
+            [rems.db.resource]
             [rems.db.user-settings]
             [rems.db.users]
             [rems.email.template :as template]
@@ -27,7 +29,10 @@
                          :application.event/draft-saved}
                        (:event/type event))
     (when-let [app-id (:application/id event)]
-      (template/event-to-emails (rems.application.model/enrich-event event rems.db.users/get-user (constantly nil))
+      (template/event-to-emails (rems.application.model/enrich-event event
+                                                                     rems.db.users/get-user
+                                                                     rems.db.catalogue/get-catalogue-item
+                                                                     rems.db.resource/get-resource)
                                 (rems.db.applications/get-application app-id)))))
 
 (defn generate-event-emails! [new-events]

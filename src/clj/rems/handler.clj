@@ -1,19 +1,17 @@
 (ns rems.handler
   (:require [clojure.string :as str]
-            [clojure.tools.logging :as log]
             [compojure.core :refer [GET defroutes routes]]
             [compojure.route :as route]
             [mount.core :as mount]
             [rems.api :refer [api-routes]]
             [rems.service.attachment]
+            [rems.service.catalogue]
             [rems.service.invitation]
             [rems.service.licenses]
             [rems.api.util :as api-util]
-            [rems.context :as context]
             [rems.auth.auth :as auth]
             [rems.config :refer [env]]
             [rems.css.styles :as styles]
-            [rems.db.catalogue]
             [rems.db.events] ;; to start events cache
             [rems.email.core] ;; to enable email polling
             [rems.application.eraser] ;; to enable expired application clean-up job
@@ -26,8 +24,7 @@
   (:import [rems.auth UnauthorizedException]))
 
 (defn- resource-to-item [resource]
-  (let [items (->> (rems.db.catalogue/get-localized-catalogue-items {:resource resource})
-                   (filter :enabled))]
+  (let [items (into [] (rems.service.catalogue/get-catalogue-items {:enabled true :resource resource}))]
     (cond
       (= 0 (count items)) :not-found
       (< 1 (count items)) :not-unique

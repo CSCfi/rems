@@ -54,6 +54,39 @@ WHERE 1=1
 /*~ ) ~*/
 ORDER BY ci.id;
 
+-- :name get-all-catalogue-items :? :*
+SELECT 
+  id, 
+  resid AS "resource-id", 
+  wfid AS "workflow-id", 
+  formid AS "form-id", 
+  start, 
+  endt AS "end", 
+  enabled, 
+  archived, 
+  organization AS "organization-id",
+  catalogueitemdata::TEXT
+FROM catalogue_item;
+
+-- :name get-catalogue-item :? :1
+SELECT 
+  id, 
+  resid AS "resource-id", 
+  wfid AS "workflow-id", 
+  formid AS "form-id", 
+  start, 
+  endt AS "end", 
+  enabled, 
+  archived, 
+  organization AS "organization-id",
+  catalogueitemdata::TEXT
+FROM catalogue_item
+WHERE 1=1
+/*~ (when (:id params) */
+  AND id = :id
+/*~ ) ~*/
+;
+
 -- :name set-catalogue-item-enabled! :!
 UPDATE catalogue_item
 SET enabled = :enabled
@@ -155,7 +188,12 @@ SELECT current_database();
 
 -- :name get-catalogue-item-localizations :? :*
 SELECT catid AS id, langcode, title, infoUrl
-FROM catalogue_item_localization;
+FROM catalogue_item_localization
+WHERE 1=1
+/*~ (when (:id params) */
+  AND catid = :id
+/*~ ) ~*/
+;
 
 -- :name upsert-catalogue-item-localization! :insert
 -- TODO now that we have the catalogue_item_localization_unique

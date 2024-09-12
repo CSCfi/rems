@@ -1910,8 +1910,9 @@
     (testing "check that catalogue item is not visible before enabling"
       ;; technically we could check this from
       ;; the catalogue page but we'd need to search
-      (let [public-catalogue-items-by-name (->> (rems.service.catalogue/get-catalogue-table {:enabled true})
-                                                (group-by (comp :title :en :localizations)))]
+      (let [public-catalogue-items-by-name (with-user "owner"
+                                             (->> (rems.service.catalogue/get-catalogue-table {:enabled true})
+                                                  (group-by (comp :title :en :localizations))))]
         (is (= nil (public-catalogue-items-by-name (btu/context-getx :catalogue-item-name))))))
     (testing "enable catalogue item"
       (enable-catalogue-item (btu/context-getx :catalogue-item-name)))

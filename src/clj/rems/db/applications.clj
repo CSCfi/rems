@@ -56,7 +56,7 @@
 ;;; Running commands
 
 (defn get-catalogue-item-licenses [catalogue-item-id]
-  (let [item (rems.db.catalogue/get-localized-catalogue-item catalogue-item-id {})
+  (let [item (rems.db.catalogue/get-catalogue-item catalogue-item-id)
         resource-licenses (:licenses (rems.db.resource/get-resource (:resource-id item)))
         workflow-licenses (-> (rems.db.workflow/get-workflow (:wfid item))
                               (get-in [:workflow :licenses]))]
@@ -70,11 +70,9 @@
 
 ;;; Fetching applications (for API)
 
-(def ^:private catalogue-item-cache (cache/ttl {:id ::catalogue-item-cache}))
 (def ^:private blacklist-cache (cache/ttl {:id ::blacklist-cache}))
 
 (defn empty-injections-cache! []
-  (cache/reset! catalogue-item-cache)
   (cache/reset! blacklist-cache))
 
 (defn empty-injection-cache!
@@ -89,19 +87,18 @@
 
 (def fetcher-injections
   {:get-attachments-for-application rems.db.attachments/get-attachments-for-application
+   :get-attachment-metadata rems.db.attachments/get-attachment
    :get-form-template rems.db.form/get-form-template
-   :get-catalogue-item #(cache/lookup-or-miss! catalogue-item-cache % (fn [id] (rems.db.catalogue/get-localized-catalogue-item id {:expand-names? true
-                                                                                                                                   :expand-resource-data? true})))
+   :get-catalogue-item rems.db.catalogue/get-catalogue-item
+   :get-catalogue-item-licenses get-catalogue-item-licenses
    :get-config (fn [] env)
    :get-license rems.db.licenses/get-license
+   :get-resource rems.db.resource/get-resource
    :get-user rems.db.users/get-user
    :get-users-with-role rems.db.roles/get-users-with-role
    :get-workflow rems.db.workflow/get-workflow
    :blacklisted? #(cache/lookup-or-miss! blacklist-cache [%1 %2] (fn [[userid resource]]
-                                                                   (rems.db.blacklist/blacklisted? userid resource)))
-   ;; TODO: no caching for these, but they're only used by command handlers currently
-   :get-attachment-metadata rems.db.attachments/get-attachment
-   :get-catalogue-item-licenses get-catalogue-item-licenses})
+                                                                   (rems.db.blacklist/blacklisted? userid resource)))})
 
 (defn get-application-internal
   "Returns the full application state without any user permission

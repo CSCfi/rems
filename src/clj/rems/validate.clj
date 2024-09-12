@@ -7,10 +7,10 @@
             [rems.common.form :as common-form]
             [rems.config :refer [env]]
             [rems.api.schema]
-            [rems.service.catalogue]
             [rems.service.form]
             [rems.service.licenses]
             [rems.service.resource]
+            [rems.db.catalogue]
             [rems.db.events]
             [rems.db.organizations]
             [rems.ext.duo]
@@ -47,7 +47,7 @@
     (doseq [license (rems.service.licenses/get-all-licenses {})]
       (when-not (valid-organization? (:organization license))
         (log/warn "Unrecognized organization in license:" (pr-str license))))
-    (doseq [item (rems.service.catalogue/get-localized-catalogue-items)]
+    (doseq [item (rems.db.catalogue/get-catalogue-items)]
       (when-not (valid-organization? (:organization item))
         (log/warn "Unrecognized organization in catalogue item:" (pr-str item))))))
 

@@ -246,7 +246,7 @@
         (testing "Form is non-editable after in use by a catalogue item"
           (is (= {:success false
                   :errors [{:type "t.administration.errors/in-use-by"
-                            :catalogue-items [{:id cat-id :localizations {}}]}]}
+                            :catalogue-items [{:catalogue-item/id cat-id :localizations {}}]}]}
                  (api-call :get (str "/api/forms/" form-id "/editable") nil
                            api-key user-id)))
           (testing "even if catalogue item is archived & disabled"
@@ -256,7 +256,7 @@
                       api-key user-id)
             (is (= {:success false
                     :errors [{:type "t.administration.errors/in-use-by"
-                              :catalogue-items [{:id cat-id :localizations {}}]}]}
+                              :catalogue-items [{:catalogue-item/id cat-id :localizations {}}]}]}
                    (api-call :get (str "/api/forms/" form-id "/editable") nil
                              api-key user-id)))))))
     (let [form-id (:id (api-call :post "/api/forms/create"

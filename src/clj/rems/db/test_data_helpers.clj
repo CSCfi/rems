@@ -231,7 +231,7 @@
     (assert (:success result) {:command command :result result})
     (:category/id result)))
 
-(defn create-catalogue-item! [{:keys [actor title resource-id form-id workflow-id infourl organization start categories]
+(defn create-catalogue-item! [{:keys [actor enabled title resource-id form-id workflow-id infourl organization start categories]
                                :as command}]
   (let [actor (or actor (create-owner!))
         localizations (into {}
@@ -248,7 +248,9 @@
                        :organization (or organization (ensure-default-organization!))
                        :wfid (or workflow-id (create-workflow! {:organization organization}))
                        :localizations (select-config-langs (or localizations {}))
-                       :enabled (:enabled command true)}
+                       :enabled (if (some? enabled)
+                                  enabled
+                                  true)}
                       (assoc-some :categories categories))))]
     (assert (:success result) {:command command :result result})
     (:id result)))
