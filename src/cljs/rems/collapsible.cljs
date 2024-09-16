@@ -82,14 +82,21 @@
    - `:collapse-id` (required) string or keyword, id of controlled collapsible
    - `:on-close` function, invoked when collapsible is toggled hidden. false disables hide control 
    - `:on-open` function, invoked when collapsible is toggled open. false disables open control"
-  [{:keys [on-close on-open] :as action}]
-  (let [hide (not (false? on-close))
-        open (not (false? on-open))]
+  [{:keys [collapsible-id on-close on-open] :as action}]
+  (let [on-close? (not (false? on-close))
+        on-open? (not (false? on-open))
+        state @(rf/subscribe [::expanded collapsible-id])]
     [:div.text-center
-     (cond
-       (and hide open) [atoms/action-link (toggle-action action)]
-       hide [atoms/action-link (hide-action action)]
-       open [atoms/action-link (show-action action)])]))
+     (cond (and on-close? on-open?)
+           [atoms/action-link (toggle-action action)]
+
+           on-close?
+           (when state
+             [atoms/action-link (hide-action action)])
+
+           on-open?
+           (when-not state
+             [atoms/action-link (show-action action)]))]))
 
 (defn info-toggle-control
   "Toggle control that uses simple icon as label.
@@ -162,7 +169,6 @@
   - `:class` optional class for wrapping element
   - `:footer` component displayed always after collapsible area
   - `:id` (required) unique id
-  - `:class` string/keyword/vector, for wrapping element
   - `:group` string, only one collapsible in group can be open at a time
   - `:open?` should the collapsible be initially open?
   - `:title` component or text displayed in title area"
