@@ -24,7 +24,7 @@
   (when-let [current-test (get-current-test)]
     (-> test-cache-statistics
         (swap! assoc
-               (str current-test) (rems.service.caches/get-all-cache-statistics!)))))
+               (str current-test) (rems.service.caches/export-all-cache-statistics!)))))
 
 (defn- reset-caches! []
   (rems.service.caches/reset-all-caches!)

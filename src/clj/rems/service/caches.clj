@@ -12,6 +12,6 @@
   (logr/info :reset-all)
   (run! cache/reset! (get-all-caches)))
 
-(defn get-all-cache-statistics! []
-  (logr/info :statistics-all) ; export resets cache statistics
+(defn export-all-cache-statistics! []
+  (logr/info :statistics-all)
   (into {} (map (juxt :id cache/export-statistics!)) (get-all-caches)))
