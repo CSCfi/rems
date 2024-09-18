@@ -18,8 +18,14 @@ fi
 docker build --pull \
     --tag cscfi/rems:latest \
     --tag cscfi/rems:${tag2} \
+    --tag image-registry.apps.2.rahti.csc.fi/rems/rems:${tag1} \
+    --tag image-registry.apps.2.rahti.csc.fi/rems/rems:${tag2} \
     --tag docker-registry.rahti.csc.fi/rems/rems:${tag1} \
     --tag docker-registry.rahti.csc.fi/rems/rems:${tag2} .
+
+docker login -p $rahti2token -u unused image-registry.apps.2.rahti.csc.fi
+docker push image-registry.apps.2.rahti.csc.fi/rems/rems:${tag1}
+docker push image-registry.apps.2.rahti.csc.fi/rems/rems:${tag2}
 
 docker login -p $rahtitoken -u unused docker-registry.rahti.csc.fi
 docker push docker-registry.rahti.csc.fi/rems/rems:${tag1}
