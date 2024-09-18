@@ -148,10 +148,12 @@
 
   (evict! [this k]
     (ensure-initialized! this)
-    (increment-evict-statistic! this)
-    (locking id
-      (w/evict the-cache k)
-      (reset-dependent-caches! id)))
+    (when (w/has? the-cache k)
+      (increment-evict-statistic! this)
+      (locking id
+        (w/evict the-cache k)
+        (reset-dependent-caches! id))
+      (logr/debug :evict-finish id k)))
 
   (miss! [this k]
     (ensure-initialized! this)
