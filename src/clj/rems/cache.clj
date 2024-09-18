@@ -181,6 +181,7 @@
                                   (atom the-cache)
                                   miss-fn
                                   (or reload-fn (constantly {})))]
+    (assert (not (contains? @caches id)) (format "cache id %s already exists" id))
     (swap! caches assoc id cache)
     (swap! caches-dag dep/depend id depends-on) ; noop when empty depends-on
     cache))
