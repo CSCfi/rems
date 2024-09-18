@@ -18,29 +18,114 @@
   [c]
   (clojure.walk/keywordize-keys @(get c :the-cache)))
 
+(def ^:private miss-fn (constantly {:value true}))
+(def ^:private reload-fn (constantly {:always {:value :special}}))
+
 (deftest test-basic-cache
   (with-redefs [rems.cache/caches (doto caches (reset! nil))
                 rems.cache/caches-dag (doto caches-dag (reset! (dep/make-graph)))]
-    (let [cache-spy (atom nil)
-          c (cache/basic {:id ::test-cache
-                          :miss-fn (fn [id]
-                                     (swap! cache-spy update-in [::test-cache :miss-fn] (fnil conj []) id)
-                                     true)})]
-      (is (= c (get @caches ::test-cache)))
-      (is (= {} (get-cache-entries c)))
-      (is (= [] (cache/get-cache-dependencies ::test-cache)))
+    (let [c (cache/basic {:id ::test-cache
+                          :miss-fn (fn [id] (miss-fn id))
+                          :reload-fn (fn [] (reload-fn))})]
+      (is (= c
+             (get @caches ::test-cache)))
+      (is (= []
+             (cache/get-cache-dependencies ::test-cache)))
 
-      (testing "only lookup-or-miss! updates cache entry on cache miss"
+      (testing "initialization"
+        (testing "cache is uninitialized at start"
+          (is (= {}
+                 (get-cache-raw c)))
+          (is (= false
+                 (deref (:initialized? c))))
+          (is (= {:evict 0 :get 0 :reload 0 :reset 0 :upsert 0}
+                 (cache/export-statistics! c))))
+
+        (testing "entries reloads cache"
+          (is (= {:always {:value :special}}
+                 (get-cache-entries c)))
+          (is (= {:evict 0 :get 1 :reload 1 :reset 0 :upsert 0}
+                 (cache/export-statistics! c))))
+
+        (testing "reset"
+          (cache/reset! c)
+          (is (= {:evict 0 :get 0 :reload 0 :reset 1 :upsert 0}
+                 (cache/export-statistics! c)))
+          (is (= {}
+                 (get-cache-raw c))))
+
+        (testing "ensure-initialized reloads cache"
+          (cache/ensure-initialized! c)
+          (is (= {:evict 0 :get 1 :reload 1 :reset 0 :upsert 0}
+                 (cache/export-statistics! c)))
+          (is (= {:always {:value :special}}
+                 (get-cache-raw c)))))
+
+      (testing "lookup"
         (is (= nil
                (cache/lookup! c :a)))
+        (is (= {:value :special}
+               (cache/lookup! c :always)))
+        (is (= {:evict 0 :get 2 :reload 0 :reset 0 :upsert 0}
+               (cache/export-statistics! c)))
+        (is (= {:always {:value :special}}
+               (get-cache-raw c))))
+
+      (testing "lookup-or-miss"
+        (testing "existing entry should not trigger cache miss"
+          (is (= {:value :special}
+                 (cache/lookup-or-miss! c :always)))
+          (is (= {:evict 0 :get 1 :reload 0 :reset 0 :upsert 0}
+                 (cache/export-statistics! c)))
+          (is (= {:always {:value :special}}
+                 (get-cache-raw c))))
+
+        (testing "non-existing entry should be added on cache miss"
+          (is (= {:value true}
+                 (cache/lookup-or-miss! c :a)))
+          (is (= {:evict 0 :get 1 :reload 0 :reset 0 :upsert 1}
+                 (cache/export-statistics! c)))
+          (is (= {:a {:value true}
+                  :always {:value :special}}
+                 (get-cache-raw c))))
+
+        (testing "absent value skips cache entry"
+          (with-redefs [miss-fn (constantly cache/absent)]
+            (is (= nil
+                   (cache/lookup-or-miss! c :test-skip))))
+          (is (= {:evict 0 :get 1 :reload 0 :reset 0 :upsert 0}
+                 (cache/export-statistics! c)))
+          (is (= {:a {:value true}
+                  :always {:value :special}}
+                 (get-cache-raw c)))))
+
+      (testing "evict"
+        (cache/evict! c :a)
         (is (= nil
-               @cache-spy))
-        (is (= true
-               (cache/lookup-or-miss! c :a)))
-        (is (= {::test-cache {:miss-fn [:a]}}
-               @cache-spy))
-        (is (= true
-               (cache/lookup! c :a)))))))
+               (cache/lookup! c :a)))
+        (is (= {:evict 1 :get 2 :reload 0 :reset 0 :upsert 0}
+               (cache/export-statistics! c)))
+        (is (= {:always {:value :special}}
+               (get-cache-raw c)))
+
+        (testing "non-existing entry does nothing"
+          (cache/evict! c :does-not-exist)
+          (is (= {:evict 0 :get 1 :reload 0 :reset 0 :upsert 0}
+                 (cache/export-statistics! c)))
+          (is (= {:always {:value :special}}
+                 (get-cache-raw c)))))
+
+      (testing "miss"
+        (cache/miss! c :new-entry)
+        (is (= {:value true}
+               (cache/lookup! c :new-entry)))
+        (is (= {:value true}
+               (cache/lookup-or-miss! c :new-entry)))
+        (is (= {:evict 0 :get 3 :reload 0 :reset 0 :upsert 1}
+               (cache/export-statistics! c)))
+        (is (= {:always {:value :special}
+                :new-entry {:value true}}
+               (get-cache-raw c)))))))
 
 (deftest test-cache-dependencies
   (testing "cannot create caches with circular dependencies"
@@ -74,12 +159,15 @@
         (testing "cache :a has no dependencies"
           (is (= cache-a (get @caches :a)))
           (is (= [] (cache/get-cache-dependencies :a))))
+
         (testing "cache :b depends on [:a]"
           (is (= cache-b (get @caches :b)))
           (is (= [cache-a] (cache/get-cache-dependencies :b))))
+
         (testing "cache :c depends on [:b]"
           (is (= cache-c (get @caches :c)))
           (is (= [cache-b] (cache/get-cache-dependencies :c))))
+
         (testing "cache :d depends on [:a :b]"
           (is (= cache-d (get @caches :d)))
           (is (= #{cache-a cache-b} (set (cache/get-cache-dependencies :d)))))
@@ -105,24 +193,28 @@
                     ":reload-finish :b {:count 1}"
                     ":reload-finish :c {:count 1}"]
                    (mapv :message (log-test/the-log)))))
+
           (testing "accessing cache :a does not cause further reloads"
             (log-test/with-log
               (is (= {1 true}
                      (get-cache-entries cache-a)))
               (is (= []
                      (log-test/the-log)))))
+
           (testing "accessing cache :b does not cause further reloads"
             (log-test/with-log
               (is (= {2 true}
                      (get-cache-entries cache-b)))
               (is (= []
                      (log-test/the-log)))))
+
           (testing "accessing cache :c does not cause further reloads"
             (log-test/with-log
               (is (= {3 true}
                      (get-cache-entries cache-c)))
               (is (= []
                      (log-test/the-log)))))
+
           (testing "accessing cache :d reloads only itself"
             (log-test/with-log
               (is (= {4 true}
