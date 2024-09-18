@@ -36,8 +36,8 @@
     "Retrieves the current cache snapshot.")
   (lookup! [this k] [this k not-found]
     "Retrieves `k` from cache if it exists, or `not-found` if specified.")
-  (lookup-or-miss! [this k] [this k value-fn]
-    "Retrieves `k` from cache if it exists, else updates the cache for `k` to `(miss-fn k)` or `(value-fn k)` and performs the lookup again.")
+  (lookup-or-miss! [this k]
+    "Retrieves `k` from cache if it exists, else updates the cache for `k` to `(miss-fn k)` and performs the lookup again.")
   (evict! [this k]
     "Removes `k` from cache.")
   (miss! [this k]
@@ -131,15 +131,13 @@
     (ensure-initialized! this)
     (w/lookup the-cache k not-found))
 
-  ;; supports use case where cache does not have pre-determined reload function
-  (lookup-or-miss! [this k] (lookup-or-miss! this k miss-fn))
-  (lookup-or-miss! [this k value-fn]
+  (lookup-or-miss! [this k]
     (ensure-initialized! this)
     (if (w/has? the-cache k)
       (w/lookup the-cache k)
 
-      (let [value (value-fn k)
-            skip-update? (= ::absent value)]
+      (let [value (miss-fn k)
+            skip-update? (= absent value)]
 
         (when-not skip-update?
           (increment-upsert-statistic! this)
@@ -158,7 +156,7 @@
   (miss! [this k]
     (ensure-initialized! this)
     (let [value (miss-fn k)
-          skip-update? (= ::absent value)]
+          skip-update? (= absent value)]
 
       (when-not skip-update?
         (increment-upsert-statistic! this)
