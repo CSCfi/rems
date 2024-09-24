@@ -12,7 +12,7 @@
             [rems.common.roles :as roles]
             [rems.spinner :as spinner]
             [rems.table :as table]
-            [rems.text :refer [localized localize-command localize-role localize-state text text-format]]
+            [rems.text :refer [get-localized-title localized localize-command localize-role localize-state text text-format]]
             [rems.util :refer [fetch]]))
 
 (rf/reg-event-fx
@@ -120,9 +120,11 @@
 (defn- render-licenses [licenses]
   (into [:<>]
         (interpose ", ")
-        (for [license licenses
+        (for [license (->> licenses
+                           (mapv #(assoc % ::title (get-localized-title %)))
+                           (sort-by ::title))
               :let [uri (str "/administration/licenses/" (:license/id license))
-                    title (:title (localized (:localizations license)))]]
+                    title (::title license)]]
           [atoms/link {} uri title])))
 
 (defn- localize-workflow [workflow-type]

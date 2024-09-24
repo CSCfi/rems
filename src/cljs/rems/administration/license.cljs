@@ -122,7 +122,9 @@
     :open? (<= (count licenses) 5)
     :collapse (if (seq licenses)
                 (into [:div]
-                      (for [license licenses]
+                      (for [license (->> licenses
+                                         (mapv #(assoc % ::title (get-localized-title %)))
+                                         (sort-by ::title))]
                         [license-view-compact license]))
                 [:p (text :t.administration/no-licenses)])}])
 
