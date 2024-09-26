@@ -7,25 +7,18 @@
             [rems.common.dependency :as dep]
             [rems.config]))
 
-(defprotocol CacheStatisticsProtocol
-  "Run-time cache statistics."
+(def ^:private caches (atom nil))
+(def ^:private caches-dag (atom (dep/make-graph)))
 
-  (export-statistics! [this]
-    "Retrieves runtime statistics from cache, and resets appropriate counters.")
-  (increment-get-statistic! [this]
-    "Increments cache access counter.")
-  (increment-reload-statistic! [this]
-    "Increments cache reload counter.")
-  (increment-reset-statistic! [this]
-    "Increments cache reset counter.")
-  (increment-upsert-statistic! [this]
-    "Increments cache insert/update counter.")
-  (increment-evict-statistic! [this]
-    "Increments cache evict counter."))
+(def ^{:doc "Value that tells cache to skip entry."} absent ::absent)
+
+(def ^:private initial-statistics {:get 0 :reload 0 :reset 0 :upsert 0 :evict 0})
 
 (defprotocol RefreshableCacheProtocol
   "Protocol for cache wrapper that can refresh the underlying cache."
 
+  (reload! [this]
+    "Reloads the cache to `(reload-fn)`, or `(reload-fn deps)` if `depends-on` was specified.")
   (ensure-initialized! [this]
     "Reloads the cache if it is not ready.")
   (reset! [this]
@@ -43,13 +36,26 @@
   (miss! [this k]
     "Updates the cache for `k` to `(miss-fn k)` and returns the updated value."))
 
-(def ^:private caches (atom nil))
-(def ^:private caches-dag (atom (dep/make-graph)))
+(defprotocol CacheStatisticsProtocol
+  "Run-time cache statistics."
+
+  (export-statistics! [this]
+    "Retrieves runtime statistics from cache, and resets appropriate counters.")
+  (increment-get-statistic! [this]
+    "Increments cache access counter.")
+  (increment-reload-statistic! [this]
+    "Increments cache reload counter.")
+  (increment-reset-statistic! [this]
+    "Increments cache reset counter.")
+  (increment-upsert-statistic! [this]
+    "Increments cache insert/update counter.")
+  (increment-evict-statistic! [this]
+    "Increments cache evict counter."))
 
 (defn get-all-caches [] (some-> @caches vals))
 
 (defn get-cache-dependents [id]
-  (->> (dep/get-dependents @caches-dag id)
+  (->> (dep/get-all-dependents @caches-dag id)
        (map #(get @caches %))))
 
 (defn get-cache-dependencies [id]
@@ -58,14 +64,12 @@
 
 (defn- reset-dependent-caches! [id]
   (when-let [dependents (seq (get-cache-dependents id))]
-    (logr/debug :reset-dependents id {:dependents (mapv :id dependents)})
-    (run! rems.cache/reset! dependents)))
-
-(def ^{:doc "Value that tells cache to skip entry."} absent ::absent)
-
-(def ^:private initial-statistics {:get 0 :reload 0 :reset 0 :upsert 0 :evict 0})
+    (logr/debug ">" id :reset-dependents {:dependents (map :id dependents)})
+    (run! rems.cache/reset! dependents)
+    (logr/debug "<" id :reset-dependents)))
 
 (defrecord RefreshableCache [id
+                             write-lock
                              ^clojure.lang.Volatile statistics
                              ^clojure.lang.Volatile initialized?
                              ^clojure.lang.IAtom the-cache
@@ -86,107 +90,93 @@
 
   RefreshableCacheProtocol
 
+  (reload! [this]
+    (locking write-lock
+      (logr/debug ">" id :reload)
+      (if-let [deps (seq (get-cache-dependencies id))]
+        (w/seed the-cache (reload-fn (into {} (map (juxt :id entries!)) deps)))
+        (w/seed the-cache (reload-fn)))
+      (vreset! initialized? true)
+      (reset-dependent-caches! id)
+      (increment-reload-statistic! this)
+      (logr/debug "<" id :reload {:count (count @the-cache)})))
+
   (ensure-initialized! [this]
-    (increment-get-statistic! this)
-    (when-not @initialized? ; no need to acquire lock if already initialized
-      (logr/debug :reload id)
+    (when-not @initialized?
       (locking id
         (when-not @initialized?
-          (increment-reload-statistic! this)
-          (if-let [deps (->> (get-cache-dependencies id)
-                             (into {} (map (juxt :id entries!)))
-                             not-empty)]
-            (w/seed the-cache (reload-fn deps))
-            (w/seed the-cache (reload-fn)))
-          (vreset! initialized? true)
-          (reset-dependent-caches! id)
-          (logr/info :reload-finish id {:count (count @the-cache)}))))
-    this)
+          (reload! this))))
+    (increment-get-statistic! this)
+    the-cache)
 
   (reset! [this]
     (when @initialized?
-      (logr/debug :reset id)
       (locking id
         (when @initialized?
-          (increment-reset-statistic! this)
-          (w/seed the-cache {})
-          (vreset! initialized? false)
-          (reset-dependent-caches! id)
-          (logr/debug :reset-finish id))))
+          (locking write-lock
+            (logr/debug ">" id :reset)
+            (vreset! initialized? false)
+            (w/seed the-cache {})
+            (increment-reset-statistic! this)
+            (logr/debug "<" id :reset)))))
     this)
 
-  (has? [this k]
-    (ensure-initialized! this)
-    (w/has? the-cache k))
-
   (entries! [this]
-    (ensure-initialized! this)
-    @the-cache)
+    (locking write-lock
+      @(ensure-initialized! this)))
+
+  (has? [this k]
+    (c/has? (entries! this) k))
 
   (lookup! [this k]
-    (ensure-initialized! this)
-    (w/lookup the-cache k))
+    (c/lookup (entries! this) k))
 
   (lookup! [this k not-found]
-    (ensure-initialized! this)
-    (w/lookup the-cache k not-found))
-
-  (lookup-or-miss! [this k]
-    (ensure-initialized! this)
-    (if (w/has? the-cache k)
-      (w/lookup the-cache k)
-
-      (let [value (miss-fn k)
-            skip-update? (= absent value)]
-
-        (when-not skip-update?
-          (increment-upsert-statistic! this)
-          (locking id
-            (w/miss the-cache k value)
-            (reset-dependent-caches! id))
-          value))))
-
-  (evict! [this k]
-    (ensure-initialized! this)
-    (when (w/has? the-cache k)
-      (increment-evict-statistic! this)
-      (locking id
-        (w/evict the-cache k)
-        (reset-dependent-caches! id))
-      (logr/debug :evict-finish id k)))
+    (c/lookup (entries! this) k not-found))
 
   (miss! [this k]
-    (ensure-initialized! this)
-    (let [value (miss-fn k)
-          skip-update? (= absent value)]
+    (locking write-lock
+      (let [value (miss-fn k)]
+        (if (= absent value)
+          (logr/debug id :skip-update k)
+          (do
+            (logr/debug ">" id :upsert k value)
+            (w/miss (ensure-initialized! this) k value)
+            (reset-dependent-caches! id)
+            (increment-upsert-statistic! this)
+            (logr/debug "<" id :upsert k value)
+            value)))))
 
-      (when-not skip-update?
-        (increment-upsert-statistic! this)
-        (locking id
-          (w/miss the-cache k value)
-          (reset-dependent-caches! id))
-        value))))
+  (lookup-or-miss! [this k]
+    (locking write-lock
+      (if (has? this k)
+        (lookup! this k)
+        (miss! this k))))
 
-(defn- make-cache! [cache-factory-fn {:keys [base depends-on id miss-fn reload-fn]} & [cache-opts]]
+  (evict! [this k]
+    (locking write-lock
+      (when (has? this k)
+        (logr/debug ">" id :evict k)
+        (w/evict (ensure-initialized! this) k)
+        (reset-dependent-caches! id)
+        (increment-evict-statistic! this)
+        (logr/debug "<" id :evict k)))))
+
+(defn basic [{:keys [depends-on id miss-fn reload-fn]}]
   (let [initialized? false
         statistics (if (:dev rems.config/env)
                      (select-keys initial-statistics [:reload :reset :upsert :evict]) ; get statistics can become big quickly
                      initial-statistics)
-        the-cache (if cache-opts
-                    (cache-factory-fn (or base {}) cache-opts)
-                    (cache-factory-fn (or base {})))
+        write-lock (Object.)
+        the-cache (w/basic-cache-factory {})
         cache (->RefreshableCache id
+                                  write-lock
                                   (volatile! statistics)
                                   (volatile! initialized?)
-                                  (atom the-cache)
+                                  the-cache
                                   miss-fn
                                   (or reload-fn (constantly {})))]
-    (assert (not (contains? @caches id)) (format "cache id %s already exists" id))
+    (assert (not (contains? @caches id)) (format "error overriding cache id %s" id))
     (swap! caches assoc id cache)
     (swap! caches-dag dep/depend id depends-on) ; noop when empty depends-on
     cache))
-
-(defn basic
-  {:arglists '([{:keys [base depends-on id miss-fn reload-fn]}])}
-  [opts]
-  (make-cache! c/basic-cache-factory opts))

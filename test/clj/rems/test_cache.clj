@@ -1,9 +1,12 @@
 (ns rems.test-cache
-  (:require [clojure.test :refer [deftest is testing]]
+  (:require [clojure.pprint]
+            [clojure.test :refer [deftest is testing]]
             [clojure.tools.logging.test :as log-test]
             [clojure.walk]
+            [medley.core :refer [assoc-some]]
             [rems.cache :as cache]
-            [rems.common.dependency :as dep]))
+            [rems.common.dependency :as dep])
+  (:import [java.util.concurrent Executors TimeUnit ExecutorService]))
 
 (def ^:private caches (atom nil))
 (def ^:private caches-dag (atom nil))
@@ -75,7 +78,7 @@
         (testing "existing entry should not trigger cache miss"
           (is (= {:value :special}
                  (cache/lookup-or-miss! c :always)))
-          (is (= {:evict 0 :get 1 :reload 0 :reset 0 :upsert 0}
+          (is (= {:evict 0 :get 2 :reload 0 :reset 0 :upsert 0}
                  (cache/export-statistics! c)))
           (is (= {:always {:value :special}}
                  (get-cache-raw c))))
@@ -83,7 +86,7 @@
         (testing "non-existing entry should be added on cache miss"
           (is (= {:value true}
                  (cache/lookup-or-miss! c :a)))
-          (is (= {:evict 0 :get 1 :reload 0 :reset 0 :upsert 1}
+          (is (= {:evict 0 :get 2 :reload 0 :reset 0 :upsert 1}
                  (cache/export-statistics! c)))
           (is (= {:a {:value true}
                   :always {:value :special}}
@@ -103,7 +106,7 @@
         (cache/evict! c :a)
         (is (= nil
                (cache/lookup! c :a)))
-        (is (= {:evict 1 :get 2 :reload 0 :reset 0 :upsert 0}
+        (is (= {:evict 1 :get 3 :reload 0 :reset 0 :upsert 0}
                (cache/export-statistics! c)))
         (is (= {:always {:value :special}}
                (get-cache-raw c)))
@@ -121,7 +124,7 @@
                (cache/lookup! c :new-entry)))
         (is (= {:value true}
                (cache/lookup-or-miss! c :new-entry)))
-        (is (= {:evict 0 :get 3 :reload 0 :reset 0 :upsert 1}
+        (is (= {:evict 0 :get 4 :reload 0 :reset 0 :upsert 1}
                (cache/export-statistics! c)))
         (is (= {:always {:value :special}
                 :new-entry {:value true}}
@@ -139,7 +142,7 @@
     (with-redefs [rems.cache/caches (doto caches (reset! nil))
                   rems.cache/caches-dag (doto caches-dag (reset! (dep/make-graph)))]
       (let [_cache-a (cache/basic {:id :a})]
-        (is (thrown-with-msg? AssertionError #"Assert failed: cache id :a already exists"
+        (is (thrown-with-msg? AssertionError #"Assert failed: error overriding cache id :a"
                               (cache/basic {:id :a}))))))
 
   (testing "can create basic caches with dependencies"
@@ -184,14 +187,16 @@
                    (log-test/the-log)))
             (is (= {3 true}
                    (get-cache-entries cache-c)))
-            (is (= [":reload :c"
-                    ":reload :b"
-                    ":reload :a"
-                    ":reset-dependents :a {:dependents [:b :d]}" ; reset :d is not logged because it is already uninitialized
-                    ":reload-finish :a {:count 1}"
-                    ":reset-dependents :b {:dependents [:c :d]}"
-                    ":reload-finish :b {:count 1}"
-                    ":reload-finish :c {:count 1}"]
+            (is (= ["> :c :reload"
+                    "> :b :reload"
+                    "> :a :reload"
+                    "> :a :reset-dependents {:dependents (:c :b :d)}"
+                    "< :a :reset-dependents"
+                    "< :a :reload {:count 1}"
+                    "> :b :reset-dependents {:dependents (:c :d)}"
+                    "< :b :reset-dependents"
+                    "< :b :reload {:count 1}"
+                    "< :c :reload {:count 1}"]
                    (mapv :message (log-test/the-log)))))
 
           (testing "accessing cache :a does not cause further reloads"
@@ -219,6 +224,201 @@
             (log-test/with-log
               (is (= {4 true}
                      (get-cache-entries cache-d)))
-              (is (= [":reload :d"
-                      ":reload-finish :d {:count 1}"]
+              (is (= ["> :d :reload"
+                      "< :d :reload {:count 1}"]
                      (mapv :message (log-test/the-log)))))))))))
+
+(defn- submit-all [^ExecutorService thread-pool & tasks]
+  (doall (for [task tasks]
+           (.submit thread-pool ^Callable task))))
+
+(defmacro with-timing [& body]
+  `(let [start# (System/nanoTime)
+         value# (do ~@body)
+         end# (System/nanoTime)]
+     [start# end# value#]))
+
+(deftest test-cache-transactions
+  (with-redefs [rems.cache/caches (doto caches (reset! nil))
+                rems.cache/caches-dag (doto caches-dag (reset! (dep/make-graph)))]
+    (let [;; worker writes to current-a
+          ;;   cache a reads from current-a
+          ;;   cache a resets dependent-a and dependent-c
+          current-a (atom 0)
+          ;; worker writes to current-b
+          ;;   cache b reads from current-b
+          ;;   cache b resets dependent-b
+          current-b (atom 0)
+          ;; separate event logs to minimize test latency on event ordering
+          reader-a-events (atom [])
+          reader-b-events (atom [])
+          reader-c-events (atom [])
+          writer-a-events (atom [])
+          writer-b-events (atom [])
+          resetter-events (atom [])
+
+          cache-a (cache/basic {:id :a
+                                :miss-fn (fn [_id]
+                                           (let [value @current-a]
+                                             (Thread/sleep (+ 2 (rand-int 5)))
+                                             value))
+                                :reload-fn (fn []
+                                             (let [value @current-a]
+                                               (Thread/sleep (+ 2 (rand-int 5)))
+                                               {:a value}))})
+          cache-b (cache/basic {:id :b
+                                :miss-fn (fn [_id]
+                                           (let [value @current-b]
+                                             (Thread/sleep (+ 2 (rand-int 5)))
+                                             value))
+                                :reload-fn (fn []
+                                             (let [value @current-b]
+                                               (Thread/sleep (+ 2 (rand-int 5)))
+                                               {:b value}))})
+          ;; worker reads from dependent-a
+          ;;   dependent a reads from cache a
+          dependent-a (cache/basic {:id :dependent-a
+                                    :depends-on [:a]
+                                    :reload-fn (fn [deps]
+                                                 (:a deps))})
+          ;; worker reads from dependent-b
+          ;;   dependent-b reads from cache-b
+          dependent-b (cache/basic {:id :dependent-b
+                                    :depends-on [:b]
+                                    :reload-fn (fn [deps]
+                                                 (:b deps))})
+          ;; worker reads from dependent-c
+          ;;   dependent c reads from cache a and cache b
+          dependent-c (cache/basic {:id :dependent-c
+                                    :depends-on [:a :dependent-b]
+                                    :reload-fn (fn [deps]
+                                                 (merge (:a deps) (:dependent-b deps)))})
+          iteration-count (atom 0)
+          finished? #(<= 20 @iteration-count)
+          make-progress! #(swap! iteration-count inc)
+          thread-pool (Executors/newCachedThreadPool)]
+      (try
+        (submit-all thread-pool
+                    (fn cache-reader-a [] (while true
+                                            (Thread/sleep (+ 2 (rand-int 5)))
+                                            (let [[start end value] (with-timing (cache/lookup! dependent-a :a))]
+                                              (swap! reader-a-events conj [:lookup :cache-reader-a {:a value
+                                                                                                    :start start
+                                                                                                    :end end}]))))
+                    (fn cache-reader-b [] (while true
+                                            (Thread/sleep (+ 2 (rand-int 5)))
+                                            (let [[start end value] (with-timing (cache/lookup! dependent-b :b))]
+                                              (swap! reader-b-events conj [:lookup :cache-reader-b {:b value
+                                                                                                    :start start
+                                                                                                    :end end}]))))
+                    (fn cache-reader-c [] (while true
+                                            (Thread/sleep (+ 2 (rand-int 5)))
+                                            (let [[start end value] (with-timing (cache/entries! dependent-c))]
+                                              (swap! reader-c-events conj [:lookup :cache-reader-c (merge value
+                                                                                                          {:start start
+                                                                                                           :end end})]))))
+                    (fn cache-writer-a [] (while (not (finished?))
+                                            (Thread/sleep (+ 2 (rand-int 5)))
+                                            (let [expected (swap! current-a inc)
+                                                  [start end value] (with-timing (cache/miss! cache-a :a))]
+                                              (swap! writer-a-events conj [:update :cache-writer-a {:a value
+                                                                                                    :expected expected
+                                                                                                    :start start
+                                                                                                    :end end}]))))
+                    (fn cache-writer-b [] (while (not (finished?))
+                                            (Thread/sleep (+ 2 (rand-int 5)))
+                                            (let [expected (swap! current-b inc)
+                                                  [start end value] (with-timing (cache/miss! cache-b :b))]
+                                              (swap! writer-b-events conj [:update :cache-writer-b {:b value
+                                                                                                    :expected expected
+                                                                                                    :start start
+                                                                                                    :end end}]))))
+                    (fn cache-resetter [] (while (not (finished?))
+                                            (Thread/sleep 200)
+                                            (let [[start end] (with-timing (run! cache/reset! [cache-a
+                                                                                               cache-b
+                                                                                               dependent-a
+                                                                                               dependent-b
+                                                                                               dependent-c]))]
+                                              (swap! resetter-events conj [:reset :cache-resetter {:start start
+                                                                                                   :end end}])))))
+        (while (not (finished?))
+          (make-progress!)
+          (println "starting iteration" @iteration-count)
+          (Thread/sleep 50))
+        (finally
+          (println "terminating thread pool")
+          (doto thread-pool
+            (.shutdownNow)
+            (.awaitTermination 30 TimeUnit/SECONDS))))
+
+      (let [raw-events (->> (concat @reader-a-events
+                                    @reader-b-events
+                                    @reader-c-events
+                                    @writer-a-events
+                                    @writer-b-events
+                                    @resetter-events)
+                            (map (fn [[event-type id arg-map]]
+                                   [event-type id (-> arg-map
+                                                      (dissoc :start)
+                                                      (assoc :duration (format "%.3fms"
+                                                                               (/ (- (:end arg-map) (:start arg-map))
+                                                                                  (* 1000.0 1000.0)))))]))
+                            (sort-by (fn [[_event-type _id arg-map]]
+                                       (:end arg-map))))
+            result (->> raw-events
+                        (reduce (fn [m [event-type id arg-map]]
+                                  (let [state (dissoc m :read-count :reads :writes)]
+                                    (case event-type
+                                      ;; when upstream state is committed to cache
+                                      :update (-> m
+                                                  (assoc-some :a (:a arg-map)
+                                                              :b (:b arg-map))
+                                                  (update :writes conj (assoc (select-keys arg-map [:a :b :expected])
+                                                                              :id id
+                                                                              :state state)))
+                                      ;; when cache is read from
+                                      :lookup (-> m
+                                                  (update-in [:read-count id] (fnil inc 0))
+                                                  (update :reads conj (assoc (select-keys arg-map [:a :b])
+                                                                             :id id
+                                                                             :state state)))
+                                      m)))
+                                {:a 0 :b 0 :reads [] :writes []}))
+            valid-read-event? (fn [{:keys [a b id state]}]
+                                (case id
+                                  :cache-reader-a (= (:a state) a)
+                                  :cache-reader-b (= (:b state) b)
+                                  ;; dependency resolver does not lock all reads
+                                  :cache-reader-c (cond
+                                                    (= (:a state) a) (>= (:b state) b)
+                                                    (= (:b state) b) (>= (:a state) a)
+                                                    ;; at least one dependency must not be stale though
+                                                    :else false)))
+            valid-write-event? (fn [{:keys [a b expected id state]}]
+                                 (case id
+                                   ;; updates must be sequential
+                                   :cache-writer-a (= a expected (inc (:a state)))
+                                   :cache-writer-b (= b expected (inc (:b state)))))]
+        ;; for local debugging
+        #_(do
+            (spit "debug-cache-transactions-test-raw-events.edn"
+                  (binding [clojure.pprint/*print-right-margin* 150]
+                    (with-out-str
+                      (clojure.pprint/pprint raw-events))))
+            (spit "debug-cache-transactions-test.edn"
+                  (binding [clojure.pprint/*print-right-margin* 150]
+                    (with-out-str
+                      (clojure.pprint/pprint result)))))
+        (testing "no deadlock"
+          (is (< 1 (:a result)))
+          (is (< 1 (:b result)))
+          (is (< 1 (get-in result [:read-count :cache-reader-a] 0)))
+          (is (< 1 (get-in result [:read-count :cache-reader-b] 0)))
+          (is (< 1 (get-in result [:read-count :cache-reader-c] 0))))
+
+        (testing "all cache writes happen in correct order"
+          (is (= [] (remove valid-write-event? (:writes result)))))
+
+        (testing "all cache reads happen in correct order"
+          (is (= [] (remove valid-read-event? (:reads result)))))))))
