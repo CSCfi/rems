@@ -54,19 +54,9 @@
 
 (defn get-all-caches [] (some-> @caches vals))
 
-(defn get-cache-dependents [id]
-  (->> (dep/get-all-dependents @caches-dag id)
-       (map #(get @caches %))))
-
 (defn get-cache-dependencies [id]
   (->> (dep/get-dependencies @caches-dag id)
        (map #(get @caches %))))
-
-(defn- reset-dependent-caches! [id]
-  (when-let [dependents (seq (get-cache-dependents id))]
-    (logr/debug ">" id :reset-dependents {:dependents (map :id dependents)})
-    (run! rems.cache/reset! dependents)
-    (logr/debug "<" id :reset-dependents)))
 
 (defrecord RefreshableCache [id
                              write-lock
@@ -97,7 +87,6 @@
         (w/seed the-cache (reload-fn (into {} (map (juxt :id entries!)) deps)))
         (w/seed the-cache (reload-fn)))
       (vreset! initialized? true)
-      (reset-dependent-caches! id)
       (increment-reload-statistic! this)
       (logr/debug "<" id :reload {:count (count @the-cache)})))
 
@@ -142,7 +131,6 @@
           (do
             (logr/debug ">" id :upsert k value)
             (w/miss (ensure-initialized! this) k value)
-            (reset-dependent-caches! id)
             (increment-upsert-statistic! this)
             (logr/debug "<" id :upsert k value)
             value)))))
@@ -158,9 +146,14 @@
       (when (has? this k)
         (logr/debug ">" id :evict k)
         (w/evict (ensure-initialized! this) k)
-        (reset-dependent-caches! id)
         (increment-evict-statistic! this)
         (logr/debug "<" id :evict k)))))
+
+(defn- reset-dependent-caches-on-change! [id _cache _old-value _new-value]
+  (when-let [dependents (seq (dep/get-all-dependents @caches-dag id))]
+    (logr/debug ">" id :reset-dependents {:dependents dependents})
+    (run! #(rems.cache/reset! (get @caches %)) dependents)
+    (logr/debug "<" id :reset-dependents)))
 
 (defn basic [{:keys [depends-on id miss-fn reload-fn]}]
   (let [initialized? false
@@ -178,5 +171,6 @@
                                   (or reload-fn (constantly {})))]
     (assert (not (contains? @caches id)) (format "error overriding cache id %s" id))
     (swap! caches assoc id cache)
+    (add-watch the-cache id reset-dependent-caches-on-change!)
     (swap! caches-dag dep/depend id depends-on) ; noop when empty depends-on
     cache))
