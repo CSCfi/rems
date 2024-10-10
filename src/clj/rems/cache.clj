@@ -58,7 +58,7 @@
 (defrecord RefreshableCache [id
                              write-lock
                              ^clojure.lang.Volatile statistics
-                             ^clojure.lang.Volatile initialized?
+                             ^clojure.lang.IAtom initialized?
                              ^clojure.lang.IAtom the-cache
                              ^clojure.lang.IFn miss-fn
                              ^clojure.lang.IFn reload-fn]
@@ -82,7 +82,7 @@
       (if-let [deps (seq (get-cache-dependencies id))]
         (w/seed the-cache (reload-fn (into {} (map (juxt :id entries!)) deps)))
         (w/seed the-cache (reload-fn)))
-      (vreset! initialized? true)
+      (reset! initialized? true)
       (increment-reload-statistic! this)
       (logr/debug "<" id :reload {:count (count @the-cache)})))
 
@@ -143,6 +143,7 @@
     (logr/debug "<" id :reset-dependents)))
 
 (defn basic [{:keys [depends-on id miss-fn reload-fn]}]
+  (assert (not (contains? @caches id)) (format "error overriding cache id %s" id))
   (let [initialized? false
         statistics (if (:dev rems.config/env)
                      (select-keys initial-statistics [:reload :upsert :evict]) ; :get statistics can become big quickly
@@ -152,11 +153,10 @@
         cache (->RefreshableCache id
                                   write-lock
                                   (volatile! statistics)
-                                  (volatile! initialized?)
+                                  (atom initialized?)
                                   the-cache
                                   miss-fn
                                   (or reload-fn (constantly {})))]
-    (assert (not (contains? @caches id)) (format "error overriding cache id %s" id))
     (swap! caches assoc id cache)
     (add-watch the-cache id reset-dependent-caches-on-change!)
     (swap! caches-dag dep/depend id depends-on) ; noop when empty depends-on
