@@ -3,8 +3,11 @@
             [clojure.core.cache.wrapped :as w]
             [clojure.tools.logging.readable :as logr]
             [medley.core :refer [update-existing]]
+            [mount.core :as mount]
             [rems.common.dependency :as dep]
-            [rems.config]))
+            [rems.concurrency :as concurrency]
+            [rems.config])
+  (:import [java.util.concurrent CountDownLatch TimeUnit]))
 
 (def ^:private caches (atom nil))
 (def ^:private caches-dag (atom (dep/make-graph)))
@@ -55,7 +58,72 @@
   (->> (dep/get-dependencies @caches-dag id)
        (map #(get @caches %))))
 
+(mount/defstate dependency-loaders
+  :start (do
+           (logr/info "starting dependency-loaders thread pool")
+           (concurrency/work-stealing-thread-pool))
+  :stop (when dependency-loaders
+          (logr/info "stopping dependency-loaders thread pool")
+          (concurrency/stop! dependency-loaders {:timeout-ms 5000})))
+
+(defn submit-tasks! [& fns]
+  (concurrency/submit! dependency-loaders fns))
+
+(def ^:dynamic ^:private *cache* nil)
+(def ^:dynamic ^:private *cache-deps* nil)
+(def ^:dynamic ^:private *finished* nil)
+(def ^:dynamic ^:private *progress* nil)
+
+(defn- create-join-dependency-task
+  "Creates a low-level threaded function that joins `cache` dependency into `cache-deps`.
+   Synchronizes via `progress` and `finished` with other threads."
+  [cache cache-deps finished progress]
+  (binding [*cache* cache
+            *cache-deps* cache-deps
+            *finished* finished
+            *progress* progress]
+    (bound-fn []
+      (let [w-lock (:write-lock *cache*)
+            r-lock (:read-lock *cache*)]
+        (locking r-lock ; synchronizes access with other dependency joiners
+          (locking w-lock ; ensure cache state is unchanged while this thread reads (and potentially writes)
+            (let [id (:id *cache*)
+                  entries @(ensure-initialized! *cache*)]
+              (swap! *cache-deps* assoc id entries))
+            (.countDown *progress*) ; signal progress to parent thread
+            (.await *finished*))))))) ; once all dependency joiners are finished
+
+(defn- create-reset-dependent-task
+  "Creates a low-level threaded function that sets `cache` into uninitialized state, triggering
+   next cache access to reload. Synchronizes via `progress` and `finished` with other threads."
+  [cache finished progress]
+  (binding [*cache* cache
+            *finished* finished
+            *progress* progress]
+    (bound-fn []
+      (if (not @(:initialized? *cache*))
+        (.countDown *progress*) ; bail out early
+        (let [r-lock (:read-lock *cache*)]
+          (locking r-lock
+            (set-uninitialized! *cache*)
+            (.countDown *progress*)
+            (.await *finished*)))))))
+
+(defn- reset-dependents-on-change! [id _cache _old-value _new-value]
+  (when-let [dependents (seq (dep/get-all-dependents @caches-dag id))]
+    (let [finished (CountDownLatch. 1)
+          progress (CountDownLatch. (count dependents))]
+      (logr/debug ">" id :reset-dependents {:dependents dependents})
+      (submit-tasks! (for [dep-id dependents]
+                       (create-reset-dependent-task (get @caches dep-id)
+                                                    finished
+                                                    progress)))
+      (.await progress 3000 TimeUnit/MILLISECONDS)
+      (.countDown finished)
+      (logr/debug "<" id :reset-dependents))))
+
 (defrecord RefreshableCache [id
+                             read-lock
                              write-lock
                              ^clojure.lang.Volatile statistics
                              ^clojure.lang.IAtom initialized?
@@ -79,18 +147,30 @@
   (reload! [this]
     (locking write-lock
       (logr/debug ">" id :reload)
-      (if-let [deps (seq (get-cache-dependencies id))]
-        (w/seed the-cache (reload-fn (into {} (map (juxt :id entries!)) deps)))
-        (w/seed the-cache (reload-fn)))
+      (let [deps (get-cache-dependencies id)]
+        (cond
+          (empty? deps)
+          (w/seed the-cache (reload-fn))
+
+          :else
+          ;; XXX: dependency resolver can synchronize immediate dependencies, but
+          ;; it does not properly synchronize transitive dependencies (so they might every now and then be off sync).
+          ;; this might be workable by e.g. passing latches down.
+          (let [finished (CountDownLatch. 1)
+                progress  (CountDownLatch. (count deps))
+                cache-deps (atom {})]
+            (submit-tasks! (for [c deps]
+                             (create-join-dependency-task c cache-deps finished progress)))
+            (.await progress 3000 TimeUnit/MILLISECONDS)
+            (w/seed the-cache (reload-fn @cache-deps))
+            (.countDown finished))))
       (reset! initialized? true)
       (increment-reload-statistic! this)
       (logr/debug "<" id :reload {:count (count @the-cache)})))
 
   (ensure-initialized! [this]
     (when-not @initialized?
-      (locking id
-        (when-not @initialized?
-          (reload! this))))
+      (reload! this))
     (increment-get-statistic! this)
     the-cache)
 
@@ -136,21 +216,17 @@
         (increment-evict-statistic! this)
         (logr/debug "<" id :evict k)))))
 
-(defn- reset-dependent-caches-on-change! [id _cache _old-value _new-value]
-  (when-let [dependents (seq (dep/get-all-dependents @caches-dag id))]
-    (logr/debug ">" id :reset-dependents {:dependents dependents})
-    (run! #(rems.cache/reset! (get @caches %)) dependents)
-    (logr/debug "<" id :reset-dependents)))
-
 (defn basic [{:keys [depends-on id miss-fn reload-fn]}]
   (assert (not (contains? @caches id)) (format "error overriding cache id %s" id))
   (let [initialized? false
         statistics (if (:dev rems.config/env)
                      (select-keys initial-statistics [:reload :upsert :evict]) ; :get statistics can become big quickly
                      initial-statistics)
+        read-lock (Object.)
         write-lock (Object.)
         the-cache (w/basic-cache-factory {})
         cache (->RefreshableCache id
+                                  read-lock
                                   write-lock
                                   (volatile! statistics)
                                   (atom initialized?)
@@ -158,6 +234,6 @@
                                   miss-fn
                                   (or reload-fn (constantly {})))]
     (swap! caches assoc id cache)
-    (add-watch the-cache id reset-dependent-caches-on-change!)
     (swap! caches-dag dep/depend id depends-on) ; noop when empty depends-on
+    (add-watch the-cache id reset-dependents-on-change!)
     cache))

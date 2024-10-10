@@ -1,12 +1,27 @@
 (ns rems.test-cache
-  (:require [clojure.pprint]
-            [clojure.test :refer [deftest is testing]]
+  (:require [clj-time.core :as time]
+            [clojure.pprint]
+            [clojure.test :refer [deftest is testing use-fixtures]]
             [clojure.tools.logging.test :as log-test]
             [clojure.walk]
             [medley.core :refer [assoc-some]]
+            [mount.core :as mount]
             [rems.cache :as cache]
-            [rems.common.dependency :as dep])
-  (:import [java.util.concurrent Executors TimeUnit ExecutorService]))
+            [rems.common.dependency :as dep]
+            [rems.concurrency :as concurrency]))
+
+(mount/defstate cache-transactions-thread-pool
+  :start (concurrency/cached-thread-pool {:thread-prefix "test-cache-transactions"})
+  :stop (some-> cache-transactions-thread-pool
+                (concurrency/stop! {:timeout-ms (time/in-millis (time/seconds 10))})))
+
+(defn- submit-all [thread-pool & fns]
+  (concurrency/submit! thread-pool fns))
+
+(use-fixtures :each (fn [f]
+                      (mount/start #'rems.cache/dependency-loaders #'cache-transactions-thread-pool)
+                      (f)
+                      (mount/stop #'rems.cache/dependency-loaders #'cache-transactions-thread-pool)))
 
 (def ^:private caches (atom nil))
 (def ^:private caches-dag (atom nil))
@@ -214,10 +229,6 @@
                       "< :d :reload {:count 1}"]
                      (mapv :message (log-test/the-log)))))))))))
 
-(defn- submit-all [^ExecutorService thread-pool & tasks]
-  (doall (for [task tasks]
-           (.submit thread-pool ^Callable task))))
-
 (defmacro with-timing [& body]
   `(let [start# (System/nanoTime)
          value# (do ~@body)
@@ -276,15 +287,14 @@
           ;; worker reads from dependent-c
           ;;   dependent c reads from cache a and cache b
           dependent-c (cache/basic {:id :dependent-c
-                                    :depends-on [:a :dependent-b]
+                                    :depends-on [:a :b]
                                     :reload-fn (fn [deps]
-                                                 (merge (:a deps) (:dependent-b deps)))})
-          iteration-count (atom 0)
-          finished? #(<= 20 @iteration-count)
-          make-progress! #(swap! iteration-count inc)
-          thread-pool (Executors/newCachedThreadPool)]
+                                                 (merge (:a deps) (:b deps)))})
+          progress (atom 0)
+          finished? #(<= 20 @progress)
+          make-progress! #(swap! progress inc)]
       (try
-        (submit-all thread-pool
+        (submit-all cache-transactions-thread-pool
                     (fn cache-reader-a [] (while true
                                             (Thread/sleep (+ 2 (rand-int 5)))
                                             (let [[start end value] (with-timing (cache/lookup! dependent-a :a))]
@@ -330,13 +340,12 @@
                                                                                                    :end end}])))))
         (while (not (finished?))
           (make-progress!)
-          (println "starting iteration" @iteration-count)
+          (println "progress" @progress)
           (Thread/sleep 50))
         (finally
-          (println "terminating thread pool")
-          (doto thread-pool
-            (.shutdownNow)
-            (.awaitTermination 30 TimeUnit/SECONDS))))
+          (println "terminating test thread pool")
+          (mount/stop #'cache-transactions-thread-pool)
+          (mount/stop #'rems.cache/dependency-loaders)))
 
       (let [raw-events (->> (concat @reader-a-events
                                     @reader-b-events
@@ -375,12 +384,8 @@
                                 (case id
                                   :cache-reader-a (= (:a state) a)
                                   :cache-reader-b (= (:b state) b)
-                                  ;; dependency resolver does not lock all reads
-                                  :cache-reader-c (cond
-                                                    (= (:a state) a) (>= (:b state) b)
-                                                    (= (:b state) b) (>= (:a state) a)
-                                                    ;; at least one dependency must not be stale though
-                                                    :else false)))
+                                  :cache-reader-c (and (= (:a state) a)
+                                                       (= (:b state) b))))
             valid-write-event? (fn [{:keys [a b expected id state]}]
                                  (case id
                                    ;; updates must be sequential
