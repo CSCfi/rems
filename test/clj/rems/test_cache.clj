@@ -235,6 +235,9 @@
          end# (System/nanoTime)]
      [start# end# value#]))
 
+(defn- random-wait []
+  (Thread/sleep (+ 1 (rand-int 3))))
+
 (deftest test-cache-transactions
   (with-redefs [rems.cache/caches (doto caches (reset! nil))
                 rems.cache/caches-dag (doto caches-dag (reset! (dep/make-graph)))]
@@ -257,20 +260,20 @@
           cache-a (cache/basic {:id :a
                                 :miss-fn (fn [_id]
                                            (let [value @current-a]
-                                             (Thread/sleep (+ 2 (rand-int 5)))
+                                             (random-wait)
                                              value))
                                 :reload-fn (fn []
                                              (let [value @current-a]
-                                               (Thread/sleep (+ 2 (rand-int 5)))
+                                               (random-wait)
                                                {:a value}))})
           cache-b (cache/basic {:id :b
                                 :miss-fn (fn [_id]
                                            (let [value @current-b]
-                                             (Thread/sleep (+ 2 (rand-int 5)))
+                                             (random-wait)
                                              value))
                                 :reload-fn (fn []
                                              (let [value @current-b]
-                                               (Thread/sleep (+ 2 (rand-int 5)))
+                                               (random-wait)
                                                {:b value}))})
           ;; worker reads from dependent-a
           ;;   dependent a reads from cache a
@@ -296,25 +299,25 @@
       (try
         (submit-all cache-transactions-thread-pool
                     (fn cache-reader-a [] (while true
-                                            (Thread/sleep (+ 2 (rand-int 5)))
+                                            (random-wait)
                                             (let [[start end value] (with-timing (cache/lookup! dependent-a :a))]
                                               (swap! reader-a-events conj [:lookup :cache-reader-a {:a value
                                                                                                     :start start
                                                                                                     :end end}]))))
                     (fn cache-reader-b [] (while true
-                                            (Thread/sleep (+ 2 (rand-int 5)))
+                                            (random-wait)
                                             (let [[start end value] (with-timing (cache/lookup! dependent-b :b))]
                                               (swap! reader-b-events conj [:lookup :cache-reader-b {:b value
                                                                                                     :start start
                                                                                                     :end end}]))))
                     (fn cache-reader-c [] (while true
-                                            (Thread/sleep (+ 2 (rand-int 5)))
+                                            (random-wait)
                                             (let [[start end value] (with-timing (cache/entries! dependent-c))]
                                               (swap! reader-c-events conj [:lookup :cache-reader-c (merge value
                                                                                                           {:start start
                                                                                                            :end end})]))))
                     (fn cache-writer-a [] (while (not (finished?))
-                                            (Thread/sleep (+ 2 (rand-int 5)))
+                                            (random-wait)
                                             (let [expected (swap! current-a inc)
                                                   [start end value] (with-timing (cache/miss! cache-a :a))]
                                               (swap! writer-a-events conj [:update :cache-writer-a {:a value
@@ -322,7 +325,7 @@
                                                                                                     :start start
                                                                                                     :end end}]))))
                     (fn cache-writer-b [] (while (not (finished?))
-                                            (Thread/sleep (+ 2 (rand-int 5)))
+                                            (random-wait)
                                             (let [expected (swap! current-b inc)
                                                   [start end value] (with-timing (cache/miss! cache-b :b))]
                                               (swap! writer-b-events conj [:update :cache-writer-b {:b value
