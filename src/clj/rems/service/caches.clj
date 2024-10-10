@@ -10,7 +10,7 @@
 
 (defn reset-all-caches! []
   (logr/info :reset-all)
-  (run! cache/reset! (get-all-caches)))
+  (run! cache/set-uninitialized! (get-all-caches)))
 
 (defn export-all-cache-statistics! []
   (logr/info :statistics-all)

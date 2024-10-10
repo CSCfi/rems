@@ -101,8 +101,7 @@
 (defn delete-application-attachments! [application-id]
   (when-let [attachments (seq (cache/lookup! by-application-id application-id))]
     (run! #(db/delete-attachment! {:id (:attachment/id %)}) attachments)
-    (cache/reset! attachment-cache)
-    (cache/ensure-initialized! attachment-cache)))
+    (cache/set-uninitialized! attachment-cache)))
 
 (s/defschema LicenseAttachmentDb
   {:attachment/id s/Int

@@ -33,7 +33,7 @@
     (testing "user has different userid in userattrs"
       ;; NB: raw db call due testing backwards compatible behavior
       (db/add-user! {:user "different-userid" :userattrs (json/generate-string {:userid "bad"})})
-      (cache/reset! rems.db.users/user-cache)
+      (cache/set-uninitialized! rems.db.users/user-cache)
       (is (= {:userid "bad"
               :name nil
               :email nil}

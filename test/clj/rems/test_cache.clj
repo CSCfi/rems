@@ -41,35 +41,21 @@
                  (get-cache-raw c)))
           (is (= false
                  (deref (:initialized? c))))
-          (is (= {:evict 0 :get 0 :reload 0 :reset 0 :upsert 0}
+          (is (= {:evict 0 :get 0 :reload 0 :upsert 0}
                  (cache/export-statistics! c))))
 
         (testing "entries reloads cache"
           (is (= {:always {:value :special}}
                  (get-cache-entries c)))
-          (is (= {:evict 0 :get 1 :reload 1 :reset 0 :upsert 0}
-                 (cache/export-statistics! c))))
-
-        (testing "reset"
-          (cache/reset! c)
-          (is (= {:evict 0 :get 0 :reload 0 :reset 1 :upsert 0}
-                 (cache/export-statistics! c)))
-          (is (= {}
-                 (get-cache-raw c))))
-
-        (testing "ensure-initialized reloads cache"
-          (cache/ensure-initialized! c)
-          (is (= {:evict 0 :get 1 :reload 1 :reset 0 :upsert 0}
-                 (cache/export-statistics! c)))
-          (is (= {:always {:value :special}}
-                 (get-cache-raw c)))))
+          (is (= {:evict 0 :get 1 :reload 1 :upsert 0}
+                 (cache/export-statistics! c)))))
 
       (testing "lookup"
         (is (= nil
                (cache/lookup! c :a)))
         (is (= {:value :special}
                (cache/lookup! c :always)))
-        (is (= {:evict 0 :get 2 :reload 0 :reset 0 :upsert 0}
+        (is (= {:evict 0 :get 2 :reload 0 :upsert 0}
                (cache/export-statistics! c)))
         (is (= {:always {:value :special}}
                (get-cache-raw c))))
@@ -78,7 +64,7 @@
         (testing "existing entry should not trigger cache miss"
           (is (= {:value :special}
                  (cache/lookup-or-miss! c :always)))
-          (is (= {:evict 0 :get 2 :reload 0 :reset 0 :upsert 0}
+          (is (= {:evict 0 :get 2 :reload 0 :upsert 0}
                  (cache/export-statistics! c)))
           (is (= {:always {:value :special}}
                  (get-cache-raw c))))
@@ -86,7 +72,7 @@
         (testing "non-existing entry should be added on cache miss"
           (is (= {:value true}
                  (cache/lookup-or-miss! c :a)))
-          (is (= {:evict 0 :get 2 :reload 0 :reset 0 :upsert 1}
+          (is (= {:evict 0 :get 2 :reload 0 :upsert 1}
                  (cache/export-statistics! c)))
           (is (= {:a {:value true}
                   :always {:value :special}}
@@ -96,7 +82,7 @@
           (with-redefs [miss-fn (constantly cache/absent)]
             (is (= nil
                    (cache/lookup-or-miss! c :test-skip))))
-          (is (= {:evict 0 :get 1 :reload 0 :reset 0 :upsert 0}
+          (is (= {:evict 0 :get 1 :reload 0 :upsert 0}
                  (cache/export-statistics! c)))
           (is (= {:a {:value true}
                   :always {:value :special}}
@@ -106,14 +92,14 @@
         (cache/evict! c :a)
         (is (= nil
                (cache/lookup! c :a)))
-        (is (= {:evict 1 :get 3 :reload 0 :reset 0 :upsert 0}
+        (is (= {:evict 1 :get 3 :reload 0 :upsert 0}
                (cache/export-statistics! c)))
         (is (= {:always {:value :special}}
                (get-cache-raw c)))
 
         (testing "non-existing entry does nothing"
           (cache/evict! c :does-not-exist)
-          (is (= {:evict 0 :get 1 :reload 0 :reset 0 :upsert 0}
+          (is (= {:evict 0 :get 1 :reload 0 :upsert 0}
                  (cache/export-statistics! c)))
           (is (= {:always {:value :special}}
                  (get-cache-raw c)))))
@@ -124,7 +110,7 @@
                (cache/lookup! c :new-entry)))
         (is (= {:value true}
                (cache/lookup-or-miss! c :new-entry)))
-        (is (= {:evict 0 :get 4 :reload 0 :reset 0 :upsert 1}
+        (is (= {:evict 0 :get 4 :reload 0 :upsert 1}
                (cache/export-statistics! c)))
         (is (= {:always {:value :special}
                 :new-entry {:value true}}
@@ -335,11 +321,11 @@
                                                                                                     :end end}]))))
                     (fn cache-resetter [] (while (not (finished?))
                                             (Thread/sleep 200)
-                                            (let [[start end] (with-timing (run! cache/reset! [cache-a
-                                                                                               cache-b
-                                                                                               dependent-a
-                                                                                               dependent-b
-                                                                                               dependent-c]))]
+                                            (let [[start end] (with-timing (run! cache/set-uninitialized! [cache-a
+                                                                                                           cache-b
+                                                                                                           dependent-a
+                                                                                                           dependent-b
+                                                                                                           dependent-c]))]
                                               (swap! resetter-events conj [:reset :cache-resetter {:start start
                                                                                                    :end end}])))))
         (while (not (finished?))

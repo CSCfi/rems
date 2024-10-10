@@ -1,5 +1,4 @@
 (ns rems.cache
-  (:refer-clojure :exclude [reset!])
   (:require [clojure.core.cache :as c]
             [clojure.core.cache.wrapped :as w]
             [clojure.tools.logging.readable :as logr]
@@ -12,7 +11,7 @@
 
 (def ^{:doc "Value that tells cache to skip entry."} absent ::absent)
 
-(def ^:private initial-statistics {:get 0 :reload 0 :reset 0 :upsert 0 :evict 0})
+(def ^:private initial-statistics {:get 0 :reload 0 :upsert 0 :evict 0})
 
 (defprotocol RefreshableCacheProtocol
   "Protocol for cache wrapper that can refresh the underlying cache."
@@ -21,8 +20,8 @@
     "Reloads the cache to `(reload-fn)`, or `(reload-fn deps)` if `depends-on` was specified.")
   (ensure-initialized! [this]
     "Reloads the cache if it is not ready.")
-  (reset! [this]
-    "Resets the cache to uninitialized state. Next call to ensure-initialized will reload the cache.")
+  (set-uninitialized! [this]
+    "Marks the cache as uninitialized. Next call to ensure-initialized will reload the cache and possible dependencies.")
   (has? [this k]
     "Checks if cache contains `k`.")
   (entries! [this]
@@ -45,8 +44,6 @@
     "Increments cache access counter.")
   (increment-reload-statistic! [this]
     "Increments cache reload counter.")
-  (increment-reset-statistic! [this]
-    "Increments cache reset counter.")
   (increment-upsert-statistic! [this]
     "Increments cache insert/update counter.")
   (increment-evict-statistic! [this]
@@ -74,7 +71,6 @@
 
   (increment-get-statistic! [this] (vswap! statistics update-existing :get inc))
   (increment-reload-statistic! [this] (vswap! statistics update :reload inc))
-  (increment-reset-statistic! [this] (vswap! statistics update :reset inc))
   (increment-upsert-statistic! [this] (vswap! statistics update :upsert inc))
   (increment-evict-statistic! [this] (vswap! statistics update :evict inc))
 
@@ -98,17 +94,8 @@
     (increment-get-statistic! this)
     the-cache)
 
-  (reset! [this]
-    (when @initialized?
-      (locking id
-        (when @initialized?
-          (locking write-lock
-            (logr/debug ">" id :reset)
-            (vreset! initialized? false)
-            (w/seed the-cache {})
-            (increment-reset-statistic! this)
-            (logr/debug "<" id :reset)))))
-    this)
+  (set-uninitialized! [this]
+    (reset! initialized? false))
 
   (entries! [this]
     (locking write-lock
@@ -158,7 +145,7 @@
 (defn basic [{:keys [depends-on id miss-fn reload-fn]}]
   (let [initialized? false
         statistics (if (:dev rems.config/env)
-                     (select-keys initial-statistics [:reload :reset :upsert :evict]) ; get statistics can become big quickly
+                     (select-keys initial-statistics [:reload :upsert :evict]) ; :get statistics can become big quickly
                      initial-statistics)
         write-lock (Object.)
         the-cache (w/basic-cache-factory {})

@@ -66,7 +66,7 @@
                                   :when (some? c)]
                               {id {test-id c}}))))
 
-(defn- sum-total [x] (+ (:get x 0) (:reload x 0) (:reset x 0) (:upsert x 0) (:evict x 0)))
+(defn- sum-total [x] (+ (:get x 0) (:reload x 0) (:upsert x 0) (:evict x 0)))
 
 (defn- enrich-statistics [[cache-id by-test-id]]
   (let [total-stats (apply merge-with + (vals by-test-id))
@@ -114,7 +114,7 @@
                (println (format "Top %d cache users grouped by cache:" top-n-results))
                (println "")
                (run! println (rems.markdown/markdown-table
-                              {:header [:id "%" :get :upsert :evict :reload :reset]
+                              {:header [:id "%" :get :upsert :evict :reload]
                                :rows (get-tabular-data stats)
-                               :row-fn (juxt :id :% :get :upsert :evict :reload :reset)}))))
+                               :row-fn (juxt :id :% :get :upsert :evict :reload)}))))
            result)}))
