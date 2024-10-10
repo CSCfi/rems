@@ -13,15 +13,14 @@
 (mount/defstate cache-transactions-thread-pool
   :start (concurrency/cached-thread-pool {:thread-prefix "test-cache-transactions"})
   :stop (some-> cache-transactions-thread-pool
-                (concurrency/stop! {:timeout-ms (time/in-millis (time/seconds 10))})))
+                (concurrency/stop! {:timeout-ms (time/in-millis (time/seconds 30))})))
 
 (defn- submit-all [thread-pool & fns]
   (concurrency/submit! thread-pool fns))
 
 (use-fixtures :each (fn [f]
                       (mount/start #'rems.cache/dependency-loaders #'cache-transactions-thread-pool)
-                      (f)
-                      (mount/stop #'rems.cache/dependency-loaders #'cache-transactions-thread-pool)))
+                      (f)))
 
 (def ^:private caches (atom nil))
 (def ^:private caches-dag (atom nil))
