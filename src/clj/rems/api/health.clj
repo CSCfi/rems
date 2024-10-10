@@ -1,7 +1,7 @@
 (ns rems.api.health
   (:require [compojure.api.sweet :refer :all]
             [rems.common.git :as git]
-            [rems.db.events :as events]
+            [rems.db.events]
             [ring.util.http-response :refer :all]
             [schema.core :as s])
   (:import org.joda.time.DateTime))
@@ -13,7 +13,7 @@
    :latest-event (s/maybe DateTime)})
 
 (defn- health []
-  (let [latest (events/get-latest-event)]
+  (let [latest (rems.db.events/get-latest-event)]
     ;; unhealthy statuses are currently reported via exceptions, i.e. non-200 status codes
     {:healthy true
      :version git/+version+

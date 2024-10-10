@@ -29,7 +29,9 @@
 
 (defn- rollback-until-just-before [migration-id]
   (let [config (migratus-config)]
+    ;; ensure all migrations [first ... migration-id - 1]
     (migratus.core/migrate-until-just-before config migration-id)
+    ;; these two undo all migrations [migration-id ... last]
     (migratus.core/rollback-until-just-after config migration-id)
     (migratus.core/rollback config)))
 

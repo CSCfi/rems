@@ -7,9 +7,9 @@
             [mount.core :as mount]
             [rems.common.application-util :as application-util]
             [rems.config :refer [env]]
-            [rems.db.applications :as applications]
+            [rems.db.applications]
             [rems.db.core :as db]
-            [rems.db.outbox :as outbox]
+            [rems.db.outbox]
             [rems.ga4gh :as ga4gh]
             [rems.json :as json]
             [rems.plugins :as plugins]
@@ -64,25 +64,25 @@
 
 (defn process-outbox! []
   (doseq [entry (mapv fix-entry-from-db
-                      (outbox/get-due-entries :entitlement-post))]
+                      (rems.db.outbox/get-due-entries :entitlement-post))]
     ;; TODO could send multiple entitlements at once instead of one outbox entry at a time
     (if-let [errors (post-entitlements! (:outbox/entitlement-post entry))]
-      (let [entry (outbox/attempt-failed! entry errors)]
+      (let [entry (rems.db.outbox/attempt-failed! entry errors)]
         (when (not (:outbox/next-attempt entry))
           (log/warn "all attempts to send entitlement post id " (:outbox/id entry) "failed")))
-      (outbox/attempt-succeeded! (:outbox/id entry)))))
+      (rems.db.outbox/attempt-succeeded! (:outbox/id entry)))))
 
 (mount/defstate entitlement-poller
   :start (scheduler/start! "entitlement-poller" process-outbox! (.toStandardDuration (time/seconds 10)))
   :stop (scheduler/stop! entitlement-poller))
 
 (defn- add-to-outbox! [action type entitlements config]
-  (outbox/put! {:outbox/type :entitlement-post
-                :outbox/deadline (time/plus (time/now) (time/days 1)) ;; hardcoded for now
-                :outbox/entitlement-post {:action action
-                                          :type type
-                                          :entitlements entitlements
-                                          :config config}}))
+  (rems.db.outbox/put! {:outbox/type :entitlement-post
+                        :outbox/deadline (time/plus (time/now) (time/days 1)) ;; hardcoded for now
+                        :outbox/entitlement-post {:action action
+                                                  :type type
+                                                  :entitlements entitlements
+                                                  :config config}}))
 
 (defn- grant-entitlements! [application-id user-id resource-ids actor end]
   (log/info "granting entitlements on application" application-id "to" user-id "resources" resource-ids "until" end)
@@ -168,7 +168,7 @@
                      :application.event/resources-changed
                      :application.event/revoked}
                    (:event/type event))
-    (let [application (applications/get-application-internal (:application/id event))]
+    (let [application (rems.db.applications/get-application-internal (:application/id event))]
       ;; performance improvement 2: only need to check entitlements in the "end states"
       (when (contains? #{:application.state/approved
                          :application.state/closed

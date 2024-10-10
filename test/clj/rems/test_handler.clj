@@ -7,7 +7,7 @@
             [rems.handler :refer :all]
             [ring.mock.request :refer :all]))
 
-(use-fixtures :once api-fixture)
+(use-fixtures :each api-fixture)
 
 (deftest test-caching
   (with-redefs [git/+version+ {:version "0.0.0" :revision "abcd1234"}]

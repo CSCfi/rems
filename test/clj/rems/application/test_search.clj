@@ -1,7 +1,7 @@
 (ns ^:integration rems.application.test-search
   (:require [clojure.test :refer :all]
             [rems.application.search :as search]
-            [rems.db.applications :as applications]
+            [rems.db.applications]
             [rems.service.test-data :as test-data]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.db.testing :refer [rollback-db-fixture search-index-fixture test-db-fixture]]))
@@ -9,8 +9,9 @@
 (use-fixtures
   :once
   test-db-fixture
-  rollback-db-fixture
   search-index-fixture)
+
+(use-fixtures :each rollback-db-fixture)
 
 (deftest test-application-search
   ;; generate users with full names and emails
@@ -41,7 +42,7 @@
 
   (testing "find by ID"
     (let [app-id (test-helpers/create-application! {:actor "alice"})
-          app (applications/get-application app-id)
+          app (rems.db.applications/get-application app-id)
           generated (:application/generated-external-id app)
           assigned "1980/0.1234-ext5"]
       (test-helpers/command! {:type :application.command/submit

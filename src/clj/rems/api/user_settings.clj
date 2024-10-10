@@ -2,12 +2,12 @@
   (:require [compojure.api.sweet :refer :all]
             [rems.api.schema :as schema]
             [rems.api.util :refer [extended-logging]]
-            [rems.service.user-settings :as user-settings]
+            [rems.service.user-settings]
             [rems.util :refer [getx-user-id get-user-id]]
             [ring.util.http-response :refer :all]
             [schema.core :as s]))
 
-(def GetUserSettings user-settings/UserSettings)
+(def GetUserSettings rems.service.user-settings/UserSettings)
 
 (s/defschema UpdateUserSettings
   {(s/optional-key :language) s/Keyword
@@ -21,7 +21,7 @@
       :summary "Get user settings"
       :roles #{:logged-in}
       :return GetUserSettings
-      (ok (user-settings/get-user-settings (get-user-id))))
+      (ok (rems.service.user-settings/get-user-settings (get-user-id))))
 
     (PUT "/edit" request
       :summary "Update user settings"
@@ -29,7 +29,7 @@
       :body [settings UpdateUserSettings]
       :return schema/SuccessResponse
       (extended-logging request)
-      (ok (user-settings/update-user-settings! (getx-user-id) settings)))
+      (ok (rems.service.user-settings/update-user-settings! (getx-user-id) settings)))
 
     (PUT "/" request
       :summary "Update user settings, DEPRECATED, will disappear, use /edit instead"
@@ -37,4 +37,4 @@
       :body [settings UpdateUserSettings]
       :return schema/SuccessResponse
       (extended-logging request)
-      (ok (user-settings/update-user-settings! (getx-user-id) settings)))))
+      (ok (rems.service.user-settings/update-user-settings! (getx-user-id) settings)))))

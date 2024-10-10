@@ -1,7 +1,7 @@
 (ns rems.api.catalogue
   (:require [compojure.api.sweet :refer :all]
             [rems.api.schema :as schema]
-            [rems.service.catalogue :as catalogue]
+            [rems.service.catalogue]
             [rems.api.util] ; required for route :roles
             [rems.auth.util :refer [throw-forbidden throw-unauthorized]]
             [rems.config :refer [env]]
@@ -26,9 +26,7 @@
       (cond
         (or (:catalogue-is-public env)
             (roles/has-roles? :logged-in))
-        (ok (catalogue/get-catalogue-table (merge {:join-organization? join-organization}
-                                                  (when-not (apply roles/has-roles? roles/+admin-read-roles+)  ; only admins get enabled and disabled items
-                                                    {:enabled true}))))
+        (ok (rems.service.catalogue/get-catalogue-table {:join-organization? join-organization}))
 
         (not (roles/has-roles? :logged-in))
         (throw-unauthorized)
@@ -43,12 +41,8 @@
       (cond
         (or (:catalogue-is-public env)
             (roles/has-roles? :logged-in))
-        (ok (catalogue/get-catalogue-tree (merge {:archived false
-                                                  :expand-catalogue-data? true
-                                                  :join-organization? join-organization
-                                                  :empty false}
-                                                 (when-not (apply roles/has-roles? roles/+admin-read-roles+)  ; only admins get enabled and disabled items
-                                                   {:enabled true}))))
+        (ok (rems.service.catalogue/get-catalogue-tree {:join-organization? join-organization
+                                                        :empty false}))
 
         (not (roles/has-roles? :logged-in))
         (throw-unauthorized)

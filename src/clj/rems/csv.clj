@@ -1,7 +1,6 @@
-(ns rems.db.csv
+(ns rems.csv
   "Utilities for exporting database contents as CSV"
-  (:require [clj-time.core :as time]
-            [clojure.string :as str]
+  (:require [clojure.string :as str]
             [com.rpl.specter :refer [ALL select]]
             [medley.core :refer [find-first]]
             [rems.config :refer [env]]
@@ -99,7 +98,3 @@
                     :rows (mapv (partial application-to-row form-id) applications)
                     :quote-strings? true
                     :strip-line-returns? true))))
-
-(defn applications-filename []
-  (format "applications_%s.csv" (str/replace (text/localize-time (time/now)) " " "_")))
-

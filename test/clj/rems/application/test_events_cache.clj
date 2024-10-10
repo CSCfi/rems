@@ -4,7 +4,7 @@
             [mount.core :as mount]
             [rems.application.events-cache :as events-cache]
             [rems.db.core :as db]
-            [rems.db.events :as events]
+            [rems.db.events]
             [rems.db.testing :refer [test-db-fixture rollback-db-fixture]]))
 
 (use-fixtures :once test-db-fixture)
@@ -19,7 +19,7 @@
                :event/time (time/now)
                :event/actor ""
                :application/id app-id}]
-    (events/add-event! event)
+    (rems.db.events/add-event! event)
     event))
 
 ;; in case the cache uses mount and somebody forgets to start it

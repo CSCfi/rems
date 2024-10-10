@@ -2,7 +2,7 @@
   (:require [clojure.string :as str]
             [clojure.test :refer :all]
             [rems.api.testing :refer :all]
-            [rems.db.outbox :as outbox]
+            [rems.db.outbox]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.service.test-data :as test-data]
             [rems.handler :refer [handler]]
@@ -37,8 +37,8 @@
   (create-application-in-progress!)
   (testing "sends emails"
     (let [outbox-emails (atom [])]
-      (with-redefs [outbox/puts! (fn [emails]
-                                   (swap! outbox-emails concat emails))]
+      (with-redefs [rems.db.outbox/puts! (fn [emails]
+                                           (swap! outbox-emails concat emails))]
         (let [body (-> (request :post "/api/email/send-handler-reminder")
                        (authenticate test-data/+test-api-key+ "developer")
                        handler
@@ -64,8 +64,8 @@
 
   (testing "sends emails"
     (let [outbox-emails (atom [])]
-      (with-redefs [outbox/puts! (fn [emails]
-                                   (swap! outbox-emails concat emails))]
+      (with-redefs [rems.db.outbox/puts! (fn [emails]
+                                           (swap! outbox-emails concat emails))]
         (let [body (-> (request :post "/api/email/send-reviewer-reminder")
                        (authenticate test-data/+test-api-key+ "developer")
                        handler
@@ -91,8 +91,8 @@
 
   (testing "sends emails"
     (let [outbox-emails (atom [])]
-      (with-redefs [outbox/puts! (fn [emails]
-                                   (swap! outbox-emails concat emails))]
+      (with-redefs [rems.db.outbox/puts! (fn [emails]
+                                           (swap! outbox-emails concat emails))]
         (let [body (-> (request :post "/api/email/send-reminders")
                        (authenticate test-data/+test-api-key+ "developer")
                        handler

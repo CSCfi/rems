@@ -1,6 +1,8 @@
 (ns rems.db.catalogue
   (:require [clj-time.core :as time]
-            [clojure.core.memoize :as memo]
+            [clojure.set]
+            [medley.core :refer [assoc-some]]
+            [rems.cache :as cache]
             [rems.common.util :refer [index-by]]
             [rems.db.core :as db]
             [rems.json :as json]
@@ -17,37 +19,47 @@
 (def ^:private coerce-CatalogueItemData
   (coerce/coercer! CatalogueItemData coerce/string-coercion-matcher))
 
-(def ^:private +localizations-cache-time-ms+ (* 5 60 1000))
+(defn- format-localization [x]
+  (update x :langcode keyword))
 
-(defn- load-catalogue-item-localizations!
-  "Load catalogue item localizations from the database."
-  []
-  (->> (db/get-catalogue-item-localizations)
-       (map #(update-in % [:langcode] keyword))
-       (index-by [:id :langcode])))
+(def catalogue-item-localizations-cache
+  (cache/basic {:id ::catalogue-item-localizations-cache
+                :miss-fn (fn [id]
+                           (if-let [localizations (seq (db/get-catalogue-item-localizations {:id id}))]
+                             (->> localizations
+                                  (map format-localization)
+                                  (index-by [:langcode]))
+                             cache/absent))
+                :reload-fn (fn []
+                             (->> (db/get-catalogue-item-localizations)
+                                  (map format-localization)
+                                  (index-by [:id :langcode])))}))
 
-(defn- get-cache [cache-key]
-  (case cache-key
-    :localizations (load-catalogue-item-localizations!)))
+(defn- parse-catalogue-item-raw [x]
+  (let [data (-> (:catalogueitemdata x) json/parse-string coerce-CatalogueItemData)
+        cat (-> {:id (:id x)
+                 :start (:start x)
+                 :end (:end x)
+                 :archived (:archived x)
+                 :enabled (:enabled x)
+                 :localizations {}
+                 :resource-id (:resource-id x)
+                 :wfid (:workflow-id x)
+                 :formid (:form-id x)
+                 :organization {:organization/id (:organization-id x)}}
+                (assoc-some :categories (not-empty (:categories data))))]
+    cat))
 
-(def ^:private cached (memo/ttl get-cache :ttl/threshold +localizations-cache-time-ms+))
-
-(defn- localize-catalogue-item
-  "Associates localisations into a catalogue item from
-  the preloaded state."
-  [item]
-  (assoc item :localizations (get (cached :localizations) (:id item) {})))
-
-(defn- join-catalogue-item-data [item]
-  (let [catalogueitemdata (json/parse-string (:catalogueitemdata item))]
-    (-> (dissoc item :catalogueitemdata)
-        (merge (coerce-CatalogueItemData catalogueitemdata)))))
-
-(defn catalogueitemdata->json [data]
-  (-> (select-keys data [:categories])
-      (update :categories (fn [categories] (->> categories (mapv #(select-keys % [:category/id])))))
-      validate-catalogueitemdata
-      json/generate-string))
+(def catalogue-item-cache
+  (cache/basic {:id ::catalogue-item-cache
+                :miss-fn (fn [id]
+                           (if-let [cat (db/get-catalogue-item {:id id})]
+                             (parse-catalogue-item-raw cat)
+                             cache/absent))
+                :reload-fn (fn []
+                             (->> (db/get-all-catalogue-items)
+                                  (map parse-catalogue-item-raw)
+                                  (index-by [:id])))}))
 
 (defn now-active?
   ([start end]
@@ -65,24 +77,86 @@
   ([x]
    (assoc-expired (time/now) x))
   ([now x]
-   (assoc x :expired (not (now-active? now (:start x) (:end x))))))
+   (assoc x
+          :expired
+          (not (now-active? now (:start x) (:end x))))))
 
-(defn get-localized-catalogue-items
-  ([]
-   (get-localized-catalogue-items {}))
-  ([query-params]
-   (->> (db/get-catalogue-items query-params)
-        (mapv localize-catalogue-item)
-        (mapv assoc-expired)
-        (mapv join-catalogue-item-data))))
+(defn- localize-catalogue-item [item]
+  (let [localizations (cache/lookup-or-miss! catalogue-item-localizations-cache (:id item))]
+    (-> item
+        (assoc-some :localizations localizations))))
 
-(defn get-localized-catalogue-item
-  ([id]
-   (get-localized-catalogue-item id {:expand-names? true :expand-catalogue-data? true}))
-  ([id query-params]
-   (first (get-localized-catalogue-items (merge {:ids [id]
-                                                 :archived true}
-                                                query-params)))))
+(defn get-catalogue-items []
+  (->> (vals (cache/entries! catalogue-item-cache))
+       (eduction (map assoc-expired)
+                 (map localize-catalogue-item))))
 
-(defn reset-cache! []
-  (memo/memo-clear! cached))
+(defn get-catalogue-item [id]
+  (some-> (cache/lookup-or-miss! catalogue-item-cache id)
+          assoc-expired
+          localize-catalogue-item))
+
+(defn catalogueitemdata->json [data]
+  (-> (select-keys data [:categories])
+      (update :categories (fn [categories] (->> categories (mapv #(select-keys % [:category/id])))))
+      validate-catalogueitemdata
+      json/generate-string))
+
+(defn create-catalogue-item! [{:keys [archived categories enabled form-id localizations organization-id resource-id start workflow-id]
+                               :or {archived false enabled true}}]
+  (let [catalogueitemdata (catalogueitemdata->json (assoc-some {} :categories categories))
+        id (:id (db/create-catalogue-item! (-> {:archived archived
+                                                :enabled enabled
+                                                :form form-id
+                                                :organization organization-id
+                                                :resid resource-id
+                                                :wfid workflow-id
+                                                :catalogueitemdata catalogueitemdata}
+                                               (assoc-some :start start))))]
+    (doseq [[langcode localization] localizations]
+      (db/upsert-catalogue-item-localization! {:id id
+                                               :langcode (name langcode)
+                                               :title (:title localization)
+                                               :infourl (:infourl localization)}))
+    (cache/miss! catalogue-item-localizations-cache id)
+    (cache/miss! catalogue-item-cache id)
+    id))
+
+(defn edit-catalogue-item! [id {:keys [categories localizations organization-id]}]
+  (when organization-id
+    (db/set-catalogue-item-organization! {:id id :organization organization-id}))
+  (doseq [[langcode localization] localizations]
+    (db/upsert-catalogue-item-localization! {:id id
+                                             :langcode (name langcode)
+                                             :title (:title localization)
+                                             :infourl (:infourl localization)}))
+  (when categories
+    (let [catalogueitemdata (catalogueitemdata->json {:categories categories})]
+      (db/set-catalogue-item-data! {:id id :catalogueitemdata catalogueitemdata})))
+
+  (cache/miss! catalogue-item-localizations-cache id)
+  (cache/miss! catalogue-item-cache id)
+  id)
+
+(defn set-attributes!
+  "Convenience function to set one or more attributes."
+  [id {:keys [archived enabled endt] :as opts}]
+  (let [set-archived? (contains? opts :archived)
+        set-enabled? (contains? opts :enabled)
+        set-endt? (contains? opts :endt)]
+
+    (when set-archived?
+      (db/set-catalogue-item-archived! {:id id :archived (true? archived)}))
+    (when set-enabled?
+      (db/set-catalogue-item-enabled! {:id id :enabled (true? enabled)}))
+    (when set-endt?
+      (db/set-catalogue-item-endt! {:id id :end endt}))
+
+    ;; Clear endt in case it has been set in the db. Otherwise we might
+    ;; end up with an enabled item that's not active and can't be made
+    ;; active via the UI.
+    (when (not set-endt?)
+      (when set-enabled?
+        (db/set-catalogue-item-endt! {:id id :end nil}))))
+
+  (cache/miss! catalogue-item-cache id))

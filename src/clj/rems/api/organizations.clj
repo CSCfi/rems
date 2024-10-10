@@ -2,7 +2,7 @@
   (:require [compojure.api.sweet :refer :all]
             [rems.api.schema :as schema]
             [rems.api.util :refer [not-found-json-response extended-logging]] ; required for route :roles
-            [rems.service.organizations :as organizations]
+            [rems.service.organizations]
             [rems.schema-base :as schema-base]
             [rems.util :refer [getx-user-id]]
             [ring.util.http-response :refer :all]
@@ -41,10 +41,10 @@
                      {disabled :- (describe s/Bool "whether to include disabled organizations") false}
                      {archived :- (describe s/Bool "whether to include archived organizations") false}]
       :return [schema-base/OrganizationFull]
-      (ok (organizations/get-organizations (merge {:userid (getx-user-id)
-                                                   :owner owner}
-                                                  (when-not disabled {:enabled true})
-                                                  (when-not archived {:archived false})))))
+      (ok (rems.service.organizations/get-organizations (merge {:userid (getx-user-id)
+                                                                :owner owner}
+                                                               (when-not disabled {:enabled true})
+                                                               (when-not archived {:archived false})))))
 
     (POST "/create" request
       :summary "Create organization"
@@ -52,7 +52,7 @@
       :body [command CreateOrganizationCommand]
       :return CreateOrganizationResponse
       (extended-logging request)
-      (ok (organizations/add-organization! command)))
+      (ok (rems.service.organizations/add-organization! command)))
 
     (PUT "/edit" request
       :summary "Edit organization. Organization owners cannot change the owners."
@@ -61,7 +61,7 @@
       :body [command EditOrganizationCommand]
       :return EditOrganizationResponse
       (extended-logging request)
-      (ok (organizations/edit-organization! command)))
+      (ok (rems.service.organizations/edit-organization! command)))
 
     (PUT "/archived" request
       :summary "Archive or unarchive the organization"
@@ -69,7 +69,7 @@
       :body [command schema/OrganizationArchivedCommand]
       :return schema/SuccessResponse
       (extended-logging request)
-      (ok (organizations/set-organization-archived! command)))
+      (ok (rems.service.organizations/set-organization-archived! command)))
 
     (PUT "/enabled" request
       :summary "Enable or disable the organization"
@@ -77,19 +77,19 @@
       :body [command schema/OrganizationEnabledCommand]
       :return schema/SuccessResponse
       (extended-logging request)
-      (ok (organizations/set-organization-enabled! command)))
+      (ok (rems.service.organizations/set-organization-enabled! command)))
 
     (GET "/available-owners" []
       :summary "List of available owners"
       :roles #{:owner :organization-owner}
       :return AvailableOwners
-      (ok (organizations/get-available-owners)))
+      (ok (rems.service.organizations/get-available-owners)))
 
     (GET "/:organization-id" []
       :summary "Get an organization. Returns more information for owners and handlers."
       :roles #{:logged-in}
       :path-params [organization-id :- (describe s/Str "organization id")]
       :return schema-base/OrganizationFull
-      (if-let [org (organizations/get-organization (getx-user-id) {:organization/id organization-id})]
+      (if-let [org (rems.service.organizations/get-organization (getx-user-id) {:organization/id organization-id})]
         (ok org)
         (not-found-json-response)))))

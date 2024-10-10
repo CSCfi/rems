@@ -1,19 +1,17 @@
 (ns rems.handler
   (:require [clojure.string :as str]
-            [clojure.tools.logging :as log]
             [compojure.core :refer [GET defroutes routes]]
             [compojure.route :as route]
             [mount.core :as mount]
             [rems.api :refer [api-routes]]
-            [rems.service.attachment :as attachment]
-            [rems.service.invitation :as invitation]
-            [rems.service.licenses :as licenses]
+            [rems.service.attachment]
+            [rems.service.catalogue]
+            [rems.service.invitation]
+            [rems.service.licenses]
             [rems.api.util :as api-util]
-            [rems.context :as context]
             [rems.auth.auth :as auth]
             [rems.config :refer [env]]
             [rems.css.styles :as styles]
-            [rems.db.catalogue :as catalogue]
             [rems.db.events] ;; to start events cache
             [rems.email.core] ;; to enable email polling
             [rems.application.eraser] ;; to enable expired application clean-up job
@@ -26,8 +24,7 @@
   (:import [rems.auth UnauthorizedException]))
 
 (defn- resource-to-item [resource]
-  (let [items (->> (catalogue/get-localized-catalogue-items {:resource resource})
-                   (filter :enabled))]
+  (let [items (into [] (rems.service.catalogue/get-catalogue-items {:enabled true :resource resource}))]
     (cond
       (= 0 (count items)) :not-found
       (< 1 (count items)) :not-unique
@@ -46,7 +43,7 @@
 
 (defroutes redirects
   (GET "/accept-invitation" [token]
-    (if-let [invitation (first (invitation/get-invitations {:token token}))]
+    (if-let [invitation (first (rems.service.invitation/get-invitations {:token token}))]
       (cond (:invitation/workflow invitation)
             (redirect (str "/invitation/accept-invitation?type=workflow&token=" token)))
       (redirect (str "/application/accept-invitation/" token))))
@@ -69,8 +66,8 @@
   (GET "/applications/attachment/:attachment-id" [attachment-id]
     (let [attachment-id (Long/parseLong attachment-id)]
       (api-util/check-user)
-      (if-let [attachment (attachment/get-application-attachment (getx-user-id) attachment-id)]
-        (attachment/download attachment)
+      (if-let [attachment (rems.service.attachment/get-application-attachment (getx-user-id) attachment-id)]
+        (rems.service.attachment/download attachment)
         (api-util/not-found-text-response))))
 
   (GET "/applications/:application-id/license-attachment/:license-id/:language" [application-id license-id language]
@@ -78,8 +75,8 @@
           license-id (Long/parseLong license-id)
           language (keyword language)]
       (api-util/check-user)
-      (if-let [attachment (licenses/get-application-license-attachment (getx-user-id) application-id license-id language)]
-        (attachment/download attachment)
+      (if-let [attachment (rems.service.attachment/get-application-license-attachment (getx-user-id) application-id license-id language)]
+        (rems.service.attachment/download attachment)
         (api-util/not-found-text-response)))))
 
 (defn wrap-login-redirect [handler]

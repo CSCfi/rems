@@ -5,7 +5,7 @@
             [rems.handler :refer [handler]]
             [ring.mock.request :refer :all]))
 
-(use-fixtures :once api-fixture)
+(use-fixtures :each api-fixture)
 
 (deftest extra-pages-api-test
   (test-data/create-test-api-key!)

@@ -54,6 +54,39 @@ WHERE 1=1
 /*~ ) ~*/
 ORDER BY ci.id;
 
+-- :name get-all-catalogue-items :? :*
+SELECT 
+  id, 
+  resid AS "resource-id", 
+  wfid AS "workflow-id", 
+  formid AS "form-id", 
+  start, 
+  endt AS "end", 
+  enabled, 
+  archived, 
+  organization AS "organization-id",
+  catalogueitemdata::TEXT
+FROM catalogue_item;
+
+-- :name get-catalogue-item :? :1
+SELECT 
+  id, 
+  resid AS "resource-id", 
+  wfid AS "workflow-id", 
+  formid AS "form-id", 
+  start, 
+  endt AS "end", 
+  enabled, 
+  archived, 
+  organization AS "organization-id",
+  catalogueitemdata::TEXT
+FROM catalogue_item
+WHERE 1=1
+/*~ (when (:id params) */
+  AND id = :id
+/*~ ) ~*/
+;
+
 -- :name set-catalogue-item-enabled! :!
 UPDATE catalogue_item
 SET enabled = :enabled
@@ -134,6 +167,7 @@ INSERT INTO resource
 (resid, organization, resourcedata)
 VALUES (:resid, :organization, :resourcedata::jsonb);
 
+-- XXX: unused function?
 -- :name update-resource! :!
 UPDATE resource
 SET (resid, organization, resourcedata) = (:resid, :organization, :resourcedata::jsonb)
@@ -154,7 +188,12 @@ SELECT current_database();
 
 -- :name get-catalogue-item-localizations :? :*
 SELECT catid AS id, langcode, title, infoUrl
-FROM catalogue_item_localization;
+FROM catalogue_item_localization
+WHERE 1=1
+/*~ (when (:id params) */
+  AND catid = :id
+/*~ ) ~*/
+;
 
 -- :name upsert-catalogue-item-localization! :insert
 -- TODO now that we have the catalogue_item_localization_unique
@@ -315,12 +354,11 @@ SET data = decode('', 'hex')
 WHERE id = :id;
 
 -- :name get-attachment :? :1
-SELECT id, appid, filename, userId, type, data FROM attachment
+SELECT data FROM attachment
 WHERE id = :id;
 
--- :name get-attachments :? :*
-SELECT id, appid, filename, userId, type
-FROM attachment;
+-- :name get-attachments-metadata :? :*
+SELECT id, appid, filename, userId, type FROM attachment;
 
 -- :name get-attachment-metadata :? :1
 SELECT id, appid, filename, userId, type FROM attachment
@@ -369,8 +407,15 @@ VALUES
 DELETE FROM license_attachment WHERE id = :id;
 
 -- :name get-license-attachment :? :1
-SELECT filename, type, data FROM license_attachment
-WHERE id = :attachmentId;
+SELECT data FROM license_attachment
+WHERE id = :id;
+
+-- :name get-license-attachment-metadata :? :1
+SELECT id, userid, filename, type, start FROM license_attachment
+WHERE id = :id;
+
+-- :name get-license-attachments-metadata :? :*
+SELECT id, userid, filename, type, start FROM license_attachment;
 
 -- :name create-license-localization! :insert
 INSERT INTO license_localization
@@ -444,6 +489,7 @@ SELECT
   wf.workflowBody::TEXT as workflow, wf.enabled, wf.archived
 FROM workflow wf;
 
+-- XXX: deprecate?
 -- :name get-licenses :? :*
 -- :doc
 -- - Gets application licenses by catalogue item ids
@@ -472,7 +518,12 @@ WHERE lic.id = :id;
 
 -- :name get-license-localizations :? :*
 SELECT licid, langcode, title, textcontent, attachmentid
-FROM license_localization;
+FROM license_localization
+WHERE 1=1
+/*~ (when (:id params) */
+  AND licid = :id
+/*~ ) ~*/
+;
 
 -- :name get-resources-for-license :? :*
 SELECT resid FROM resource_licenses WHERE licid = :id;
@@ -637,13 +688,18 @@ WHERE prefix = :prefix
 INSERT INTO external_application_id (prefix, suffix)
 VALUES (:prefix, :suffix);
 
--- :name add-blacklist-event! :!
+-- :name add-blacklist-event! :insert
 INSERT INTO blacklist_event (eventdata)
-VALUES (:eventdata::jsonb);
+VALUES (:eventdata::jsonb)
+RETURNING id;
 
 -- :name update-blacklist-event! :!
 UPDATE blacklist_event
 SET eventdata = :eventdata::jsonb
+WHERE id = :id;
+
+-- :name get-blacklist-event :? :1
+SELECT id as "event/id", eventdata::text FROM blacklist_event
 WHERE id = :id;
 
 -- :name get-blacklist-events :? :*
@@ -655,8 +711,7 @@ WHERE 1=1
 /*~ (when (:userid params) */
   AND eventdata->>'userid' = :userid
 /*~ ) ~*/
-ORDER BY id ASC
-;
+ORDER BY id ASC;
 
 -- :name put-to-outbox! :insert
 INSERT INTO outbox (outboxData)
@@ -722,7 +777,8 @@ ORDER BY time ASC;
 SELECT id, data::text as data FROM organization;
 
 -- :name get-organization-by-id :? :1
-SELECT id, data::text as data FROM organization WHERE id = :id;
+SELECT id, data::text as data FROM organization
+WHERE id = :id;
 
 -- :name add-organization! :insert
 INSERT INTO organization(id, data) VALUES (:id, :data::jsonb)

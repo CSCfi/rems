@@ -1,11 +1,11 @@
 (ns rems.api.catalogue-items
   (:require [clojure.string :as str]
             [compojure.api.sweet :refer :all]
+            [medley.core :refer [assoc-some]]
             [rems.api.schema :as schema]
-            [rems.service.catalogue :as catalogue]
+            [rems.service.catalogue]
             [rems.api.util :refer [not-found-json-response check-user extended-logging]] ; required for route :roles
             [rems.common.roles :refer [+admin-write-roles+]]
-            [rems.common.util :refer [apply-filters]]
             [rems.schema-base :as schema-base]
             [ring.swagger.json-schema :as rjs]
             [ring.util.http-response :refer :all]
@@ -81,13 +81,13 @@
                      {disabled :- (describe s/Bool "whether to include disabled items") false}
                      {expired :- (describe s/Bool "whether to include expired items") false}]
       :return GetCatalogueItemsResponse
-      (ok (apply-filters
-           (merge (when-not expired {:expired false})
-                  (when-not disabled {:enabled true})
-                  (when-not archived {:archived false}))
-           (catalogue/get-localized-catalogue-items {:resource resource
-                                                     :expand-names? (str/includes? (or expand "") "names")
-                                                     :archived archived}))))
+      (ok (rems.service.catalogue/get-catalogue-items
+           ;; nil = dont filter this attribute
+           (assoc-some {:archived (when-not archived false)
+                        :enabled (when-not disabled true)
+                        :expired (when-not expired false)}
+                       :expand-names? (when expand (str/includes? expand "names"))
+                       :resource resource))))
 
     (POST "/:item-id/change-form" request
       :summary "Change catalogue item form. Creates a copy and ends the old. DEPRECATED, will disappear, use /update instead"
@@ -97,8 +97,8 @@
       :responses {200 {:schema ChangeFormResponse}
                   404 {:schema s/Any :description "Not found"}}
       (extended-logging request)
-      (if-let [it (catalogue/get-localized-catalogue-item item-id)]
-        (ok (catalogue/change-form! it (:form command)))
+      (if-let [it (rems.service.catalogue/get-catalogue-item item-id)]
+        (ok (rems.service.catalogue/change-form! it (:form command)))
         (not-found-json-response)))
 
     (POST "/:item-id/update" request
@@ -109,12 +109,12 @@
       :responses {200 {:schema UpdateCatalogueItemResponse}
                   404 {:schema s/Any :description "Not found"}}
       (extended-logging request)
-      (if-let [it (catalogue/get-localized-catalogue-item item-id)]
-        (ok (catalogue/update! it
-                               (merge (when (contains? command :form)
-                                        {:form-id (:form command)})
-                                      (when (contains? command :workflow)
-                                        {:workflow-id (:workflow command)}))))
+      (if-let [it (rems.service.catalogue/get-catalogue-item item-id)]
+        (ok (rems.service.catalogue/update! it
+                                            (merge (when (contains? command :form)
+                                                     {:form-id (:form command)})
+                                                   (when (contains? command :workflow)
+                                                     {:workflow-id (:workflow command)}))))
         (not-found-json-response)))
 
     (GET "/:item-id" []
@@ -122,9 +122,9 @@
       :path-params [item-id :- (describe s/Int "catalogue item")]
       :responses {200 {:schema schema/CatalogueItem}
                   404 {:schema s/Any :description "Not found"}}
-
       (check-user)
-      (if-let [it (catalogue/get-localized-catalogue-item item-id)]
+      ;; XXX: deprecate :expand-names? parameter
+      (if-let [it (rems.service.catalogue/get-catalogue-item item-id {:expand-names? true})]
         (ok it)
         (not-found-json-response)))
 
@@ -134,7 +134,7 @@
       :body [command CreateCatalogueItemCommand]
       :return CreateCatalogueItemResponse
       (extended-logging request)
-      (ok (catalogue/create-catalogue-item! command)))
+      (ok (rems.service.catalogue/create-catalogue-item! command)))
 
     (PUT "/edit" request
       :summary "Edit a catalogue item"
@@ -142,9 +142,9 @@
       :body [command EditCatalogueItemCommand]
       :return schema/SuccessResponse
       (extended-logging request)
-      (if (nil? (catalogue/get-localized-catalogue-item (:id command)))
+      (if (nil? (rems.service.catalogue/get-catalogue-item (:id command)))
         (not-found-json-response)
-        (ok (catalogue/edit-catalogue-item! command))))
+        (ok (rems.service.catalogue/edit-catalogue-item! command))))
 
     (PUT "/archived" request
       :summary "Archive or unarchive catalogue item"
@@ -152,7 +152,7 @@
       :body [command schema/ArchivedCommand]
       :return schema/SuccessResponse
       (extended-logging request)
-      (ok (catalogue/set-catalogue-item-archived! command)))
+      (ok (rems.service.catalogue/set-catalogue-item-archived! command)))
 
     (PUT "/enabled" request
       :summary "Enable or disable catalogue item"
@@ -160,4 +160,4 @@
       :body [command schema/EnabledCommand]
       :return schema/SuccessResponse
       (extended-logging request)
-      (ok (catalogue/set-catalogue-item-enabled! command)))))
+      (ok (rems.service.catalogue/set-catalogue-item-enabled! command)))))
