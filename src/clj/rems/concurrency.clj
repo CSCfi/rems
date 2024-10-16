@@ -34,15 +34,31 @@
   (.submit thread-pool task))
 
 (defn submit! [^ExecutorService thread-pool & tasks]
-  (into []
-        (map (partial submit-one! thread-pool))
-        (flatten tasks)))
+  (doall
+   (for [task (flatten tasks)]
+     (submit-one! thread-pool task))))
 
-(defn stop!
+(defn shutdown!
+  "Initiates an orderly shutdown in which previously submitted tasks are executed,
+   but no new tasks will be accepted.
+   
+   If `timeout-ms` is provided, blocks until all tasks have completed execution after
+   a shutdown request, or the timeout occurs, or the current thread is interrupted,
+   whichever happens first."
+  [^ExecutorService thread-pool & [{:keys [timeout-ms]}]]
+  (.shutdown thread-pool)
+  (when timeout-ms
+    (when-not (.awaitTermination thread-pool timeout-ms TimeUnit/MILLISECONDS)
+      (throw (IllegalStateException. "did not terminate")))))
+
+(defn shutdown-now!
   "Attempts to stop all actively executing tasks and halts the processing of waiting tasks.
-   Blocks until all tasks have completed execution after a shutdown request, or the timeout occurs,
-   or the current thread is interrupted, whichever happens first."
-  [^ExecutorService thread-pool {:keys [timeout-ms]}]
+   
+   If `timeout-ms` is provided, blocks until all tasks have completed execution after
+   a shutdown request, or the timeout occurs, or the current thread is interrupted,
+   whichever happens first."
+  [^ExecutorService thread-pool & [{:keys [timeout-ms]}]]
   (.shutdownNow thread-pool)
-  (when-not (.awaitTermination thread-pool timeout-ms TimeUnit/MILLISECONDS)
-    (throw (IllegalStateException. "did not terminate"))))
+  (when timeout-ms
+    (when-not (.awaitTermination thread-pool timeout-ms TimeUnit/MILLISECONDS)
+      (throw (IllegalStateException. "did not terminate")))))
