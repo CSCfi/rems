@@ -3,11 +3,18 @@
   (:import [java.util.concurrent Executors ExecutorService ThreadFactory TimeUnit]))
 
 (defn- create-thread-factory ^ThreadFactory [& [thread-prefix]]
-  (proxy [java.util.concurrent.ThreadFactory] []
-    (newThread [runnable]
-      (let [thread (.newThread (java.util.concurrent.Executors/defaultThreadFactory) runnable)]
-        (cond-> thread
-          thread-prefix (doto (.setName (str thread-prefix "-" (.getName thread)))))))))
+  (let [default-thread-factory (Executors/defaultThreadFactory)]
+    (proxy [java.util.concurrent.ThreadFactory] []
+      (newThread [runnable]
+        (let [thread (.newThread default-thread-factory runnable)
+              thread-name (if thread-prefix
+                            (str thread-prefix "-" (.getName thread))
+                            (.getName thread))]
+          (doto thread
+            (.setName thread-name)))))))
+
+(defn get-available-processors []
+  (.. Runtime getRuntime availableProcessors))
 
 (defn cached-thread-pool
   "Creates a thread pool that creates new threads as needed, but will reuse previously constructed

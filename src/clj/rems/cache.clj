@@ -60,7 +60,9 @@
 
 (defn- get-thread-pool! []
   (or @dependency-loaders-thread-pool
-      (reset! dependency-loaders-thread-pool (concurrency/work-stealing-thread-pool))))
+      (reset! dependency-loaders-thread-pool
+              ;; XXX: lower parallelism than available processors should not deadlock due to multiple task queues
+              (concurrency/work-stealing-thread-pool {:parallelism 3}))))
 
 (defn shutdown-thread-pool! []
   (some-> @dependency-loaders-thread-pool

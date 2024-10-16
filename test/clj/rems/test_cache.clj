@@ -1,6 +1,7 @@
 (ns rems.test-cache
   (:require [clojure.pprint]
             [clojure.test :refer [deftest is testing]]
+            [clojure.tools.logging.readable :as logr]
             [clojure.tools.logging.test :as log-test]
             [clojure.walk]
             [medley.core :refer [map-vals]]
@@ -312,6 +313,7 @@
 
           cache-transactions-thread-pool (concurrency/cached-thread-pool {:thread-prefix "test-cache-transactions"})]
       (try
+        (logr/info "number of available processors:" (concurrency/get-available-processors))
         (submit-all cache-transactions-thread-pool
                     (fn cache-reader-a [] (while true
                                             (random-wait)
