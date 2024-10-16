@@ -6,8 +6,8 @@
   (:require [clojure.test :refer [deftest is testing]]
             [clj-time.core :as time]
             [rems.common.application-util :as application-util]
-            [rems.db.applications :as applications]
-            [rems.db.users :as users]
+            [rems.db.applications]
+            [rems.db.users]
             [rems.testing-util :refer [with-fixed-time]]))
 
 (def bot-userid "bona-fide-bot")
@@ -174,8 +174,8 @@
                      :application.event/decided}
                    (:event/type event))
     (generate-commands event
-                       (users/get-user (:event/actor event))
-                       (applications/get-application (:application/id event)))))
+                       (rems.db.users/get-user (:event/actor event))
+                       (rems.db.applications/get-application (:application/id event)))))
 
 (defn run-bona-fide-bot [new-events]
   (doall (mapcat #(maybe-generate-commands %)

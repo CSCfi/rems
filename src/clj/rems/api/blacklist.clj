@@ -1,17 +1,18 @@
 (ns rems.api.blacklist
   (:require [clojure.tools.logging :as log]
             [compojure.api.sweet :refer :all]
+            [medley.core :refer [assoc-some]]
             [rems.api.schema :as schema]
             [rems.service.command :as command]
-            [rems.service.blacklist :as blacklist]
+            [rems.service.blacklist]
             [rems.api.util :refer [extended-logging unprocessable-entity-json-response]] ; required for route :roles
             [rems.application.rejecter-bot :as rejecter-bot]
             [rems.common.roles :refer [+admin-read-roles+]]
             [rems.common.util :refer [getx-in]]
-            [rems.db.resource :as resource]
-            [rems.db.users :as users]
-            [rems.db.user-mappings :as user-mappings]
+            [rems.db.user-mappings]
             [rems.schema-base :as schema-base]
+            [rems.service.resource]
+            [rems.service.users]
             [rems.util :refer [getx-user-id]]
             [ring.util.http-response :refer [ok]]
             [schema.core :as s])
@@ -29,12 +30,14 @@
          :blacklist/added-at DateTime))
 
 (defn- user-not-found-error [command]
-  (when-not (users/user-exists? (get-in command [:blacklist/user :userid]))
+  (when-not (rems.service.users/user-exists? (get-in command [:blacklist/user :userid]))
     (unprocessable-entity-json-response "user not found")))
 
 (defn- resource-not-found-error [command]
-  (when-not (resource/ext-id-exists? (get-in command [:blacklist/resource :resource/ext-id]))
+  (when-not (rems.service.resource/ext-id-exists? (get-in command [:blacklist/resource :resource/ext-id]))
     (unprocessable-entity-json-response "resource not found")))
+
+(defn- get-blockable-users [] (rems.service.users/get-users))
 
 (def blacklist-api
   (context "/blacklist" []
@@ -46,14 +49,15 @@
       :query-params [{user :- schema-base/UserId nil}
                      {resource :- s/Str nil}]
       :return [BlacklistEntryWithDetails]
-      (ok (blacklist/get-blacklist {:userid (user-mappings/find-userid user)
-                                    :resource/ext-id resource})))
+      (ok (rems.service.blacklist/get-blacklist (assoc-some nil
+                                                            :userid (rems.db.user-mappings/find-userid user)
+                                                            :resource/ext-id resource))))
 
     (GET "/users" []
       :summary "Existing REMS users available for adding to the blacklist"
       :roles  #{:owner :handler}
       :return [schema-base/UserWithAttributes]
-      (ok (users/get-users)))
+      (ok (get-blockable-users)))
 
     ;; TODO write access to blacklist for organization-owner
 
@@ -63,11 +67,11 @@
       :body [command BlacklistCommand]
       :return schema/SuccessResponse
       (extended-logging request)
-      (let [userid (user-mappings/find-userid (getx-in command [:blacklist/user :userid]))
+      (let [userid (rems.db.user-mappings/find-userid (getx-in command [:blacklist/user :userid]))
             command (assoc-in command [:blacklist/user :userid] userid)]
         (or (user-not-found-error command)
             (resource-not-found-error command)
-            (do (blacklist/add-user-to-blacklist! (getx-user-id) command)
+            (do (rems.service.blacklist/add-user-to-blacklist! (getx-user-id) command)
                 (doseq [cmd (rejecter-bot/reject-all-applications-by userid)]
                   (let [result (command/command! cmd)]
                     (when (:errors result)
@@ -81,9 +85,9 @@
       :body [command BlacklistCommand]
       :return schema/SuccessResponse
       (extended-logging request)
-      (let [userid (user-mappings/find-userid (getx-in command [:blacklist/user :userid]))
+      (let [userid (rems.db.user-mappings/find-userid (getx-in command [:blacklist/user :userid]))
             command (assoc-in command [:blacklist/user :userid] userid)]
         (or (user-not-found-error command)
             (resource-not-found-error command)
-            (do (blacklist/remove-user-from-blacklist! (getx-user-id) command)
+            (do (rems.service.blacklist/remove-user-from-blacklist! (getx-user-id) command)
                 (ok {:success true})))))))

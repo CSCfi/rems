@@ -1,46 +1,61 @@
 (ns rems.service.resource
-  (:require [com.rpl.specter :refer [ALL transform]]
+  (:require [better-cond.core :as b]
+            [clojure.set]
+            [com.rpl.specter :refer [ALL transform]]
             [rems.service.dependencies :as dependencies]
             [rems.service.util :as util]
-            [rems.db.core :as db]
-            [rems.db.licenses :as licenses]
-            [rems.db.organizations :as organizations]
-            [rems.db.resource :as resource]
-            [rems.ext.duo :as duo]))
+            [rems.config]
+            [rems.db.licenses]
+            [rems.db.organizations]
+            [rems.db.resource]
+            [rems.ext.duo :as duo])
+  (:import rems.InvalidRequestException))
+
+(defn- enrich-resource-license [license]
+  (-> (rems.db.licenses/join-license license)
+      rems.db.organizations/join-organization
+      (clojure.set/rename-keys {:license/id :id})))
 
 (defn- join-dependencies [resource]
   (when resource
     (->> resource
-         organizations/join-organization
-         licenses/join-resource-licenses
+         rems.db.organizations/join-organization
          (duo/join-duo-codes [:resource/duo :duo/codes])
-         (transform [:licenses ALL] organizations/join-organization))))
+         (transform [:licenses ALL] enrich-resource-license))))
 
 (defn get-resource [id]
-  (when-let [resource (resource/get-resource id)]
+  (when-let [resource (rems.db.resource/get-resource id)]
     (join-dependencies resource)))
 
 (defn get-resources [filters]
-  (->> (resource/get-resources filters)
+  (->> (rems.db.resource/get-resources filters)
        (mapv join-dependencies)))
+
+(defn ext-id-exists? [ext-id]
+  (rems.db.resource/ext-id-exists? ext-id))
+
+(defn- check-duo-codes! [resource]
+  (b/when-let [duos (seq (map :id (get-in resource [:resource/duo :duo/codes])))
+               unsupported (not-empty (clojure.set/difference (set duos)
+                                                              (set (map :id (duo/get-duo-codes)))))]
+    (throw (InvalidRequestException.
+            (str "Resource contains unsupported DUO codes: " (pr-str unsupported))))))
 
 (defn create-resource! [resource]
   (util/check-allowed-organization! (:organization resource))
-  (let [id (resource/create-resource! resource)]
-    ;; reset-cache! not strictly necessary since resources don't depend on anything, but here for consistency
-    (dependencies/reset-cache!)
+  (check-duo-codes! resource)
+  (let [id (rems.db.resource/create-resource! resource)]
     {:success true
      :id id}))
 
 (defn set-resource-enabled! [{:keys [id enabled]}]
   (util/check-allowed-organization! (:organization (get-resource id)))
-  (db/set-resource-enabled! {:id id :enabled enabled})
+  (rems.db.resource/set-enabled! id enabled)
   {:success true})
 
 (defn set-resource-archived! [{:keys [id archived]}]
   (util/check-allowed-organization! (:organization (get-resource id)))
   (or (dependencies/change-archive-status-error archived {:resource/id id})
       (do
-        (db/set-resource-archived! {:id id
-                                    :archived archived})
+        (rems.db.resource/set-archived! id archived)
         {:success true})))

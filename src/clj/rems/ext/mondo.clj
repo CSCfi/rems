@@ -10,8 +10,8 @@
             [clojure.test :refer [deftest is]]
             [medley.core :refer [find-first update-existing index-by]]
             [com.rpl.specter :refer [ALL filterer must transform]]
-            [com.stuartsierra.dependency :as dep]
             [rems.config]
+            [rems.common.dependency :as dep]
             [rems.github :as github]))
 
 (defn- strip-bom
@@ -114,9 +114,8 @@
                               (mapv #(dissoc % :parents))
                               (index-by :id)))
       (reset! codes-dag (->> codes
-                             (reduce (fn [g {:keys [id parents]}]
-                                       (reduce #(dep/depend %1 id %2) g parents))
-                                     (dep/graph)))))))
+                             (reduce (fn [g code] (dep/depend g (:id code) (:parents code)))
+                                     (dep/make-graph)))))))
 
 (defn- add-mondo-prefix [id]
   (str "MONDO:" id))
@@ -157,7 +156,7 @@
       (ensure-codes-are-loaded)
       (->> code
            strip-mondo-prefix
-           (dep/transitive-dependencies @codes-dag)
+           (dep/get-all-dependencies @codes-dag)
            (map add-mondo-prefix)
            set))
     (do

@@ -16,12 +16,13 @@
             [rems.api.testing :refer [standalone-fixture]]
             [rems.common.util :refer [conj-vec getx parse-int]]
             [rems.config :refer [env]]
-            [rems.db.api-key :as api-key]
+            [rems.db.api-key]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.db.test-data-users :as test-users]
             [rems.service.test-data :as test-data]
             [rems.json :as json]
             [rems.main]
+            [rems.testing-util :refer [get-current-test-name]]
             [rems.util :refer [ensure-empty-directory!]]
             [slingshot.slingshot :refer [try+]])
   (:import [java.net SocketException]))
@@ -171,7 +172,7 @@
 
 (defn- create-test-data [f]
   (test-helpers/assert-no-existing-data!)
-  (api-key/add-api-key! 42 {:comment "test data"})
+  (rems.db.api-key/add-api-key! 42 {:comment "test data"})
   ;; Organizations
   (test-helpers/create-organization! {:actor "owner"})
   (test-helpers/create-organization! {:actor "owner"
@@ -289,11 +290,6 @@
 
 (defn- get-sequence-number []
   (:sequence-number (swap! test-context update :sequence-number (fnil inc 0))))
-
-(defn- get-current-test-name []
-  (if-let [test-var (first clojure.test/*testing-vars*)]
-    (name (symbol test-var))
-    "unknown"))
 
 ;;; etaoin exported
 

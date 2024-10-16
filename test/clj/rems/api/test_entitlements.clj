@@ -3,7 +3,7 @@
             [clojure.string :as str]
             [clojure.test :refer :all]
             [rems.api.testing :refer :all]
-            [rems.db.api-key :as api-key]
+            [rems.db.api-key]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.testing-util :refer [utc-fixture with-fixed-time]]
             [ring.mock.request :refer :all]))
@@ -55,7 +55,7 @@
 
 (deftest entitlements-test
   (with-fixed-time (time/date-time 2010)
-    (api-key/add-api-key! api-key {})
+    (rems.db.api-key/add-api-key! api-key {})
     (test-helpers/create-user! {:userid "alice" :name "Alice Applicant" :email "alice@example.com" :nickname "In Wonderland"})
     ;; don't set malice's email to test the api with nil emails
     (test-helpers/create-user! {:userid "malice" :name "Malice Applicant"})

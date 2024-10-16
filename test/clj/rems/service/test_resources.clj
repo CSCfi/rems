@@ -1,7 +1,7 @@
 (ns ^:integration rems.service.test-resources
   (:require [clojure.test :refer :all]
-            [rems.service.licenses :as licenses]
-            [rems.service.resource :as resources]
+            [rems.service.licenses]
+            [rems.service.resource]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.db.testing :refer [rollback-db-fixture test-db-fixture]]
             [rems.testing-util :refer [with-user]]))
@@ -11,7 +11,7 @@
 
 (defn- status-flags [res-id]
   (with-user "owner"
-    (-> (resources/get-resource res-id)
+    (-> (rems.service.resource/get-resource res-id)
         (select-keys [:enabled :archived]))))
 
 (deftest resource-enabled-archived-test
@@ -23,8 +23,8 @@
           res-id2 (test-helpers/create-resource! {})
 
           archive-license! #(with-user "owner"
-                              (licenses/set-license-archived! {:id lic-id
-                                                               :archived %}))]
+                              (rems.service.licenses/set-license-archived! {:id lic-id
+                                                                            :archived %}))]
 
       (testing "new resources are enabled and not archived"
         (is (= {:enabled true
@@ -32,58 +32,58 @@
                (status-flags res-id))))
 
       ;; reset all to false for the following tests
-      (resources/set-resource-enabled! {:id res-id
-                                        :enabled false})
-      (resources/set-resource-archived! {:id res-id
-                                         :archived false})
+      (rems.service.resource/set-resource-enabled! {:id res-id
+                                                    :enabled false})
+      (rems.service.resource/set-resource-archived! {:id res-id
+                                                     :archived false})
 
       (testing "enable"
-        (resources/set-resource-enabled! {:id res-id
-                                          :enabled true})
+        (rems.service.resource/set-resource-enabled! {:id res-id
+                                                      :enabled true})
         (is (= {:enabled true
                 :archived false}
                (status-flags res-id))))
 
       (testing "disable"
-        (resources/set-resource-enabled! {:id res-id
-                                          :enabled false})
+        (rems.service.resource/set-resource-enabled! {:id res-id
+                                                      :enabled false})
         (is (= {:enabled false
                 :archived false}
                (status-flags res-id))))
 
       (testing "archive"
-        (resources/set-resource-archived! {:id res-id
-                                           :archived true})
+        (rems.service.resource/set-resource-archived! {:id res-id
+                                                       :archived true})
         (is (= {:enabled false
                 :archived true}
                (status-flags res-id))))
 
       (testing "unarchive"
-        (resources/set-resource-archived! {:id res-id
-                                           :archived false})
+        (rems.service.resource/set-resource-archived! {:id res-id
+                                                       :archived false})
         (is (= {:enabled false
                 :archived false}
                (status-flags res-id))))
 
       (testing "cannot unarchive if license is archived"
-        (resources/set-resource-archived! {:id res-id
-                                           :archived true})
+        (rems.service.resource/set-resource-archived! {:id res-id
+                                                       :archived true})
         (archive-license! true)
-        (is (not (:success (resources/set-resource-archived! {:id res-id
-                                                              :archived false}))))
+        (is (not (:success (rems.service.resource/set-resource-archived! {:id res-id
+                                                                          :archived false}))))
         (archive-license! false)
-        (is (:success (resources/set-resource-archived! {:id res-id
-                                                         :archived false}))))
+        (is (:success (rems.service.resource/set-resource-archived! {:id res-id
+                                                                     :archived false}))))
 
       (testing "does not affect unrelated resources"
-        (resources/set-resource-enabled! {:id res-id
-                                          :enabled true})
-        (resources/set-resource-archived! {:id res-id
-                                           :archived true})
-        (resources/set-resource-enabled! {:id res-id2
-                                          :enabled false})
-        (resources/set-resource-archived! {:id res-id2
-                                           :archived false})
+        (rems.service.resource/set-resource-enabled! {:id res-id
+                                                      :enabled true})
+        (rems.service.resource/set-resource-archived! {:id res-id
+                                                       :archived true})
+        (rems.service.resource/set-resource-enabled! {:id res-id2
+                                                      :enabled false})
+        (rems.service.resource/set-resource-archived! {:id res-id2
+                                                       :archived false})
         (is (= {:enabled true
                 :archived true}
                (status-flags res-id)))

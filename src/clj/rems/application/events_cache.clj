@@ -1,6 +1,6 @@
 (ns rems.application.events-cache
   (:require [conman.core :as conman]
-            [rems.db.events :as events]
+            [rems.db.events]
             [rems.db.core :refer [*db*]]
             [rems.util :refer [atom?]]))
 
@@ -15,7 +15,7 @@
 (defn- update-with-new-events [cached update-fn]
   (conman/with-transaction [*db* {:isolation :serializable
                                   :read-only? true}]
-    (let [new-events (events/get-all-events-since (:last-processed-event-id cached))]
+    (let [new-events (rems.db.events/get-all-events-since (:last-processed-event-id cached))]
       (if (empty? new-events)
         cached
         {:state (update-fn (:state cached) new-events)

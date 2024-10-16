@@ -1,7 +1,7 @@
 (ns rems.api.resources
   (:require [compojure.api.sweet :refer :all]
             [rems.api.schema :as schema]
-            [rems.service.resource :as resource]
+            [rems.service.resource]
             [rems.api.util :refer [extended-logging not-found-json-response]] ; required for route :roles
             [rems.common.roles :refer [+admin-read-roles+ +admin-write-roles+]]
             [rems.ext.duo :as duo]
@@ -45,9 +45,9 @@
                      {archived :- (describe s/Bool "whether to include archived resources") false}
                      {resid :- (describe s/Str "optionally filter by resid (external resource identifier)") nil}]
       :return Resources
-      (ok (resource/get-resources (merge (when-not disabled {:enabled true})
-                                         (when-not archived {:archived false})
-                                         (when resid {:resid resid})))))
+      (ok (rems.service.resource/get-resources (merge (when-not disabled {:enabled true})
+                                                      (when-not archived {:archived false})
+                                                      (when resid {:resid resid})))))
 
     (GET "/duo-codes" []
       :summary "Get DUO codes"
@@ -73,7 +73,7 @@
       :roles +admin-read-roles+
       :path-params [resource-id :- (describe s/Int "resource id")]
       :return Resource
-      (if-let [resource (resource/get-resource resource-id)]
+      (if-let [resource (rems.service.resource/get-resource resource-id)]
         (ok resource)
         (not-found-json-response)))
 
@@ -83,7 +83,7 @@
       :body [command CreateResourceCommand]
       :return CreateResourceResponse
       (extended-logging request)
-      (ok (resource/create-resource! command)))
+      (ok (rems.service.resource/create-resource! command)))
 
     (PUT "/archived" request
       :summary "Archive or unarchive resource"
@@ -91,7 +91,7 @@
       :body [command schema/ArchivedCommand]
       :return schema/SuccessResponse
       (extended-logging request)
-      (ok (resource/set-resource-archived! command)))
+      (ok (rems.service.resource/set-resource-archived! command)))
 
     (PUT "/enabled" request
       :summary "Enable or disable resource"
@@ -99,4 +99,4 @@
       :body [command schema/EnabledCommand]
       :return schema/SuccessResponse
       (extended-logging request)
-      (ok (resource/set-resource-enabled! command)))))
+      (ok (rems.service.resource/set-resource-enabled! command)))))

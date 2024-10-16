@@ -1,5 +1,6 @@
 (ns ^:integration rems.api.test-licenses
-  (:require [clojure.test :refer :all]
+  (:require [clojure.java.io]
+            [clojure.test :refer :all]
             [rems.handler :refer [handler]]
             [rems.api.testing :refer :all]
             [rems.db.testing :refer [owners-fixture +test-api-key+]]
@@ -42,11 +43,9 @@
           (let [command {:licensetype "link"
                          :organization {:organization/id "organization1"}
                          :localizations {:en {:title "en title"
-                                              :textcontent "http://example.com/license/en"
-                                              :attachment-id nil}
+                                              :textcontent "http://example.com/license/en"}
                                          :fi {:title "fi title"
-                                              :textcontent "http://example.com/license/fi"
-                                              :attachment-id nil}}}
+                                              :textcontent "http://example.com/license/fi"}}}
                 id (:id (api-call :post "/api/licenses/create" command
                                   +test-api-key+ user))]
             (is id)
@@ -59,11 +58,9 @@
                                        :organization/name {:fi "Organization 1" :en "Organization 1" :sv "Organization 1"}
                                        :organization/short-name {:fi "ORG 1" :en "ORG 1" :sv "ORG 1"}}
                         :localizations {:en {:title "en title"
-                                             :textcontent "http://example.com/license/en"
-                                             :attachment-id nil}
+                                             :textcontent "http://example.com/license/en"}
                                         :fi {:title "fi title"
-                                             :textcontent "http://example.com/license/fi"
-                                             :attachment-id nil}}
+                                             :textcontent "http://example.com/license/fi"}}
                         :enabled true
                         :archived false}
                        license))))))
@@ -72,11 +69,9 @@
           (let [command {:licensetype "text"
                          :organization {:organization/id "organization1"}
                          :localizations {:en {:title "en title"
-                                              :textcontent "en text"
-                                              :attachment-id nil}
+                                              :textcontent "en text"}
                                          :fi {:title "fi title"
-                                              :textcontent "fi text"
-                                              :attachment-id nil}}}
+                                              :textcontent "fi text"}}}
                 body (api-call :post "/api/licenses/create" command
                                +test-api-key+ user)
                 id (:id body)]
@@ -92,11 +87,9 @@
                                        :organization/name {:fi "Organization 1" :en "Organization 1" :sv "Organization 1"}
                                        :organization/short-name {:fi "ORG 1" :en "ORG 1" :sv "ORG 1"}}
                         :localizations {:en {:title "en title"
-                                             :textcontent "en text"
-                                             :attachment-id nil}
+                                             :textcontent "en text"}
                                         :fi {:title "fi title"
-                                             :textcontent "fi text"
-                                             :attachment-id nil}}
+                                             :textcontent "fi text"}}
                         :enabled true
                         :archived false}
                        license))))))

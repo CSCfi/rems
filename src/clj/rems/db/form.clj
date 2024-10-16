@@ -1,10 +1,11 @@
 (ns rems.db.form
-  (:require [clojure.test :refer :all]
-            [medley.core :refer [map-keys filter-vals remove-keys]]
+  (:require [clojure.test :refer [deftest is testing]]
+            [clojure.set]
+            [medley.core :refer [filter-vals]]
             [rems.api.schema :as schema]
+            [rems.cache :as cache]
             [rems.common.form :as common-form]
-            [rems.common.util :refer [apply-filters getx]]
-            [rems.config :refer [env]]
+            [rems.common.util :refer [apply-filters getx index-by]]
             [rems.db.core :as db]
             [rems.json :as json]
             [rems.schema-base :as schema-base]
@@ -15,9 +16,6 @@
 (def ^:private coerce-fields
   (coerce/coercer! [schema/FieldTemplate] coerce/string-coercion-matcher))
 
-(defn- deserialize-fields [fields-json]
-  (coerce-fields (json/parse-string fields-json)))
-
 (s/defschema FormData
   {:form/internal-name s/Str
    :form/external-title schema-base/LocalizedString})
@@ -25,41 +23,36 @@
 (def ^:private coerce-formdata
   (coerce/coercer! FormData coerce/string-coercion-matcher))
 
-(defn- deserialize-formdata [row]
-  (merge (dissoc row :formdata)
-         (coerce-formdata (json/parse-string (:formdata row)))))
+(defn- parse-form-template-raw [x]
+  (let [fields (-> (:fields x) json/parse-string coerce-fields)
+        data (-> (:formdata x) json/parse-string coerce-formdata)
+        form {:form/id (:id x)
+              :form/internal-name (:form/internal-name data)
+              :form/external-title (:form/external-title data)
+              :form/fields fields
+              :form/title (:form/internal-name data) ; XXX: add deprecated title - could this be removed?
+              :archived (:archived x)
+              :enabled (:enabled x)
+              :organization {:organization/id (:organization x)}}]
+    form))
 
-(defn- add-deprecated-title [row]
-  (assoc row :form/title (:form/internal-name row)))
-
-(defn- parse-db-row [row]
-  (-> row
-      (update :fields deserialize-fields)
-      deserialize-formdata
-      (->> (map-keys {:id :form/id
-                      :form/internal-name :form/internal-name
-                      :form/external-title :form/external-title
-                      :organization :organization
-                      :fields :form/fields
-                      :enabled :enabled
-                      :archived :archived})
-           (remove-keys nil?))
-      add-deprecated-title
-      (update :organization (fn [o] {:organization/id o}))))
-
-(defn add-validation-errors [form]
-  (when form
-    (assoc form :form/errors (common-form/validate-form-template form (:languages env)))))
-
-(defn get-form-templates [filters]
-  (->> (db/get-form-templates)
-       (map parse-db-row)
-       (apply-filters filters)
-       doall))
+(def form-template-cache
+  (cache/basic {:id ::form-template-cache
+                :miss-fn (fn [id]
+                           (if-let [form (db/get-form-template {:id id})]
+                             (parse-form-template-raw form)
+                             cache/absent))
+                :reload-fn (fn []
+                             (->> (db/get-form-templates)
+                                  (map parse-form-template-raw)
+                                  (index-by [:form/id])))}))
 
 (defn get-form-template [id]
-  (some-> (db/get-form-template {:id id})
-          parse-db-row))
+  (cache/lookup-or-miss! form-template-cache id))
+
+(defn get-form-templates [& [filters]]
+  (->> (vals (cache/entries! form-template-cache))
+       (into [] (apply-filters filters))))
 
 (defn- validate-given-ids
   "Check that `:field/id` values are distinct, not empty (or not given)."
@@ -104,9 +97,6 @@
     (= :always (get-in field [:field/visibility :visibility/type]))
     (dissoc :field/visibility)))
 
-(defn- normalize-field-definitions [fields]
-  (map normalize-field-definition fields))
-
 (def ^:private validate-fields
   (s/validator [schema/FieldTemplate]))
 
@@ -114,7 +104,7 @@
   (->> (:form/fields form)
        (validate-given-ids)
        (common-form/assign-field-ids)
-       (normalize-field-definitions)
+       (mapv normalize-field-definition)
        (validate-fields)
        (json/generate-string)))
 
@@ -127,23 +117,47 @@
       json/generate-string))
 
 (defn save-form-template! [form]
-  (:id (db/save-form-template! {:organization (:organization/id (:organization form))
-                                :formdata (serialize-formdata {:form/internal-name (:form/internal-name form)
-                                                               :form/external-title (:form/external-title form)})
-                                :fields (serialize-fields form)})))
+  (let [id (:id (db/save-form-template! {:organization (:organization/id (:organization form))
+                                         :formdata (serialize-formdata {:form/internal-name (:form/internal-name form)
+                                                                        :form/external-title (:form/external-title form)})
+                                         :fields (serialize-fields form)}))]
+    (cache/miss! form-template-cache id)
+    id))
 
 (defn edit-form-template! [form]
-  (db/edit-form-template! {:id (:form/id form)
-                           :organization (:organization/id (:organization form))
-                           :formdata (serialize-formdata {:form/internal-name (or (:form/internal-name form) (:form/title form))
-                                                          :form/external-title (:form/external-title form)})
-                           :fields (serialize-fields form)}))
+  (let [id (:form/id form)]
+    (assert id)
+    (db/edit-form-template! {:id id
+                             :organization (:organization/id (:organization form))
+                             :formdata (serialize-formdata {:form/internal-name (or (:form/internal-name form) (:form/title form))
+                                                            :form/external-title (:form/external-title form)})
+                             :fields (serialize-fields form)})
+    (cache/miss! form-template-cache id)
+    id))
 
-(defn update-form-template!
-  "Updates a form template. Not user action like #'edit-form-template! or #'save-form-template! are."
-  [form]
-  (:id (db/update-form-template! {:id (getx form :form/id)
-                                  :organization (:organization/id (:organization form))
-                                  :formdata (serialize-formdata {:form/internal-name (:form/internal-name form)
-                                                                 :form/external-title (:form/external-title form)})
-                                  :fields (serialize-fields form)})))
+(comment
+  (defn update-form-template!
+    "Updates a form template. Not user action like #'edit-form-template! or #'save-form-template! are."
+    [form]
+    (let [id (:id (db/update-form-template! {:id (getx form :form/id)
+                                             :organization (:organization/id (:organization form))
+                                             :formdata (serialize-formdata {:form/internal-name (:form/internal-name form)
+                                                                            :form/external-title (:form/external-title form)})
+                                             :fields (serialize-fields form)}))]
+      (cache/miss! form-template-cache id)
+      id)))
+
+(defn set-enabled! [id enabled?]
+  (assert id)
+  (db/set-form-template-enabled! {:id id :enabled enabled?})
+  (cache/miss! form-template-cache id))
+
+(defn set-archived! [id archived?]
+  (assert id)
+  (db/set-form-template-archived! {:id id :archived archived?})
+  (cache/miss! form-template-cache id))
+
+(defn join-form-template [x]
+  (if-let [id (:form/id x)]
+    (merge x (get-form-template id))
+    x))

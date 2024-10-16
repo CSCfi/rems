@@ -1,8 +1,7 @@
 (ns rems.db.user-settings
   (:require [clojure.string :as str]
-            [clojure.tools.logging :as log]
-            [medley.core :refer [dissoc-in]]
-            [mount.core :as mount]
+            [medley.core :refer [assoc-some map-vals]]
+            [rems.cache :as cache]
             [rems.common.util :refer [+email-regex+]]
             [rems.config :refer [env]]
             [rems.db.core :as db]
@@ -31,51 +30,31 @@
       validate-user-settings
       json/generate-string))
 
-(def ^:private coerce-user-settings
+(def ^:private coerce-DbUserSettings
   (coerce/coercer! DbUserSettings json/coercion-matcher))
 
-(defn- json->settings [json]
-  (when json
-    (-> json
-        json/parse-string
-        coerce-user-settings)))
+(defn- parse-user-settings-raw [x]
+  (when-let [data (some-> (:settings x) json/parse-string)]
+    (let [settings (-> {:language (:language data)}
+                       (assoc-some :notification-email (:notification-email data)))]
+      (coerce-DbUserSettings settings))))
 
-(def user-settings-cache (atom ::uninitialized))
-
-(defn empty-user-settings-cache! []
-  (log/info "Emptying low level user-settings cache")
-  (reset! user-settings-cache {:user-settings-by-id-cache {}}))
-
-(defn reset-user-settings-cache! []
-  (log/info "Resetting low level user-settings cache")
-  (reset! user-settings-cache ::uninitialized))
-
-(defn reload-user-settings-cache! []
-  (log/info "Reloading low level user-settings cache")
-  (let [user-settingss (db/get-user-settings {})
-        new-user-settings-by-id-cache (atom (sorted-map))]
-    (doseq [user-settings user-settingss]
-      (let [fixed-user-settings (-> user-settings
-                                    :settings
-                                    json->settings)
-            id (:userid user-settings)]
-        (log/debug "Loading uncached user-settings:" id)
-        (swap! new-user-settings-by-id-cache assoc id fixed-user-settings)))
-    (reset! user-settings-cache {:user-settings-by-id-cache @new-user-settings-by-id-cache})
-    (log/info "Reloaded low level user-settings cache with" (count user-settingss) "user-settings")))
-
-(mount/defstate low-level-user-settings-cache
-  :start (reload-user-settings-cache!)
-  :stop (reset-user-settings-cache!))
-
-(defn ensure-cache-is-initialized! []
-  (assert (not= ::uninitialized @user-settings-cache)))
+(def user-settings-cache
+  (cache/basic {:id ::user-settings-cache
+                :miss-fn (fn [userid]
+                           (if-let [settings (db/get-user-settings {:user userid})]
+                             (-> settings
+                                 first
+                                 parse-user-settings-raw)
+                             cache/absent))
+                :reload-fn (fn []
+                             (->> (db/get-user-settings {})
+                                  (group-by :userid)
+                                  (map-vals parse-user-settings-raw)))}))
 
 (defn get-user-settings [userid]
-  (ensure-cache-is-initialized!)
   (merge (default-settings)
-         (when userid
-           (get-in @user-settings-cache [:user-settings-by-id-cache userid]))))
+         (cache/lookup-or-miss! user-settings-cache userid)))
 
 (defn validate-new-settings
   "Validates the new settings.
@@ -103,10 +82,10 @@
       (db/update-user-settings! {:user userid
                                  :settings (settings->json
                                             new-user-settings)})
-      (swap! user-settings-cache assoc-in [:user-settings-by-id-cache userid] new-user-settings)
+      (cache/miss! user-settings-cache userid)
       {:success true})
     {:success false}))
 
 (defn delete-user-settings! [userid]
   (db/delete-user-settings! {:user userid})
-  (swap! user-settings-cache dissoc-in [:user-settings-by-id-cache userid]))
+  (cache/evict! user-settings-cache userid))

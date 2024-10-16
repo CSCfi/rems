@@ -1,9 +1,9 @@
 (ns rems.service.invitation
   (:require [rems.service.util :as util]
-            [rems.db.applications :as applications]
-            [rems.db.invitation :as invitation]
-            [rems.db.users :as users]
-            [rems.db.workflow :as workflow]
+            [rems.db.applications]
+            [rems.db.invitation]
+            [rems.db.users]
+            [rems.db.workflow]
             [rems.email.core :as email]
             [medley.core :refer [update-existing]]
             [rems.util :refer [secure-token]]))
@@ -11,8 +11,8 @@
 (defn- join-dependencies [invitation]
   (when invitation
     (-> invitation
-        (update-existing :invitation/invited-by users/join-user)
-        (update-existing :invitation/invited-user users/join-user))))
+        (update-existing :invitation/invited-by rems.db.users/join-user)
+        (update-existing :invitation/invited-user rems.db.users/join-user))))
 
 (defn- apply-user-permissions [userid invitation]
   (dissoc invitation :invitation/token))
@@ -25,7 +25,7 @@
 
 (defn- invalid-workflow-error [cmd]
   (when-let [workflow-id (:workflow-id cmd)]
-    (if-let [workflow (workflow/get-workflow workflow-id)]
+    (if-let [workflow (rems.db.workflow/get-workflow workflow-id)]
       ;; TODO: check for workflow status, or perhaps it's ok to invite to any workflow?
       (let [organization (:organization workflow)]
         (util/check-allowed-organization! organization))
@@ -34,7 +34,7 @@
 
 (defn get-invitations-full [cmd]
   (->> cmd
-       invitation/get-invitations
+       rems.db.invitation/get-invitations
        (mapv join-dependencies)))
 
 (defn get-invitations [cmd]
@@ -56,21 +56,21 @@
 (defn create-invitation! [cmd]
   (or (invalid-invitation-type-error cmd)
       (invalid-workflow-error cmd)
-      (let [id (invitation/create-invitation! (merge {:invitation/name (:name cmd)
-                                                      :invitation/email (:email cmd)
-                                                      :invitation/token (secure-token)
-                                                      :invitation/invited-by {:userid (:userid cmd)}}
-                                                     (when-let [workflow-id (:workflow-id cmd)]
-                                                       {:invitation/workflow {:workflow/id workflow-id}})))]
+      (let [id (rems.db.invitation/create-invitation! (merge {:invitation/name (:name cmd)
+                                                              :invitation/email (:email cmd)
+                                                              :invitation/token (secure-token)
+                                                              :invitation/invited-by {:userid (:userid cmd)}}
+                                                             (when-let [workflow-id (:workflow-id cmd)]
+                                                               {:invitation/workflow {:workflow/id workflow-id}})))]
         (when id
           (email/generate-invitation-emails! (get-invitations-full {:ids [id]})))
         {:success (not (nil? id))
          :invitation/id id})))
 
 (defn accept-invitation! [{:keys [userid token]}]
-  (if-let [invitation (first (invitation/get-invitations {:token token}))]
+  (if-let [invitation (first (rems.db.invitation/get-invitations {:token token}))]
     (if-let [workflow-id (get-in invitation [:invitation/workflow :workflow/id])]
-      (let [workflow (workflow/get-workflow workflow-id)
+      (let [workflow (rems.db.workflow/get-workflow workflow-id)
             handlers (set (map :userid (get-in workflow [:workflow :handlers])))]
         (cond (contains? handlers userid)
               {:success false
@@ -78,10 +78,10 @@
 
               (not (:invitation/accepted invitation))
               (do
-                (workflow/edit-workflow! {:id workflow-id
-                                          :handlers (conj handlers userid)})
-                (invitation/accept-invitation! userid token)
-                (applications/reload-cache!)
+                (rems.db.workflow/edit-workflow! {:id workflow-id
+                                                  :handlers (vec (conj handlers userid))})
+                (rems.db.invitation/accept-invitation! userid token)
+                (rems.db.applications/reload-cache!)
                 {:success true
                  :invitation/workflow {:workflow/id workflow-id}})
 

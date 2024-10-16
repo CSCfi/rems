@@ -241,7 +241,7 @@
                                    +test-api-key+ user-id)]
               (is (not (:success result)))
               (is (= [{:type "t.administration.errors/in-use-by"
-                       :catalogue-items [{:id catalogue-item :localizations {}}]}]
+                       :catalogue-items [{:catalogue-item/id catalogue-item :localizations {}}]}]
                      (:errors result)))))))
 
       (testing "deleting non-existing category returns 404"

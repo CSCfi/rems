@@ -1,7 +1,6 @@
 (ns rems.db.applications
   "Query functions for forms and applications."
-  (:require [clojure.core.cache.wrapped :as cache]
-            [clojure.java.jdbc :as jdbc]
+  (:require [clojure.java.jdbc :as jdbc]
             [clojure.set :as set]
             [clojure.test :refer [deftest is]]
             [clojure.tools.logging :as log]
@@ -12,21 +11,20 @@
             [rems.application.model :as model]
             [rems.auth.util :refer [throw-forbidden]]
             [rems.common.application-util :as application-util]
-            [rems.common.util :refer [conj-set keep-keys]]
+            [rems.common.util :refer [conj-set]]
             [rems.config :refer [env]]
-            [rems.db.attachments :as attachments]
-            [rems.db.blacklist :as blacklist]
-            [rems.db.catalogue :as catalogue]
+            [rems.db.attachments]
+            [rems.db.blacklist]
+            [rems.db.catalogue]
             [rems.db.core :as db]
-            [rems.db.csv :as csv]
-            [rems.db.events :as events]
-            [rems.db.form :as form]
-            [rems.db.licenses :as licenses]
-            [rems.db.users :as users]
-            [rems.db.workflow :as workflow]
-            [rems.permissions :as permissions]
-            [rems.scheduler :as scheduler])
-  (:import [org.joda.time Duration]))
+            [rems.db.events]
+            [rems.db.form]
+            [rems.db.licenses]
+            [rems.db.resource]
+            [rems.db.roles]
+            [rems.db.users]
+            [rems.db.workflow]
+            [rems.permissions :as permissions]))
 
 ;;; Creating applications
 
@@ -54,69 +52,39 @@
 ;;; Running commands
 
 (defn get-catalogue-item-licenses [catalogue-item-id]
-  (let [item (catalogue/get-localized-catalogue-item catalogue-item-id {})
-        workflow-licenses (-> (workflow/get-workflow (:wfid item))
+  (let [item (rems.db.catalogue/get-catalogue-item catalogue-item-id)
+        resource-licenses (:licenses (rems.db.resource/get-resource (:resource-id item)))
+        workflow-licenses (-> (rems.db.workflow/get-workflow (:wfid item))
                               (get-in [:workflow :licenses]))]
-    (->> (licenses/get-licenses {:items [catalogue-item-id]})
-         (keep-keys {:id :license/id})
-         (into workflow-licenses)
-         (distinct-by :license/id))))
+    (->> (concat resource-licenses workflow-licenses)
+         (map #(clojure.set/rename-keys % {:id :license/id}))
+         (distinct-by :license/id)
+         (into []))))
 
 (defn get-application-by-invitation-token [invitation-token]
   (:id (db/get-application-by-invitation-token {:token invitation-token})))
 
 ;;; Fetching applications (for API)
 
-(def ^:private form-template-cache (cache/ttl-cache-factory {}))
-(def ^:private catalogue-item-cache (cache/ttl-cache-factory {}))
-(def ^:private license-cache (cache/ttl-cache-factory {}))
-(def ^:private user-cache (cache/ttl-cache-factory {}))
-(def ^:private users-with-role-cache (cache/ttl-cache-factory {}))
-(def ^:private workflow-cache (cache/ttl-cache-factory {}))
-(def ^:private blacklist-cache (cache/ttl-cache-factory {}))
-
-(defn empty-injections-cache! []
-  (swap! form-template-cache empty)
-  (swap! catalogue-item-cache empty)
-  (swap! license-cache empty)
-  (swap! user-cache empty)
-  (swap! users-with-role-cache empty)
-  (swap! workflow-cache empty)
-  (swap! blacklist-cache empty))
-
-(defn empty-injection-cache!
-  "Sometimes another part of REMS invalidates the injections. While the caches
-  are being reimplemented, we can still offer specific support functions for
-  partial cache refreshes.
-
-  NB: only the necessary invalidations have been implemented"
-  [cache-key]
-  (swap! (case cache-key
-           :blacklisted? blacklist-cache
-           :get-workflow workflow-cache)
-         empty))
-
 (def fetcher-injections
-  {:get-attachments-for-application attachments/get-attachments-for-application
-   :get-form-template #(cache/lookup-or-miss form-template-cache % form/get-form-template)
-   :get-catalogue-item #(cache/lookup-or-miss catalogue-item-cache % (fn [id] (catalogue/get-localized-catalogue-item id {:expand-names? true
-                                                                                                                          :expand-resource-data? true})))
+  {:get-attachments-for-application rems.db.attachments/get-attachments-for-application
+   :get-attachment-metadata rems.db.attachments/get-attachment
+   :get-form-template rems.db.form/get-form-template
+   :get-catalogue-item rems.db.catalogue/get-catalogue-item
+   :get-catalogue-item-licenses get-catalogue-item-licenses
    :get-config (fn [] env)
-   :get-license #(cache/lookup-or-miss license-cache % licenses/get-license)
-   :get-user #(cache/lookup-or-miss user-cache % users/get-user)
-   :get-users-with-role #(cache/lookup-or-miss users-with-role-cache % users/get-users-with-role)
-   :get-workflow #(cache/lookup-or-miss workflow-cache % workflow/get-workflow)
-   :blacklisted? #(cache/lookup-or-miss blacklist-cache [%1 %2] (fn [[userid resource]]
-                                                                  (blacklist/blacklisted? userid resource)))
-   ;; TODO: no caching for these, but they're only used by command handlers currently
-   :get-attachment-metadata attachments/get-attachment-metadata
-   :get-catalogue-item-licenses get-catalogue-item-licenses})
+   :get-license rems.db.licenses/get-license
+   :get-resource rems.db.resource/get-resource
+   :get-user rems.db.users/get-user
+   :get-users-with-role rems.db.roles/get-users-with-role
+   :get-workflow rems.db.workflow/get-workflow
+   :blacklisted? rems.db.blacklist/blacklisted?})
 
 (defn get-application-internal
   "Returns the full application state without any user permission
    checks and filtering of sensitive information. Don't expose via APIs."
   [application-id]
-  (let [events (events/get-application-events application-id)]
+  (let [events (rems.db.events/get-application-events application-id)]
     (if (empty? events)
       nil ; application not found
       (model/build-application-view events fetcher-injections))))
@@ -146,12 +114,6 @@
     (update applications app-id model/application-view event)
     applications))
 
-(defn- ->ApplicationOverview [application]
-  (dissoc application
-          :application/events
-          :application/forms
-          :application/licenses))
-
 (mount/defstate
   ^{:doc "The cached state will contain the following keys:
           ::raw-apps
@@ -180,9 +142,9 @@
 
 (defn- group-apps-by-user [apps]
   (->> apps
-       (mapcat (fn [app]
-                 (for [user (keys (:application/user-roles app))]
-                   [user app])))
+       (eduction (mapcat (fn [app]
+                           (for [user (keys (:application/user-roles app))]
+                             [user app]))))
        (reduce (fn [apps-by-user [user app]]
                  (if user ; test data could have a user without permissions
                    (update apps-by-user user conj app)
@@ -204,7 +166,7 @@
 
 (defn- group-roles-by-user [apps]
   (->> apps
-       (mapcat (fn [app] (:application/user-roles app)))
+       (eduction (mapcat (fn [app] (:application/user-roles app))))
        (reduce (fn [roles-by-user [user roles]]
                  (update roles-by-user user set/union roles))
                {})))
@@ -220,10 +182,10 @@
 
 (defn- group-users-by-role [apps]
   (->> apps
-       (mapcat (fn [app]
-                 (for [[user roles] (:application/user-roles app)
-                       role roles]
-                   [user role])))
+       (eduction (mapcat (fn [app]
+                           (for [[user roles] (:application/user-roles app)
+                                 role roles]
+                             [user role]))))
        (reduce (fn [users-by-role [user role]]
                  (update users-by-role role conj-set user))
                {})))
@@ -243,13 +205,13 @@
               :let [old-user-roles (get old-roles-by-user userid {})
                     old-app-roles (->> old-updated-enriched-apps
                                        vals
-                                       (map :application/user-roles)
-                                       (mapcat #(get % userid))
+                                       (eduction (map :application/user-roles)
+                                                 (mapcat #(get % userid)))
                                        frequencies)
                     new-app-roles (->> new-updated-enriched-apps
                                        vals
-                                       (map :application/user-roles)
-                                       (mapcat #(get % userid))
+                                       (eduction (map :application/user-roles)
+                                                 (mapcat #(get % userid)))
                                        frequencies)]]
 
           [userid (as-> old-user-roles roles
@@ -292,8 +254,7 @@
   ;; - personalized - app for user (no :application/user-roles)
   ;; - updated      - only those that changed this round
   ;; - deleted      - applications that are going away
-  (let [cached-injections (map-vals memoize fetcher-injections)
-        updated-app-ids (set (into updated-app-ids deleted-app-ids)) ; let's consider deleted to be automatically an app to update
+  (let [updated-app-ids (set (into updated-app-ids deleted-app-ids)) ; let's consider deleted to be automatically an app to update
 
         old-raw-apps (::raw-apps state)
         old-enriched-apps (::enriched-apps state)
@@ -308,7 +269,7 @@
                        (apply dissoc apps deleted-app-ids)
                        (doall apps))
         new-updated-raw-apps (select-keys new-raw-apps updated-app-ids)
-        new-updated-enriched-apps (doall (map-vals #(model/enrich-with-injections % cached-injections) new-updated-raw-apps))
+        new-updated-enriched-apps (doall (map-vals #(model/enrich-with-injections % fetcher-injections) new-updated-raw-apps))
         new-enriched-apps (as-> new-updated-enriched-apps apps
                             (merge old-enriched-apps apps)
                             (apply dissoc apps deleted-app-ids)
@@ -377,21 +338,29 @@
       ::enriched-apps
       (vals)))
 
-(defn- get-all-applications-full [userid] ;; full i.e. not overview
+(defn get-all-applications-full
+  "Returns all full, personalized applications for `userid`. Optional `xf` can be applied 
+   to list of application ids before transformation, e.g. search filter."
+  [userid & [xf]] ; full i.e. not overview
   (let [cache (refresh-all-applications-cache!)
         app-ids (get-in cache [::app-ids-by-user userid])
         cached-apps (get-in cache [::enriched-apps])
         personalize-app (fn [app] ; NB: may return nil if should not see the app
-                          (model/apply-user-permissions app userid))
-        apps (->> app-ids
-                  (map cached-apps)
-                  (keep personalize-app))]
-    apps))
+                          (model/apply-user-permissions app userid))]
+    (cond->> app-ids
+      xf (eduction xf)
+      true (eduction (map cached-apps)
+                     (keep personalize-app)))))
 
-(defn get-all-applications [userid]
-  (->> userid
-       get-all-applications-full
-       (map ->ApplicationOverview)))
+(defn- my-application? [app]
+  (some #{:applicant :member} (:application/roles app)))
+
+(defn get-my-applications-full
+  "Returns all full, personalized applications where `userid` is an applying user.
+   Optional `xf` can be applied to list of application ids before transformation, e.g. search filter."
+  [userid & [xf]]
+  (->> (get-all-applications-full userid xf)
+       (eduction (filter my-application?))))
 
 (defn get-all-application-roles [userid]
   (-> (refresh-all-applications-cache!)
@@ -404,33 +373,12 @@
       (get-in [::users-by-role role])
       set))
 
-(defn- my-application? [application]
-  (some #{:applicant :member} (:application/roles application)))
-
-(defn get-my-applications [user-id]
-  (->> (get-all-applications user-id)
-       (filterv my-application?)))
-
-(defn export-applications-for-form-as-csv [user-id form-id language]
-  (let [applications (get-all-applications-full user-id)
-        filtered-applications (filter #(contains? (set (map :form/id (:application/forms %))) form-id) applications)]
-    (csv/applications-to-csv filtered-applications form-id language)))
-
 (defn reload-cache! []
   (log/info "Start rems.db.applications/reload-cache!")
-  (empty-injections-cache!)
   ;; TODO: Here is a small chance that a user will experience a cache miss. Consider rebuilding the cache asynchronously and then `reset!` the cache.
   (events-cache/empty! all-applications-cache)
   (refresh-all-applications-cache!)
   (log/info "Finished rems.db.applications/reload-cache!"))
-
-;; empty the cache occasionally in case some of the injected entities are changed
-(mount/defstate all-applications-cache-reloader
-  :start (scheduler/start! "all-applications-cache-reloader"
-                           reload-cache!
-                           (Duration/standardHours 1)
-                           (select-keys env [:buzy-hours]))
-  :stop (scheduler/stop! all-applications-cache-reloader))
 
 (defn reload-applications! [{:keys [by-userids by-workflow-ids]}]
   ;; NB: try make sure the cache is up to date so we have any new applications present
@@ -462,8 +410,8 @@
   (assert (application-util/draft? (get-application app-id))
           (str "Tried to delete application " app-id " which is not a draft!"))
   (delete-from-all-applications-cache! app-id)
-  (db/delete-application-attachments! {:application app-id})
-  (events/delete-application-events! app-id)
+  (rems.db.attachments/delete-application-attachments! app-id)
+  (rems.db.events/delete-application-events! app-id)
   (let [result (db/delete-application! {:application app-id})]
     (log/infof "Finished deleting application %s" app-id)
     result))

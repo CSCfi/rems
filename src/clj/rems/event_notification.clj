@@ -7,8 +7,8 @@
             [rems.api.schema :as schema]
             [rems.common.util :refer [getx]]
             [rems.config]
-            [rems.db.applications :as applications]
-            [rems.db.outbox :as outbox]
+            [rems.db.applications]
+            [rems.db.outbox]
             [rems.json :as json]
             [rems.scheduler :as scheduler]))
 
@@ -45,25 +45,25 @@
   ;;
   ;; This can be done per target url or globally.
   (log/debug "Trying to send notifications")
-  (let [due-notifications (outbox/get-due-entries :event-notification)]
+  (let [due-notifications (rems.db.outbox/get-due-entries :event-notification)]
     (log/debug (str "Notifications due: " (count due-notifications)))
     (doseq [entry due-notifications]
       (if-let [error (notify! (get-in entry [:outbox/event-notification :target])
                               (get-in entry [:outbox/event-notification :body]))]
-        (let [entry (outbox/attempt-failed! entry error)]
+        (let [entry (rems.db.outbox/attempt-failed! entry error)]
           (when-not (:outbox/next-attempt entry)
             (log/warn "all attempts to send event notification id " (:outbox/id entry) "failed")))
-        (outbox/attempt-succeeded! (:outbox/id entry))))))
+        (rems.db.outbox/attempt-succeeded! (:outbox/id entry))))))
 
 (mount/defstate event-notification-poller
   :start (scheduler/start! "event-notification-poller" process-outbox! (.toStandardDuration (time/seconds 10)))
   :stop (scheduler/stop! event-notification-poller))
 
 (defn- add-to-outbox! [target body]
-  (outbox/put! {:outbox/type :event-notification
-                :outbox/deadline (time/plus (time/now) (time/days 1)) ;; hardcoded for now
-                :outbox/event-notification {:target target
-                                            :body body}}))
+  (rems.db.outbox/put! {:outbox/type :event-notification
+                        :outbox/deadline (time/plus (time/now) (time/days 1)) ;; hardcoded for now
+                        :outbox/event-notification {:target target
+                                                    :body body}}))
 
 (defn wants? [target event]
   (let [whitelist (:event-types target)]
@@ -83,7 +83,7 @@
 (defn queue-notifications! [events]
   (when-let [targets (seq (get rems.config/env :event-notification-targets))]
     (doseq [event events
-            :let [application-part (delay {:event/application (applications/get-application (:application/id event))})]
+            :let [application-part (delay {:event/application (rems.db.applications/get-application (:application/id event))})]
             target targets
             :when (wants? target event)
             :let [body (merge event

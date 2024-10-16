@@ -3,7 +3,7 @@
             [ring.util.http-response :refer [ok]]
             [rems.api.util] ; required for :roles with compojure-api
             [rems.config :refer [env]]
-            [rems.service.permissions :refer [get-jwks get-user-permissions]]
+            [rems.service.permissions]
             [schema.core :as s])
   (:import [rems NotImplementedException]))
 
@@ -26,7 +26,7 @@
        :summary "Experimental. Get JSON Web Key Set (JWKS) (RFC 7517) containing the keys used for signing GA4GH Visas."
        :return GetJWKSResponse
        (or (permissions-api-not-enabled-error)
-           (ok (get-jwks))))
+           (ok (rems.service.permissions/get-jwks))))
      (GET "/permissions/:user" []
        ;; We're trying to replicate https://github.com/CSCfi/elixir-rems-proxy/#get-permissionsusername here
        :summary (str "Experimental. Returns user's permissions in ga4gh visa format. "
@@ -37,5 +37,5 @@
        :query-params [{expired :- (describe s/Bool "whether to include expired permissions") false}]
        :return GetPermissionsResponse
        (or (permissions-api-not-enabled-error)
-           (ok (get-user-permissions {:user user
-                                      :expired expired})))))))
+           (ok (rems.service.permissions/get-user-permissions {:user user
+                                                               :expired expired})))))))
