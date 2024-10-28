@@ -4,7 +4,7 @@ REMS is an open source project and we are open to issues and pull requests from 
 
 Instructions for getting started are in [docs/development.md](docs/development.md). You will also find architecture documentation and more guides in [docs directory](docs/).
 
-You can try things against our [demo instance](https://rems-demo.rahtiapp.fi/).
+You can try things against our [demo instance](https://rems-test.2.rahtiapp.fi/).
 
 See [Good first issue](https://github.com/CSCfi/rems/labels/Good%20First%20Issue) and [Help wanted](https://github.com/CSCfi/rems/labels/Help%20Wanted).
 
