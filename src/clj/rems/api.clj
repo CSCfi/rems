@@ -54,13 +54,13 @@
 
 (defn forbidden-handler
   [exception ex-data request]
-  (log/info "forbidden" (.getMessage exception))
+  (log/info "forbidden" exception (.getMessage exception))
   (-> (forbidden (or (.getMessage exception) "forbidden"))
       (plain-text)))
 
 (defn invalid-handler
   [exception ex-data request]
-  (log/info "bad-request" (.getMessage exception))
+  (log/info "bad-request" exception (.getMessage exception))
   (-> (bad-request (.getMessage exception))
       (plain-text)))
 

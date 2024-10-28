@@ -96,18 +96,19 @@
     (try
       (handler req)
       (catch clojure.lang.ExceptionInfo e
-        (if (auth/get-api-key req) ; not our web app
-          ;; straight error
-          (bad-request (.getMessage e))
-
-          ;; redirect browser to an error page
-          (let [data (ex-data e)
-                url (str "/error?key="
-                         (:key data)
-                         (apply str (for [arg (:args data)]
-                                      (str "&args[]=" arg))))]
-            (log/error e "Error" (with-out-str (some-> data pprint)))
-            (redirect url))))
+        (let [data (ex-data e)]
+          (if (auth/get-api-key req) ; not our web app, or test
+            ;; straight error
+            (do
+              (log/error e "bad-request" (with-out-str (some-> data pprint)))
+              (bad-request (.getMessage e)))
+            ;; redirect browser to an error page
+            (let [url (str "/error?key="
+                           (:key data)
+                           (apply str (for [arg (:args data)]
+                                        (str "&args[]=" arg))))]
+              (log/error e "Error" (with-out-str (some-> data pprint)))
+              (redirect url)))))
       (catch Throwable t
         (log/error t "Internal error" (with-out-str (when-let [data (ex-data t)]
                                                       (pprint data))))
