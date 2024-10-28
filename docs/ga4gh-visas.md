@@ -21,7 +21,7 @@ More info about GA4GH visas:
 Visa support is experimental and has to be enabled with the `:enable-permissions-api` configuration parameter.
 
 After this, the `/api/permissions` API can be used to query visas for a given user.
-[See the API docs in the development environment.](https://rems-dev.rahtiapp.fi/swagger-ui/index.html#/permissions).
+[See the API docs in the development environment.](https://rems-dev.2.rahtiapp.fi/swagger-ui/index.html#/permissions).
 
 The API returns a one
 [ControlledAccessGrant visa](https://github.com/ga4gh-duri/ga4gh-duri.github.io/blob/master/researcher_ids/ga4gh_passport_v1.md#controlledaccessgrants)
