@@ -143,7 +143,7 @@ Experimental support exists for named format parameters, which can be used alter
 
 Custom themes can be used by creating a file, for example `my-custom-theme.edn`, and specifying its location in the `:theme-path` configuration parameter. The theme file can override some or all of the theme attributes (see `:theme` in [config-defaults.edn](https://github.com/CSCfi/rems/blob/master/resources/config-defaults.edn)). Static resources can be placed in a `public` directory next to the theme configuration file. See [example-theme/theme.edn](https://github.com/CSCfi/rems/blob/master/example-theme/theme.edn) for an example.
 
-To quickly validate that all UI components look right navigate to `/guide`. See it in action at <https://rems-demo.rahtiapp.fi/guide>.
+To quickly validate that all UI components look right navigate to `/guide`. See it in action at <https://rems-test.2.rahtiapp.fi/guide>.
 
 Note! REMS sets a Cache-Control max-age of 23 hours for static resources (`:theme-static-resources`, `:extra-static-resources`). Consider using a different filename when updating static resource to avoid caching issues.
 
