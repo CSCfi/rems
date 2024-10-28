@@ -5,7 +5,7 @@
 The REMS API is documented using
 [OpenAPI aka Swagger](https://swagger.io/docs/specification/about/).
 You can check out the API docs using
-[the swagger-ui of the public demo instance](https://rems-demo.rahtiapp.fi/swagger-ui),
+[the swagger-ui of the public demo instance](https://rems-test.2.rahtiapp.fi/swagger-ui),
 or your local development instance at <http://localhost:3000/swagger-ui>.
 
 ## Authentication
