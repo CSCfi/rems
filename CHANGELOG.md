@@ -8,6 +8,9 @@ have notable changes.
 
 Changes since v2.37
 
+### Additions
+- Catalogue tree now supports keyboard interactions for ARIA role="tree". Navigation works with arrow keys and Home/End, tree nodes can be opened/closed with Enter key, and default action (like add to cart) works with Enter key. (#3336)
+
 ### Changes
 - The performance has been improved when there are many handlers. (#3283)
 - The error message "shake" animation has been removed. (#3298)

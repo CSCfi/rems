@@ -219,7 +219,11 @@
     (for [i (range 10)]
       [(str ".bg-depth-" i) {:background-color (str "rgba(0,0,0," (/ i 30.0) ")")}])
     (for [i (range 10)]
-      [(str ".fs-depth-" i) {:font-size (str (format "%.2f" (+ 0.75 (Math/pow 2 (- i)))) "rem")}])
+      [(str ".fs-depth-" i) {:font-size (u/rem (Math/max 1.0 (case i
+                                                               0 1.75
+                                                               1 1.5
+                                                               2 1.375
+                                                               (- 1.25 (* 0.05 (- i 3))))))}])
     (for [i (range 10)]
       [(str ".pad-depth-" i) {:padding-left (u/rem (* 1.8 i))}])]
 
@@ -236,7 +240,12 @@
    ;;   which means that it should have a good contrast with light background.
    ;;   This could be made explicit by changing the name accordingly.
    [:.text-highlight {:color (theme-getx :color3)
-                      :font-weight "bold"}]))
+                      :font-weight "bold"}]
+   ;; copies Bootstrap header (h1, h2, ...) styles for non-header element
+   [:.tree-header {:font-weight 500
+                   :line-height 1.2
+                   :margin-top 0
+                   :margin-bottom 0}]))
 
 (defn- form-group []
   {:position "relative"

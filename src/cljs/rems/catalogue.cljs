@@ -1,5 +1,7 @@
 (ns rems.catalogue
   (:require [re-frame.core :as rf]
+            [reagent.core :as r]
+            [reagent.format :as rfmt]
             [rems.application-list :as application-list]
             [rems.common.application-util :refer [form-fields-editable?]]
             [rems.atoms :as atoms :refer [external-link document-title document-title]]
@@ -8,12 +10,14 @@
             [rems.fetcher :as fetcher]
             [rems.flash-message :as flash-message]
             [rems.common.roles :as roles]
+            [rems.common.util :refer [andstr]]
             [rems.config]
             [rems.globals]
             [rems.spinner :as spinner]
             [rems.table :as table]
             [rems.tree :as tree]
-            [rems.text :refer [text text-format get-localized-title]]))
+            [rems.text :refer [text text-format get-localized-title localized]]
+            [rems.util :refer [get-dom-element]]))
 
 (rf/reg-event-fx
  ::enter-page
@@ -67,6 +71,35 @@
    (str "/application?items=" (:id item))
    (text :t.cart/apply)])
 
+(defn- click-apply-button [row-key root-id]
+  (let [selector (rfmt/format "#%s [data-row='%s'] .apply-for-catalogue-item"
+                              root-id row-key)]
+    (some-> (get-dom-element selector)
+            .click)))
+
+(defn- row-command [item cart-item-ids]
+  (cond
+    (not (:enable-cart @rems.globals/config))
+    [apply-button item]
+
+    (contains? cart-item-ids (:id item))
+    [cart/remove-from-cart-button item]
+
+    :else
+    [cart/add-to-cart-button item]))
+
+(defn- perform-row-command [item cart-item-ids root-id]
+  (when-not (:category/id item)
+    (cond
+      (not (:enable-cart @rems.globals/config))
+      (click-apply-button (:id item) (name root-id))
+
+      (contains? cart-item-ids (:id item))
+      (rf/dispatch [:rems.cart/remove-item (:id item)])
+
+      :else
+      (rf/dispatch [:rems.cart/add-item item]))))
+
 (rf/reg-sub
  ::catalogue-table-rows
  (fn [_ _]
@@ -79,12 +112,7 @@
               :name {:value (get-localized-title item)}
               :commands {:display-value [:div.commands.flex-nowrap.justify-content-end
                                          [catalogue-item-more-info item]
-                                         (when @roles/logged-in?
-                                           (if (:enable-cart @rems.globals/config)
-                                             (if (contains? cart-item-ids (:id item))
-                                               [cart/remove-from-cart-button item]
-                                               [cart/add-to-cart-button item])
-                                             (apply-button item)))]}})
+                                         [row-command item cart-item-ids]]}})
            catalogue))))
 
 (defn draft-application-list []
@@ -112,25 +140,27 @@
                    :default-sort-column :name}])
 
 (defn- catalogue-tree []
-  (let [language @rems.config/current-language
-        cart @(rf/subscribe [:rems.cart/cart])
+  (let [cart @(rf/subscribe [:rems.cart/cart])
         cart-item-ids (set (map :id cart))
+        get-row-details-id (fn [id] 
+                             (str (name ::catalogue-tree) "-" id "-details"))
         catalogue {:id ::catalogue-tree
                    :row-key #(or (some->> (:category/id %) (str "category_"))
                                  (:id %))
                    :show-matching-parents? (:catalogue-tree-show-matching-parents @rems.globals/config)
                    :columns [{:key :name
-                              :value #(or (get (:category/title %) language) (get-localized-title %))
+                              :value #(or (localized (:category/title %)) (get-localized-title %))
                               :sort-value #(vector (:category/display-order % 2147483647) ; can't use Java Integer/MAX_VALUE here but anything that is not set is last
-                                                   (get (:category/title %) language "_") ; "_" means not set i.e. item is last
+                                                   (or (localized (:category/title %)) "_") ; "_" means not set i.e. item is last
                                                    (get-localized-title %))
                               :title (text :t.catalogue/header)
-                              :content #(if (:category/id %)
+                              :content #(if-let [id (:category/id %)]
                                           [:div.my-2
-                                           [:h3.mb-0 {:class (str "fs-depth-" (:depth % 0))}
-                                            (get (:category/title %) language)]
-                                           (when-let [description (get (:category/description %) language)]
-                                             [:div.mt-3 description])]
+                                           [:div.tree-header {:class (str "fs-depth-" (:depth % 0))}
+                                            (localized (:category/title %))]
+                                           (when-let [description (localized (:category/description %))]
+                                             [:div.mt-3 {:id (get-row-details-id id)}
+                                              description])]
                                           [:div (get-localized-title %)])
                               :col-span #(if (:category/id %) 2 1)}
                              {:key :commands
@@ -138,11 +168,7 @@
                                           [:div.commands.flex-nowrap.justify-content-end
                                            [catalogue-item-more-info %]
                                            (when @roles/logged-in?
-                                             (if (:enable-cart @rems.globals/config)
-                                               (if (contains? cart-item-ids (:id %))
-                                                 [cart/remove-from-cart-button %]
-                                                 [cart/add-to-cart-button %])
-                                               (apply-button %)))])
+                                             [row-command % cart-item-ids])])
                               :aria-label (text :t.actions/commands)
                               :sortable? false
                               :filterable? false}]
@@ -153,7 +179,20 @@
                                    true ; always pass categories
                                    (and (:enabled row)
                                         (not (:expired row)))))
-                   :default-sort-column :name}]
+                   :row-action (fn [row]
+                                 (when @roles/logged-in?
+                                   (perform-row-command (:value row) cart-item-ids ::catalogue-tree)))
+                   :row-aria-label (fn [{:keys [value] :as row}]
+                                     (cond
+                                       (:category/id value) (str (text :t.administration/category)
+                                                                 (andstr ": " (localized (:category/title value))))
+                                       :else (str (text :t.administration/resource)
+                                                  (andstr ": " (get-localized-title value)))))
+                   :row-aria-describedby (fn [{:keys [value] :as row}]
+                                           (when-let [id (:category/id value)]
+                                             (get-row-details-id id)))
+                   :default-sort-column :name
+                   :aria-labelledby :catalogue-apply-resources}]
     [:div.mt-2rem
      [tree/search catalogue]
      [tree/tree catalogue]]))
@@ -173,7 +212,7 @@
                        @(rf/subscribe [::full-catalogue-tree :fetching?]))
            [cart/cart-list-container]))
 
-       [:h2 (text :t.catalogue/apply-resources)]])
+       [:h2#catalogue-apply-resources (text :t.catalogue/apply-resources)]])
 
     (when (:enable-catalogue-tree @rems.globals/config)
       (if @(rf/subscribe [::full-catalogue :fetching?])
