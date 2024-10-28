@@ -10,7 +10,7 @@ REMS is a Clojure+ClojureScript Single Page App.
 
 REMS is developed by a [team](mailto:rems@csc.fi) at CSC – IT Center for Science.
 
-You can try out REMS using the publicly available demo instance at <https://rems-demo.rahtiapp.fi>.
+You can try out REMS using the publicly available demo instance at <https://rems-test.2.rahtiapp.fi>.
 
 ## Getting started
 
@@ -40,6 +40,6 @@ See the [release page](https://github.com/CSCfi/rems/releases) for the releases.
 The REMS API is documented using
 [OpenAPI aka Swagger](https://swagger.io/docs/specification/about/).
 You can check out the API docs using
-[the swagger-ui of the public demo instance](https://rems-demo.rahtiapp.fi/swagger-ui).
+[the swagger-ui of the public demo instance](https://rems-test.2.rahtiapp.fi/swagger-ui).
 
 Documentation can be found under the [docs](./docs) folder.
