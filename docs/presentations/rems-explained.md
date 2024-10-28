@@ -44,4 +44,4 @@ Full REMS source code:
 
 REMS demo:
 
-- [https://rems-demo.rahtiapp.fi/](https://rems-demo.rahtiapp.fi/)
+- [https://rems-demo.rahtiapp.fi/](https://rems-test.2.rahtiapp.fi/)
