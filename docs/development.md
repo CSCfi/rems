@@ -176,7 +176,7 @@ Running `lein antq` produces a list of outdated dependencies by looking at lates
 You can access the component guide at `/guide`. It contains all the UI
 components in various configurations and is useful for example to develop and document UI components.
 
-See a running guide as example [https://rems-dev.rahtiapp.fi/guide](https://rems-dev.rahtiapp.fi/guide).
+See a running guide as example [https://rems-dev.2.rahtiapp.fi/guide](https://rems-dev.2.rahtiapp.fi/guide).
 
 ## Developing database migrations
 
