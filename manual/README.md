@@ -6,7 +6,7 @@ The resources in REMS do not necessarily have to be in electronic data sets. It 
 
 REMS is a service developed by [CSC – IT Center for Science Ltd.](https://www.csc.fi/en/home) and [Nitor](https://www.nitor.com/en).
 
-You can test how REMS works [using our demo environment](https://rems-demo.rahtiapp.fi).
+You can test how REMS works [using our test environment](https://rems-test.2.rahtiapp.fi).
 
 ## Organisations who are already using REMS
 
@@ -22,7 +22,7 @@ According to THL, the benefits of REMS include:
 
 In addition to THL, [the Language Bank of Finland](https://www.kielipankki.fi/language-bank/) and [Findata](https://www.findata.fi/en/services/data-requests/) are also using REMS.
 
-REMS is developed in close cooperation with our customers. You can follow the agile development of REMS from our [public Github project board](https://github.com/CSCfi/rems/projects/1).
+REMS is developed in close cooperation with our customers. You can follow the agile development of REMS from our [public Github project board](https://github.com/orgs/CSCfi/projects/13/views/1).
 
 ## Why REMS
 
@@ -41,7 +41,7 @@ Benefits for the resource owner:
 - **Customisable application process**: ability to create and modify the application forms
 - **Automation**: Some functions, such as approving and rejecting applications, can be automated to reduce unnecessary workload.
 
-If you want to start using REMS to manage access rights to your resources, contact us at rems-support@csc.fi.
+If you want to start using REMS to manage access rights to your resources, contact us at rems-support@csc.fi or check our [installation instructions](installing-upgrading.md)
 
 REMS also makes applying for access rights easier. Applicants can:
 
