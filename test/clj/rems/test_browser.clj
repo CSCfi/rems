@@ -2295,15 +2295,16 @@
               (btu/fill-human (field-component (label-id :fi)) (format "Multi-select option %s (FI)" i))
               (btu/fill-human (field-component (label-id :sv)) (format "Multi-select option %s (SV)" i))))
           (testing "preview is updated when multi-select option order changes"
-            (is (= (map btu/value-of-el (btu/query-all [(field-preview) {:class :form-check}]))
-                   ["multi-select-option-0"
+            (is (= ["multi-select-option-0"
                     "multi-select-option-1"
-                    "multi-select-option-2"]))
+                    "multi-select-option-2"]
+                   (map btu/value-of-el (btu/query-all [(field-preview) {:class :form-check}]))))
             (btu/scroll-and-click [(field-editor) {:css (str ".form-field-option .move-up[data-index='1']")}])
-            (is (= (map btu/value-of-el (btu/query-all [(field-preview) {:class :form-check}]))
-                   ["multi-select-option-1"
+            (Thread/sleep 250) ; wait for re-frame + React
+            (is (= ["multi-select-option-1"
                     "multi-select-option-0"
-                    "multi-select-option-2"]))))
+                    "multi-select-option-2"]
+                   (map btu/value-of-el (btu/query-all [(field-preview) {:class :form-check}]))))))
 
         (testing "create table field"
           (add-form-field!)
