@@ -7,6 +7,7 @@
             [medley.core :refer [map-vals]]
             [rems.cache :as cache]
             [rems.common.dependency :as dep]
+            [rems.common.util :refer [getx range-1]]
             [rems.concurrency :as concurrency]))
 
 (defn- submit-all [thread-pool & fns]
@@ -226,9 +227,311 @@
          end# (System/nanoTime)]
      [start# end# value#]))
 
-(defn- random-wait []
-  (Thread/sleep (+ 1 (rand-int 3))))
+(defn- random-wait-ms []
+  (Thread/sleep (+ 1 (rand-int 5))))
 
+(defn- random-wait-ns []
+  (Thread/sleep 0 (+ 0 (rand-int 2))))
+
+(deftest test-cache-transact
+  ;; Test approach:
+  ;; - with two atoms representing the database
+  ;; - with two caches
+  ;; - with two dependent caches
+  ;; - with four readers and two writers
+  ;; - iterate 20 rounds of
+  ;;   - writers write numbers to db and update cache
+  ;;   - readers read caches and dependent caches
+  ;;   - log each event
+  ;; - wait for everything to finish
+  ;; - then check that each cache saw the atom values in monotonically increasing order
+
+  (with-redefs [rems.cache/caches (doto caches (reset! nil))
+                rems.cache/caches-dag (doto caches-dag (reset! (dep/make-graph)))]
+    (let [progress (atom 0)
+          current-a (atom 1)
+          current-b (atom 1)
+          make-progress! #(swap! progress inc)
+          finished? #(<= 20 @progress)
+
+          ;; separate event logs try to minimize test latency
+          reader-a-events (atom [])
+          reader-a-event! #(swap! reader-a-events conj [%1 :cache-reader-a %2 %3])
+
+          reader-b-events (atom [])
+          reader-b-event! #(swap! reader-b-events conj [%1 :cache-reader-b %2 %3])
+
+          reader-dependent-b-events (atom [])
+          reader-dependent-b-event! #(swap! reader-dependent-b-events conj [%1 :cache-reader-dependent-b %2 %3])
+
+          reader-dependent-ab-events (atom [])
+          reader-dependent-ab-event! #(swap! reader-dependent-ab-events conj [%1 :cache-reader-dependent-ab %2 %3])
+
+          writer-a-events (atom [])
+          writer-a-event! #(swap! writer-a-events conj [%1 :cache-writer-a %2 %3])
+
+          writer-b-events (atom [])
+          writer-b-event! #(swap! writer-b-events conj [%1 :cache-writer-b %2 %3])
+
+          get-all-events #(concat @reader-a-events
+                                  @reader-b-events
+                                  @reader-dependent-b-events
+                                  @reader-dependent-ab-events
+                                  @writer-a-events
+                                  @writer-b-events)
+
+          cache-a (cache/basic {:id :a
+                                :miss-fn (fn [id] (random-wait-ms) @current-a)
+                                :reload-fn (fn [] (random-wait-ms) {:a @current-a})})
+          cache-b (cache/basic {:id :b
+                                :miss-fn (fn [id] (random-wait-ms) @current-b)
+                                :reload-fn (fn [] (random-wait-ms) {:b @current-b})})
+          dependent-b (cache/basic {:id :dependent-b
+                                    :depends-on [:b]
+                                    :reload-fn (fn [deps] (random-wait-ms) {:b (-> deps :b :b)})})
+          dependent-ab (cache/basic {:id :dependent-ab
+                                     :depends-on [:a :b]
+                                     :reload-fn (fn [deps]
+                                                  {:ab (+ (* 1000 (-> deps :a :a))
+                                                          (-> deps :b :b))})})
+
+          readers-finished? #(and (= @current-a (:a (nth (last @reader-a-events) 2)))
+                                  (= @current-b (:b (nth (last @reader-b-events) 2)))
+                                  (= @current-b (:b (nth (last @reader-dependent-b-events) 2)))
+                                  (= (+ (* 1000 @current-a)
+                                        @current-b)
+                                     (:ab (nth (last @reader-dependent-ab-events) 2))))
+
+          cache-transactions-thread-pool (concurrency/cached-thread-pool {:thread-prefix "test-cache-transactions"})]
+      (try
+        (logr/info "number of available processors:" (concurrency/get-available-processors))
+
+        (submit-all cache-transactions-thread-pool
+                    (fn cache-reader-a []
+                      (while true
+                        (random-wait-ms)
+
+                        (let [[start end value] (with-tracing (cache/lookup-or-miss! cache-a :a))]
+                          (reader-a-event! :lookup-or-miss
+                                           {:a value}
+                                           {:start start :end end}))))
+
+                    (fn cache-reader-b []
+                      (while true
+                        (random-wait-ms)
+
+                        (let [[start end value] (with-tracing (cache/lookup-or-miss! cache-b :b))]
+                          (reader-b-event! :lookup-or-miss
+                                           {:b value}
+                                           {:start start :end end}))))
+
+                    (fn cache-reader-dependent-b []
+                      (while true
+                        (random-wait-ms)
+
+                        (let [[start end value] (with-tracing (cache/lookup! dependent-b :b))]
+                          (reader-dependent-b-event! :lookup-or-miss
+                                                     {:b value}
+                                                     {:start start :end end}))))
+
+                    (fn cache-reader-dependent-ab []
+                      (while true
+                        (random-wait-ms)
+
+                        (let [[start end value] (with-tracing (cache/lookup! dependent-ab :ab))]
+                          (reader-dependent-ab-event! :lookup-or-miss
+                                                      {:ab value}
+                                                      {:start start :end end}))))
+
+                    (fn cache-writer-a []
+                      (while (not (finished?))
+                        (random-wait-ms)
+
+                        (let [[start end value] (with-tracing
+                                                  (swap! current-a inc)
+                                                  (cache/miss! cache-a :a))]
+                          (writer-a-event! :miss
+                                           {:a value}
+                                           {:start start :end end}))))
+
+                    (fn cache-writer-b []
+                      (while (not (finished?))
+                        (random-wait-ms)
+                        (let [[start end value] (with-tracing
+                                                  (swap! current-b inc)
+                                                  (cache/miss! cache-b :b))]
+                          (writer-b-event! :miss
+                                           {:b value}
+                                           {:start start :end end})))))
+
+        (while (not (finished?))
+          (make-progress!)
+          (println "progress" @progress)
+          (Thread/sleep 50))
+
+        (println "waiting for readers to finish")
+        (let [start-time (System/currentTimeMillis)]
+          (while (and (not (readers-finished?))
+                      (< (- (System/currentTimeMillis) start-time) 1000))
+            (Thread/sleep 50)))
+
+        (finally
+          (println "terminating test thread pool")
+          (concurrency/shutdown-now! cache-transactions-thread-pool {:timeout-ms 5000})))
+
+      (let [get-event-duration #(format "%.3fms" (/ (- (:end %) (:start %))
+                                                    (* 1000.0 1000.0)))
+            event-end (fn [[_ _ _ opts]] (:end opts))
+            raw-events (->> (get-all-events)
+                            (sort-by event-end)
+                            (map (fn [[event-type id state-kv opts]]
+                                   {:type event-type
+                                    :id id
+                                    :state state-kv
+                                    :time (assoc opts :duration (get-event-duration opts))})))]
+
+        (testing "all cache reads see monotonically growing results"
+          (testing "reader a"
+            (let [reader-a-seen (->> raw-events
+                                     (filter (comp #{:cache-reader-a} :id))
+                                     (mapv (comp :a :state))
+                                     dedupe)]
+              (is (apply < 0 reader-a-seen))))
+
+          (testing "reader b"
+            (let [reader-b-seen (->> raw-events
+                                     (filter (comp #{:cache-reader-b} :id))
+                                     (mapv (comp :b :state))
+                                     dedupe)]
+              (is (apply < 0 reader-b-seen))))
+
+          (testing "reader dependent b"
+            (let [reader-dependent-b-seen (->> raw-events
+                                               (filter (comp #{:cache-reader-dependent-b} :id))
+                                               (mapv (comp :b :state))
+                                               dedupe)]
+              (is (apply < 0 reader-dependent-b-seen))))
+
+          (testing "reader dependent ab"
+            (let [reader-dependent-ab-seen (->> raw-events
+                                                (filter (comp #{:cache-reader-dependent-ab} :id))
+                                                (mapv (comp :ab :state))
+                                                dedupe)]
+              (is (apply < 0 reader-dependent-ab-seen)))))))))
+
+(defmacro capture-time [a id & body]
+  `(let [start-time# (System/nanoTime)
+         result# (do ~@body)
+         end-time# (System/nanoTime)]
+     (swap! ~a update ~id conj (- end-time# start-time#))
+     result#))
+
+(deftest test-cache-performance
+  ;; Test approach:
+  ;; - with two caches and two dependent caches
+  ;; - with two writers and 100 readers,
+  ;; - read & write 1000 times and
+  ;; - print observed waiting times
+  ;; - check end was reached
+  (with-redefs [rems.cache/caches (doto caches (reset! nil))
+                rems.cache/caches-dag (doto caches-dag (reset! (dep/make-graph)))]
+    (let [progress (atom 0)
+          current-a (atom 1)
+          current-b (atom 1)
+
+          cache-a (cache/basic {:id :a
+                                :miss-fn (fn [id] (random-wait-ns) @current-a)
+                                :reload-fn (fn [] (random-wait-ns) {:a @current-a})})
+          cache-b (cache/basic {:id :b
+                                :miss-fn (fn [id] (random-wait-ns) @current-b)
+                                :reload-fn (fn [] (random-wait-ns) {:b @current-b})})
+          dependent-b (cache/basic {:id :dependent-b
+                                    :depends-on [:b]
+                                    :reload-fn (fn [deps] (random-wait-ns) {:b (-> deps :b :b)})})
+          dependent-ab (cache/basic {:id :dependent-ab
+                                     :depends-on [:a :b]
+                                     :reload-fn (fn [deps]
+                                                  (random-wait-ns)
+                                                  {:ab [(-> deps :a :a) (-> deps :b :b)]})})
+
+          cache-performance-thread-pool (concurrency/cached-thread-pool {:thread-prefix "test-cache-performance"})
+
+          humanize (fn [n]
+                     (cond (> n 1000000)
+                           (format "%.2f ms" (/ n 1000000.0))
+                           (> n 1000)
+                           (format "%.2f ms" (/ n 100000.0))
+                           :else
+                           (format "%.2f ns" (double n))))
+
+          summarize (fn [coll]
+                      {:min (humanize (apply min coll))
+                       :max (humanize (apply max coll))
+                       :avg (humanize (/ (reduce + 0 coll) (double (count coll))))})
+
+          workers (apply submit-all
+                         cache-performance-thread-pool
+                         (concat [(fn cache-writer-a []
+                                    (dotimes [i 1000]
+                                      (reset! current-a i)
+                                      (cache/miss! cache-a :a)))
+
+                                  (fn cache-writer-b []
+                                    (dotimes [i 1000]
+                                      (reset! current-b i)
+                                      (cache/miss! cache-b :b)))]
+
+                                 (for [r (range-1 100)]
+                                   (fn cache-reader []
+                                     (let [time-a (atom {})]
+                                       (doseq [i (shuffle (range 1000))]
+                                         (random-wait-ns)
+                                         (case (mod i 4)
+                                           0 (capture-time time-a :a (cache/lookup-or-miss! cache-a :a))
+                                           1 (capture-time time-a :b (cache/lookup-or-miss! cache-a :b))
+                                           2 (capture-time time-a :da (cache/lookup! dependent-b :a))
+                                           3 (capture-time time-a :dab (cache/lookup! dependent-ab :ab))))
+                                       (assoc (map-vals summarize @time-a)
+                                              :thread (format "%3d" r)))))))
+          start-time (System/currentTimeMillis)]
+
+      (try
+        (println "waiting for workers to finish")
+        (let [results (->> (for [w workers
+                                 :let [result (.get ^java.util.concurrent.Future w)]]
+                             (map-vals (fn [x]
+                                         (if (:min x)
+                                           (format "%9s < %9s < %9s" (:min x) (:avg x) (:max x))
+                                           x))
+                                       result))
+                           (sort-by :thread)
+                           doall)]
+
+          (clojure.pprint/print-table [:thread :a :b :da :dab]
+                                      results))
+
+        (finally
+          (println "terminating test thread pool")
+          (concurrency/shutdown-now! cache-performance-thread-pool {:timeout-ms 5000})))
+
+      (let [counts {:a @current-a
+                    :b @current-b
+                    :cache-a (cache/lookup! cache-a :a)
+                    :cache-b (cache/lookup! cache-b :b)
+                    :dependent-b (cache/lookup! dependent-b :b)
+                    :dependent-ab (cache/lookup! dependent-ab :ab)}]
+
+        (println "elapsed" (- (System/currentTimeMillis) start-time) "ms")
+
+        (is (= {:a 999
+                :b 999
+                :cache-a 999
+                :cache-b 999
+                :dependent-b 999
+                :dependent-ab [999 999]}
+               counts))))))
+
+;; TODO Anssi can salvage this?
 ;; test outline:
 ;; - caches A and B hold separate state that is written into (incrementing values)
 ;; - dependent caches read from A and B
@@ -243,7 +546,7 @@
 ;;
 ;; threads run for roughly (50ms * progress)
 ;; e.g. progress 20 => 1000ms
-(deftest test-cache-transactions
+(deftest test-cache-transact2
   (with-redefs [rems.cache/caches (doto caches (reset! nil))
                 rems.cache/caches-dag (doto caches-dag (reset! (dep/make-graph)))]
     (let [progress (atom 0)
@@ -285,21 +588,21 @@
 
           cache-a (cache/basic {:id :a
                                 :miss-fn (fn [id]
-                                           (random-wait)
+                                           (random-wait-ms)
                                            (let [value (inc (get @current-a id 0))]
                                              (swap! current-a assoc id value)
                                              value))
                                 :reload-fn (fn []
-                                             (random-wait)
+                                             (random-wait-ms)
                                              @current-a)})
           cache-b (cache/basic {:id :b
                                 :miss-fn (fn [id]
-                                           (random-wait)
+                                           (random-wait-ms)
                                            (let [value (inc (get @current-b id 0))]
                                              (swap! current-b assoc id value)
                                              value))
                                 :reload-fn (fn []
-                                             (random-wait)
+                                             (random-wait-ms)
                                              @current-b)})
           dependent-b (cache/basic {:id :dependent-b
                                     :depends-on [:b]
@@ -316,49 +619,49 @@
         (logr/info "number of available processors:" (concurrency/get-available-processors))
         (submit-all cache-transactions-thread-pool
                     (fn cache-reader-a [] (while true
-                                            (random-wait)
+                                            (random-wait-ms)
                                             (let [[start end value] (with-tracing (cache/lookup-or-miss! cache-a :a))]
                                               (reader-a-event! :lookup-or-miss
                                                                {:a value}
                                                                {:start start :end end}))))
                     (fn cache-reader-b [] (while true
-                                            (random-wait)
+                                            (random-wait-ms)
                                             (let [[start end value] (with-tracing (cache/lookup! dependent-b :b))]
                                               (reader-b-event! :lookup
                                                                {:b value}
                                                                {:start start :end end}))))
                     (fn cache-reader-c [] (while true
-                                            (random-wait)
+                                            (random-wait-ms)
                                             (let [[start end value] (with-tracing (cache/entries! dependent-c))]
                                               (reader-c-event! :lookup
                                                                value
                                                                {:start start :end end}))))
                     (fn cache-writer-a [] (while (not (finished?))
-                                            (random-wait)
+                                            (random-wait-ms)
                                             (let [[start end value] (with-tracing (cache/miss! cache-a :a))]
                                               (writer-a-event! :miss
                                                                {:a value}
                                                                {:start start :end end}))))
                     (fn cache-writer-b [] (while (not (finished?))
-                                            (random-wait)
+                                            (random-wait-ms)
                                             (let [[start end value] (with-tracing (cache/miss! cache-b :b))]
                                               (writer-b-event! :miss
                                                                {:b value}
                                                                {:start start :end end}))))
                     (fn cache-evicter-a [] (while (not (finished?))
-                                             (random-wait)
+                                             (random-wait-ms)
                                              (let [[start end] (with-tracing (cache/evict! cache-a :a))]
                                                (evicter-a-event! :evict
                                                                  {}
                                                                  {:key :a :cache (:id cache-a) :start start :end end}))))
                     (fn cache-evicter-b [] (while (not (finished?))
-                                             (random-wait)
+                                             (random-wait-ms)
                                              (let [k (rand-nth ["random-1" "random-2" "random-3"])]
                                                (let [[start end value] (with-tracing (cache/miss! cache-b k))]
                                                  (evicter-b-event! :miss
                                                                    {k value}
                                                                    {:cache (:id cache-b) :start start :end end}))
-                                               (random-wait)
+                                               (random-wait-ms)
                                                (let [[start end] (with-tracing (cache/evict! cache-b k))]
                                                  (evicter-b-event! :evict
                                                                    {}
@@ -368,7 +671,6 @@
           (println "progress" @progress)
           (Thread/sleep 50))
         (finally
-          (cache/shutdown-thread-pool!)
           (println "terminating test thread pool")
           (concurrency/shutdown-now! cache-transactions-thread-pool {:timeout-ms 5000})))
 
