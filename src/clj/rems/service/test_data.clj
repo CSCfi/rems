@@ -7,6 +7,7 @@
             [clojure.test :refer :all]
             [clojure.tools.logging :as log]
             [rems.api.schema :as schema]
+            [rems.common.util :refer [range-1]]
             [rems.config]
             [rems.db.api-key]
             [rems.db.catalogue]
@@ -567,11 +568,6 @@
 
     (->> (time/minus (time/now) (time/days 84))
          (test-helpers/create-draft! applicant [catid] "long forgotten draft"))))
-
-(defn- range-1
-  "Like `clojure.core/range`, but starts from 1 and `end` is inclusive."
-  [end]
-  (range 1 (inc end)))
 
 (defn- in-parallel [fs]
   (let [executor (Executors/newFixedThreadPool 10)]

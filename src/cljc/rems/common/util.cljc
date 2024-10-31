@@ -719,3 +719,8 @@
   [s]
   (when-not (str/blank? s)
     s))
+
+(defn range-1
+  "Like `clojure.core/range`, but starts from 1 and `end` is inclusive."
+  [end]
+  (range 1 (inc end)))
