@@ -4,9 +4,7 @@
             [medley.core :refer [update-existing]]
             [rems.common.util :refer [build-index]]
             [rems.common.dependency :as dep]
-            [rems.concurrency :as concurrency]
-            [rems.config])
-  (:import [java.util.concurrent CountDownLatch TimeUnit]))
+            [rems.config]))
 
 (def ^:private caches (atom nil))
 (def ^:private caches-dag (atom (dep/make-graph)))
@@ -57,17 +55,14 @@
   (->> (dep/get-dependencies @caches-dag id)
        (map #(get @caches %))))
 
-(def ^:dynamic ^:private *cache* nil)
-(def ^:dynamic ^:private *cache-deps* nil)
-
 (defn- reset-dependents-on-change! [id _cache _old-value _new-value]
-  (let [cache (get @caches id)]
-    (when-some [dependents (seq (dep/get-all-dependents @caches-dag id))]
-      (logr/debug ">" id :reset-dependents {:dependents dependents})
+  (when-some [dependents (seq (dep/get-all-dependents @caches-dag id))]
+    (logr/debug ">" id :reset-dependents {:dependents dependents})
+    (locking caches
       (doseq [dep-id dependents
               :let [dep-cache (get @caches dep-id)]]
-        (set-uninitialized! dep-cache))
-      (logr/debug "<" id :reset-dependents))))
+        (set-uninitialized! dep-cache)))
+    (logr/debug "<" id :reset-dependents)))
 
 (defrecord RefreshableCache [id
                              ^clojure.lang.IAtom statistics
