@@ -227,8 +227,8 @@
          end# (System/nanoTime)]
      [start# end# value#]))
 
-(defn- random-wait-ms []
-  (Thread/sleep (+ 1 (rand-int 5))))
+(defn- random-wait-ms [& [extra]]
+  (Thread/sleep (+ 1 (rand-int (or extra 5)))))
 
 (defn- random-wait-ns []
   (Thread/sleep 0 (+ 0 (rand-int 2))))
@@ -273,12 +273,16 @@
           writer-b-events (atom [])
           writer-b-event! #(swap! writer-b-events conj [%1 :cache-writer-b %2 %3])
 
+          evicter-events (atom [])
+          evicter-event! #(swap! evicter-events conj [%1 :cache-evicter %2 %3])
+
           get-all-events #(concat @reader-a-events
                                   @reader-b-events
                                   @reader-dependent-b-events
                                   @reader-dependent-ab-events
                                   @writer-a-events
-                                  @writer-b-events)
+                                  @writer-b-events
+                                  @evicter-events)
 
           cache-a (cache/basic {:id :a
                                 :miss-fn (fn [id] (random-wait-ms) @current-a)
@@ -330,7 +334,7 @@
                         (random-wait-ms)
 
                         (let [[start end value] (with-tracing (cache/lookup! dependent-b :b))]
-                          (reader-dependent-b-event! :lookup-or-miss
+                          (reader-dependent-b-event! :lookup
                                                      {:b value}
                                                      {:start start :end end}))))
 
@@ -339,7 +343,7 @@
                         (random-wait-ms)
 
                         (let [[start end value] (with-tracing (cache/lookup! dependent-ab :ab))]
-                          (reader-dependent-ab-event! :lookup-or-miss
+                          (reader-dependent-ab-event! :lookup
                                                       {:ab value}
                                                       {:start start :end end}))))
 
@@ -362,7 +366,16 @@
                                                   (cache/miss! cache-b :b))]
                           (writer-b-event! :miss
                                            {:b value}
-                                           {:start start :end end})))))
+                                           {:start start :end end}))))
+
+                    (fn cache-evicter []
+                      (while (not (finished?))
+                        (random-wait-ms 50)
+                        (let [[start end _] (with-tracing
+                                              (cache/evict! cache-a :a))]
+                          (evicter-event! :evict
+                                          {}
+                                          {:start start :end end})))))
 
         (while (not (finished?))
           (make-progress!)
@@ -435,8 +448,7 @@
   ;; - check end was reached
   (with-redefs [rems.cache/caches (doto caches (reset! nil))
                 rems.cache/caches-dag (doto caches-dag (reset! (dep/make-graph)))]
-    (let [progress (atom 0)
-          current-a (atom 1)
+    (let [current-a (atom 1)
           current-b (atom 1)
 
           cache-a (cache/basic {:id :a
@@ -490,7 +502,7 @@
                                            0 (capture-time time-a :a (cache/lookup-or-miss! cache-a :a))
                                            1 (capture-time time-a :b (cache/lookup-or-miss! cache-a :b))
                                            2 (capture-time time-a :da (cache/lookup! dependent-b :a))
-                                           3 (capture-time time-a :dab (cache/lookup! dependent-ab :ab))))
+                                           3 (capture-time time-a :dab (get (cache/entries! dependent-ab) :ab))))
                                        (assoc (map-vals summarize @time-a)
                                               :thread (format "%3d" r)))))))
           start-time (System/currentTimeMillis)]
@@ -530,259 +542,3 @@
                 :dependent-b 999
                 :dependent-ab [999 999]}
                counts))))))
-
-;; TODO Anssi can salvage this?
-;; test outline:
-;; - caches A and B hold separate state that is written into (incrementing values)
-;; - dependent caches read from A and B
-;; - separate threads handle reading and writing with random wait interval
-;; - each read and write is logs an event with start/end timestamps, and value received from cache
-;; - all events are sorted by _end_ timestamp (ascending)
-;; - test result is processed from sorted events with event sourcing
-;; - each event associated with cache function (lookup lookup-or-miss miss) is validated against then-current-state
-;;
-;; debugging with raw events can be useful, they look like this:
-;; [:lookup-or-miss :cache-reader-a {:a 2} {:start 2013364271881178, :end 2013364280924581, :duration "9,043ms"}]
-;;
-;; threads run for roughly (50ms * progress)
-;; e.g. progress 20 => 1000ms
-(deftest test-cache-transact2
-  (with-redefs [rems.cache/caches (doto caches (reset! nil))
-                rems.cache/caches-dag (doto caches-dag (reset! (dep/make-graph)))]
-    (let [progress (atom 0)
-          finished? #(<= 20 @progress)
-          make-progress! #(swap! progress inc)
-
-          current-a (atom {:a 0})
-          current-b (atom {:b 0})
-
-          ;; separate event logs try to minimize test latency
-          reader-a-events (atom [])
-          reader-a-event! #(swap! reader-a-events conj [%1 :cache-reader-a %2 %3])
-
-          reader-b-events (atom [])
-          reader-b-event! #(swap! reader-b-events conj [%1 :cache-reader-b %2 %3])
-
-          reader-c-events (atom [])
-          reader-c-event! #(swap! reader-c-events conj [%1 :cache-reader-c %2 %3])
-
-          writer-a-events (atom [])
-          writer-a-event! #(swap! writer-a-events conj [%1 :cache-writer-a %2 %3])
-
-          writer-b-events (atom [])
-          writer-b-event! #(swap! writer-b-events conj [%1 :cache-writer-b %2 %3])
-
-          evicter-a-events (atom [])
-          evicter-a-event! #(swap! evicter-a-events conj [%1 :cache-evicter-a %2 %3])
-
-          evicter-b-events (atom [])
-          evicter-b-event! #(swap! evicter-b-events conj [%1 :cache-evicter-b %2 %3])
-
-          get-all-events #(concat @reader-a-events
-                                  @reader-b-events
-                                  @reader-c-events
-                                  @writer-a-events
-                                  @writer-b-events
-                                  @evicter-a-events
-                                  @evicter-b-events)
-
-          cache-a (cache/basic {:id :a
-                                :miss-fn (fn [id]
-                                           (random-wait-ms)
-                                           (let [value (inc (get @current-a id 0))]
-                                             (swap! current-a assoc id value)
-                                             value))
-                                :reload-fn (fn []
-                                             (random-wait-ms)
-                                             @current-a)})
-          cache-b (cache/basic {:id :b
-                                :miss-fn (fn [id]
-                                           (random-wait-ms)
-                                           (let [value (inc (get @current-b id 0))]
-                                             (swap! current-b assoc id value)
-                                             value))
-                                :reload-fn (fn []
-                                             (random-wait-ms)
-                                             @current-b)})
-          dependent-b (cache/basic {:id :dependent-b
-                                    :depends-on [:b]
-                                    :reload-fn (fn [deps]
-                                                 (select-keys (:b deps) [:b]))})
-          dependent-c (cache/basic {:id :dependent-c
-                                    :depends-on [:a :b]
-                                    :reload-fn (fn [deps]
-                                                 (merge (select-keys (:a deps) [:a])
-                                                        (select-keys (:b deps) [:b])))})
-
-          cache-transactions-thread-pool (concurrency/cached-thread-pool {:thread-prefix "test-cache-transactions"})]
-      (try
-        (logr/info "number of available processors:" (concurrency/get-available-processors))
-        (submit-all cache-transactions-thread-pool
-                    (fn cache-reader-a [] (while true
-                                            (random-wait-ms)
-                                            (let [[start end value] (with-tracing (cache/lookup-or-miss! cache-a :a))]
-                                              (reader-a-event! :lookup-or-miss
-                                                               {:a value}
-                                                               {:start start :end end}))))
-                    (fn cache-reader-b [] (while true
-                                            (random-wait-ms)
-                                            (let [[start end value] (with-tracing (cache/lookup! dependent-b :b))]
-                                              (reader-b-event! :lookup
-                                                               {:b value}
-                                                               {:start start :end end}))))
-                    (fn cache-reader-c [] (while true
-                                            (random-wait-ms)
-                                            (let [[start end value] (with-tracing (cache/entries! dependent-c))]
-                                              (reader-c-event! :lookup
-                                                               value
-                                                               {:start start :end end}))))
-                    (fn cache-writer-a [] (while (not (finished?))
-                                            (random-wait-ms)
-                                            (let [[start end value] (with-tracing (cache/miss! cache-a :a))]
-                                              (writer-a-event! :miss
-                                                               {:a value}
-                                                               {:start start :end end}))))
-                    (fn cache-writer-b [] (while (not (finished?))
-                                            (random-wait-ms)
-                                            (let [[start end value] (with-tracing (cache/miss! cache-b :b))]
-                                              (writer-b-event! :miss
-                                                               {:b value}
-                                                               {:start start :end end}))))
-                    (fn cache-evicter-a [] (while (not (finished?))
-                                             (random-wait-ms)
-                                             (let [[start end] (with-tracing (cache/evict! cache-a :a))]
-                                               (evicter-a-event! :evict
-                                                                 {}
-                                                                 {:key :a :cache (:id cache-a) :start start :end end}))))
-                    (fn cache-evicter-b [] (while (not (finished?))
-                                             (random-wait-ms)
-                                             (let [k (rand-nth ["random-1" "random-2" "random-3"])]
-                                               (let [[start end value] (with-tracing (cache/miss! cache-b k))]
-                                                 (evicter-b-event! :miss
-                                                                   {k value}
-                                                                   {:cache (:id cache-b) :start start :end end}))
-                                               (random-wait-ms)
-                                               (let [[start end] (with-tracing (cache/evict! cache-b k))]
-                                                 (evicter-b-event! :evict
-                                                                   {}
-                                                                   {:key k :cache (:id cache-b) :start start :end end}))))))
-        (while (not (finished?))
-          (make-progress!)
-          (println "progress" @progress)
-          (Thread/sleep 50))
-        (finally
-          (println "terminating test thread pool")
-          (concurrency/shutdown-now! cache-transactions-thread-pool {:timeout-ms 5000})))
-
-      (let [get-event-duration #(format "%.3fms" (/ (- (:end %) (:start %))
-                                                    (* 1000.0 1000.0)))
-            event-end (fn [[_ _ _ opts]] (:end opts))
-            raw-events (->> (get-all-events)
-                            (sort-by event-end)
-                            (map (fn [[event-type id state-kv opts]]
-                                   [event-type id state-kv (-> opts
-                                                               (assoc :duration (get-event-duration opts)))])))
-            result (->> raw-events
-                        (reduce (fn [m [event-type id state-kv opts]]
-                                  (case event-type
-                                    :miss
-                                    (-> m
-                                        (update :state merge state-kv)
-                                        (update :last-evicted (partial apply dissoc) (keys state-kv))
-                                        (update :miss (fnil conj []) (merge {:id id
-                                                                             :state-kv state-kv
-                                                                             :state (:state m)}
-                                                                            (select-keys m [:last-evicted]))))
-                                    :lookup
-                                    (-> m
-                                        (update :lookup (fnil conj []) (merge {:id id
-                                                                               :state-kv state-kv
-                                                                               :state (:state m)}
-                                                                              (select-keys m [:last-evicted]))))
-                                    :lookup-or-miss
-                                    (-> m
-                                        (update :state merge state-kv)
-                                        (update :last-evicted (partial apply dissoc) (keys state-kv))
-                                        (update :lookup-or-miss (fnil conj []) (merge {:id id
-                                                                                       :state-kv state-kv
-                                                                                       :state (:state m)}
-                                                                                      (select-keys m [:last-evicted]))))
-                                    :evict
-                                    (-> m
-                                        (assoc-in [:last-evicted (:key opts)] (get-in m [:state (:key opts)]))
-                                        (update :evict (fnil conj []) {:id id}))))
-                                {:state {:a 0 :b 0}}))
-
-            valid-lookup? (fn [{:keys [id state state-kv last-evicted]}]
-                            (let [evicted #(some? (get last-evicted %))
-                                  valid #(= (get state %) (get state-kv %))]
-                              (case id
-                                :cache-reader-a (or (evicted :a)
-                                                    (valid :a))
-                                :cache-reader-b (or (evicted :b)
-                                                    (valid :b))
-                                :cache-reader-c (or (some evicted [:a :b])
-                                                    (every? valid [:a :b])))))
-            valid-lookup-or-miss? (fn [{:keys [id state state-kv last-evicted]}]
-                                    (let [evicted #(some? (get last-evicted %))
-                                          validate-key #(cond
-                                                          ;; miss-fn is invoked on evicted key
-                                                          (evicted %) (= (inc (get last-evicted %)) (get state-kv %))
-                                                          :else (= (get state %) (get state-kv %)))]
-                                      (case id
-                                        :cache-reader-a (validate-key :a)
-                                        :cache-reader-b (validate-key :b)
-                                        :cache-reader-c (every? validate-key [:a :b]))))
-            valid-miss? (fn [{:keys [id state state-kv last-evicted]}]
-                          (let [evicted #(some? (get last-evicted %))
-                                validate-key #(cond
-                                                (evicted %) (= (inc (get last-evicted %)) (get state-kv %))
-                                                :else (= (inc (get state %)) (get state-kv %)))]
-                            (case id
-                              ;; updates must be sequential
-                              :cache-writer-a (validate-key :a)
-                              :cache-writer-b (validate-key :b)
-                              true)))
-
-            save-event-logs-to-file! (delay
-                                       ;; uncomment for local debugging
-                                       #_(spit "debug-cache-transactions-test-raw-events.edn"
-                                               (binding [clojure.pprint/*print-right-margin* 150]
-                                                 (with-out-str
-                                                   (clojure.pprint/pprint raw-events)))))
-
-            save-event-overview-to-file! (delay
-                                           ;; uncomment for local debugging
-                                           #_(let [event-counts (-> result
-                                                                    (select-keys [:lookup :lookup-or-miss :miss :evict])
-                                                                    (->> (map-vals count)))]
-                                               (spit "cache-transactions-statistics.edn"
-                                                     (with-out-str
-                                                       (clojure.pprint/pprint {:events event-counts
-                                                                               :events-total (reduce + 0 (vals event-counts))
-                                                                               :state (:state result)})))))]
-
-        (force save-event-logs-to-file!)
-        (force save-event-overview-to-file!)
-
-        (testing "no deadlock"
-          (is (< 1 (get-in result [:state :a])))
-          (is (< 1 (get-in result [:state :b])))
-          (let [count-events #(count (filter (comp #{%2} :id) (get result %1)))]
-            (is (< 1 (count-events :lookup-or-miss :cache-reader-a)))
-            (is (< 1 (count-events :lookup :cache-reader-b)))
-            (is (< 1 (count-events :lookup :cache-reader-c)))
-            (is (< 1 (count-events :miss :cache-writer-a)))
-            (is (< 1 (count-events :miss :cache-writer-b)))
-            (is (< 1 (count-events :miss :cache-evicter-b)))
-            (is (< 1 (count-events :evict :cache-evicter-a)))
-            (is (< 1 (count-events :evict :cache-evicter-b)))))
-
-        (testing "all cache writes happen in correct order"
-          (is (= [] (remove valid-miss? (:miss result)))))
-
-        (testing "all cache reads happen in correct order"
-          (is (= [] (remove valid-lookup? (:lookup result)))))
-
-        (testing "all cache lookup-or-misses happen in correct order"
-          (is (= [] (remove valid-lookup-or-miss? (:lookup-or-miss result)))))))))
