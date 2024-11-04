@@ -5,9 +5,9 @@
             [rems.application.approver-bot :as approver-bot]
             [rems.application.bona-fide-bot :as bona-fide-bot]
             [rems.application.rejecter-bot :as rejecter-bot]
-            [rems.db.api-key :as api-key]
-            [rems.db.applications :as applications]
-            [rems.db.entitlements :as entitlements]
+            [rems.db.api-key]
+            [rems.db.applications]
+            [rems.db.entitlements]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.email.core :as email]
             [rems.event-notification :as event-notification]
@@ -25,7 +25,7 @@
 (deftest test-end-to-end
   (testing "clear poller backlog"
     (email/try-send-emails!)
-    (entitlements/process-outbox!)
+    (rems.db.entitlements/process-outbox!)
     (event-notification/process-outbox!))
   (with-open [entitlements-server (stub/start! {"/add" {:status 200}
                                                 "/remove" {:status 200}})
@@ -60,7 +60,7 @@
 
           (testing "create owner & api key"
             (test-helpers/create-user! {:userid owner-id} :owner)
-            (api-key/add-api-key! api-key))
+            (rems.db.api-key/add-api-key! api-key))
 
           (testing "create organization"
             (api-call :post "/api/organizations/create"
@@ -265,7 +265,7 @@
                          api-key handler-id)))
 
             (email/try-send-emails!)
-            (entitlements/process-outbox!)
+            (rems.db.entitlements/process-outbox!)
 
             (testing "email for approved application"
               (let [mail (last @email-atom)]
@@ -308,7 +308,7 @@
                          api-key handler-id)))
 
             (email/try-send-emails!)
-            (entitlements/process-outbox!)
+            (rems.db.entitlements/process-outbox!)
 
             (testing "ended entitlement"
               (testing "visible via API"
@@ -395,7 +395,7 @@
 
     (testing "create owner & api key"
       (test-helpers/create-user! {:userid owner-id} :owner)
-      (api-key/add-api-key! api-key))
+      (rems.db.api-key/add-api-key! api-key))
 
     (testing "create users"
       (api-call :post "/api/users/create" handler-attributes api-key owner-id)
@@ -518,7 +518,7 @@
 
     (testing "create owner & api key"
       (test-helpers/create-user! {:userid owner-id} :owner)
-      (api-key/add-api-key! api-key))
+      (rems.db.api-key/add-api-key! api-key))
 
     (testing "create users"
       (api-call :post "/api/users/create" handler-attributes api-key owner-id)
@@ -660,7 +660,7 @@
 
     (testing "create owner & api key"
       (test-helpers/create-user! {:userid owner-id} :owner)
-      (api-key/add-api-key! api-key))
+      (rems.db.api-key/add-api-key! api-key))
 
     (testing "create users"
       (api-call :post "/api/users/create" applicant-attributes api-key owner-id)
@@ -714,7 +714,7 @@
         (assert-success
          (api-call :post "/api/applications/submit" {:application-id app-id}
                    api-key applicant-id)))
-      (let [event (-> (applications/get-application-internal app-id)
+      (let [event (-> (rems.db.applications/get-application-internal app-id)
                       :application/events
                       last)
             token (:invitation/token event)]

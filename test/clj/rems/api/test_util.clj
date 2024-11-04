@@ -147,13 +147,14 @@
           (is (:success body))
           (is (= [:info (str "> params: {:application-id " app-id ", :file {:filename test.txt, :content-type text/plain, :tempfile ring-would-name-this-file-randomly, :size 16}}")] @log))))
 
-      (let [body (-> (request :post "/api/resources/create")
-                     (add-login-cookies "owner")
-                     (json-body {:resid "extended-logging"
-                                 :organization {:organization/id "nbn"}
-                                 :licenses []})
-                     handler
-                     assert-response-is-ok
-                     read-body)]
-        (is (:success body))
-        (is (= [:info "> params: {:licenses [], :organization #:organization{:id nbn}, :resid extended-logging}"] @log))))))
+      (binding [*print-namespace-maps* true] ; in case set to false locally
+        (let [body (-> (request :post "/api/resources/create")
+                       (add-login-cookies "owner")
+                       (json-body {:resid "extended-logging"
+                                   :organization {:organization/id "nbn"}
+                                   :licenses []})
+                       handler
+                       assert-response-is-ok
+                       read-body)]
+          (is (:success body))
+          (is (= [:info "> params: {:licenses [], :organization #:organization{:id nbn}, :resid extended-logging}"] @log)))))))

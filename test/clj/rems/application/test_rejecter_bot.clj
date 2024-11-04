@@ -1,14 +1,14 @@
 (ns ^:integration rems.application.test-rejecter-bot
   (:require [clojure.test :refer :all]
-            [rems.service.blacklist :as blacklist]
+            [rems.service.blacklist]
             [rems.service.command :as command]
             [rems.application.rejecter-bot :as rejecter-bot]
-            [rems.db.applications :as applications]
+            [rems.db.applications]
             [rems.db.test-data-helpers :as test-helpers]
-            [rems.db.testing :refer [test-db-fixture reset-caches-fixture rollback-db-fixture]]))
+            [rems.db.testing :refer [test-db-fixture rollback-db-fixture]]))
 
 (use-fixtures :once test-db-fixture)
-(use-fixtures :each rollback-db-fixture reset-caches-fixture)
+(use-fixtures :each rollback-db-fixture)
 
 ;; These tests are integration tests via rems.service.command
 ;; since we'd need to mock get-application to unit-test
@@ -35,30 +35,30 @@
                                                      :workflow-id wf
                                                      :resource-id res2})]
       (testing "rejecting submitted applications:"
-        (blacklist/add-user-to-blacklist! "handler"
-                                          {:blacklist/user {:userid "user1"}
-                                           :blacklist/resource {:resource/ext-id "res1"}})
+        (rems.service.blacklist/add-user-to-blacklist! "handler"
+                                                       {:blacklist/user {:userid "user1"}
+                                                        :blacklist/resource {:resource/ext-id "res1"}})
         (testing "blacklisted user"
           (let [app-id (test-helpers/create-application! {:actor "user1"
                                                           :catalogue-item-ids [cat1]})]
             (test-helpers/command! {:type :application.command/submit
                                     :application-id app-id
                                     :actor "user1"})
-            (is (= :application.state/rejected (:application/state (applications/get-application app-id))))))
+            (is (= :application.state/rejected (:application/state (rems.db.applications/get-application app-id))))))
         (testing "blacklisted user, different resource"
           (let [app-id (test-helpers/create-application! {:actor "user1"
                                                           :catalogue-item-ids [cat2]})]
             (test-helpers/command! {:type :application.command/submit
                                     :application-id app-id
                                     :actor "user1"})
-            (is (= :application.state/submitted (:application/state (applications/get-application app-id))))))
+            (is (= :application.state/submitted (:application/state (rems.db.applications/get-application app-id))))))
         (testing "unblacklisted user"
           (let [app-id (test-helpers/create-application! {:actor "user2"
                                                           :catalogue-item-ids [cat1]})]
             (test-helpers/command! {:type :application.command/submit
                                     :application-id app-id
                                     :actor "user2"})
-            (is (= :application.state/submitted (:application/state (applications/get-application app-id)))))))
+            (is (= :application.state/submitted (:application/state (rems.db.applications/get-application app-id)))))))
       (testing "rejecting on revoke:"
         (let [app-1 (test-helpers/create-application! {:actor "baddie"
                                                        :catalogue-item-ids [cat1]})
@@ -106,21 +106,21 @@
             (test-helpers/command! {:type :application.command/approve
                                     :application-id app-12
                                     :actor "handler"})
-            (is (= :application.state/submitted (:application/state (applications/get-application app-1))))
-            (is (= :application.state/submitted (:application/state (applications/get-application app-2))))
-            (is (= :application.state/approved (:application/state (applications/get-application app-12))))
-            (is (= :application.state/submitted (:application/state (applications/get-application app-1-innocent))))
-            (is (= :application.state/submitted (:application/state (applications/get-application app-1-member))))
-            (is (= :application.state/submitted (:application/state (applications/get-application accomplice-app-1)))))
+            (is (= :application.state/submitted (:application/state (rems.db.applications/get-application app-1))))
+            (is (= :application.state/submitted (:application/state (rems.db.applications/get-application app-2))))
+            (is (= :application.state/approved (:application/state (rems.db.applications/get-application app-12))))
+            (is (= :application.state/submitted (:application/state (rems.db.applications/get-application app-1-innocent))))
+            (is (= :application.state/submitted (:application/state (rems.db.applications/get-application app-1-member))))
+            (is (= :application.state/submitted (:application/state (rems.db.applications/get-application accomplice-app-1)))))
           (testing "revoke"
             (test-helpers/command! {:type :application.command/revoke
                                     :application-id app-12
                                     :actor "handler"})
-            (is (= :application.state/revoked (:application/state (applications/get-application app-12)))))
+            (is (= :application.state/revoked (:application/state (rems.db.applications/get-application app-12)))))
           (testing "related applications are rejected"
-            (is (= :application.state/rejected (:application/state (applications/get-application app-1))))
-            (is (= :application.state/rejected (:application/state (applications/get-application app-2))))
-            (is (= :application.state/rejected (:application/state (applications/get-application app-1-member))))
-            (is (= :application.state/rejected (:application/state (applications/get-application accomplice-app-1)))))
+            (is (= :application.state/rejected (:application/state (rems.db.applications/get-application app-1))))
+            (is (= :application.state/rejected (:application/state (rems.db.applications/get-application app-2))))
+            (is (= :application.state/rejected (:application/state (rems.db.applications/get-application app-1-member))))
+            (is (= :application.state/rejected (:application/state (rems.db.applications/get-application accomplice-app-1)))))
           (testing "unrelated applications are not rejected"
-            (is (= :application.state/submitted (:application/state (applications/get-application app-1-innocent))))))))))
+            (is (= :application.state/submitted (:application/state (rems.db.applications/get-application app-1-innocent))))))))))

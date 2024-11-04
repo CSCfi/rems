@@ -85,7 +85,7 @@
     (unbind-ns ns-sym)))
 
 (comment
-  (do (rems.service.catalogue/get-localized-catalogue-items nil)
+  (do (rems.service.catalogue/get-catalogue-items nil)
       {:trace @trace-a
        :stack @stack-a})
 
@@ -95,13 +95,13 @@
 
   (ns-publics (the-ns 'rems.service.catalogue))
 
-  (bind #'rems.service.catalogue/get-localized-catalogue-items
-        'rems.service.catalogue/get-localized-catalogue-items
-        rems.service.catalogue/get-localized-catalogue-items)
+  (bind #'rems.service.catalogue/get-catalogue-items
+        'rems.service.catalogue/get-catalogue-items
+        rems.service.catalogue/get-catalogue-items)
 
-  (bind #'rems.db.catalogue/get-localized-catalogue-items
-        'rems.db.catalogue/get-localized-catalogue-items
-        rems.db.catalogue/get-localized-catalogue-items)
+  (bind #'rems.db.catalogue/get-catalogue-items
+        'rems.db.catalogue/get-catalogue-items
+        rems.db.catalogue/get-catalogue-items)
 
   (bind-ns 'rems.service.catalogue)
   (bind-ns 'rems.db.catalogue)
@@ -124,4 +124,4 @@
 
   (bind-ns 'rems.locales)
 
-  (count (rems.service.catalogue/get-localized-catalogue-items nil)))
+  (count (rems.service.catalogue/get-catalogue-items nil)))

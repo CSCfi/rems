@@ -52,7 +52,7 @@
       (with-fake-login-users {} (f)))))
 
 (use-fixtures
-  :once
+  :each
   api-fixture)
 
 (deftest test-user-does-not-exist

@@ -1,79 +1,115 @@
 (ns rems.db.licenses
-  "querying localized licenses"
-  (:require [medley.core :refer [distinct-by]]
-            [rems.common.util :refer [apply-filters]]
-            [rems.db.core :as db]))
+  (:require [clojure.set]
+            [medley.core :refer [assoc-some map-vals]]
+            [rems.cache :as cache]
+            [rems.common.util :refer [apply-filters index-by]]
+            [rems.db.core :as db]
+            [schema.coerce :as coerce]
+            [schema.core :as s]))
 
-(defn- format-license [license]
-  {:id (:id license)
-   :licensetype (:type license)
-   :organization (:organization license)
-   :enabled (:enabled license)
-   :archived (:archived license)})
+(s/defschema LicenseDb
+  {:id s/Int
+   :licensetype (s/enum "link" "text" "attachment")
+   :organization s/Str
+   :enabled s/Bool
+   :archived s/Bool})
 
-(defn- format-licenses [licenses]
-  (mapv format-license licenses))
+(def ^:private coerce-LicenseDb
+  (coerce/coercer! LicenseDb coerce/string-coercion-matcher))
 
-(defn- get-license-localizations []
-  (->> (db/get-license-localizations)
-       (map #(update-in % [:langcode] keyword))
-       (group-by :licid)))
+(defn- parse-license-raw [x]
+  (let [license {:id (:id x)
+                 :licensetype (:type x)
+                 :organization (:organization x)
+                 :enabled (:enabled x)
+                 :archived (:archived x)}]
+    (coerce-LicenseDb license)))
 
-(defn- localize-license [localizations license]
-  (assoc license :localizations
-         (into {} (for [{:keys [langcode title textcontent attachmentid]} (get localizations (:id license))]
-                    [langcode {:title title
-                               :textcontent textcontent
-                               :attachment-id attachmentid}]))))
+(def license-cache
+  (cache/basic {:id ::license-cache
+                :miss-fn (fn [id]
+                           (if-let [license (db/get-license {:id id})]
+                             (parse-license-raw license)
+                             cache/absent))
+                :reload-fn (fn []
+                             (->> (db/get-all-licenses)
+                                  (map parse-license-raw)
+                                  (index-by [:id])))}))
 
-(defn- localize-licenses [licenses]
-  (mapv (partial localize-license (get-license-localizations)) licenses))
+(s/defschema LicenseLocalizationDb
+  {:licid s/Int
+   :langcode s/Keyword
+   :title s/Str
+   :textcontent s/Str
+   (s/optional-key :attachment-id) s/Int})
 
-(defn get-resource-licenses
-  "Get resource licenses for given resource id"
-  [id]
-  (->> (db/get-resource-licenses {:id id})
-       (format-licenses)
-       (localize-licenses)))
+(def ^:private coerce-LicenseLocalizationDb
+  (coerce/coercer! LicenseLocalizationDb coerce/string-coercion-matcher))
+
+(defn- parse-localization-raw [x]
+  (let [localization (-> {:licid (:licid x)
+                          :langcode (keyword (:langcode x))
+                          :title (:title x)
+                          :textcontent (:textcontent x)}
+                         (assoc-some :attachment-id (:attachmentid x)))]
+    (coerce-LicenseLocalizationDb localization)))
+
+(def license-localizations-cache
+  (cache/basic {:id ::license-localizations-cache
+                :miss-fn (fn [id]
+                           (if-let [localizations (seq (db/get-license-localizations {:id id}))]
+                             (->> localizations
+                                  (mapv parse-localization-raw)
+                                  (index-by [:langcode]))
+                             cache/absent))
+                :reload-fn (fn []
+                             (->> (db/get-license-localizations)
+                                  (mapv parse-localization-raw)
+                                  (index-by [:licid :langcode])))}))
+
+(defn localize-license [license]
+  (let [localizations (->> (cache/lookup-or-miss! license-localizations-cache (:id license))
+                           (map-vals #(select-keys % [:attachment-id :textcontent :title])))]
+    (-> license
+        (assoc :localizations (or localizations {})))))
 
 (defn get-license
   "Get a single license by id"
   [id]
-  (when-let [license (db/get-license {:id id})]
-    (->> license
-         (format-license)
-         (localize-license (get-license-localizations)))))
+  (some-> (cache/lookup-or-miss! license-cache id)
+          localize-license))
 
-(defn get-all-licenses
-  "Get all licenses.
-
-   filters is a map of key-value pairs that must be present in the licenses"
-  [filters]
-  (->> (db/get-all-licenses)
+(defn get-licenses [& [filters]]
+  (->> (vals (cache/entries! license-cache))
        (apply-filters filters)
-       (format-licenses)
-       (localize-licenses)))
+       (mapv localize-license)))
 
-(defn get-licenses
-  "Get licenses. Params map can contain:
-     :items -- sequence of catalogue items to get resource licenses for"
-  [params]
-  (->> (db/get-licenses params)
-       (format-licenses)
-       (localize-licenses)
-       (distinct-by :id)))
-
-(defn join-resource-licenses [x]
-  (assoc x :licenses (get-resource-licenses (:id x))))
-
-(defn join-catalogue-item-licenses [item]
-  (assoc item :licenses (get-licenses {:items [(:id item)]})))
-
-(defn join-license [{:keys [license/id] :as x}]
-  (-> (get-license id)
+(defn join-license [x]
+  (-> (get-license (:license/id x))
       (dissoc :id)
       (merge x)))
 
 (defn license-exists? [id]
-  (some? (db/get-license {:id id})))
+  (cache/has? license-cache id))
+
+(defn set-enabled! [id enabled?]
+  (db/set-license-enabled! {:id id :enabled enabled?})
+  (cache/miss! license-cache id))
+
+(defn set-archived! [id archived?]
+  (db/set-license-archived! {:id id :archived archived?})
+  (cache/miss! license-cache id))
+
+(defn create-license! [{:keys [license-type organization-id localizations]}]
+  (let [id (:id (db/create-license! {:organization organization-id
+                                     :type license-type}))]
+    (doseq [[langcode localization] localizations]
+      (db/create-license-localization! {:licid id
+                                        :langcode (name langcode)
+                                        :title (:title localization)
+                                        :textcontent (:textcontent localization)
+                                        :attachmentId (:attachment-id localization)}))
+    (cache/miss! license-localizations-cache id)
+    (cache/miss! license-cache id)
+    id))
 

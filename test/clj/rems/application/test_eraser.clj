@@ -6,12 +6,12 @@
             [rems.application.eraser :as eraser]
             [rems.application.expirer-bot :as expirer-bot]
             [rems.config :refer [env]]
-            [rems.db.applications :as applications]
-            [rems.db.outbox :as outbox]
-            [rems.db.roles :as roles]
+            [rems.db.applications]
+            [rems.db.outbox]
+            [rems.db.roles]
             [rems.db.testing :refer [test-db-fixture rollback-db-fixture]]
             [rems.db.test-data-helpers :as test-helpers]
-            [rems.db.user-settings :as user-settings]
+            [rems.db.user-settings]
             [rems.testing-util :refer [with-fixed-time]]
             [clojure.string :as str]))
 
@@ -51,14 +51,14 @@
     app-id))
 
 (defn- get-events [app-id]
-  (:application/events (applications/get-application-internal app-id)))
+  (:application/events (rems.db.applications/get-application-internal app-id)))
 
 (defn expiration-notifications-sent [event]
   (= :application.event/expiration-notifications-sent (:event/type event)))
 
 (defn- get-all-application-ids [user-id]
-  (->> (applications/get-all-applications user-id)
-       (map :application/id)))
+  (->> (rems.db.applications/get-my-applications-full user-id)
+       (mapv :application/id)))
 
 (deftest test-expire-application
   (let [_ (test-helpers/create-user! {:userid "alice"})
@@ -73,7 +73,7 @@
         outbox-emails (atom [])]
 
     (testing "does not process applications when expirer-bot user does not exist"
-      (with-redefs [outbox/puts! (fn [emails] (swap! outbox-emails concat emails))
+      (with-redefs [rems.db.outbox/puts! (fn [emails] (swap! outbox-emails concat emails))
                     env {:application-expiration {:application.state/draft {:delete-after "P90D"}}}]
         (log-test/with-log
           (testing "processing applications does not delete applications"
@@ -92,11 +92,11 @@
           (is (log-test/logged? "rems.application.eraser" :warn "Cannot process applications, because user expirer-bot does not exist")))))
 
     (testing "does not delete applications when configuration is not valid"
-      (with-redefs [outbox/puts! (fn [emails] (swap! outbox-emails concat emails))
+      (with-redefs [rems.db.outbox/puts! (fn [emails] (swap! outbox-emails concat emails))
                     env {}]
         (test-helpers/create-user! {:userid expirer-bot/bot-userid})
-        (roles/add-role! expirer-bot/bot-userid :expirer)
-        (applications/reload-cache!) ; we change roles which affect applications
+        (rems.db.roles/add-role! expirer-bot/bot-userid :expirer)
+        (rems.db.applications/reload-cache!) ; we change roles which affect applications
 
         (log-test/with-log
           (testing "processing applications does not delete applications"
@@ -116,7 +116,7 @@
           (is (log-test/logged? "rems.application.eraser" :info "No applications to process")))))
 
     (testing "cannot remove other than draft applications"
-      (with-redefs [outbox/puts! (fn [emails] (swap! outbox-emails concat emails))
+      (with-redefs [rems.db.outbox/puts! (fn [emails] (swap! outbox-emails concat emails))
                     env {:application-expiration {:application.state/submitted {:delete-after "P90D"}}}]
         (log-test/with-log
           (testing "processing applications does not delete applications"
@@ -146,7 +146,7 @@
             (is (not (log-test/logged? "rems.db.applications" :info #"Finished deleting application")))))))
 
     (testing "deletes expired draft application"
-      (with-redefs [outbox/puts! (fn [emails] (swap! outbox-emails concat emails))
+      (with-redefs [rems.db.outbox/puts! (fn [emails] (swap! outbox-emails concat emails))
                     env {:application-expiration {:application.state/draft {:delete-after "P90D"}}}]
         (with-fixed-time test-time
           (log-test/with-log
@@ -198,7 +198,7 @@
       (doseq [expiration [{:application.state/draft {:delete-after "P90D"}}
                           {:application.state/draft {:reminder-before "P7D"}}
                           nil]]
-        (with-redefs [outbox/puts! (fn [emails] (swap! outbox-emails concat emails))
+        (with-redefs [rems.db.outbox/puts! (fn [emails] (swap! outbox-emails concat emails))
                       env {:application-id-column :id
                            :public-url "localhost/"
                            :application-expiration expiration}]
@@ -218,8 +218,8 @@
                 (is (empty? @outbox-emails))))))))
 
     (testing "send expiration notifications"
-      (with-redefs [outbox/puts! (fn [emails] (swap! outbox-emails concat emails))
-                    user-settings/get-user-settings (constantly {:language :en})
+      (with-redefs [rems.db.outbox/puts! (fn [emails] (swap! outbox-emails concat emails))
+                    rems.db.user-settings/get-user-settings (constantly {:language :en})
                     env {:application-id-column :id
                          :public-url "localhost/"
                          :application-expiration expiration-config}]

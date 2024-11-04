@@ -1,112 +1,155 @@
 (ns rems.db.attachments
-  (:require [clojure.test :refer [deftest is]]
-            [clojure.tools.logging :as log]
-            [rems.common.attachment-util :as attachment-util]
-            [rems.common.util :refer [fix-filename]]
-            [rems.config :refer [env]]
+  (:require [clj-time.core :as time]
+            [rems.cache :as cache]
+            [rems.common.util :refer [getx index-by]]
             [rems.db.core :as db]
-            [rems.multipart :refer [scan-for-malware]]
-            [rems.util :refer [file-to-bytes]])
-  (:import [rems PayloadTooLargeException UnsupportedMediaTypeException InvalidRequestException]))
+            [schema.core :as s]
+            [schema.coerce :as coerce]))
 
-(defn check-size
-  [file]
-  (when (= :too-large (:error file)) ; set already by the multipart upload wrapper
-    (throw (PayloadTooLargeException. (str "File is too large")))))
+(s/defschema AttachmentDb
+  {:attachment/id s/Int
+   :attachment/user s/Str
+   :attachment/filename s/Str
+   :attachment/type s/Str
+   :application/id s/Int})
 
-(defn check-allowed-attachment
-  [filename]
-  (when-not (attachment-util/allowed-extension? filename)
-    (throw (UnsupportedMediaTypeException. (str "Unsupported extension: " filename)))))
+(def ^:private coerce-AttachmentDb
+  (coerce/coercer! AttachmentDb coerce/string-coercion-matcher))
+
+(defn- parse-attachment-raw [x]
+  (coerce-AttachmentDb {:application/id (:appid x)
+                        :attachment/id (:id x)
+                        :attachment/user (:userid x)
+                        :attachment/filename (:filename x)
+                        :attachment/type (:type x)}))
+
+(def attachment-cache
+  (cache/basic {:id ::attachment-cache
+                :miss-fn (fn [id]
+                           (if-let [attachment (db/get-attachment-metadata {:id id})]
+                             (parse-attachment-raw attachment)
+                             cache/absent))
+                :reload-fn (fn []
+                             (->> (db/get-attachments-metadata)
+                                  (mapv parse-attachment-raw)
+                                  (index-by [:attachment/id])))}))
+
+(def ^:private by-application-id
+  (cache/basic {:id ::by-application-id-cache
+                :depends-on [::attachment-cache]
+                :reload-fn (fn [deps]
+                             (group-by :application/id (vals (getx deps ::attachment-cache))))}))
 
 (defn get-attachment [attachment-id]
-  (when-let [{:keys [id userid type appid filename data]} (db/get-attachment {:id attachment-id})]
-    (check-allowed-attachment filename)
-    {:application/id appid
-     :attachment/id id
-     :attachment/user userid
-     :attachment/filename filename
-     :attachment/data data
-     :attachment/type type}))
+  (cache/lookup-or-miss! attachment-cache attachment-id))
 
-(defn check-for-malware-if-enabled [byte-array]
-  (when-let [malware-scanner-path (:scanner-path (:malware-scanning env))]
-    (let [scan (scan-for-malware malware-scanner-path byte-array)]
-      (when (:logging (:malware-scanning env))
-        (when (seq (:out scan)) (log/info (:out scan)))
-        (when (seq (:err scan)) (log/error (:err scan))))
-      (when (:detected scan)
-        (throw (InvalidRequestException. "Malware detected"))))))
+(defn get-attachment-data [attachment-id]
+  (:data (db/get-attachment {:id attachment-id})))
 
 (defn get-attachments
   "Gets attachments without the data."
   []
-  (for [{:keys [id userid type appid filename]} (db/get-attachments)]
-    (do
-      (check-allowed-attachment filename)
-      {:application/id appid
-       :attachment/id id
-       :attachment/user userid
-       :attachment/filename filename
-       :attachment/type type})))
-
-(defn get-attachment-metadata [attachment-id]
-  (when-let [{:keys [id userid type appid filename]} (db/get-attachment-metadata {:id attachment-id})]
-    {:application/id appid
-     :attachment/id id
-     :attachment/user userid
-     :attachment/filename filename
-     :attachment/type type}))
+  (vals (cache/entries! attachment-cache)))
 
 (defn get-attachments-for-application [application-id]
-  (vec
-   (for [{:keys [id filename type userid]} (db/get-attachments-for-application {:application-id application-id})]
-     {:attachment/id id
-      :attachment/user userid
-      :attachment/filename filename
-      :attachment/type type})))
+  (->> (cache/lookup! by-application-id application-id)
+       (mapv #(dissoc % :application/id))))
 
 (defn save-attachment!
-  [{:keys [tempfile filename content-type]} user-id application-id]
-  (check-allowed-attachment filename)
-  (let [byte-array (file-to-bytes tempfile)
-        _ (check-for-malware-if-enabled byte-array)
-        filename (fix-filename filename (mapv :attachment/filename (get-attachments-for-application application-id)))
-        id (:id (db/save-attachment! {:application application-id
+  [{:keys [data filename content-type user-id application-id]}]
+  (let [id (:id (db/save-attachment! {:application application-id
                                       :user user-id
                                       :filename filename
                                       :type content-type
-                                      :data byte-array}))]
-    {:id id
-     :success true}))
+                                      :data data}))]
+    (cache/miss! attachment-cache id)
+    id))
 
 (defn update-attachment!
   "Updates the attachment, but does not modify the file data! Also does not \"fix the filename\"."
   [attachment]
-  (check-allowed-attachment (:attachment/filename attachment))
-  (db/update-attachment! {:id (:attachment/id attachment)
-                          :application (:application/id attachment)
-                          :user (:attachment/user attachment)
-                          :filename (:attachment/filename attachment)
-                          :type (:attachment/type attachment)})
-  {:id (:attachment/id attachment)
-   :success true})
+  (let [id (:attachment/id attachment)]
+    (db/update-attachment! {:id id
+                            :application (:application/id attachment)
+                            :user (:attachment/user attachment)
+                            :filename (:attachment/filename attachment)
+                            :type (:attachment/type attachment)})
+    (cache/miss! attachment-cache id)
+    id))
 
 (defn redact-attachment!
   "Updates the attachment by zeroing the file data."
   [attachment-id]
   (db/redact-attachment! {:id attachment-id})
-  {:id attachment-id
-   :success true})
+  ;; no need to update metadata cache
+  attachment-id)
 
 (defn copy-attachment! [new-application-id attachment-id]
-  (let [attachment (db/get-attachment {:id attachment-id})]
-    (:id (db/save-attachment! {:application new-application-id
-                               :user (:userid attachment)
-                               :filename (:filename attachment)
-                               :type (:type attachment)
-                               :data (:data attachment)}))))
+  (let [attachment (get-attachment attachment-id)
+        id (:id (db/save-attachment! {:application new-application-id
+                                      :user (:attachment/user attachment)
+                                      :filename (:attachment/filename attachment)
+                                      :type (:attachment/type attachment)
+                                      :data (get-attachment-data attachment-id)}))]
+    (cache/miss! attachment-cache id)
+    id))
 
-(defn delete-attachment! [attachment-id]
-  (db/delete-attachment! {:id attachment-id}))
+(defn delete-attachment! [id]
+  (db/delete-attachment! {:id id})
+  (cache/evict! attachment-cache id))
 
+(defn delete-application-attachments! [application-id]
+  (when-let [attachments (seq (cache/lookup! by-application-id application-id))]
+    (run! #(db/delete-attachment! {:id (:attachment/id %)}) attachments)
+    (cache/set-uninitialized! attachment-cache)))
+
+(s/defschema LicenseAttachmentDb
+  {:attachment/id s/Int
+   :attachment/user s/Str
+   :attachment/filename s/Str
+   :attachment/type s/Str
+   ;; :start s/Any ; XXX: unused database attribute?
+   })
+
+(def ^:private coerce-LicenseAttachmentDb
+  (coerce/coercer! LicenseAttachmentDb coerce/string-coercion-matcher))
+
+(defn- parse-license-attachment-raw [x]
+  (coerce-LicenseAttachmentDb {:attachment/id (:id x)
+                               :attachment/user (:userid x)
+                               :attachment/filename (:filename x)
+                               :attachment/type (:type x)
+                               ;; :start (:start x) ; XXX: unused database attribute?
+                               }))
+
+;; XXX: license attachments should probably be migrated to attachments?
+(def license-attachments-cache
+  (cache/basic {:id ::license-attachments-cache
+                :miss-fn (fn [id]
+                           (if-let [attachment (db/get-license-attachment-metadata {:id id})]
+                             (parse-license-attachment-raw attachment)
+                             cache/absent))
+                :reload-fn (fn []
+                             (->> (db/get-license-attachments-metadata)
+                                  (mapv parse-license-attachment-raw)
+                                  (index-by [:attachment/id])))}))
+
+(defn create-license-attachment! [{:keys [user-id filename content-type data]}]
+  (let [id (:id (db/create-license-attachment! {:user user-id
+                                                :filename filename
+                                                :type content-type
+                                                :data data
+                                                :start (time/now)}))]
+    (cache/miss! license-attachments-cache id)
+    id))
+
+(defn remove-license-attachment! [id]
+  (db/remove-license-attachment! {:id id})
+  (cache/evict! license-attachments-cache id))
+
+(defn get-license-attachment-metadata [id]
+  (cache/lookup-or-miss! license-attachments-cache id))
+
+(defn join-license-attachment-data [x]
+  (when-let [id (:attachment/id x)]
+    (assoc x :attachment/data (:data (db/get-license-attachment {:id id})))))

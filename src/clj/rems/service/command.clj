@@ -6,13 +6,13 @@
             [rems.application.commands :as commands]
             [rems.application.process-managers :as process-managers]
             [rems.application.rejecter-bot :as rejecter-bot]
-            [rems.db.applications :as applications]
-            [rems.db.attachments :as attachments]
+            [rems.db.applications]
+            [rems.db.attachments]
             [rems.db.core :as db]
-            [rems.db.events :as events]
-            [rems.db.entitlements :as entitlements]
-            [rems.db.users :as users]
-            [rems.db.user-mappings :as user-mappings]
+            [rems.db.events]
+            [rems.db.entitlements]
+            [rems.db.users]
+            [rems.db.user-mappings]
             [rems.email.core :as email]
             [rems.event-notification :as event-notification]
             [rems.util :refer [secure-token]])
@@ -24,7 +24,7 @@
   (concat
    (process-managers/revokes-to-blacklist new-events)
    (email/generate-event-emails! new-events)
-   (entitlements/update-entitlements-for-events new-events)
+   (rems.db.entitlements/update-entitlements-for-events new-events)
    (rejecter-bot/run-rejecter-bot new-events)
    (approver-bot/run-approver-bot new-events)
    (bona-fide-bot/run-bona-fide-bot new-events)
@@ -34,12 +34,12 @@
    (process-managers/clear-redacted-attachments new-events)))
 
 (def ^:private command-injections
-  (merge applications/fetcher-injections
+  (merge rems.db.applications/fetcher-injections
          {:secure-token secure-token
-          :allocate-application-ids! applications/allocate-application-ids!
-          :copy-attachment! attachments/copy-attachment!
-          :valid-user? users/user-exists?
-          :find-userid user-mappings/find-userid}))
+          :allocate-application-ids! rems.db.applications/allocate-application-ids!
+          :copy-attachment! rems.db.attachments/copy-attachment!
+          :valid-user? rems.db.users/user-exists?
+          :find-userid rems.db.user-mappings/find-userid}))
 
 (def ^:dynamic *fail-on-process-manager-errors* false)
 
@@ -64,10 +64,10 @@
         (throw (TryAgainException. e))
         (throw e))))
   (let [app (when-let [app-id (:application-id cmd)]
-              (applications/get-application-internal app-id))
+              (rems.db.applications/get-application-internal app-id))
         result (commands/handle-command cmd app command-injections)]
     (if-not (:errors result)
-      (let [events-from-db (mapv #(events/add-event-with-compaction! app %) (:events result))]
+      (let [events-from-db (mapv #(rems.db.events/add-event-with-compaction! app %) (:events result))]
         (doseq [cmd2 (run-process-managers events-from-db)]
           (let [result (command! cmd2)]
             (when (:errors result)

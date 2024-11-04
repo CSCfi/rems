@@ -1,8 +1,8 @@
 (ns ^:integration rems.test-pdf
   (:require [clj-time.core :as time]
             [clojure.test :refer [deftest is testing use-fixtures]]
-            [rems.db.applications :as applications]
-            [rems.db.core :as db]
+            [rems.db.applications]
+            [rems.db.attachments]
             [rems.service.test-data :as test-data]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.db.testing :refer [test-db-fixture rollback-db-fixture]]
@@ -153,7 +153,7 @@
                   [:phrase "2001-01-01 00:00" " " "Alice Applicant lämnade in ansökan." nil nil nil]]]]]]
              (with-language :sv
                (with-fixed-time (time/date-time 2010)
-                 (#'pdf/render-application (applications/get-application-for-user "alice" application-id)))))))
+                 (#'pdf/render-application (rems.db.applications/get-application-for-user "alice" application-id)))))))
     (testing "handler should see complete application"
       (is (= [{}
               [[:heading pdf/heading-style "Application 2000/1: "]
@@ -216,7 +216,7 @@
                    nil]]]]]]
              (with-language :en
                (with-fixed-time (time/date-time 2010)
-                 (#'pdf/render-application (applications/get-application-for-user "developer" application-id)))))))
+                 (#'pdf/render-application (rems.db.applications/get-application-for-user "developer" application-id)))))))
     (testing "decider should see complete application"
       (is (= [{}
               [[:heading pdf/heading-style "Hakemus 2000/1: "]
@@ -279,7 +279,7 @@
                    nil]]]]]]
              (with-language :fi
                (with-fixed-time (time/date-time 2010)
-                 (#'pdf/render-application (applications/get-application-for-user "david" application-id)))))))
+                 (#'pdf/render-application (rems.db.applications/get-application-for-user "david" application-id)))))))
     (testing "reviewer should not see private fields"
       (is (= [{}
               [[:heading pdf/heading-style "Ansökan 2000/1: "]
@@ -331,7 +331,7 @@
                    nil]]]]]]
              (with-language :sv
                (with-fixed-time (time/date-time 2010)
-                 (#'pdf/render-application (applications/get-application-for-user "carl" application-id)))))))))
+                 (#'pdf/render-application (rems.db.applications/get-application-for-user "carl" application-id)))))))))
 
 (deftest test-pdf-gold-standard
   (test-helpers/create-user! {:userid "alice" :name "Alice Applicant" :email "alice@example.com"})
@@ -372,16 +372,14 @@
                                                           :time (time/date-time 2000)})
         handler "developer"]
     (testing "fill and submit"
-      (let [attachment-1 (:id (db/save-attachment! {:application application-id
-                                                    :user handler
-                                                    :filename "attachment.pdf"
-                                                    :type "application/pdf"
-                                                    :data (byte-array 0)}))
-            attachment-2 (:id (db/save-attachment! {:application application-id
-                                                    :user handler
-                                                    :filename "picture.png"
-                                                    :type "image/png"
-                                                    :data (byte-array 0)}))]
+      (let [attachment-1 (test-helpers/create-attachment! {:application-id application-id
+                                                           :actor applicant
+                                                           :filename "attachment.pdf"
+                                                           :filetype "application/pdf"})
+            attachment-2 (test-helpers/create-attachment! {:application-id application-id
+                                                           :actor applicant
+                                                           :filename "picture.png"
+                                                           :filetype "image/png"})]
         ;; two draft-saved events
         (test-helpers/fill-form! {:time (time/date-time 2000)
                                   :actor applicant
@@ -429,16 +427,14 @@
                               :decision :approved
                               :actor "david"}))
     (testing "approve"
-      (let [att1 (:id (db/save-attachment! {:application application-id
-                                            :user handler
-                                            :filename "file1.txt"
-                                            :type "text/plain"
-                                            :data (byte-array 0)}))
-            att2 (:id (db/save-attachment! {:application application-id
-                                            :user handler
-                                            :filename "file2.pdf"
-                                            :type "application/pdf"
-                                            :data (byte-array 0)}))]
+      (let [att1 (test-helpers/create-attachment! {:application-id application-id
+                                                   :actor handler
+                                                   :filename "file1.txt"
+                                                   :filetype "text/plain"})
+            att2 (test-helpers/create-attachment! {:application-id application-id
+                                                   :actor handler
+                                                   :filename "file2.pdf"
+                                                   :filetype "application/pdf"})]
         (test-helpers/command! {:time (time/date-time 2003)
                                 :application-id application-id
                                 :type :application.command/approve
@@ -542,10 +538,10 @@
                   [:phrase "2003-01-01 00:00" " " "Developer approved the application." nil "\nComment: approved" "\nAttachments: file1.txt, file2.pdf"]]]]]]
              (with-language :en
                (with-fixed-time (time/date-time 2010)
-                 (#'pdf/render-application (applications/get-application-for-user handler application-id)))))))
+                 (#'pdf/render-application (rems.db.applications/get-application-for-user handler application-id)))))))
     (testing "pdf rendering succeeds"
       (is (some?
            (with-language :en
              ;; uncomment this to get a pdf file to look at
              #_(pdf/application-to-pdf (applications/get-application-for-user handler application-id) "/tmp/example-application.pdf")
-             (pdf/application-to-pdf-bytes (applications/get-application-for-user handler application-id))))))))
+             (pdf/application-to-pdf-bytes (rems.db.applications/get-application-for-user handler application-id))))))))

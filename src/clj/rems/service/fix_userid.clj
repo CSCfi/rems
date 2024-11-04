@@ -1,7 +1,6 @@
 
 (ns rems.service.fix-userid
-  (:require rems.service.dependencies
-            [rems.db.api-key]
+  (:require [rems.db.api-key]
             [rems.db.applications]
             [rems.db.attachments]
             [rems.db.blacklist]
@@ -16,7 +15,8 @@
             [rems.db.user-mappings]
             [rems.db.user-settings]
             [rems.db.users]
-            [rems.db.workflow]))
+            [rems.db.workflow]
+            [rems.service.dependencies]))
 
 (defn fix-apikey [old-userid new-userid simulate?]
   (doall
@@ -99,7 +99,7 @@
 
 (defn fix-blacklist-event [old-userid new-userid simulate?]
   (doall
-   (for [old-event (rems.db.blacklist/get-events nil)
+   (for [old-event (rems.db.blacklist/get-events)
          :let [new-event (cond-> old-event
                            (= old-userid (:event/actor old-event))
                            (assoc :event/actor new-userid)
@@ -206,19 +206,13 @@
 
 
 (defn fix-roles [old-userid new-userid simulate?]
-  (doall
-   (for [old (rems.db.roles/get-all-roles)
-         :let [new (if (= old-userid (:userid old))
-                     (assoc old :userid new-userid)
-                     old)]
-         :when (not= new old)
-         :let [params [new]]]
-     (do
-       (apply prn #'fix-roles old params)
-       (when-not simulate?
-         (rems.db.roles/remove-roles! old-userid)
-         (apply rems.db.roles/update-roles! params))
-       {:old old :params params}))))
+  (when-let [old-roles (rems.db.roles/get-roles old-userid)]
+    (apply prn #'fix-roles old-userid old-roles)
+    (when-not simulate?
+      (rems.db.roles/remove-roles! old-userid)
+      (rems.db.roles/update-roles! new-userid old-roles))
+    {:old {:userid old-userid :roles old-roles}
+     :params [new-userid old-roles]}))
 
 (comment
   (fix-roles "frank" "owner" false))
@@ -233,9 +227,9 @@
           old-mappings (rems.db.user-mappings/get-user-mappings {:userid old-userid})]
       (apply prn #'fix-user old-user old-settings old-mappings)
       (when-not simulate?
-        (rems.db.users/add-user! (assoc old-user :userid new-userid))
+        (rems.db.users/add-user! new-userid old-user)
         (rems.db.user-settings/update-user-settings! new-userid old-settings)
-        (rems.db.user-mappings/delete-user-mapping! old-userid)
+        (rems.db.user-mappings/delete-user-mapping! {:userid old-userid})
         (doseq [old-mapping old-mappings
                 :when (not= (:ext-id-value old-mapping) new-userid)] ; not saved in login either
           (rems.db.user-mappings/create-user-mapping! (assoc old-mapping :userid new-userid))))
@@ -254,7 +248,7 @@
 
 (defn fix-workflow [old-userid new-userid simulate?]
   (doall
-   (for [old (rems.db.workflow/get-workflows nil)
+   (for [old (rems.db.workflow/get-workflows)
          :let [old {:id (:id old)
                     :organization (:organization old)
                     :title (:title old)

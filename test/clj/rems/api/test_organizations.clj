@@ -2,7 +2,7 @@
   (:require [clojure.test :refer :all]
             [medley.core :refer [find-first]]
             [rems.api.testing :refer :all]
-            [rems.db.api-key :as api-key]
+            [rems.db.api-key]
             [rems.db.test-data-helpers :as test-helpers]
             [ring.mock.request :refer :all]))
 
@@ -23,7 +23,7 @@
         get-orgs (fn [userid] (api-call :get (str "/api/organizations")
                                         nil
                                         api-key userid))]
-    (api-key/add-api-key! api-key)
+    (rems.db.api-key/add-api-key! api-key)
     (test-helpers/create-user! {:userid user})
     (test-helpers/create-user! {:userid owner :name "Owner" :email "owner@example.com"} :owner)
     (test-helpers/create-user! {:userid org-owner1 :name "Organization Owner 1" :email "organization-owner1@example.com"})
@@ -203,7 +203,7 @@
                 "organization data is unchanged")))))))
 
 (deftest organization-api-status-test
-  (api-key/add-api-key! "42")
+  (rems.db.api-key/add-api-key! "42")
   (test-helpers/create-user! {:userid "owner" :name "Owner" :email "owner@example.com"} :owner)
   (api-call :post "/api/organizations/create"
             {:organization/id organization-id
@@ -240,7 +240,7 @@
     (is (= {:enabled true :archived false} (get-status)))))
 
 (deftest organizations-api-security-test
-  (api-key/add-api-key! "42")
+  (rems.db.api-key/add-api-key! "42")
   (test-helpers/create-user! {:userid "alice"})
   (test-helpers/create-user! {:userid "owner"} :owner)
   (testing "without authentication"
@@ -340,7 +340,7 @@
   (let [api-key "42"
         owner "owner"
         org-owner1 "organization-owner1"]
-    (api-key/add-api-key! api-key)
+    (rems.db.api-key/add-api-key! api-key)
     (test-helpers/create-user! {:userid owner} :owner)
     (test-helpers/create-user! {:userid org-owner1})
     (testing "trying to create a duplicate fails" ; separate test because it will leave the transaction in an errored state

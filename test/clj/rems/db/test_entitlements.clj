@@ -2,11 +2,11 @@
   (:require [clj-time.core :as time]
             [clojure.test :refer :all]
             [rems.config]
-            [rems.db.applications :as applications]
+            [rems.db.applications]
             [rems.db.core :as db]
-            [rems.db.entitlements :as entitlements]
+            [rems.db.entitlements]
             [rems.db.test-data-helpers :as test-helpers]
-            [rems.db.testing :refer [reset-caches-fixture test-db-fixture rollback-db-fixture]]
+            [rems.db.testing :refer [test-db-fixture rollback-db-fixture]]
             [rems.json :as json]
             [rems.testing-util :refer [fixed-time-fixture suppress-logging-fixture]]
             [stub-http.core :as stub]))
@@ -18,9 +18,9 @@
   :once
   (fixed-time-fixture +test-time+)
   (suppress-logging-fixture "rems.db.entitlements")
-  test-db-fixture
-  rollback-db-fixture
-  reset-caches-fixture)
+  test-db-fixture)
+
+(use-fixtures :each rollback-db-fixture)
 
 (def +entitlements+
   [{:resid "res1" :catappid 11 :userid "user1" :start (time/date-time 2001 10 11) :mail "user1@tes.t" :end (time/date-time 2003 10 11)}
@@ -44,7 +44,7 @@
     (run-with-server
      {:status 200}
      (fn [server]
-       (is (nil? (#'entitlements/post-entitlements! {:action :add :type :basic :entitlements +entitlements+})))
+       (is (nil? (#'rems.db.entitlements/post-entitlements! {:action :add :type :basic :entitlements +entitlements+})))
        (is (= [+expected-payload+] (for [r (stub/recorded-requests server)]
                                      (json/parse-string (get-in r [:body "postData"]))))))))
 
@@ -52,18 +52,18 @@
     (run-with-server
      {:status 404}
      (fn [_]
-       (is (= ["failed: 404"] (#'entitlements/post-entitlements! {:action :add :type :basic :entitlements +entitlements+}))))))
+       (is (= ["failed: 404"] (#'rems.db.entitlements/post-entitlements! {:action :add :type :basic :entitlements +entitlements+}))))))
   (testing "timeout"
     (run-with-server
      {:status 200 :delay 5000} ;; timeout of 2500 in code
      (fn [_]
-       (is (= ["failed: exception"] (#'entitlements/post-entitlements! {:action :add :type :basic :entitlements +entitlements+}))))))
+       (is (= ["failed: exception"] (#'rems.db.entitlements/post-entitlements! {:action :add :type :basic :entitlements +entitlements+}))))))
   (testing "invalid url"
     (with-redefs [rems.config/env (assoc rems.config/env
                                          :entitlements-target {:add "http://invalid/entitlements"})]
-      (is (= ["failed: exception"] (#'entitlements/post-entitlements! {:action :add :type :basic :entitlements +entitlements+})))))
+      (is (= ["failed: exception"] (#'rems.db.entitlements/post-entitlements! {:action :add :type :basic :entitlements +entitlements+})))))
   (testing "no server configured"
-    (is (nil? (#'entitlements/post-entitlements! {:action :add :type :basic :entitlements +entitlements+})))))
+    (is (nil? (#'rems.db.entitlements/post-entitlements! {:action :add :type :basic :entitlements +entitlements+})))))
 
 (defn- get-requests [server]
   (doall
@@ -101,7 +101,7 @@
     (test-helpers/create-user! {:userid member :email "e.l@s.a" :name "Elsa"})
     (test-helpers/create-user! {:userid admin :email "o.w@n.er" :name "Owner"})
 
-    (entitlements/process-outbox!) ;; empty outbox from pending posts
+    (rems.db.entitlements/process-outbox!) ;; empty outbox from pending posts
 
     (let [app-id (test-helpers/create-application! {:actor applicant :catalogue-item-ids [item1 item2]})]
       (testing "submitted application should not yet cause entitlements"
@@ -120,7 +120,7 @@
                                    :actor admin
                                    :member {:userid member}})
 
-           (entitlements/process-outbox!)
+           (rems.db.entitlements/process-outbox!)
 
            (is (empty? (db/get-entitlements {:application app-id})))
            (is (empty? (stub/recorded-requests server)))))
@@ -139,9 +139,9 @@
                                      :accepted-licenses [lic-id1]}) ; only accept some licenses
              (is (= {applicant #{lic-id1 lic-id2}
                      member #{lic-id1}}
-                    (:application/accepted-licenses (applications/get-application app-id))))
+                    (:application/accepted-licenses (rems.db.applications/get-application app-id))))
 
-             (entitlements/process-outbox!)
+             (rems.db.entitlements/process-outbox!)
 
              (testing "entitlements exist in db"
                (is (= #{[applicant "resource1"] [applicant "resource2"]}
@@ -161,7 +161,7 @@
                                    :actor member
                                    :accepted-licenses [lic-id1 lic-id2]}) ; now accept all licenses
 
-           (entitlements/process-outbox!)
+           (rems.db.entitlements/process-outbox!)
 
            (testing "all entitlements exist in db"
              (is (= #{[applicant "resource1"] [applicant "resource2"]
@@ -182,7 +182,7 @@
                                    :actor admin
                                    :member {:userid member}
                                    :comment "Left team"})
-           (entitlements/process-outbox!)
+           (rems.db.entitlements/process-outbox!)
 
            (testing "entitlements removed from db"
              (is (= #{[applicant "resource1"] [applicant "resource2"]}
@@ -202,7 +202,7 @@
                                    :catalogue-item-ids [item1 item3]
                                    :comment "Removed second resource, added third resource"})
 
-           (entitlements/process-outbox!)
+           (rems.db.entitlements/process-outbox!)
 
            (testing "entitlements changed in db"
              (is (= #{[applicant "resource1"] [applicant "resource3"]}
@@ -224,7 +224,7 @@
                                    :actor admin
                                    :comment "Finished"})
 
-           (entitlements/process-outbox!)
+           (rems.db.entitlements/process-outbox!)
 
            (testing "entitlements ended in db"
              (is (= [] (db/get-entitlements {:application app-id :active-at (time/now)}))))
@@ -252,7 +252,7 @@
         (run-with-server
          {:status 200}
          (fn [server]
-           (entitlements/process-outbox!)
+           (rems.db.entitlements/process-outbox!)
 
            (is (= [{:resid "resource1" :userid applicant :end (time/date-time 2100 01 01)}]
                   (mapv #(select-keys % [:resid :userid :end]) (db/get-entitlements {:application app-id}))))
@@ -272,7 +272,7 @@
                               :actor admin
                               :comment ""})
 
-      (entitlements/process-outbox!)
+      (rems.db.entitlements/process-outbox!)
 
       (testing "revoked application should end entitlements"
         (run-with-server
@@ -283,7 +283,7 @@
                                    :actor admin
                                    :comment "Banned"})
 
-           (entitlements/process-outbox!)
+           (rems.db.entitlements/process-outbox!)
 
            (testing "entitlements ended in db"
              (is (= [] (db/get-entitlements {:application app-id :active-at (time/now)}))))

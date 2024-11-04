@@ -1,29 +1,28 @@
 (ns rems.service.category
   (:require [medley.core :refer [update-existing-in]]
-            [rems.db.category :as category]
+            [rems.db.category]
             [rems.service.dependencies :as dependencies]))
 
 (defn join-categories [m ks]
-  (update-existing-in m ks category/enrich-categories))
+  (update-existing-in m ks rems.db.category/enrich-categories))
 
 (defn get-category [id]
-  (when-let [category (category/get-category id)]
+  (when-let [category (rems.db.category/get-category id)]
     (-> category
         (join-categories [:category/children]))))
 
 (defn get-categories []
-  (category/get-categories))
+  (rems.db.category/get-categories))
 
 (defn- category-entities-not-found-error [children]
-  (when-let [not-found (seq (remove #(category/get-category (:category/id %)) children))]
+  (when-let [not-found (seq (remove #(rems.db.category/get-category (:category/id %)) children))]
     {:success false
      :errors [{:type :t.administration.errors/dependencies-not-found
                :categories not-found}]}))
 
 (defn create-category! [command]
   (or (category-entities-not-found-error (:category/children command))
-      (let [id (category/create-category! command)]
-        (dependencies/reset-cache!)
+      (let [id (rems.db.category/create-category! command)]
         {:success true
          :category/id id})))
 
@@ -34,11 +33,11 @@
                :category/id id}]}))
 
 (defn- ancestor-as-subcategory-error [id children]
-  (let [ancestors (category/get-ancestors-of id)]
+  (let [ancestors (rems.db.category/get-ancestors-of id)]
     (when-let [looping-ancestors (seq (filter #(ancestors (:category/id %)) children))]
       {:success false
        :errors [{:type :t.administration.errors/ancestor-as-subcategory-disallowed
-                 :categories (mapv #(select-keys (category/get-category (:category/id %))
+                 :categories (mapv #(select-keys (rems.db.category/get-category (:category/id %))
                                                  [:category/id :category/title])
                                    looping-ancestors)}]})))
 
@@ -48,13 +47,11 @@
       (ancestor-as-subcategory-error (:category/id command) (:category/children command))
       (let [id (:category/id command)
             data (dissoc command :category/id)]
-        (category/update-category! id data)
-        (dependencies/reset-cache!)
+        (rems.db.category/update-category! id data)
         {:success true})))
 
 (defn delete-category! [command]
   (or (dependencies/in-use-error (select-keys command [:category/id]))
       (do
-        (category/delete-category! (:category/id command))
-        (dependencies/reset-cache!)
+        (rems.db.category/delete-category! (:category/id command))
         {:success true})))

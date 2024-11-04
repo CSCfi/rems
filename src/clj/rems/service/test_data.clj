@@ -7,18 +7,20 @@
             [clojure.test :refer :all]
             [clojure.tools.logging :as log]
             [rems.api.schema :as schema]
+            [rems.common.util :refer [range-1]]
             [rems.config]
-            [rems.db.api-key :as api-key]
-            [rems.db.core :as db]
-            [rems.db.roles :as roles]
+            [rems.db.api-key]
+            [rems.db.catalogue]
+            [rems.db.licenses]
+            [rems.db.roles]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.db.test-data-users :refer :all]
-            [rems.db.users :as users]
-            [rems.db.workflow :as workflow]
-            [rems.db.user-settings :as user-settings]
-            [rems.service.form :as form]
-            [rems.service.organizations :as organizations]
-            [rems.testing-util :refer [with-user]])
+            [rems.db.users]
+            [rems.db.workflow]
+            [rems.db.user-settings]
+            [rems.service.form]
+            [rems.service.organizations]
+            [rems.testing-util :refer [with-suppress-logging with-user]])
   (:import [java.util UUID]
            [java.util.concurrent Executors Future]))
 
@@ -30,19 +32,19 @@
   (doseq [user (vals users)]
     (when-let [data (get attrs user)]
       (test-helpers/create-user! data)))
-  (roles/add-role! (users :owner) :owner)
-  (roles/add-role! (users :reporter) :reporter))
+  (rems.db.roles/add-role! (users :owner) :owner)
+  (rems.db.roles/add-role! (users :reporter) :reporter))
 
 (defn create-test-users-and-roles! []
   ;; users provided by the fake login
   (create-users-and-roles! +fake-users+ +fake-user-data+)
   ;; invalid user for tests
-  (db/add-user! {:user "invalid" :userattrs nil}))
+  (rems.db.users/add-user! "invalid" {}))
 
 (defn create-bots! []
   (doseq [attr (vals +bot-user-data+)]
     (test-helpers/create-user! attr))
-  (roles/add-role! (:expirer-bot +bot-users+) :expirer))
+  (rems.db.roles/add-role! (:expirer-bot +bot-users+) :expirer))
 
 (defn- create-archived-form! [actor]
   (with-user actor
@@ -52,7 +54,7 @@
                                          :form/external-title {:en "Archived form, should not be seen by applicants"
                                                                :fi "Archived form, should not be seen by applicants"
                                                                :sv "Archived form, should not be seen by applicants"}})]
-      (form/set-form-archived! {:id id :archived true}))))
+      (rems.service.form/set-form-archived! {:id id :archived true}))))
 
 (defn- create-disabled-license! [{:keys [actor organization]}]
   (let [id (test-helpers/create-license! {:actor actor
@@ -62,7 +64,7 @@
                                                           :fi "Käytöstä poistettu lisenssi"}
                                           :license/link {:en "http://disabled"
                                                          :fi "http://disabled"}})]
-    (db/set-license-enabled! {:id id :enabled false})))
+    (rems.db.licenses/set-enabled! id false)))
 
 (def label-field
   {:field/type :label
@@ -567,11 +569,6 @@
     (->> (time/minus (time/now) (time/days 84))
          (test-helpers/create-draft! applicant [catid] "long forgotten draft"))))
 
-(defn- range-1
-  "Like `clojure.core/range`, but starts from 1 and `end` is inclusive."
-  [end]
-  (range 1 (inc end)))
-
 (defn- in-parallel [fs]
   (let [executor (Executors/newFixedThreadPool 10)]
     (try
@@ -600,15 +597,8 @@
 
 (defn random-word [] (rand-nth words))
 
-(defn create-performance-test-data! []
-  (log/info "Creating performance test data")
-  (let [start-time (System/currentTimeMillis)
-        resource-count 1000
-        application-count 3000
-        user-count 1000
-        handler-count 100
-
-        owner (+fake-users+ :owner)
+(defn- create-lots-of-test-data! [{:keys [application-count handler-count resource-count user-count]}]
+  (let [owner (+fake-users+ :owner)
 
         ;; create handlers
         handlers-data (for [i (range handler-count)
@@ -620,8 +610,8 @@
 
         _ (doseq [handler handlers-data]
             (test-helpers/create-user! handler)
-            (user-settings/update-user-settings! (:userid handler)
-                                                 {:language (rand-nth [:en :fi :sv])}))
+            (rems.db.user-settings/update-user-settings! (:userid handler)
+                                                         {:language (rand-nth [:en :fi :sv])}))
 
         handlers (concat [(+fake-users+ :approver1)
                           (+fake-users+ :approver2)]
@@ -629,11 +619,11 @@
                            (str "perf-test-handler-" i)))
 
         ;; create domain data
-        _perf (organizations/add-organization! {:organization/id "perf"
-                                                :organization/name {:fi "Suorituskykytestiorganisaatio" :en "Performance Test Organization" :sv "Organisationen för utvärderingsprov"}
-                                                :organization/short-name {:fi "Suorituskyky" :en "Performance" :sv "Uvärderingsprov"}
-                                                :organization/owners [{:userid (+fake-users+ :organization-owner1)}]
-                                                :organization/review-emails []})
+        _perf (rems.service.organizations/add-organization! {:organization/id "perf"
+                                                             :organization/name {:fi "Suorituskykytestiorganisaatio" :en "Performance Test Organization" :sv "Organisationen för utvärderingsprov"}
+                                                             :organization/short-name {:fi "Suorituskyky" :en "Performance" :sv "Uvärderingsprov"}
+                                                             :organization/owners [{:userid (+fake-users+ :organization-owner1)}]
+                                                             :organization/review-emails []})
         workflow-id (test-helpers/create-workflow! {:actor owner
                                                     :organization {:organization/id "perf"}
                                                     :title "Performance tests"
@@ -656,7 +646,7 @@
                                                                               :field/placeholder {:en "The purpose of the project is to..."
                                                                                                   :fi "Projektin tarkoitus on..."
                                                                                                   :sv "Det här projekt..."}})]})
-        form (form/get-form-template form-id)
+        form (rems.service.form/get-form-template form-id)
         category {:category/id (test-helpers/create-category! {:actor owner
                                                                :category/title {:en "Performance"
                                                                                 :fi "Suorituskyky"
@@ -691,9 +681,8 @@
                        (for [n (range-1 user-count)]
                          (fn []
                            (let [user-id (str "perftester" n)]
-                             (users/add-user-raw! user-id {:userid user-id
-                                                           :email (str user-id "@example.com")
-                                                           :name (str "Performance Tester " n)})
+                             (rems.db.users/add-user! user-id {:email (str user-id "@example.com")
+                                                               :name (str "Performance Tester " n)})
                              user-id)))))]
     (with-redefs [rems.config/env (assoc rems.config/env
                                          :enable-save-compaction false  ; generate more events without compaction
@@ -732,11 +721,23 @@
              (test-helpers/command! {:type :application.command/approve
                                      :application-id app-id
                                      :actor handler
-                                     :comment ""}))))))
-    (let [delta-time (/ (- (System/currentTimeMillis) start-time) 1000.0)]
-      (log/infof "Performance test applications created in %.2fs (%.2f/s)"
-                 delta-time
-                 (/ application-count delta-time)))))
+                                     :comment ""}))))))))
+
+(defn create-performance-test-data! []
+  (let [start-time (System/currentTimeMillis)
+        application-count 3000]
+    (with-suppress-logging ["rems.cache"
+                            "rems.db.entitlements"
+                            "rems.service.entitlements"]
+      (log/info "Creating performance test data")
+      (create-lots-of-test-data! {:application-count application-count
+                                  :handler-count 100
+                                  :resource-count 1000
+                                  :user-count 1000})
+      (let [delta-time (/ (- (System/currentTimeMillis) start-time) 1000.0)]
+        (log/infof "Performance test applications created in %.2fs (%.2f/s)"
+                   delta-time
+                   (/ application-count delta-time))))))
 
 (defn- create-items! [users users-data]
   (let [owner (users :owner)
@@ -781,7 +782,7 @@
 
         _ (create-disabled-license! {:actor owner
                                      :organization {:organization/id "nbn"}})
-        attachment-license (test-helpers/create-attachment-license! {:actor owner
+        attachment-license (test-helpers/create-license-attachment! {:actor owner
                                                                      :organization {:organization/id "nbn"}})
 
         ;; Create resources
@@ -823,8 +824,8 @@
                                                                                      :license-ids [license2 extra-license attachment-license]})
 
         workflows (create-workflows! (merge users +bot-users+))
-        _ (workflow/edit-workflow! {:id (:organization-owner workflows)
-                                    :licenses [license-organization-owner]})
+        _ (rems.db.workflow/edit-workflow! {:id (:organization-owner workflows)
+                                            :licenses [license-organization-owner]})
 
         form (create-all-field-types-example-form! owner {:organization/id "nbn"} "Example form with all field types" {:en "Example form with all field types"
                                                                                                                        :fi "Esimerkkilomake kaikin kenttätyypein"
@@ -1028,7 +1029,7 @@
       (create-disabled-applications! default-disabled
                                      (users :applicant2)
                                      (users :approver1))
-      (db/set-catalogue-item-enabled! {:id default-disabled :enabled false}))
+      (rems.db.catalogue/set-attributes! default-disabled {:enabled false}))
     (let [default-expired (test-helpers/create-catalogue-item! {:actor owner
                                                                 :title {:en "Default workflow (expired)"
                                                                         :fi "Oletustyövuo (vanhentunut)"
@@ -1038,7 +1039,7 @@
                                                                 :organization {:organization/id "nbn"}
                                                                 :workflow-id (:default workflows)
                                                                 :categories [ordinary-category]})]
-      (db/set-catalogue-item-endt! {:id default-expired :end (time/now)}))
+      (rems.db.catalogue/set-attributes! default-expired {:endt (time/now)}))
     (test-helpers/create-catalogue-item! {:actor organization-owner1
                                           :title {:en "Owned by organization owner"
                                                   :fi "Organisaatio-omistajan omistama"
@@ -1306,7 +1307,7 @@
                                         :organization/review-emails []})))
 
 (defn create-test-api-key! []
-  (api-key/add-api-key! +test-api-key+ {:comment "test data"}))
+  (rems.db.api-key/add-api-key! +test-api-key+ {:comment "test data"}))
 
 (defn create-owners!
   "Create an owner, two organization owners, and their organizations."
@@ -1342,7 +1343,7 @@
   (let [[users user-data] (case (:authentication rems.config/env)
                             :oidc [+oidc-users+ +oidc-user-data+]
                             [+demo-users+ +demo-user-data+])]
-    (api-key/add-api-key! 55 {:comment "Finna"})
+    (rems.db.api-key/add-api-key! 55 {:comment "Finna"})
     (create-users-and-roles! users user-data)
     (create-organizations! users)
     (create-bots!)
