@@ -8,6 +8,10 @@
             [rems.text :refer [text text-format localized localize-attachment]]
             [rems.util :refer [class-names]]))
 
+(def nbsp "\u00A0") ; non breaking space
+(def nbhy "\u2011") ; non breaking hyphen
+(def hamburger "\u2630") ; the hamburger menu icon
+
 (defn external-link []
   [:i {:class "fa fa-external-link-alt"}
    [:span.sr-only (text :t.link/opens-in-new-window)]])

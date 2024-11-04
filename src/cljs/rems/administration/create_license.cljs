@@ -3,7 +3,7 @@
             [re-frame.core :as rf]
             [rems.administration.administration :as administration]
             [rems.administration.components :refer [localized-text-field localized-textarea-autosize organization-field radio-button-group]]
-            [rems.atoms :as atoms :refer [failure-symbol file-download document-title]]
+            [rems.atoms :as atoms :refer [document-title failure-symbol file-download nbsp]]
             [rems.collapsible :as collapsible]
             [rems.common.attachment-util :as attachment-util]
             [rems.config]
@@ -187,7 +187,7 @@
                [:a.attachment-link.btn.btn-secondary.mr-2
                 {:href (str "/api/licenses/attachments/" attachment-id)
                  :target :_blank}
-                [file-download] "\u00A0" filename]
+                [file-download] nbsp filename]
                [:button.btn.btn-secondary.mr-2 {:type :button
                                                 :on-click (remove-attachment-event language attachment-id)}
                 (text :t.form/attachment-remove)]])

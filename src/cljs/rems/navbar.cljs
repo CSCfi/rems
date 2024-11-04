@@ -105,7 +105,7 @@
    [:div.navbar.navbar-expand-sm.flex-fill
     [:button.navbar-toggler
      {:type :button :data-toggle "collapse" :data-target "#small-navbar"}
-     "\u2630"]
+     atoms/hamburger]
     (when (rems.theme/use-navbar-logo?)
       [:div.navbar-brand.logo-menu
        [:div.img]])

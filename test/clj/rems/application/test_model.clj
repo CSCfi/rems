@@ -7,6 +7,7 @@
             [rems.api.schema :as schema]
             [rems.application.events :as events]
             [rems.application.model :as model]
+            [rems.atoms :refer [nbsp nbhy]]
             [rems.common.application-util :as application-util]
             [rems.common.util :refer [deep-merge]]
             [rems.permissions :as permissions]
@@ -364,8 +365,8 @@
         nowrap (fn [s]
                  ;; GitHub will strip all CSS from markdown, so we cannot use CSS for nowrap
                  (-> s
-                     (str/replace " " "\u00A0") ;  non-breaking space
-                     (str/replace "-" "\u2011")))] ; non-breaking hyphen
+                     (str/replace " " nbsp) ;  non-breaking space
+                     (str/replace "-" nbhy)))] ; non-breaking hyphen
     (hiccup/html
      [:table {:border 1}
       [:tr

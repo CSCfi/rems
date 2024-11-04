@@ -35,7 +35,7 @@
             [rems.administration.duo :refer [duo-field duo-info-field]]
             [rems.common.application-util :refer [accepted-licenses? can-see-everything? form-fields-editable? get-member-name is-handler? is-handling-user?]]
             [rems.common.attachment-util :as attachment-util]
-            [rems.atoms :as atoms :refer [external-link file-download info-field readonly-checkbox document-title success-symbol make-empty-symbol]]
+            [rems.atoms :as atoms :refer [document-title external-link file-download info-field make-empty-symbol nbsp readonly-checkbox success-symbol]]
             [rems.common.catalogue-util :refer [catalogue-item-more-info-url]]
             [rems.collapsible :as collapsible]
             [rems.common.form :as form]
@@ -483,7 +483,7 @@
     [:a.btn.btn-secondary
      {:href (str "/api/applications/" (:application/id application) "/attachments?all=false")
       :target :_blank}
-     [file-download] "\u00A0" (text :t.form/attachments-as-zip)]))
+     [file-download] nbsp (text :t.form/attachments-as-zip)]))
 
 (defn- link-license [license]
   (let [title (localized (:license/title license))
@@ -507,7 +507,7 @@
                   "/license-attachment/" (:license/id license)
                   "/" (name @rems.config/current-language))]
     [:a.license-title {:href link :target :_blank}
-     [file-download] "\u00A0" title]))
+     [file-download] nbsp title]))
 
 (defn license-field [application license show-accepted-licenses?]
   [:div.license.flex-row.d-flex
