@@ -207,18 +207,22 @@
       (try
         (swap! request-count inc)
 
-        (with-mdc {:userid userid
-                   :request-count @request-count}
+        (with-mdc {:userid userid}
           (when log?
-            (log/info "req >" (:request-method request) uri)
+            (with-mdc {:request-count @request-count}
+              (log/info "req >" (:request-method request) uri))
             (when (seq (:form-params request))
               (log/debug "form params" (pr-str (:form-params request)))))
 
+          ;; NB: No request-count set here.
+          ;; It should be dynamically counted which for each log entry and
+          ;; the MDC approach does not support this.
           (let [response (handler request)]
             (when log?
-              (log/info "req <" (:request-method request) uri (:status response)
-                        (str (int (/ (- (System/nanoTime) start) 1000000)) "ms")
-                        (or (get-in response [:headers "Location"]) "")))
+              (with-mdc {:request-count @request-count}
+                (log/info "req <" (:request-method request) uri (:status response)
+                          (str (int (/ (- (System/nanoTime) start) 1000000)) "ms")
+                          (or (get-in response [:headers "Location"]) ""))))
             response))
         (finally
           (swap! request-count dec))))))
