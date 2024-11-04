@@ -9,6 +9,9 @@ have notable changes.
 Changes since v2.37
 
 ### Changes
+- The logging of the simultaneous request count (`rqc:`) is now done for the request and response
+  log lines only, and separately. Previously the same value was used for all logging in a request,
+  which could be confusing as the actual request count can change between the lines.
 - The performance has been improved when there are many handlers. (#3283)
 - The error message "shake" animation has been removed. (#3298)
 - The collapsible component no longer animates on open/close.
