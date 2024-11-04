@@ -12,7 +12,7 @@
             [rems.db.applications]
             [rems.db.attachments]
             [rems.multipart :refer [scan-for-malware]]
-            [rems.util :refer [file-to-bytes]]
+            [rems.util :refer [to-bytes]]
             [ring.util.http-response :refer :all])
   (:import [java.io ByteArrayInputStream ByteArrayOutputStream]
            [java.util.zip ZipOutputStream ZipEntry ZipException]
@@ -69,7 +69,7 @@
 (defn save-attachment! [{:keys [file user-id application-id]}]
   (check-size file)
   (check-allowed-attachment file)
-  (let [data (file-to-bytes (:tempfile file))]
+  (let [data (to-bytes (:tempfile file))]
     (check-for-malware-if-enabled data)
     {:id (rems.db.attachments/save-attachment! {:data data
                                                 :filename (:filename file)
@@ -81,7 +81,7 @@
 (defn create-license-attachment! [{:keys [file user-id]}]
   (check-size file)
   (check-allowed-attachment file)
-  (let [data (file-to-bytes (:tempfile file))]
+  (let [data (to-bytes (:tempfile file))]
     (check-for-malware-if-enabled data)
     {:id (rems.db.attachments/create-license-attachment! {:data data
                                                           :filename (:filename file)

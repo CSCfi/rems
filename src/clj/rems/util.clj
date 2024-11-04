@@ -5,7 +5,7 @@
             [rems.common.util :refer [getx]]
             [rems.context :as context])
   (:import [clojure.lang Atom]
-           [java.io ByteArrayOutputStream FileInputStream]))
+           [java.io ByteArrayOutputStream]))
 
 (defn errorf
   "Throw a RuntimeException, args passed to `clojure.core/format`."
@@ -50,13 +50,14 @@
      (catch clojure.lang.ExceptionInfo e#
        (ex-data e#))))
 
-(defn file-to-bytes
-  "Returns contents of file (String or File) as byte array."
-  [file]
-  (with-open [input (FileInputStream. (io/file file))
-              buffer (ByteArrayOutputStream.)]
-    (io/copy input buffer)
-    (.toByteArray buffer)))
+(defn to-bytes
+  "Returns contents of `x` as byte array."
+  [x]
+  (if (bytes? x)
+    x
+    (let [baos (ByteArrayOutputStream.)]
+      (io/copy x baos)
+      (.toByteArray baos))))
 
 (defn read-zip-entries
   "Read the zip-file entries from the `stream` and returns those matching `re`."
@@ -65,10 +66,8 @@
     (loop [files []]
       (if-let [entry (.getNextEntry stream)]
         (if (re-matches re (.getName entry))
-          (let [baos (java.io.ByteArrayOutputStream.)]
-            (io/copy stream baos)
-            (recur (conj files {:name (.getName entry)
-                                :bytes (.toByteArray baos)})))
+          (recur (conj files {:name (.getName entry)
+                              :bytes (to-bytes stream)}))
           (recur files))
         files))))
 
