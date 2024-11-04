@@ -1,5 +1,6 @@
 (ns rems.phase
-  (:require [rems.guide-util :refer [component-info example]]
+  (:require [rems.common.atoms :refer [nbsp]]
+            [rems.guide-util :refer [component-info example]]
             [rems.text :refer [text]]))
 
 (defn phases
@@ -33,7 +34,7 @@
                                     [:span.sr-only (text :t.phases/phase-closed)]]
                   :else [:i.fa.fa-chevron-right {:style {:color "rgba(0,0,0,0)"}}
                          [:span.sr-only (text :t.phases/phase-pending)]])
-            "\u00a0"
+            nbsp
             (if (:text phase)
               (text (:text phase))
               (:phase phase))]])))

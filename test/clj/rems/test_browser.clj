@@ -412,15 +412,15 @@
     (btu/scroll-and-click :licensetype-attachment)
     (btu/eventually-visible? :attachment-en) ; inputs are hidden
     (btu/upload-file :upload-license-button-en "test-data/test.txt")
-    (btu/wait-predicate #(= (set [(str "test.txt" attachment-load-text)])
+    (btu/wait-predicate #(= (set [(str attachment-load-text " test.txt")])
                             (set (get-attachments {:css ".page-create-license"})))
                         #(do {:attachments (set (get-attachments {:css ".page-create-license"}))}))
     (btu/upload-file :upload-license-button-fi "test-data/test-fi.txt")
-    (btu/wait-predicate #(= (set [(str "test.txt" attachment-load-text) (str "test-fi.txt" attachment-load-text)])
+    (btu/wait-predicate #(= (set [(str attachment-load-text " test.txt") (str attachment-load-text " test-fi.txt")])
                             (set (get-attachments {:css ".page-create-license"})))
                         #(do {:attachments (get-attachments {:css ".page-create-license"})}))
     (btu/upload-file :upload-license-button-sv "test-data/test-sv.txt")
-    (btu/wait-predicate #(= (set [(str "test.txt" attachment-load-text) (str "test-fi.txt" attachment-load-text) (str "test-sv.txt" attachment-load-text)])
+    (btu/wait-predicate #(= (set [(str attachment-load-text " test.txt") (str attachment-load-text " test-fi.txt") (str attachment-load-text " test-sv.txt")])
                             (set (get-attachments {:css ".page-create-license"})))
                         #(do {:attachments (get-attachments {:css ".page-create-license"})}))))
 
@@ -3446,7 +3446,7 @@
           (select-option "Organisation" "NBN")
           (fill-license-fields {:title "E2E license with attachments"
                                 :attachments true
-                                :attachment-load-text "\nLadda ner fil"})
+                                :attachment-load-text "Ladda ner fil\n"})
           (btu/scroll-and-click :save)
           (btu/screenshot "after-saving-attachments-sv")
           (wait-page-title "Licens – REMS")

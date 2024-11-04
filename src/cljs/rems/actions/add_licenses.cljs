@@ -86,7 +86,8 @@
      [dropdown/dropdown
       {:id dropdown-id
        :items (->> potential-licenses
-                   (mapv #(assoc % ::label (get-localized-title %))))
+                   (mapv #(assoc % ::label (get-localized-title %)))
+                   (sort-by ::label))
        :item-key :id
        :item-label ::label
        :item-selected? #(contains? (set selected-licenses) %)

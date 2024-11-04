@@ -23,13 +23,13 @@
      :tags ["permissions"]
      :responses {501 {:description "Permissions API is not enabled. #{:enable-permissions-api}"}}
      (GET "/jwk" []
-       :summary "Experimental. Get JSON Web Key Set (JWKS) (RFC 7517) containing the keys used for signing GA4GH Visas."
+       :summary "Get JSON Web Key Set (JWKS) (RFC 7517) containing the keys used for signing GA4GH Visas."
        :return GetJWKSResponse
        (or (permissions-api-not-enabled-error)
            (ok (rems.service.permissions/get-jwks))))
      (GET "/permissions/:user" []
        ;; We're trying to replicate https://github.com/CSCfi/elixir-rems-proxy/#get-permissionsusername here
-       :summary (str "Experimental. Returns user's permissions in ga4gh visa format. "
+       :summary (str "Returns user's permissions in ga4gh visa format. "
                      "Handlers, owners and reporters can query anybody's permissions. Other users can query their own permissions. "
                      "See also https://github.com/CSCfi/rems/blob/master/docs/ga4gh-visas.md")
        :roles #{:logged-in}
