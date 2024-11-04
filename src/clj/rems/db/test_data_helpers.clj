@@ -21,7 +21,8 @@
             [rems.db.test-data-users :refer [+fake-user-data+]]
             [rems.db.users]
             [rems.db.user-mappings]
-            [rems.testing-util :refer [copy-temp-file with-user]])
+            [rems.testing-util :refer [with-user]]
+            [rems.util :refer [to-bytes]])
   (:import [java.util UUID]))
 
 (defn select-config-langs [m]
@@ -123,13 +124,13 @@
                               {:user-id (or actor "owner")
                                :file {:filename "license-fi.txt"
                                       :content-type "text/plain"
-                                      :tempfile (copy-temp-file "Suomenkielinen lisenssi." "license-fi.txt")}})))
+                                      :tempfile (to-bytes "Suomenkielinen lisenssi.")}})))
         en-attachment (when (:en langs)
                         (:id (rems.service.attachment/create-license-attachment!
                               {:user-id (or actor "owner")
                                :file {:filename "license-en.txt"
                                       :content-type "text/plain"
-                                      :tempfile (copy-temp-file "License in English." "license-en.txt")}})))]
+                                      :tempfile (to-bytes "License in English.")}})))]
     (with-user actor
       (create-license! {:actor actor
                         :license/type :attachment
@@ -333,10 +334,9 @@
     app-id))
 
 (defn create-attachment! [{:keys [actor application-id filename filetype data]}]
-  (let [filename (or filename "attachment.pdf")
-        file {:filename filename
+  (let [file {:filename (or filename "attachment.pdf")
               :content-type (or filetype "application/pdf")
-              :tempfile (copy-temp-file (or data "") filename)}
+              :tempfile (to-bytes (or data ""))}
         attachment (rems.service.attachment/add-application-attachment actor application-id file)]
     (:id attachment)))
 
