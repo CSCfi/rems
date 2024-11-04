@@ -268,7 +268,7 @@
   (let [licenses (for [license (->> licenses
                                     (mapv #(assoc % ::title (get-localized-title %)))
                                     (sort-by ::title))
-                       :let [uri (str "/administration/licenses/" (:license/id license))
+                       :let [uri (str "/administration/licenses/" (:id license))
                              title (::title license)]]
                    [atoms/link {} uri title])]
     [fields/readonly-field-raw {:id id
