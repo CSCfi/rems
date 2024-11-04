@@ -7,7 +7,7 @@
             [rems.api.schema :as schema]
             [rems.application.events :as events]
             [rems.application.model :as model]
-            [rems.atoms :refer [nbsp nbhy]]
+            [rems.common.atoms :refer [nbsp nbhy]]
             [rems.common.application-util :as application-util]
             [rems.common.util :refer [deep-merge]]
             [rems.permissions :as permissions]

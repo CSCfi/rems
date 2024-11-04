@@ -3,6 +3,7 @@
             [re-frame.core :as rf]
             [rems.ajax]
             [rems.atoms :as atoms]
+            [rems.common.atoms :refer [hamburger]]
             [rems.common.util :refer [getx]]
             [rems.common.roles :as roles]
             [rems.config]
@@ -105,7 +106,7 @@
    [:div.navbar.navbar-expand-sm.flex-fill
     [:button.navbar-toggler
      {:type :button :data-toggle "collapse" :data-target "#small-navbar"}
-     atoms/hamburger]
+     hamburger]
     (when (rems.theme/use-navbar-logo?)
       [:div.navbar-brand.logo-menu
        [:div.img]])

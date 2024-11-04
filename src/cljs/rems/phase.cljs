@@ -1,5 +1,5 @@
 (ns rems.phase
-  (:require [rems.atoms :refer [nbsp]]
+  (:require [rems.common.atoms :refer [nbsp]]
             [rems.guide-util :refer [component-info example]]
             [rems.text :refer [text]]))
 
