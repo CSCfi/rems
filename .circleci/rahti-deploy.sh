@@ -7,7 +7,7 @@ instance=${1}
 if [ "${instance}" == "demo" ] ; then
     token=${rahti_demo_pod_delete_token}
 elif [ "${instance}" == "dev" ] ; then
-    token=${rahti_dev_pod_delete_token}
+    token=${rahti2_dev_pod_deleter_token}
 else
     echo "ERROR: Only \"dev\" and \"demo\" arguments supported!"
     echo "USAGE: ${0} [ dev | demo ]"
@@ -17,7 +17,7 @@ fi
 CONTAINER=$(curl -k -s \
     -H "Authorization: Bearer ${token}" \
     -H 'Accept: application/json' \
-    https://rahti.csc.fi:8443/api/v1/namespaces/rems-${instance}/pods | \
+    https://api.2.rahti.csc.fi:6443/api/v1/namespaces/rems-${instance}/pods | \
     jq '.items | .[].metadata.name' | grep rems-${instance} | tr -d \")
 
 if echo ${CONTAINER} | grep " " ; then
@@ -31,5 +31,5 @@ else
         -X DELETE \
         -H "Authorization: Bearer ${token}" \
         -H 'Accept: application/json' \
-        https://rahti.csc.fi:8443/api/v1/namespaces/rems-${instance}/pods/${CONTAINER}
+        https://api.2.rahti.csc.fi:6443/api/v1/namespaces/rems-${instance}/pods/${CONTAINER}
 fi
