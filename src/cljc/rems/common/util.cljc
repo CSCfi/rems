@@ -724,3 +724,9 @@
   "Like `clojure.core/range`, but starts from 1 and `end` is inclusive."
   [end]
   (range 1 (inc end)))
+
+(defn rand-nth*
+  "As (rand-nth), but returns nil if (seq coll) is nil."
+  [coll]
+  (some-> (seq coll)
+          (rand-nth)))
