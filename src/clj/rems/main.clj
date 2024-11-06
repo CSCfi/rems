@@ -10,6 +10,7 @@
             [mount.core :as mount]
             [rems.application.search :as search]
             [rems.common.git :as git]
+            [rems.common.util :refer [not-blank]]
             [rems.config :refer [env]]
             [rems.db.api-key]
             [rems.db.applications]
@@ -24,6 +25,7 @@
             [rems.service.fix-userid]
             [rems.service.test-data :as test-data]
             [rems.service.users]
+            [rems.user-simulator]
             [rems.validate :as validate])
   (:import [sun.misc Signal SignalHandler]
            [org.eclipse.jetty.server.handler.gzip GzipHandler])
@@ -146,7 +148,10 @@
         Example regex: /api/applications/[0-9]+/?
      \"api-key allow-all <api-key>\" -- clears the allowed method/path whitelist.
         An empty list means all methods and paths are allowed.
-     \"rename-user <old-userid> <new-userid>\" -- change a user's identity from old to new"
+     \"rename-user <old-userid> <new-userid>\" -- change a user's identity from old to new
+     \"user-simulator <url> <users>\" -- start user simulator that runs concurrent headless browser instances against target REMS.
+        <url> is target REMS (e.g. http://localhost:3000).
+        <users> is an comma-separated list of user ids (e.g. alice,elsa,frank). Each user is simulated in separate thread."
   [& args]
   (try
     (exit-on-signals!)
@@ -299,6 +304,13 @@
                                  #'rems.db.events/low-level-events-cache)
                     (rems.service.fix-userid/fix-all old-userid new-userid simulate?)
                     (println "Finished.\n\nConsider rebooting the server process next to refresh all the caches, most importantly the application cache.")))))
+
+          "user-simulator"
+          (let [[_ url users] args]
+            (rems.user-simulator/start! {:url url
+                                         :users (when (not-blank users)
+                                                  (mapv str/trim (str/split users #",")))})
+            (.addShutdownHook (Runtime/getRuntime) (Thread. rems.user-simulator/stop!)))
 
           (do
             (println "Unrecognized argument:" (first args))

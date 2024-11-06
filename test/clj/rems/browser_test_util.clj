@@ -21,7 +21,6 @@
             [rems.db.test-data-users :as test-users]
             [rems.service.test-data :as test-data]
             [rems.json :as json]
-            [rems.main]
             [rems.testing-util :refer [get-current-test-name]]
             [rems.util :refer [ensure-empty-directory!]]
             [slingshot.slingshot :refer [try+]])
@@ -58,9 +57,9 @@
 
 (defn context-get [k] (test-ctx :test-data k))
 (defn context-getx [k] (getx (test-ctx :test-data) k))
-(defn context-update! [& args] (apply swap! (test-ctx) update :test-data args))
-(defn context-assoc! [& args] (apply context-update! assoc args))
-(defn context-dissoc! [& args] (apply context-update! dissoc args))
+(defn context-update! [f & args] (apply swap! (test-ctx) update :test-data f args))
+(defn context-assoc! [k v & kvs] (apply context-update! assoc k v kvs))
+(defn context-dissoc! [k & ks] (apply context-update! dissoc k ks))
 
 (defn- ensure-empty-directories! []
   (ensure-empty-directory! (test-ctx :reporting-dir))
@@ -327,7 +326,7 @@
           (get-sequence-number)
           (get-current-test-name)))
 
-(defn screenshot [filename]
+(defn ^:dynamic screenshot [filename]
   (let [driver (get-driver)
         _ (wait-for-idle driver 500)
         full-filename (str (get-file-base) filename ".png")
@@ -355,7 +354,7 @@
     (when need-to-adjust?
       (et/set-window-rect driver window-size))))
 
-(defn screenshot-element [filename q]
+(defn ^:dynamic screenshot-element [filename q]
   (let [full-filename (format "%03d-%s-%s"
                               (get-sequence-number)
                               (get-current-test-name)
@@ -388,6 +387,9 @@
                                 (when explainer
                                   {:explanation (explainer)}))
                          ex)))))
+
+(defn running? []
+  (et/running? (get-driver)))
 
 (defn wrap-etaoin [f]
   (fn [& args] (apply f (get-driver) args)))
@@ -586,7 +588,7 @@
                               ['body > div:not(#app)']]
    }).then(callback);")
 
-(defn check-axe
+(defn ^:dynamic check-axe
   "Runs automated accessibility tests using axe.
 
   Returns the test report.
@@ -667,7 +669,7 @@
 (defn autosave-enabled? []
   (get env :enable-autosave false))
 
-(defn postmortem-handler
+(defn ^:dynamic postmortem-handler
   "Simplified version of `etaoin.api/postmortem-handler`"
   [ex]
   (let [driver (get-driver)
