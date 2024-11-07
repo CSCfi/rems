@@ -53,6 +53,7 @@
 
 (defn get-events [& [params]]
   (->> (vals (cache/entries! blacklist-event-cache))
+       (sort-by :event/id)
        (apply-filters params)))
 
 (defn add-event! [event]
