@@ -38,7 +38,7 @@
 (defn update-cache!
   "Updates the cache with any update.
    `update-fn` should be a function which takes as parameters the previously
-   cached state and a list of new events, and returns the updated state."
+   cached state, and returns the updated state."
   [cache update-fn]
   (let [cache-enabled? (atom? cache)
         cached (if cache-enabled? @cache empty-cache)
