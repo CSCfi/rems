@@ -49,7 +49,8 @@
                 :reload-fn (fn []
                              (->> (db/get-blacklist-events)
                                   (build-index {:keys [:event/id]
-                                                :value-fn parse-blacklist-event-raw})))}))
+                                                :value-fn parse-blacklist-event-raw})
+                                  (into (sorted-map))))}))
 
 (defn get-events [& [params]]
   (->> (vals (cache/entries! blacklist-event-cache))

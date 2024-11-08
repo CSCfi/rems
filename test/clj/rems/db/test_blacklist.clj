@@ -1,6 +1,6 @@
 (ns ^:integration rems.db.test-blacklist
   (:require [clj-time.core :as time]
-            [clojure.test :refer :all]
+            [clojure.test :refer [deftest is testing use-fixtures]]
             [rems.db.blacklist]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.db.testing :refer [test-db-fixture rollback-db-fixture]]))
@@ -20,19 +20,19 @@
                                  :event/time (time/date-time 2019 1 2 8 0 0)
                                  :userid "user1"
                                  :resource/ext-id "urn.fi/123"
-                                 :event/comment nil})
+                                 :event/comment "1"})
   (rems.db.blacklist/add-event! {:event/type :blacklist.event/remove
                                  :event/actor "handler"
                                  :event/time (time/date-time 2019 2 3 9 0 0)
                                  :userid "user1"
                                  :resource/ext-id "urn.fi/123"
-                                 :event/comment "it was ok"})
+                                 :event/comment "2"})
   (rems.db.blacklist/add-event! {:event/type :blacklist.event/add
                                  :event/actor "handler"
                                  :event/time (time/date-time 2019 1 1 1 0 0)
                                  :userid "user2"
                                  :resource/ext-id "urn.fi/124"
-                                 :event/comment nil})
+                                 :event/comment "3"})
 
   (let [events (rems.db.blacklist/get-events {:resource/ext-id "urn.fi/123"})]
     ;; event id sequence numbers aren't predictable since even
@@ -43,20 +43,20 @@
              :event/actor "handler"
              :userid "user1"
              :resource/ext-id "urn.fi/123"
-             :event/comment nil}
+             :event/comment "1"}
             {:event/type :blacklist.event/remove
              :event/time (time/date-time 2019 2 3 9 0 0)
              :event/actor "handler"
              :userid "user1"
              :resource/ext-id "urn.fi/123"
-             :event/comment "it was ok"}]
+             :event/comment "2"}]
            (map #(dissoc % :event/id) events))))
   (is (= [{:event/type :blacklist.event/add
            :event/time (time/date-time 2019 1 1 1 0 0)
            :event/actor "handler"
            :userid "user2"
            :resource/ext-id "urn.fi/124"
-           :event/comment nil}]
+           :event/comment "3"}]
          (mapv #(dissoc % :event/id) (rems.db.blacklist/get-events {:userid "user2"}))))
   (is (not (rems.db.blacklist/blacklisted? "user1" "urn.fi/123"))
       "user was added to blacklist, then removed")
@@ -65,7 +65,22 @@
   (is (not (rems.db.blacklist/blacklisted? "user2" "urn.fi/123"))
       "user was never added to blacklist")
   (is (rems.db.blacklist/blacklisted? "user2" "urn.fi/124")
-      "user was added to blacklist but not removed"))
+      "user was added to blacklist but not removed")
+
+  (testing "events are returned in correct order"
+    (doseq [id (range 4 20)]
+      (rems.db.blacklist/add-event! {:event/type (if (odd? id)
+                                                   :blacklist.event/add
+                                                   :blacklist.event/remove)
+                                     :event/actor "handler"
+                                     :event/time (time/date-time 2019 1 1 1 0 0)
+                                     :userid "user2"
+                                     :resource/ext-id "urn.fi/124"
+                                     :event/comment (str id)}))
+    (let [events (rems.db.blacklist/get-events)]
+      (is (apply < (mapv :event/id events)))
+      (is (= ["1" "2" "3" "4" "5" "6" "7" "8" "9" "10" "11" "12" "13" "14" "15" "16" "17" "18" "19"]
+             (mapv :event/comment events))))))
 
 (deftest test-parameter-validation
   (let [user-id "test-user"

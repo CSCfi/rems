@@ -386,11 +386,12 @@
     (let [apps (refresh-all-applications-cache!)
           app-ids (->> by-userids
                        (mapcat (fn [by-userid]
-                                 (->> (get-in apps [:state ::app-ids-by-user by-userid])
+                                 (->> (get-in apps [::app-ids-by-user by-userid])
                                       (mapv :application/id))))
                        distinct)]
       (log/info "Reloading" (count app-ids) "applications because of user changes")
-      (update-in-all-applications-cache! app-ids)))
+      (when (seq app-ids)
+        (update-in-all-applications-cache! app-ids))))
 
   (when (seq by-workflow-ids)
     (let [apps (refresh-all-applications-cache!)
@@ -400,7 +401,8 @@
                        (filter (comp wf-ids :workflow/id :application/workflow))
                        (mapv :application/id))]
       (log/info "Reloading" (count app-ids) "applications because of workflow changes")
-      (update-in-all-applications-cache! app-ids)))
+      (when (seq app-ids)
+        (update-in-all-applications-cache! app-ids))))
 
   nil)
 
