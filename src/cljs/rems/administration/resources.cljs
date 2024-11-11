@@ -71,6 +71,7 @@
 
 (defn- modify-resource-dropdown [resource]
   [atoms/commands-group-button
+   {:label (text :t.actions/modify)}
    (when (roles/can-modify-organization-item? resource)
      (list
       (status-flags/enabled-toggle-action {:on-change #(rf/dispatch [::set-resource-enabled %1 %2 [::fetch-resources]])} resource)
