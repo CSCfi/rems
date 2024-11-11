@@ -322,6 +322,12 @@
   (assoc action
          :label [text :t.administration/save]))
 
+(defn delete-action
+  "Standard delete action helper, to use with e.g. `action-button` or `action-link`."
+  [action]
+  (assoc action
+         :label [text :t.administration/delete]))
+
 (defn commands
   "Creates a standard commands group with left alignment."
   [& commands]

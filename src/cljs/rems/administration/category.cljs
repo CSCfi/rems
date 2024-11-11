@@ -1,7 +1,7 @@
 (ns rems.administration.category
   (:require [re-frame.core :as rf]
             [rems.administration.administration :as administration]
-            [rems.administration.components :refer [inline-info-field localized-info-field]]
+            [rems.administration.components :refer [inline-info-field localized-info-field perform-action-button]]
             [rems.atoms :as atoms :refer [document-title]]
             [rems.collapsible :as collapsible]
             [rems.flash-message :as flash-message]
@@ -56,12 +56,11 @@
    (str "/administration/categories/edit/" category-id)
    (text :t.administration/edit)])
 
-(defn- delete-category-button []
-  [:button#delete.btn.btn-primary
-   {:type :button
+(defn- delete-action []
+  (atoms/delete-action
+   {:id :delete
     :on-click #(when (js/confirm (text :t.administration/delete-confirmation))
-                 (rf/dispatch [::delete-category]))}
-   (text :t.administration/delete)])
+                 (rf/dispatch [::delete-category]))}))
 
 (defn category-view []
   (let [category (rf/subscribe [::category])]
@@ -81,7 +80,7 @@
      [:div.col.commands
       [administration/back-button "/administration/categories"]
       [roles/show-when roles/+admin-write-roles+
-       [delete-category-button]
+       [perform-action-button (delete-action)]
        [to-edit-category (:category/id @category)]]]]))
 
 (defn category-page []

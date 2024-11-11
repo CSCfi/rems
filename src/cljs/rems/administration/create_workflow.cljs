@@ -4,7 +4,7 @@
             [re-frame.core :as rf]
             [reagent.format :as rfmt]
             [rems.administration.administration :as administration]
-            [rems.administration.components :refer [localized-text-field organization-field radio-button-group text-field]]
+            [rems.administration.components :refer [localized-text-field organization-field perform-action-button radio-button-group text-field]]
             [rems.administration.items :as items]
             [rems.atoms :as atoms :refer [enrich-user document-title]]
             [rems.collapsible :as collapsible]
@@ -553,7 +553,7 @@
                                         {:command (text :t.commands/change-processing-state)})]
                    [workflow-processing-states]])}])))
 
-(defn- save-workflow-action []
+(defn- save-workflow []
   (b/cond
     :let [loading? @(rf/subscribe [::workflow :fetching?])
           editing? @(rf/subscribe [::editing?])
@@ -595,4 +595,4 @@
 
     [:div.col.commands
      [atoms/action-button (cancel-action)]
-     [atoms/rate-limited-action-button (save-workflow-action)]]]])
+     [perform-action-button (save-workflow)]]]])

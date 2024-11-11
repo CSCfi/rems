@@ -3,7 +3,7 @@
             [medley.core :refer [assoc-some]]
             [re-frame.core :as rf]
             [rems.administration.administration :as administration]
-            [rems.administration.components :refer [localized-text-field number-field]]
+            [rems.administration.components :refer [localized-text-field number-field perform-action-button]]
             [rems.atoms :as atoms :refer [document-title]]
             [rems.collapsible :as collapsible]
             [rems.common.util :refer [parse-int]]
@@ -134,22 +134,21 @@
        :clearable? true
        :on-change #(rf/dispatch [::set-selected-categories %])}]]))
 
-(defn- save-category-button [form languages]
-  (let [request (build-request form languages)]
-    [:button#save.btn.btn-primary
-     {:type :button
-      :on-click (fn []
-                  (rf/dispatch [:rems.app/user-triggered-navigation])
-                  (rf/dispatch [::edit-category request]))
-      :disabled (nil? request)}
-     (text :t.administration/save)]))
+(defn- save-category [form]
+  (let [request (build-request form @rems.config/languages)]
+    (atoms/save-action
+     {:id :save
+      :on-click (when request
+                  (fn []
+                    (rf/dispatch [:rems.app/user-triggered-navigation])
+                    (rf/dispatch [::edit-category request])))
+      :disabled (nil? request)})))
 
-(defn- delete-category-button []
-  [:button#delete.btn.btn-primary
-   {:type :button
+(defn- delete-action []
+  (atoms/delete-action
+   {:id :delete
     :on-click #(when (js/confirm (text :t.administration/delete-confirmation))
-                 (rf/dispatch [::delete-category]))}
-   (text :t.administration/delete)])
+                 (rf/dispatch [::delete-category]))}))
 
 (defn- cancel-button []
   (let [category (rf/subscribe [::category])]
@@ -159,8 +158,7 @@
 
 (defn edit-category-page []
   (let [loading? @(rf/subscribe [::categories :fetching?])
-        form @(rf/subscribe [::form])
-        languages @rems.config/languages]
+        form @(rf/subscribe [::form])]
     [:div
      [administration/navigator]
      [document-title (text :t.administration/edit-category)]
@@ -179,5 +177,5 @@
 
                    [:div.col.commands
                     [cancel-button]
-                    [delete-category-button]
-                    [save-category-button form languages]]])]}]]))
+                    [perform-action-button (delete-action)]
+                    [perform-action-button (save-category form)]]])]}]]))

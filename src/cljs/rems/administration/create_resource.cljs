@@ -2,7 +2,7 @@
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
             [rems.administration.administration :as administration]
-            [rems.administration.components :refer [organization-field text-field]]
+            [rems.administration.components :refer [organization-field perform-action-button text-field]]
             [rems.administration.duo :refer [duo-field]]
             [rems.atoms :as atoms :refer [document-title]]
             [rems.collapsible :as collapsible]
@@ -158,15 +158,15 @@
                                      :update-form ::update-duo}
                            :create-field? true}]))])]))
 
-(defn- save-resource-button [form]
+(defn- save-resource [form]
   (let [request (build-request form)]
-    [:button#save.btn.btn-primary
-     {:type :button
-      :on-click (fn []
-                  (rf/dispatch [:rems.app/user-triggered-navigation])
-                  (rf/dispatch [::create-resource request]))
-      :disabled (nil? request)}
-     (text :t.administration/save)]))
+    (atoms/save-action
+     {:id :save
+      :on-click (when request
+                  (fn []
+                    (rf/dispatch [:rems.app/user-triggered-navigation])
+                    (rf/dispatch [::create-resource request])))
+      :disabled (nil? request)})))
 
 (defn- cancel-button []
   [atoms/link {:class "btn btn-secondary"}
@@ -193,5 +193,5 @@
                    (when (:enable-duo @rems.globals/config) [resource-duos-field])
                    [:div.col.commands
                     [cancel-button]
-                    [save-resource-button form]]])]}]]))
+                    [perform-action-button (save-resource form)]]])]}]]))
 

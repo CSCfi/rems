@@ -2,7 +2,7 @@
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
             [rems.administration.administration :as administration]
-            [rems.administration.components :refer [localized-text-field localized-textarea-autosize organization-field radio-button-group]]
+            [rems.administration.components :refer [localized-text-field localized-textarea-autosize organization-field perform-action-button radio-button-group]]
             [rems.atoms :as atoms :refer [document-title failure-symbol file-download]]
             [rems.collapsible :as collapsible]
             [rems.common.atoms :refer [nbsp]]
@@ -199,17 +199,15 @@
                :error [failure-symbol]
                nil)]]])))
 
-(defn- save-license-button [on-click]
-  (let [form @(rf/subscribe [::form])
-        languages @rems.config/languages
-        request (build-request form languages)]
-    [:button#save.btn.btn-primary
-     {:type :button
-      :on-click (fn []
-                  (rf/dispatch [:rems.app/user-triggered-navigation])
-                  (on-click request))
-      :disabled (nil? request)}
-     (text :t.administration/save)]))
+(defn- save-license []
+  (let [request (build-request @(rf/subscribe [::form])
+                               @rems.config/languages)]
+    (atoms/save-action {:id :save
+                        :disabled (nil? request)
+                        :on-click (when request
+                                    (fn []
+                                      (rf/dispatch [:rems.app/user-triggered-navigation])
+                                      (rf/dispatch [::create-license request])))})))
 
 (defn- cancel-button []
   [atoms/link {:class "btn btn-secondary"}
@@ -236,5 +234,5 @@
                   nil)
                 [:div.col.commands
                  [cancel-button]
-                 [save-license-button #(rf/dispatch [::create-license %])]]]}]]))
+                 [perform-action-button (save-license)]]]}]]))
 

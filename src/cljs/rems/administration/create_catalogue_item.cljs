@@ -3,7 +3,7 @@
             [medley.core :refer [find-first map-vals]]
             [re-frame.core :as rf]
             [rems.administration.administration :as administration]
-            [rems.administration.components :refer [localized-text-field organization-field]]
+            [rems.administration.components :refer [localized-text-field organization-field perform-action-button]]
             [rems.atoms :as atoms :refer [document-title]]
             [rems.collapsible :as collapsible]
             [rems.common.util :refer [andstr]]
@@ -284,18 +284,18 @@
      "/administration/catalogue-items")
    (text :t.administration/cancel)])
 
-(defn- save-catalogue-item-button [form editing?]
-  (let [request (build-request form)]
-    [:button.btn.btn-primary
-     {:type :button
-      :id :save
-      :on-click (fn []
-                  (rf/dispatch [:rems.app/user-triggered-navigation])
-                  (if editing?
-                    (rf/dispatch [::edit-catalogue-item request])
-                    (rf/dispatch [::create-catalogue-item request])))
-      :disabled (nil? request)}
-     (text :t.administration/save)]))
+(defn- save-catalogue-item [form]
+  (let [request (build-request form)
+        editing? @(rf/subscribe [::editing?])]
+    (atoms/save-action
+     {:id :save
+      :on-click (when request
+                  (fn []
+                    (rf/dispatch [:rems.app/user-triggered-navigation])
+                    (if editing?
+                      (rf/dispatch [::edit-catalogue-item request])
+                      (rf/dispatch [::create-catalogue-item request]))))
+      :disabled (nil? request)})))
 
 (defn create-catalogue-item-page []
   (let [editing? @(rf/subscribe [::editing?])
@@ -327,4 +327,4 @@
 
                    [:div.col.commands
                     [cancel-button catalogue-item-id]
-                    [save-catalogue-item-button form editing?]]])]}]]))
+                    [perform-action-button (save-catalogue-item form)]]])]}]]))
