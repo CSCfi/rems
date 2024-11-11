@@ -2,7 +2,7 @@
   (:require [re-frame.core :as rf]
             [rems.administration.administration :as administration]
             [rems.administration.blacklist :as blacklist]
-            [rems.administration.components :refer [inline-info-field]]
+            [rems.administration.components :refer [inline-info-field perform-action-button]]
             [rems.administration.license :refer [licenses-view]]
             [rems.administration.duo :refer [duo-info-field]]
             [rems.administration.status-flags :as status-flags]
@@ -63,6 +63,16 @@
                                                                 {:resource/id (:id resource)})))}])
               [:p (text :t.duo/no-duo-codes)])}])
 
+(defn- toggle-enabled [resource]
+  (status-flags/enabled-toggle-action
+   {:on-change #(rf/dispatch [:rems.administration.resources/set-resource-enabled %1 %2 [::enter-page (:id resource)]])}
+   resource))
+
+(defn- toggle-archived [resource]
+  (status-flags/archived-toggle-action
+   {:on-change #(rf/dispatch [:rems.administration.resources/set-resource-archived %1 %2 [::enter-page (:id resource)]])}
+   resource))
+
 (defn resource-view [resource]
   (let [config @rems.globals/config]
     [:div.spaced-vertically-3
@@ -77,12 +87,11 @@
      (when (:enable-duo config)
        [resource-duos resource])
      [resource-blacklist]
-     (let [id (:id resource)]
-       [:div.col.commands
-        [administration/back-button "/administration/resources"]
-        [roles/show-when roles/+admin-write-roles+
-         [status-flags/enabled-toggle resource #(rf/dispatch [:rems.administration.resources/set-resource-enabled %1 %2 [::enter-page id]])]
-         [status-flags/archived-toggle resource #(rf/dispatch [:rems.administration.resources/set-resource-archived %1 %2 [::enter-page id]])]]])]))
+     [:div.col.commands
+      [administration/back-button "/administration/resources"]
+      [roles/show-when roles/+admin-write-roles+
+       [perform-action-button (toggle-enabled resource)]
+       [perform-action-button (toggle-archived resource)]]]]))
 
 (defn resource-page []
   (let [resource (rf/subscribe [::resource])

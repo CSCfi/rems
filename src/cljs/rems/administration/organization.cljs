@@ -2,7 +2,7 @@
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
             [rems.administration.administration :as administration]
-            [rems.administration.components :refer [inline-info-field]]
+            [rems.administration.components :refer [inline-info-field perform-action-button]]
             [rems.administration.status-flags :as status-flags]
             [rems.atoms :as atoms :refer [document-title enrich-user readonly-checkbox]]
             [rems.collapsible :as collapsible]
@@ -62,6 +62,18 @@
                 (map display-localized-review-email)
                 (interpose [:br])))]))
 
+(defn- toggle-enabled [organization]
+  (status-flags/enabled-toggle-action
+   {:id :enable-toggle
+    :on-change #(rf/dispatch [:rems.administration.organizations/set-organization-enabled %1 %2 [::enter-page (:organization/id organization)]])}
+   organization))
+
+(defn- toggle-archived [organization]
+  (status-flags/archived-toggle-action
+   {:id :archive-toggle
+    :on-change #(rf/dispatch [:rems.administration.organizations/set-organization-archived %1 %2 [::enter-page (:organization/id organization)]])}
+   organization))
+
 (defn organization-view [organization]
   [:div.spaced-vertically-3
    [collapsible/component
@@ -89,16 +101,14 @@
               [inline-info-field (text :t.administration/active) [readonly-checkbox {:value (status-flags/active? organization)}]]]}]
    (let [id (:organization/id organization)
          org-owner? (->> @(rf/subscribe [:owned-organizations])
-                         (some (comp #{id} :organization/id)))
-         set-org-enabled #(rf/dispatch [:rems.administration.organizations/set-organization-enabled %1 %2 [::enter-page id]])
-         set-org-archived #(rf/dispatch [:rems.administration.organizations/set-organization-archived %1 %2 [::enter-page id]])]
+                         (some (comp #{id} :organization/id)))]
      [:div.col.commands
       [administration/back-button "/administration/organizations"]
       (when org-owner?
         [edit-button id])
       [roles/show-when #{:owner}
-       [status-flags/enabled-toggle {:id :enable-toggle} organization set-org-enabled]
-       [status-flags/archived-toggle {:id :archive-toggle} organization set-org-archived]]])])
+       [perform-action-button (toggle-enabled organization)]
+       [perform-action-button (toggle-archived organization)]]])])
 
 (defn organization-page []
   (let [organization (rf/subscribe [::organization])

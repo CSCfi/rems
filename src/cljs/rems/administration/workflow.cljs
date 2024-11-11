@@ -4,7 +4,7 @@
             [medley.core :refer [indexed]]
             [re-frame.core :as rf]
             [rems.administration.administration :as administration]
-            [rems.administration.components :refer [inline-info-field]]
+            [rems.administration.components :refer [inline-info-field perform-action-button]]
             [rems.administration.status-flags :as status-flags]
             [rems.atoms :as atoms :refer [document-title enrich-user readonly-checkbox]]
             [rems.collapsible :as collapsible]
@@ -203,6 +203,16 @@
    {:class "edit-workflow"
     :url (str "/administration/workflows/edit/" workflow-id)}))
 
+(defn- toggle-enabled [workflow]
+  (status-flags/enabled-toggle-action
+   {:on-change #(rf/dispatch [:rems.administration.workflows/set-workflow-enabled %1 %2 [::enter-page (:id workflow)]])}
+   workflow))
+
+(defn- toggle-archived [workflow]
+  (status-flags/archived-toggle-action
+   {:on-change #(rf/dispatch [:rems.administration.workflows/set-workflow-archived %1 %2 [::enter-page (:id workflow)]])}
+   workflow))
+
 (defn workflow-page []
   [:div
    [administration/navigator]
@@ -225,5 +235,5 @@
         [administration/back-button "/administration/workflows"]
         [roles/show-when roles/+admin-write-roles+
          [atoms/action-button (edit-workflow-action (:id workflow))]
-         [status-flags/enabled-toggle workflow #(rf/dispatch [:rems.administration.workflows/set-workflow-enabled %1 %2 [::enter-page (:id workflow)]])]
-         [status-flags/archived-toggle workflow #(rf/dispatch [:rems.administration.workflows/set-workflow-archived %1 %2 [::enter-page (:id workflow)]])]]]])]])
+         [perform-action-button (toggle-enabled workflow)]
+         [perform-action-button (toggle-archived workflow)]]]])]])

@@ -2,7 +2,7 @@
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
             [rems.administration.administration :as administration]
-            [rems.administration.components :refer [inline-info-field localized-info-field]]
+            [rems.administration.components :refer [inline-info-field localized-info-field perform-action-button]]
             [rems.administration.status-flags :as status-flags]
             [rems.atoms :as atoms :refer [license-attachment-link external-link readonly-checkbox document-title]]
             [rems.common.util :refer [andstr]]
@@ -36,6 +36,16 @@
 
 (rf/reg-sub ::license (fn [db _] (::license db)))
 (rf/reg-sub ::loading? (fn [db _] (::loading? db)))
+
+(defn- toggle-enabled [license]
+  (status-flags/enabled-toggle-action
+   {:on-change #(rf/dispatch [:rems.administration.licenses/set-license-enabled %1 %2 [::enter-page (:id license)]])}
+   license))
+
+(defn- toggle-archived [license]
+  (status-flags/archived-toggle-action
+   {:on-change #(rf/dispatch [:rems.administration.licenses/set-license-archived %1 %2 [::enter-page (:id license)]])}
+   license))
 
 (defn- license-view [license]
   [:div.spaced-vertically-3
@@ -75,12 +85,11 @@
               [inline-info-field (text :t.administration/active)
                [readonly-checkbox {:value (status-flags/active? license)}]]]}]
 
-   (let [id (:id license)]
-     [:div.col.commands
-      [administration/back-button "/administration/licenses"]
-      [roles/show-when roles/+admin-write-roles+
-       [status-flags/enabled-toggle license #(rf/dispatch [:rems.administration.licenses/set-license-enabled %1 %2 [::enter-page id]])]
-       [status-flags/archived-toggle license #(rf/dispatch [:rems.administration.licenses/set-license-archived %1 %2 [::enter-page id]])]]])])
+   [:div.col.commands
+    [administration/back-button "/administration/licenses"]
+    [roles/show-when roles/+admin-write-roles+
+     [perform-action-button (toggle-enabled license)]
+     [perform-action-button (toggle-archived license)]]]])
 
 ;; XXX: Duplicates much of license-view. One notable difference is that
 ;;      here the license text is only shown in the current language.
