@@ -282,7 +282,7 @@
             (dissoc :on-click :text :url)
             (assoc-some :on-click on-click)
             (assoc :id id
-                   :label (:text action label) ; XXX: consider refactoring :text -> :label
+                   :label (or label (:text action)) ; XXX: consider refactoring :text -> :label
                    :href (or url "#")
                    :class (class-names :btn :btn-link class)
                    :role :button))])
@@ -290,12 +290,12 @@
 (defn rate-limited-action-button
   "Takes an `action` description and creates a button that triggers it.
    Click events are rate limited."
-  [{:keys [class disabled id label on-click]}]
+  [{:keys [class disabled id label on-click] :as action}]
   [rate-limited-button {:class (str/trim (str "btn-secondary " class))
                         :disabled disabled
                         :id id
                         :on-click on-click
-                        :text label ; XXX: button and rate-limited-button could use label instead
+                        :text (or label (:text action)) ; XXX: button and rate-limited-button could use label instead
                         }])
 
 (defn new-action
