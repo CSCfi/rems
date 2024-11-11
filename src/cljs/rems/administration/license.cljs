@@ -128,6 +128,7 @@
    {:id "licenses"
     :title (text :t.administration/licenses)
     :top-less-button? (> (count licenses) 5)
+    :bottom-less-button? (pos? (count licenses))
     :open? (<= (count licenses) 5)
     :collapse (if (seq licenses)
                 (into [:div]
