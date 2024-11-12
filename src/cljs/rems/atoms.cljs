@@ -242,14 +242,20 @@
                         (dissoc props :text))
      (:text props)]))
 
-(defn- wrap-rate-limit [callback ms]
-  (r/with-let [wait (r/atom nil)]
-    (fn rate-limited-callback [& args]
-      (when-not @wait
-        (reset! wait (js/setTimeout #(reset! wait nil) ms))
-        (apply callback args)))
-    (finally
-      (some-> @wait js/clearTimeout))))
+(def ^:private rate-limited (atom {}))
+
+(let [idx (atom 0)]
+  (defn- rate-limited-id! []
+    (swap! idx inc)))
+
+(defn- wrap-rate-limit [callback ms id]
+  (fn rate-limited-callback [& args]
+    (when-not (contains? @rate-limited id)
+      (swap! rate-limited
+             assoc
+             id
+             (js/setTimeout #(swap! rate-limited dissoc id) ms))
+      (apply callback args))))
 
 (defn rate-limited-button
   "atoms/button variant that allows click handler to be called, at most,
@@ -258,11 +264,15 @@
 
    * `:wait` interval in milliseconds"
   [{:keys [disabled wait] :or {wait 2000} :as props}]
-  [button (-> props
-              (dissoc :wait
-                      :loading?
-                      (when disabled :on-click))
-              (update-existing :on-click wrap-rate-limit wait))])
+  (r/with-let [callback-id (rate-limited-id!)]
+    [button (-> props
+                (dissoc :wait
+                        :loading?
+                        (when disabled :on-click))
+                (update-existing :on-click wrap-rate-limit wait callback-id))]
+    (finally
+      (some-> (get @rate-limited callback-id) js/clearTimeout)
+      (swap! rate-limited dissoc callback-id))))
 
 (defn action-button
   "Takes an `action` description and creates a button that triggers it."
@@ -426,15 +436,18 @@
        (component-info rate-limited-action-button)
        (example "example command as rate-limited button"
 
-                (defn- stateful-context [[c cmd]]
+                (defn- stateful-context [& pairs]
                   (r/with-let [n (r/atom 0)
-                               on-click #(r/rswap! n inc)]
+                               on-click #(do (r/rswap! n inc) (println @n))]
                     [:<>
-                     [c (assoc cmd :on-click on-click)]
+                     (for [[c cmd] pairs]
+                       ^{:key (:id cmd)}
+                       [:span.ml-1 [c (assoc cmd :on-click on-click)]])
                      [:span.ml-2 "Count: " @n]]))
 
                 [stateful-context
-                 [rate-limited-action-button example-command]])
+                 [rate-limited-action-button example-command]
+                 [rate-limited-action-button (assoc example-command :id "second-rate-limited-button")]])
 
        (component-info commands)
        (example "empty commands" [commands])
