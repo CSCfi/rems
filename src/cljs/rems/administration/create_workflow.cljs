@@ -129,8 +129,8 @@
                             {:params request
                              :handler (flash-message/default-success-handler
                                        :top description #(navigate! (str "/administration/workflows/" (:id %))))
-                             :error-handler (flash-message/default-error-handler :top description)})
-                     {:dispatch [:rems.app/user-triggered-navigation]})))
+                             :error-handler (flash-message/default-error-handler :top description)}))
+                   {}))
 
 (rf/reg-event-fx ::edit-workflow
                  (fn [_ [_ request]]
@@ -139,8 +139,8 @@
                            {:params request
                             :handler (flash-message/default-success-handler
                                       :top description #(navigate! (str "/administration/workflows/" (:id request))))
-                            :error-handler (flash-message/default-error-handler :top description)})
-                     {:dispatch [:rems.app/user-triggered-navigation]})))
+                            :error-handler (flash-message/default-error-handler :top description)}))
+                   {}))
 
 ;;;; UI
 

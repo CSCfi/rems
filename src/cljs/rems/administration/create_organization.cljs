@@ -160,11 +160,9 @@
     (atoms/save-action {:id :save
                         :disabled (nil? request)
                         :on-click (when request
-                                    (fn []
-                                      (rf/dispatch [:rems.app/user-triggered-navigation])
-                                      (if id
-                                        (rf/dispatch [::edit-organization request])
-                                        (rf/dispatch [::create-organization request]))))})))
+                                    (if id
+                                      #(rf/dispatch [::edit-organization request])
+                                      #(rf/dispatch [::create-organization request])))})))
 
 (defn- cancel-button []
   [atoms/link {:class "btn btn-secondary"}

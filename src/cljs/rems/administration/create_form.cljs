@@ -759,13 +759,12 @@
    {:url (str "/administration/forms" (andstr "/" @(rf/subscribe [::form-id])))}))
 
 (defn- save-form []
-  (let [editing? @(rf/subscribe [::edit-form?])
-        always-on-save #(rf/dispatch [:rems.spa/user-triggered-navigation])]
+  (let [editing? @(rf/subscribe [::edit-form?])]
     (atoms/save-action
      {:id :save
       :on-click (if editing?
-                  (comp #(rf/dispatch [::edit-form]) always-on-save)
-                  (comp #(rf/dispatch [::create-form]) always-on-save))})))
+                  #(rf/dispatch [::edit-form])
+                  #(rf/dispatch [::create-form]))})))
 
 (defn- form-page-wrapper []
   @use-autoscroll

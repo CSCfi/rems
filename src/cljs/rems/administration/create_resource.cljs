@@ -163,9 +163,7 @@
     (atoms/save-action
      {:id :save
       :on-click (when request
-                  (fn []
-                    (rf/dispatch [:rems.app/user-triggered-navigation])
-                    (rf/dispatch [::create-resource request])))
+                  #(rf/dispatch [::create-resource request]))
       :disabled (nil? request)})))
 
 (defn- cancel-button []

@@ -290,11 +290,9 @@
     (atoms/save-action
      {:id :save
       :on-click (when request
-                  (fn []
-                    (rf/dispatch [:rems.app/user-triggered-navigation])
-                    (if editing?
-                      (rf/dispatch [::edit-catalogue-item request])
-                      (rf/dispatch [::create-catalogue-item request]))))
+                  (if editing?
+                    #(rf/dispatch [::edit-catalogue-item request])
+                    #(rf/dispatch [::create-catalogue-item request])))
       :disabled (nil? request)})))
 
 (defn create-catalogue-item-page []
