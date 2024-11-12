@@ -3,10 +3,15 @@
   (:require [rems.util :refer [get-bounding-client-rect get-dom-element on-element-appear]]))
 
 (defn focus [el-or-selector & [opts]]
-  (doto (get-dom-element el-or-selector)
-    (.setAttribute "tabindex" "-1")
-    (.focus (clj->js (or opts {})))
-    (.removeAttribute "tabindex")))
+  (let [el (get-dom-element el-or-selector)
+        tabindex (.getAttribute el "tabindex")
+        restore-tabindex (if tabindex
+                           #(.setAttribute % "tabindex" tabindex)
+                           #(.removeAttribute % "tabindex"))]
+    (doto el
+      (.setAttribute "tabindex" "-1")
+      (.focus (clj->js (or opts {})))
+      restore-tabindex)))
 
 (defn focus-without-scroll [el-or-selector]
   (focus el-or-selector (js-obj "preventScroll" true)))
