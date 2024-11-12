@@ -185,11 +185,14 @@
         (logr/debug "<" id :evict k)))))
 
 (defn basic [{:keys [depends-on id miss-fn reload-fn]}]
-  (assert (not (contains? @caches id)) (format "error overriding cache id %s" id))
+  (when (contains? @caches id)
+    (if (:dev rems.config/env)
+      (logr/warnf "overriding cache id %s" id)
+      (assert false (format "error overriding cache id %s" id))))
   (let [initialized? false
         statistics (if (:dev rems.config/env)
-                     (select-keys initial-statistics [:reload :upsert :evict]) ; :get statistics can become big quickly
-                     initial-statistics)
+                     initial-statistics
+                     (select-keys initial-statistics [:reload :upsert :evict])) ; :get statistics can become big quickly
         the-cache (w/basic-cache-factory {})
         cache (->RefreshableCache id
                                   (atom statistics)

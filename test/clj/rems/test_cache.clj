@@ -7,8 +7,9 @@
             [medley.core :refer [map-vals]]
             [rems.cache :as cache]
             [rems.common.dependency :as dep]
-            [rems.common.util :refer [getx range-1]]
-            [rems.concurrency :as concurrency]))
+            [rems.common.util :refer [range-1]]
+            [rems.concurrency :as concurrency]
+            [rems.config]))
 
 (defn- submit-all [thread-pool & fns]
   (->> fns
@@ -33,7 +34,8 @@
 
 (deftest test-basic-cache
   (with-redefs [rems.cache/caches (doto caches (reset! nil))
-                rems.cache/caches-dag (doto caches-dag (reset! (dep/make-graph)))]
+                rems.cache/caches-dag (doto caches-dag (reset! (dep/make-graph)))
+                rems.config/env {:dev true}]
     (let [c (cache/basic {:id ::test-cache
                           :miss-fn (fn [id] (miss-fn id))
                           :reload-fn (fn [] (reload-fn))})]
@@ -126,21 +128,33 @@
 (deftest test-cache-dependencies
   (testing "cannot create caches with circular dependencies"
     (with-redefs [rems.cache/caches (doto caches (reset! nil))
-                  rems.cache/caches-dag (doto caches-dag (reset! (dep/make-graph)))]
+                  rems.cache/caches-dag (doto caches-dag (reset! (dep/make-graph)))
+                  rems.config/env {:dev true}]
       (let [_cache-a (cache/basic {:id :a :depends-on [:b]})]
         (is (thrown-with-msg? RuntimeException #"Circular dependency between :b and :a"
                               (cache/basic {:id :b :depends-on [:a]}))))))
 
-  (testing "cannot override existing cache id"
+  (testing "existing cache id"
     (with-redefs [rems.cache/caches (doto caches (reset! nil))
                   rems.cache/caches-dag (doto caches-dag (reset! (dep/make-graph)))]
-      (let [_cache-a (cache/basic {:id :a})]
-        (is (thrown-with-msg? AssertionError #"Assert failed: error overriding cache id :a"
-                              (cache/basic {:id :a}))))))
+
+      (testing "only warning is logged in dev"
+        (with-redefs [rems.config/env {:dev true}]
+          (log-test/with-log
+            (cache/basic {:id :a})
+            (is (not (log-test/logged? "rems.cache" :warn "overriding cache id :a")))
+            (cache/basic {:id :a})
+            (is (log-test/logged? "rems.cache" :warn "overriding cache id :a")))))
+
+      (testing "assertion error when not in dev"
+        (with-redefs [rems.config/env {}]
+          (is (thrown-with-msg? AssertionError #"Assert failed: error overriding cache id :a"
+                                (cache/basic {:id :a})))))))
 
   (testing "can create basic caches with dependencies"
     (with-redefs [rems.cache/caches (doto caches (reset! nil))
-                  rems.cache/caches-dag (doto caches-dag (reset! (dep/make-graph)))]
+                  rems.cache/caches-dag (doto caches-dag (reset! (dep/make-graph)))
+                  rems.config/env {:dev true}]
       (let [cache-a (cache/basic {:id :a
                                   :reload-fn (fn [] {1 true})})
             cache-b (cache/basic {:id :b
@@ -247,7 +261,8 @@
   ;; - then check that each cache saw the atom values in monotonically increasing order
 
   (with-redefs [rems.cache/caches (doto caches (reset! nil))
-                rems.cache/caches-dag (doto caches-dag (reset! (dep/make-graph)))]
+                rems.cache/caches-dag (doto caches-dag (reset! (dep/make-graph)))
+                rems.config/env {:dev true}]
     (let [progress (atom 0)
           current-a (atom 1)
           current-b (atom 1)
@@ -447,7 +462,8 @@
   ;; - print observed waiting times
   ;; - check end was reached
   (with-redefs [rems.cache/caches (doto caches (reset! nil))
-                rems.cache/caches-dag (doto caches-dag (reset! (dep/make-graph)))]
+                rems.cache/caches-dag (doto caches-dag (reset! (dep/make-graph)))
+                rems.config/env {:dev true}]
     (let [current-a (atom 1)
           current-b (atom 1)
 
