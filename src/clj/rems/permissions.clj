@@ -4,16 +4,13 @@
             [medley.core :refer [map-vals map-kv-vals]]
             [rems.common.util :refer [conj-set]]))
 
-(defn- give-role-to-user [application role user]
-  (assert (keyword? role) {:role role})
-  (assert (string? user) {:user user})
-  (update-in application [:application/user-roles user] conj-set role))
-
 (defn give-role-to-users [application role users]
-  (reduce (fn [app user]
-            (give-role-to-user app role user))
-          application
-          users))
+  (assert (keyword? role) {:role role})
+  (assoc application :application/user-roles
+         (persistent! (reduce (fn [user-roles user]
+                                (assoc! user-roles user (conj (set (user-roles user)) role)))
+                              (transient (or (:application/user-roles application) {}))
+                              users))))
 
 (defn- dissoc-if-empty [m k]
   (if (empty? (get m k))
@@ -36,22 +33,22 @@
   (testing "give first role"
     (is (= {:application/user-roles {"user" #{:role-1}}}
            (-> {}
-               (give-role-to-user :role-1 "user")))))
+               (give-role-to-users :role-1 ["user"])))))
   (testing "give more roles"
     (is (= {:application/user-roles {"user" #{:role-1 :role-2}}}
            (-> {}
-               (give-role-to-user :role-1 "user")
-               (give-role-to-user :role-2 "user")))))
+               (give-role-to-users :role-1 ["user"])
+               (give-role-to-users :role-2 ["user"])))))
   (testing "remove some roles"
     (is (= {:application/user-roles {"user" #{:role-1}}}
            (-> {}
-               (give-role-to-user :role-1 "user")
-               (give-role-to-user :role-2 "user")
+               (give-role-to-users :role-1 ["user"])
+               (give-role-to-users :role-2 ["user"])
                (remove-role-from-user :role-2 "user")))))
   (testing "remove all roles"
     (is (= {:application/user-roles {}}
            (-> {}
-               (give-role-to-user :role-1 "user")
+               (give-role-to-users :role-1 ["user"])
                (remove-role-from-user :role-1 "user")))))
   (testing "give a role to multiple users"
     (is (= {:application/user-roles {"user-1" #{:role-1}
@@ -60,8 +57,8 @@
                (give-role-to-users :role-1 ["user-1" "user-2"])))))
   (testing "multiple users, get the roles of a single user"
     (let [app (-> {}
-                  (give-role-to-user :role-1 "user-1")
-                  (give-role-to-user :role-2 "user-2"))]
+                  (give-role-to-users :role-1 ["user-1"])
+                  (give-role-to-users :role-2 ["user-2"]))]
       (is (= #{:role-1} (user-roles app "user-1")))
       (is (= #{:role-2} (user-roles app "user-2")))
       (is (= #{:everyone-else} (user-roles app "user-3"))))))
@@ -209,14 +206,14 @@
   (testing "one role"
     (is (= #{:foo}
            (-> {}
-               (give-role-to-user :role-1 "user")
+               (give-role-to-users :role-1 ["user"])
                (update-role-permissions {:role-1 #{:foo}})
                (user-permissions "user")))))
   (testing "multiple roles"
     (is (= #{:foo :bar}
            (-> {}
-               (give-role-to-user :role-1 "user")
-               (give-role-to-user :role-2 "user")
+               (give-role-to-users :role-1 ["user"])
+               (give-role-to-users :role-2 ["user"])
                (update-role-permissions {:role-1 #{:foo}
                                          :role-2 #{:bar}})
                (user-permissions "user"))))))
