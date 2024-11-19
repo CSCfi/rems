@@ -14,7 +14,7 @@
   api-fixture
   owners-fixture)
 
-(defmacro with-logged?
+(defmacro is-logged?
   "Evaluates `body`, asserts `(is (clojure.tools.logging.test/logged? logger-ns level message))`,
    and returns the result of `body`."
   [logger-ns level message body]
@@ -23,7 +23,7 @@
        (is (clojure.tools.logging.test/logged? ~logger-ns ~level ~message))
        result#)))
 
-(defmacro with-not-logged?
+(defmacro is-not-logged?
   "Evaluates `body`, asserts `(is (not (clojure.tools.logging.test/logged? logger-ns level message)))`,
    and returns the result of `body`."
   [logger-ns level message body]
@@ -175,7 +175,7 @@
                      (dissoc (get-in data [:localizations :sv]) :id :langcode)))))
 
           (testing "... and edit (as owner)"
-            (let [response (with-logged? "rems.db.applications" :info "Reloading 1 applications because of catalogue item changes"
+            (let [response (is-logged? "rems.db.applications" :info "Reloading 1 applications because of catalogue item changes"
                              (-> (request :put "/api/catalogue-items/edit")
                                  (authenticate +test-api-key+ owner)
                                  (json-body {:id id
@@ -211,7 +211,7 @@
                          (dissoc (get-in data [:localizations :fi]) :id :langcode)))))))
 
           (testing "... and edit (as organization owner)"
-            (let [response (with-logged? "rems.db.applications" :info "Reloading 1 applications because of catalogue item changes"
+            (let [response (is-logged? "rems.db.applications" :info "Reloading 1 applications because of catalogue item changes"
                              (-> (request :put "/api/catalogue-items/edit")
                                  (authenticate +test-api-key+ "organization-owner1")
                                  (json-body {:id id
@@ -225,7 +225,7 @@
               (is (:success response) (pr-str response))))
 
           (testing "... and edit (as organization owner but no rights to target org)"
-            (let [response (with-not-logged? "rems.db.applications" :info #"Reloading"
+            (let [response (is-not-logged? "rems.db.applications" :info #"Reloading"
                              (-> (request :put "/api/catalogue-items/edit")
                                  (authenticate +test-api-key+ "organization-owner1")
                                  (json-body {:id id
@@ -239,7 +239,7 @@
               (is (= "no access to organization \"organization2\"" (read-body response)))))
 
           (testing "... and edit (as organization owner for another organization)"
-            (let [response (with-not-logged? "rems.db.applications" :info #"Reloading"
+            (let [response (is-not-logged? "rems.db.applications" :info #"Reloading"
                              (-> (request :put "/api/catalogue-items/edit")
                                  (authenticate +test-api-key+ "organization-owner2")
                                  (json-body {:id id
@@ -252,7 +252,7 @@
               (is (= "no access to organization \"changed-organization2\"" (read-body response))))))))
 
     (testing "edit nonexisting"
-      (let [response (with-not-logged? "rems.db.applications" :info #"Reloading"
+      (let [response (is-not-logged? "rems.db.applications" :info #"Reloading"
                        (-> (request :put "/api/catalogue-items/edit")
                            (authenticate +test-api-key+ owner)
                            (json-body {:id 999999999
@@ -274,7 +274,7 @@
                        handler
                        read-ok-body)]
         (is (:success create))
-        (let [response (with-logged? "rems.db.applications" :info "Reloading 0 applications because of catalogue item changes"
+        (let [response (is-logged? "rems.db.applications" :info "Reloading 0 applications because of catalogue item changes"
                          (-> (request :put "/api/catalogue-items/edit")
                              (authenticate +test-api-key+ owner)
                              (json-body {:id (:id create)
@@ -315,7 +315,7 @@
                handler
                (read-body)))))
   (testing "edit without authentication"
-    (let [response (with-not-logged? "rems.db.applications" :info #"Reloading"
+    (let [response (is-not-logged? "rems.db.applications" :info #"Reloading"
                      (-> (request :post (str "/api/catalogue-items/edit"))
                          (json-body {:id 1
                                      :localizations {:en {:title "malicious localization"}}})
@@ -324,7 +324,7 @@
       (is (response-is-unauthorized? response))
       (is (str/includes? body "Invalid anti-forgery token"))))
   (testing "edit with wrong API-Key"
-    (let [body (with-not-logged? "rems.db.applications" :info #"Reloading"
+    (let [body (is-not-logged? "rems.db.applications" :info #"Reloading"
                  (-> (request :put (str "/api/catalogue-items/edit"))
                      (assoc-in [:headers "x-rems-api-key"] "invalid-api-key")
                      (json-body {:id 1
@@ -354,7 +354,7 @@
                                        :actor "alice"})
 
     (testing "when the form is changed a new catalogue item is created"
-      (let [new-catalogue-item-id (with-logged? "rems.db.applications" :info "Reloading 1 applications because of catalogue item changes"
+      (let [new-catalogue-item-id (is-logged? "rems.db.applications" :info "Reloading 1 applications because of catalogue item changes"
                                     (-> (request :post (str "/api/catalogue-items/" old-catalogue-item-id "/change-form"))
                                         (authenticate +test-api-key+ "owner")
                                         (json-body {:form new-form-id})
@@ -389,7 +389,7 @@
     (testing "can change to form that's in another organization"
       (let [form-id (test-helpers/create-form! {:form/internal-name "wrong organization"
                                                 :organization {:organization/id "organization2"}})
-            response (with-logged? "rems.db.applications" :info "Reloading 1 applications because of catalogue item changes"
+            response (is-logged? "rems.db.applications" :info "Reloading 1 applications because of catalogue item changes"
                        (-> (request :post (str "/api/catalogue-items/" old-catalogue-item-id "/change-form"))
                            (authenticate +test-api-key+ "owner")
                            (json-body {:form form-id})
@@ -398,7 +398,7 @@
         (is (true? (:success response)))))
 
     (testing "can change to nil form"
-      (let [response (with-logged? "rems.db.applications" :info "Reloading 1 applications because of catalogue item changes"
+      (let [response (is-logged? "rems.db.applications" :info "Reloading 1 applications because of catalogue item changes"
                        (api-call :post (str "/api/catalogue-items/" old-catalogue-item-id "/change-form")
                                  {:form nil}
                                  +test-api-key+ "owner"))
@@ -412,7 +412,7 @@
                              +test-api-key+ "owner")
                    (select-keys [:formid :form-name :id :resource-id]))))
         (testing "and back"
-          (let [response (with-logged? "rems.db.applications" :info "Reloading 0 applications because of catalogue item changes"
+          (let [response (is-logged? "rems.db.applications" :info "Reloading 0 applications because of catalogue item changes"
                            (api-call :post (str "/api/catalogue-items/" new-catalogue-item-id "/change-form")
                                      {:form new-form-id}
                                      +test-api-key+ "owner"))
@@ -427,7 +427,7 @@
                        (select-keys [:formid :form-name :id :resource-id]))))))))
 
     (testing "can change form as organization owner"
-      (let [body (with-logged? "rems.db.applications" :info "Reloading 1 applications because of catalogue item changes"
+      (let [body (is-logged? "rems.db.applications" :info "Reloading 1 applications because of catalogue item changes"
                    (-> (request :post (str "/api/catalogue-items/" old-catalogue-item-id "/change-form"))
                        (authenticate +test-api-key+ "organization-owner1")
                        (json-body {:form new-form-id})
@@ -436,7 +436,7 @@
         (is (true? (:success body)))))
 
     (testing "can't change form as owner of different organization"
-      (let [response (with-not-logged? "rems.db.applications" :info #"Reloading"
+      (let [response (is-not-logged? "rems.db.applications" :info #"Reloading"
                        (-> (request :post (str "/api/catalogue-items/" old-catalogue-item-id "/change-form"))
                            (authenticate +test-api-key+ "organization-owner2")
                            (json-body {:form new-form-id})
@@ -470,7 +470,7 @@
                                        :actor "alice"})
 
     (testing "after update a new catalogue item is created"
-      (let [new-catalogue-item-id (with-logged? "rems.db.applications" :info "Reloading 1 applications because of catalogue item changes"
+      (let [new-catalogue-item-id (is-logged? "rems.db.applications" :info "Reloading 1 applications because of catalogue item changes"
                                     (-> (request :post (str "/api/catalogue-items/" old-catalogue-item-id "/update"))
                                         (authenticate +test-api-key+ "owner")
                                         (json-body {:form new-form-id
@@ -510,7 +510,7 @@
                    (dissoc (get-in new-catalogue-item [:localizations langcode]) :id)))))
 
         (testing "and if we are done already, we get the same item"
-          (let [new-catalogue-item-id2 (with-not-logged? "rems.db.applications" :info #"Reloading"
+          (let [new-catalogue-item-id2 (is-not-logged? "rems.db.applications" :info #"Reloading"
                                          (-> (request :post (str "/api/catalogue-items/" new-catalogue-item-id "/update"))
                                              (authenticate +test-api-key+ "owner")
                                              (json-body {:form new-form-id
@@ -521,7 +521,7 @@
             (is (= new-catalogue-item-id new-catalogue-item-id2))))))
 
     (testing "when the form is updated a new catalogue item is created"
-      (let [new-catalogue-item-id (with-logged? "rems.db.applications" :info "Reloading 1 applications because of catalogue item changes"
+      (let [new-catalogue-item-id (is-logged? "rems.db.applications" :info "Reloading 1 applications because of catalogue item changes"
                                     (-> (request :post (str "/api/catalogue-items/" old-catalogue-item-id "/update"))
                                         (authenticate +test-api-key+ "owner")
                                         (json-body {:form new-form-id})
@@ -546,7 +546,7 @@
                    (select-keys new-catalogue-item same-keys)))))))
 
     (testing "when the workflow is updated a new catalogue item is created"
-      (let [new-catalogue-item-id (with-logged? "rems.db.applications" :info "Reloading 1 applications because of catalogue item changes"
+      (let [new-catalogue-item-id (is-logged? "rems.db.applications" :info "Reloading 1 applications because of catalogue item changes"
                                     (-> (request :post (str "/api/catalogue-items/" old-catalogue-item-id "/update"))
                                         (authenticate +test-api-key+ "owner")
                                         (json-body {:workflow new-workflow-id})
@@ -575,7 +575,7 @@
                                                 :organization {:organization/id "organization2"}})
             workflow-id (test-helpers/create-workflow! {:title "wrong organization"
                                                         :organization {:organization/id "organization2"}})
-            response (with-logged? "rems.db.applications" :info "Reloading 1 applications because of catalogue item changes"
+            response (is-logged? "rems.db.applications" :info "Reloading 1 applications because of catalogue item changes"
                        (-> (request :post (str "/api/catalogue-items/" old-catalogue-item-id "/update"))
                            (authenticate +test-api-key+ "owner")
                            (json-body {:form form-id
@@ -585,7 +585,7 @@
         (is (true? (:success response)))))
 
     (testing "can update to nil form"
-      (let [response (with-logged? "rems.db.applications" :info "Reloading 1 applications because of catalogue item changes"
+      (let [response (is-logged? "rems.db.applications" :info "Reloading 1 applications because of catalogue item changes"
                        (api-call :post (str "/api/catalogue-items/" old-catalogue-item-id "/update")
                                  {:form nil}
                                  +test-api-key+ "owner"))
@@ -599,7 +599,7 @@
                              +test-api-key+ "owner")
                    (select-keys [:formid :form-name :id :resource-id]))))
         (testing "and back"
-          (let [response (with-logged? "rems.db.applications" :info "Reloading 0 applications because of catalogue item changes"
+          (let [response (is-logged? "rems.db.applications" :info "Reloading 0 applications because of catalogue item changes"
                            (api-call :post (str "/api/catalogue-items/" new-catalogue-item-id "/update")
                                      {:form new-form-id}
                                      +test-api-key+ "owner"))
@@ -614,7 +614,7 @@
                        (select-keys [:formid :form-name :id :resource-id]))))))))
 
     (testing "can update as organization owner"
-      (let [body (with-logged? "rems.db.applications" :info "Reloading 1 applications because of catalogue item changes"
+      (let [body (is-logged? "rems.db.applications" :info "Reloading 1 applications because of catalogue item changes"
                    (-> (request :post (str "/api/catalogue-items/" old-catalogue-item-id "/update"))
                        (authenticate +test-api-key+ "organization-owner1")
                        (json-body {:form new-form-id
@@ -624,7 +624,7 @@
         (is (true? (:success body)))))
 
     (testing "can't update as owner of different organization"
-      (let [response (with-not-logged? "rems.db.applications" :info #"Reloading"
+      (let [response (is-not-logged? "rems.db.applications" :info #"Reloading"
                        (-> (request :post (str "/api/catalogue-items/" old-catalogue-item-id "/update"))
                            (authenticate +test-api-key+ "organization-owner2")
                            (json-body {:form new-form-id
@@ -651,7 +651,7 @@
     (doseq [user ["owner" "organization-owner1"]]
       (testing user
         (testing "disable"
-          (let [response (with-logged? "rems.db.applications" :info "Reloading 1 applications because of catalogue item changes"
+          (let [response (is-logged? "rems.db.applications" :info "Reloading 1 applications because of catalogue item changes"
                            (api-call :put "/api/catalogue-items/enabled"
                                      {:id id
                                       :enabled false}
@@ -659,7 +659,7 @@
             (is (:success response))
             (is (false? (:enabled (fetch))))))
         (testing "enable"
-          (let [response (with-logged? "rems.db.applications" :info "Reloading 1 applications because of catalogue item changes"
+          (let [response (is-logged? "rems.db.applications" :info "Reloading 1 applications because of catalogue item changes"
                            (api-call :put "/api/catalogue-items/enabled"
                                      {:id id
                                       :enabled true}
@@ -667,7 +667,7 @@
             (is (:success response))
             (is (true? (:enabled (fetch))))))
         (testing "archive"
-          (let [response (with-logged? "rems.db.applications" :info "Reloading 1 applications because of catalogue item changes"
+          (let [response (is-logged? "rems.db.applications" :info "Reloading 1 applications because of catalogue item changes"
                            (api-call :put "/api/catalogue-items/archived"
                                      {:id id
                                       :archived true}
@@ -675,7 +675,7 @@
             (is (:success response))
             (is (true? (:archived (fetch))))))
         (testing "unarchive"
-          (let [response (with-logged? "rems.db.applications" :info "Reloading 1 applications because of catalogue item changes"
+          (let [response (is-logged? "rems.db.applications" :info "Reloading 1 applications because of catalogue item changes"
                            (api-call :put "/api/catalogue-items/archived"
                                      {:id id
                                       :archived false}
@@ -685,14 +685,14 @@
 
     (testing "incorrect organization owner can't"
       (testing "enable"
-        (let [response (with-not-logged? "rems.db.applications" :info #"Reloading"
+        (let [response (is-not-logged? "rems.db.applications" :info #"Reloading"
                          (-> (request :put "/api/catalogue-items/enabled")
                              (authenticate +test-api-key+ "organization-owner2")
                              (json-body {:id id :enabled true})
                              handler))]
           (is (response-is-forbidden? response))))
       (testing "archive"
-        (let [response (with-not-logged? "rems.db.applications" :info #"Reloading"
+        (let [response (is-not-logged? "rems.db.applications" :info #"Reloading"
                          (-> (request :put "/api/catalogue-items/archived")
                              (authenticate +test-api-key+ "organization-owner2")
                              (json-body {:id id :archived true})
