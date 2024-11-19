@@ -200,24 +200,26 @@
            (group-users-by-role apps)))))
 
 (defn- update-user-roles [updated-users old-roles-by-user old-updated-enriched-apps new-updated-enriched-apps]
-  (into old-roles-by-user
-        (for [userid updated-users
-              :let [old-user-roles (get old-roles-by-user userid {})
-                    old-app-roles (->> old-updated-enriched-apps
-                                       vals
-                                       (eduction (map :application/user-roles)
-                                                 (mapcat #(get % userid)))
-                                       frequencies)
-                    new-app-roles (->> new-updated-enriched-apps
-                                       vals
-                                       (eduction (map :application/user-roles)
-                                                 (mapcat #(get % userid)))
-                                       frequencies)]]
+  (let [all-old-app-roles (->> old-updated-enriched-apps
+                               vals
+                               (mapv :application/user-roles))
+        all-new-app-roles (->> new-updated-enriched-apps
+                               vals
+                               (mapv :application/user-roles))]
+    (into old-roles-by-user
+          (for [userid updated-users
+                :let [old-user-roles (get old-roles-by-user userid {})
+                      old-app-roles (->> all-old-app-roles
+                                         (mapcat #(get % userid))
+                                         frequencies)
+                      new-app-roles (->> all-new-app-roles
+                                         (mapcat #(get % userid))
+                                         frequencies)]]
 
-          [userid (as-> old-user-roles roles
-                    (merge-with - roles old-app-roles)
-                    (merge-with + roles new-app-roles)
-                    (filter-vals pos? roles))])))
+            [userid (as-> old-user-roles roles
+                      (merge-with - roles old-app-roles)
+                      (merge-with + roles new-app-roles)
+                      (filter-vals pos? roles))]))))
 
 (deftest update-user-roles-test
   (is (= {"alice" {:applicant 1} "bob" {:applicant 1}}
