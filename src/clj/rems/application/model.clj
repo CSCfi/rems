@@ -868,6 +868,11 @@
     (-> application
         (assoc :application/invited-members (set members)))))
 
+(defn- enrich-events [application get-user get-catalogue-item get-resource]
+  (let [events (mapv #(enrich-event % get-user get-catalogue-item get-resource)
+                     (:application/events application))]
+    (assoc application :application/events events)))
+
 (defn enrich-with-injections
   [application {:keys [blacklisted?
                        get-attachments-for-application
@@ -890,7 +895,7 @@
       enrich-duos ; uses enriched resources
       (enrich-workflow-licenses get-workflow)
       (update :application/licenses enrich-licenses get-license)
-      (update :application/events (partial mapv #(enrich-event % get-user get-catalogue-item get-resource)))
+      (enrich-events get-user get-catalogue-item get-resource)
       (assoc :application/applicant (get-user (get-in application [:application/applicant :userid])))
       (update :application/attachments #(merge-lists-by :attachment/id % (get-attachments-for-application (getx application :application/id))))
       (enrich-user-attributes get-user)
