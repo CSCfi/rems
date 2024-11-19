@@ -33,7 +33,8 @@
       (template/event-to-emails (rems.application.model/enrich-event event
                                                                      rems.db.users/get-user
                                                                      rems.db.catalogue/get-catalogue-item
-                                                                     rems.db.resource/get-resource)
+                                                                     rems.db.resource/get-resource
+                                                                     (fn get-config [] env))
                                 (rems.db.applications/get-application app-id)))))
 
 (defn generate-event-emails! [new-events]

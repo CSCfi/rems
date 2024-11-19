@@ -482,31 +482,35 @@
                          :field/value)]
     (assoc application :application/description (str description))))
 
-(defn- enrich-resources [resources get-catalogue-item get-resource]
+(defn- enrich-resources [resources get-catalogue-item get-resource get-config]
   (->> resources
        (map (fn [resource]
               (let [item (get-catalogue-item (:catalogue-item/id resource))
-                    resource-id (:resource-id item) ; this is a bit backwards approach
-                    duo-codes (-> (get-resource resource-id) :resource/duo :duo/codes)]
-                (-> {:catalogue-item/id (:catalogue-item/id resource)
-                     :resource/ext-id (:resource/ext-id resource)
-                     :resource/id (:resource-id item)
-                     :catalogue-item/title (localization-for :title item)
-                     :catalogue-item/infourl (localization-for :infourl item)
-                     ;; TODO: remove unused keys
-                     :catalogue-item/start (:start item)
-                     :catalogue-item/end (:end item)
-                     :catalogue-item/enabled (:enabled item)
-                     :catalogue-item/expired (:expired item)
-                     :catalogue-item/archived (:archived item)}
-                    (assoc-some-in [:resource/duo :duo/codes] (seq (duo/enrich-duo-codes duo-codes)))))))
+                    enriched-resource {:catalogue-item/id (:catalogue-item/id resource)
+                                       :resource/ext-id (:resource/ext-id resource)
+                                       :resource/id (:resource-id item)
+                                       :catalogue-item/title (localization-for :title item)
+                                       :catalogue-item/infourl (localization-for :infourl item)
+                                       ;; TODO: remove unused keys
+                                       :catalogue-item/start (:start item)
+                                       :catalogue-item/end (:end item)
+                                       :catalogue-item/enabled (:enabled item)
+                                       :catalogue-item/expired (:expired item)
+                                       :catalogue-item/archived (:archived item)}]
+
+                (if (:enable-duo (get-config))
+                  (let [resource-id (:resource-id item) ; this is a bit backwards approach
+                        duo-codes (-> (get-resource resource-id) :resource/duo :duo/codes)]
+                    (assoc-some-in enriched-resource [:resource/duo :duo/codes] (seq (duo/enrich-duo-codes duo-codes))))
+
+                  enriched-resource))))
        (sort-by :catalogue-item/id)
        vec))
 
-(defn- enrich-application-resources [application get-catalogue-item get-resource]
+(defn- enrich-application-resources [application get-catalogue-item get-resource get-config]
   (update application
           :application/resources
-          #(enrich-resources % get-catalogue-item get-resource)))
+          #(enrich-resources % get-catalogue-item get-resource get-config)))
 
 (defn- validate-duo-match [dataset-code query-code resource]
   (let [validity (duo/check-duo-code dataset-code query-code)]
@@ -638,14 +642,14 @@
     :else
     :visibility/public))
 
-(defn enrich-event [event get-user get-catalogue-item get-resource]
+(defn enrich-event [event get-user get-catalogue-item get-resource get-config]
   (let [event-type (:event/type event)]
     (merge event
            {:event/actor-attributes (get-user (:event/actor event))
             :event/visibility (get-event-visibility event)}
            (case event-type
              :application.event/resources-changed
-             {:application/resources (enrich-resources (:application/resources event) get-catalogue-item get-resource)}
+             {:application/resources (enrich-resources (:application/resources event) get-catalogue-item get-resource get-config)}
 
              :application.event/decision-requested
              {:application/deciders (mapv get-user (:application/deciders event))}
@@ -881,8 +885,8 @@
     (-> application
         (assoc :application/invited-members (set members)))))
 
-(defn- enrich-events [application get-user get-catalogue-item get-resource]
-  (let [events (mapv #(enrich-event % get-user get-catalogue-item get-resource)
+(defn- enrich-events [application get-user get-catalogue-item get-resource get-config]
+  (let [events (mapv #(enrich-event % get-user get-catalogue-item get-resource get-config)
                      (:application/events application))]
     (assoc application :application/events events)))
 
@@ -918,11 +922,11 @@
       enrich-answers ; uses enriched form
       enrich-field-visible ; uses enriched answers
       enrich-application-description ; uses enriched answers
-      (enrich-application-resources get-catalogue-item get-resource)
+      (enrich-application-resources get-catalogue-item get-resource get-config)
       (enrich-duos get-config) ; uses enriched resources
       (enrich-workflow-licenses get-workflow)
       (enrich-application-licenses get-license)
-      (enrich-events get-user get-catalogue-item get-resource)
+      (enrich-events get-user get-catalogue-item get-resource get-config)
       (enrich-applicant get-user)
       (enrich-user-attributes get-user)
       (enrich-blacklist blacklisted?) ; uses enriched users

@@ -1381,7 +1381,7 @@
                                 :application/id 1
                                 :application/resources [{:catalogue-item/id 10 :resource/ext-id "urn:11"}
                                                         {:catalogue-item/id 20 :resource/ext-id "urn:21"}]}
-                               get-user get-catalogue-item get-resource))))
+                               get-user get-catalogue-item get-resource get-config))))
   (testing "decision-requested"
     (is (= {:event/type :application.event/decision-requested
             :event/time (DateTime. 1)
@@ -1396,7 +1396,7 @@
                                 :event/actor "handler"
                                 :application/id 1
                                 :application/deciders ["decider" "reviewer"]}
-                               get-user get-catalogue-item get-resource))))
+                               get-user get-catalogue-item get-resource get-config))))
   (testing "review-requested"
     (is (= {:event/type :application.event/review-requested
             :event/time (DateTime. 1)
@@ -1411,7 +1411,7 @@
                                 :event/actor "handler"
                                 :application/id 1
                                 :application/reviewers ["decider" "reviewer"]}
-                               get-user get-catalogue-item get-resource))))
+                               get-user get-catalogue-item get-resource get-config))))
   (testing "member-added"
     (is (= {:event/type :application.event/member-added
             :event/time (DateTime. 1)
@@ -1425,7 +1425,7 @@
                                 :event/actor "handler"
                                 :application/id 1
                                 :application/member {:userid "member"}}
-                               get-user get-catalogue-item get-resource))))
+                               get-user get-catalogue-item get-resource get-config))))
 
   (testing "member-removed"
     (is (= {:event/type :application.event/member-removed
@@ -1440,7 +1440,7 @@
                                 :event/actor "handler"
                                 :application/id 1
                                 :application/member {:userid "member"}}
-                               get-user get-catalogue-item get-resource)))))
+                               get-user get-catalogue-item get-resource get-config)))))
 
 (deftest test-enrich-answers
   (testing "draft"
