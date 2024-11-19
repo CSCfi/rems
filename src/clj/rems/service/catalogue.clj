@@ -115,18 +115,20 @@
   (rems.db.catalogue/edit-catalogue-item! id {:categories (:categories item)
                                               :localizations localizations
                                               :organization-id (:organization/id organization)})
-  (rems.db.applications/reload-cache!)
+  (rems.db.applications/reload-applications! {:by-catalogue-item-ids [id]})
   {:success true})
 
 (defn set-catalogue-item-enabled! [{:keys [id enabled]}]
   (check-allowed-to-edit! id)
   (rems.db.catalogue/set-attributes! id {:enabled enabled})
+  (rems.db.applications/reload-applications! {:by-catalogue-item-ids [id]})
   {:success true})
 
 (defn set-catalogue-item-archived! [{:keys [id archived]}]
   (check-allowed-to-edit! id)
   (or (dependencies/change-archive-status-error archived {:catalogue-item/id id})
       (do (rems.db.catalogue/set-attributes! id {:archived archived})
+          (rems.db.applications/reload-applications! {:by-catalogue-item-ids [id]})
           {:success true})))
 
 (defn change-form!
@@ -151,6 +153,9 @@
 
       ;; hide the old catalogue item
       (rems.db.catalogue/set-attributes! (:id item) {:archived true :enabled false})
+
+      ;; notify applications with old catalogue item
+      (rems.db.applications/reload-applications! {:by-catalogue-item-ids [(:id item)]})
 
       {:success true :catalogue-item-id new-item-id})))
 
@@ -190,5 +195,8 @@
 
       ;; hide the old catalogue item
       (rems.db.catalogue/set-attributes! (:id item) {:archived true :enabled false})
+
+      ;; notify applications with old catalogue item
+      (rems.db.applications/reload-applications! {:by-catalogue-item-ids [(:id item)]})
 
       {:success true :catalogue-item-id new-item-id})))

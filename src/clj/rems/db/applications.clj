@@ -380,7 +380,7 @@
   (refresh-all-applications-cache!)
   (log/info "Finished rems.db.applications/reload-cache!"))
 
-(defn reload-applications! [{:keys [by-userids by-workflow-ids]}]
+(defn reload-applications! [{:keys [by-userids by-workflow-ids by-catalogue-item-ids]}]
   ;; NB: try make sure the cache is up to date so we have any new applications present
   (when (seq by-userids)
     (let [apps (refresh-all-applications-cache!)
@@ -403,6 +403,21 @@
       (log/info "Reloading" (count app-ids) "applications because of workflow changes")
       (when (seq app-ids)
         (update-in-all-applications-cache! app-ids))))
+
+  (when (seq by-catalogue-item-ids)
+    (let [apps (refresh-all-applications-cache!)
+          cat-ids (set by-catalogue-item-ids)
+          find-catalogue-item (fn [resources]
+                                (some #(contains? cat-ids (:catalogue-item/id %)) resources))
+          app-ids (->> (::enriched-apps apps)
+                       vals
+                       (filter (comp find-catalogue-item :application/resources))
+                       (mapv :application/id))]
+      (log/info "Reloading" (count app-ids) "applications because of catalogue item changes")
+      (when (seq app-ids)
+        (update-in-all-applications-cache! app-ids))))
+
+  (log/info "Finished reloading applications")
 
   nil)
 
