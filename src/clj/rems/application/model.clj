@@ -470,7 +470,12 @@
 (defn enrich-forms [forms get-form-template]
   (mapv #(enrich-form % get-form-template) forms))
 
-(defn- set-application-description [application]
+(defn- enrich-application-forms [application get-form-template]
+  (update application
+          :application/forms
+          #(enrich-forms % get-form-template)))
+
+(defn- enrich-application-description [application]
   (let [fields (select [:application/forms ALL :form/fields ALL] application)
         description (->> fields
                          (find-first #(= :description (:field/type %)))
@@ -498,6 +503,11 @@
        (sort-by :catalogue-item/id)
        vec))
 
+(defn- enrich-application-resources [application get-catalogue-item get-resource]
+  (update application
+          :application/resources
+          #(enrich-resources % get-catalogue-item get-resource)))
+
 (defn- validate-duo-match [dataset-code query-code resource]
   (let [validity (duo/check-duo-code dataset-code query-code)]
     {:validity validity
@@ -524,17 +534,15 @@
      :resource/id (:resource/id resource)
      :duo/validation (validate-duo-match dataset-code query-code resource)}))
 
-(defn- hide-duos-if-not-enabled [application get-config]
+(defn- enrich-duos [application get-config]
   (if (:enable-duo (get-config))
-    application
     (-> application
+        (update-existing-in [:application/duo :duo/codes] duo/enrich-duo-codes)
+        (update-existing :application/duo assoc-some :duo/matches (seq (get-duo-matches application))))
+
+    (-> application ; hide instead
         (dissoc :application/duo)
         (update :application/resources (partial mapv #(dissoc % :resource/duo))))))
-
-(defn- enrich-duos [application]
-  (-> application
-      (update-existing-in [:application/duo :duo/codes] duo/enrich-duo-codes)
-      (update-existing :application/duo assoc-some :duo/matches (seq (get-duo-matches application)))))
 
 (defn- enrich-workflow-licenses [application get-workflow]
   (let [wf (get-workflow (get-in application [:application/workflow :workflow/id]))]
@@ -566,6 +574,11 @@
                                                           :license/attachment-filename (localization-for :textcontent license)})))))
                            (sort-by :license/id))]
     (merge-lists-by :license/id rich-licenses app-licenses)))
+
+(defn- enrich-application-licenses [application get-license]
+  (update application
+          :application/licenses
+          #(enrich-licenses % get-license)))
 
 (def ^:private sensitive-events #{:application.event/review-requested
                                   :application.event/reviewed
@@ -823,11 +836,6 @@
       :else
       #{:handler})))
 
-(defn- enrich-attachments [application get-user]
-  (->> application
-       (transform [:application/attachments ALL] #(update % :attachment/user get-user))
-       (transform [:application/attachments ALL] #(assoc % :attachment/redact-roles (allowed-redact-roles application %)))))
-
 (defn- enrich-workflow-anonymize-handling [application get-workflow]
   (let [workflow-id (get-in application [:application/workflow :workflow/id])
         workflow (get-workflow workflow-id)
@@ -878,6 +886,20 @@
                      (:application/events application))]
     (assoc application :application/events events)))
 
+(defn- enrich-attachments [application get-attachments-for-application get-user]
+  (->> (update application
+               :application/attachments
+               #(merge-lists-by :attachment/id
+                                %
+                                (get-attachments-for-application (getx application :application/id))))
+       (transform [:application/attachments ALL] #(update % :attachment/user get-user))
+       (transform [:application/attachments ALL] #(assoc % :attachment/redact-roles (allowed-redact-roles application %)))))
+
+(defn- enrich-applicant [application get-user]
+  (assoc application
+         :application/applicant
+         (get-user (get-in application [:application/applicant :userid]))))
+
 (defn enrich-with-injections
   [application {:keys [blacklisted?
                        get-attachments-for-application
@@ -892,18 +914,16 @@
                        cached-get-workflow-handlers]
                 :as _injections}]
   (-> application
-      (update :application/forms enrich-forms get-form-template)
+      (enrich-application-forms get-form-template)
       enrich-answers ; uses enriched form
       enrich-field-visible ; uses enriched answers
-      set-application-description ; uses enriched answers
-      (update :application/resources enrich-resources get-catalogue-item get-resource)
-      (hide-duos-if-not-enabled get-config)
-      enrich-duos ; uses enriched resources
+      enrich-application-description ; uses enriched answers
+      (enrich-application-resources get-catalogue-item get-resource)
+      (enrich-duos get-config) ; uses enriched resources
       (enrich-workflow-licenses get-workflow)
-      (update :application/licenses enrich-licenses get-license)
+      (enrich-application-licenses get-license)
       (enrich-events get-user get-catalogue-item get-resource)
-      (assoc :application/applicant (get-user (get-in application [:application/applicant :userid])))
-      (update :application/attachments #(merge-lists-by :attachment/id % (get-attachments-for-application (getx application :application/id))))
+      (enrich-applicant get-user)
       (enrich-user-attributes get-user)
       (enrich-blacklist blacklisted?) ; uses enriched users
       (enrich-workflow-handlers (or cached-get-workflow-handlers
@@ -913,7 +933,7 @@
       (enrich-super-users get-users-with-role)
       (enrich-workflow-disable-commands get-config get-workflow)
       (enrich-workflow-voting get-config get-workflow)
-      (enrich-attachments get-user)
+      (enrich-attachments get-attachments-for-application get-user) ; users enriched roles
       (enrich-processing-states get-config get-workflow)
       enrich-invited-members))
 
