@@ -704,10 +704,15 @@
             :application/members
             enrich-members)))
 
-(defn enrich-workflow-handlers [application get-workflow get-user]
-  (let [workflow (get-workflow (get-in application [:application/workflow :workflow/id]))
+(defn get-workflow-handlers [workflow-id get-workflow get-user]
+  (let [workflow (get-workflow workflow-id)
         handlers (->> (get-in workflow [:workflow :handlers])
-                      (mapv (comp get-user :userid)))
+                      (mapv (comp get-user :userid)))]
+    handlers))
+
+(defn enrich-workflow-handlers [application get-workflow-handlers]
+  (let [workflow-id (get-in application [:application/workflow :workflow/id])
+        handlers (get-workflow-handlers workflow-id)
         active-users (set (map :event/actor (:application/events application)))
         handlers (map (fn [handler]
                         (if (contains? active-users (:userid handler))
@@ -883,7 +888,8 @@
                        get-resource
                        get-user
                        get-users-with-role
-                       get-workflow]
+                       get-workflow
+                       cached-get-workflow-handlers]
                 :as _injections}]
   (-> application
       (update :application/forms enrich-forms get-form-template)
@@ -900,7 +906,8 @@
       (update :application/attachments #(merge-lists-by :attachment/id % (get-attachments-for-application (getx application :application/id))))
       (enrich-user-attributes get-user)
       (enrich-blacklist blacklisted?) ; uses enriched users
-      (enrich-workflow-handlers get-workflow get-user)
+      (enrich-workflow-handlers (or cached-get-workflow-handlers
+                                    #(get-workflow-handlers % get-workflow get-user)))
       (enrich-workflow-anonymize-handling get-workflow)
       (enrich-deadline get-config)
       (enrich-super-users get-users-with-role)

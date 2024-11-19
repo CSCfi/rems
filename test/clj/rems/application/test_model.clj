@@ -1501,7 +1501,7 @@
                                                                {:userid "edward"
                                                                 :name "Edward Elric"
                                                                 :handler/active? true}]}}
-           (-> (model/enrich-workflow-handlers application get-workflow get-user)
+           (-> (model/enrich-workflow-handlers application #(model/get-workflow-handlers % get-workflow get-user))
                (select-keys [:application/workflow]))))))
 
 (deftest test-enrich-deadline

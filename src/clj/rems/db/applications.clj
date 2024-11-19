@@ -1,6 +1,7 @@
 (ns rems.db.applications
   "Query functions for forms and applications."
-  (:require [clojure.java.jdbc :as jdbc]
+  (:require [clojure.core.memoize :refer [memo]]
+            [clojure.java.jdbc :as jdbc]
             [clojure.set :as set]
             [clojure.test :refer [deftest is]]
             [clojure.tools.logging :as log]
@@ -258,6 +259,16 @@
   ;; - deleted      - applications that are going away
   (let [updated-app-ids (set (into updated-app-ids deleted-app-ids)) ; let's consider deleted to be automatically an app to update
 
+        ;; temporarily cached injections because a mass update may have a lot of same calls (e.g. handlers of the workflow of many applications)
+        cached-get-user (memo (:get-user fetcher-injections))
+        cached-get-workflow-handlers (memo (fn [workflow-id]
+                                             (model/get-workflow-handlers workflow-id
+                                                                          (:get-workflow fetcher-injections)
+                                                                          cached-get-user)))
+        cached-injections (assoc fetcher-injections
+                                 :get-user cached-get-user
+                                 :cached-get-workflow-handlers cached-get-workflow-handlers)
+
         old-raw-apps (::raw-apps state)
         old-enriched-apps (::enriched-apps state)
         old-updated-enriched-apps (select-keys old-enriched-apps updated-app-ids)
@@ -271,7 +282,7 @@
                        (apply dissoc apps deleted-app-ids)
                        (doall apps))
         new-updated-raw-apps (select-keys new-raw-apps updated-app-ids)
-        new-updated-enriched-apps (doall (map-vals #(model/enrich-with-injections % fetcher-injections) new-updated-raw-apps))
+        new-updated-enriched-apps (doall (map-vals #(model/enrich-with-injections % cached-injections) new-updated-raw-apps))
         new-enriched-apps (as-> new-updated-enriched-apps apps
                             (merge old-enriched-apps apps)
                             (apply dissoc apps deleted-app-ids)
