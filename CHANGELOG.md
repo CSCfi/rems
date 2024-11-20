@@ -8,6 +8,9 @@ have notable changes.
 
 Changes since v2.37
 
+### Additions
+- Catalogue tree now supports keyboard interactions for ARIA role="tree". Navigation works with arrow keys and Home/End, tree nodes can be opened/closed with Enter key, and default action (like add to cart) works with Enter key. (#3336)
+
 ### Changes
 - The logging of the simultaneous request count (`rqc:`) is now done for the request and response
   log lines only, and separately. Previously the same value was used for all logging in a request,

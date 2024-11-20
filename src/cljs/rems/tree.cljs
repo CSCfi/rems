@@ -23,11 +23,13 @@
   (:require [clojure.string :as str]
             [goog.functions :refer [debounce]]
             [re-frame.core :as rf]
+            [reagent.format :as rfmt]
             [rems.atoms :refer [sort-symbol]]
             [rems.common.util :refer [conj-vec index-by]]
             [rems.config]
             [rems.guide-util :refer [component-info example namespace-info]]
             [rems.search :as search]
+            [rems.util :refer [get-dom-element]]
             [schema.core :as s]))
 
 (s/defschema ColumnKey
@@ -76,11 +78,17 @@
   {;; Unique ID for this tree, preferably a namespaced keyword.
    ;; Used not only as a HTML element ID, but also for separating
    ;; the internal state of different trees in the re-frame db.
-   :id s/Keyword
+   :id (s/cond-pre s/Keyword s/Str)
    ;; The columns of the table, in the order that they should be shown.
    ;; Optional function (Row -> key value) for the React key value
    ;; The default is from :key.
    (s/optional-key :row-key) s/Any
+   ;; Optional function (Row -> void) for performing default action via keyboard.
+   (s/optional-key :row-action) s/Any
+   ;; Optional function (Row -> string) for row aria-label.
+   (s/optional-key :row-aria-label) s/Any
+   ;; Optional function (Row -> string) for row aria-describedby.
+   (s/optional-key :row-aria-describedby) s/Any
    :columns [{;; Reference to a column in `rems.tree/Row` of `:rows`.
               :key ColumnKey
               ;; Title to show at the top of the column.
@@ -139,7 +147,10 @@
    (s/optional-key :tr-class) s/Any
    ;; Default sorting column and order.
    (s/optional-key :default-sort-column) (s/maybe ColumnKey)
-   (s/optional-key :default-sort-order) (s/maybe (s/enum :asc :desc))})
+   (s/optional-key :default-sort-order) (s/maybe (s/enum :asc :desc))
+   ;; Optional assistive technology attributes.
+   (s/optional-key :aria-label) s/Str
+   (s/optional-key :aria-labelledby) (s/cond-pre s/Str s/Keyword)})
 
 (defn apply-row-defaults [tree row]
   (let [children ((:children tree :children) row)
@@ -401,25 +412,122 @@
                (when (= (:key column) (:sort-column sorting))
                  [sort-symbol (:sort-order sorting)]))]))))
 
+(defn- focus-previous [row-key tree-id]
+  (let [selector (rfmt/format "#%s [data-row='%s']" tree-id row-key)]
+    (some-> (get-dom-element selector)
+            .-previousSibling
+            .focus)))
+
+(defn- focus-next [row-key tree-id]
+  (let [selector (rfmt/format "#%s [data-row='%s']" tree-id row-key)]
+    (some-> (get-dom-element selector)
+            .-nextSibling
+            .focus)))
+
+(defn- focus-parent [parent-id tree-id]
+  (when parent-id
+    (let [selector (rfmt/format "#%s [data-row='%s']" tree-id parent-id)]
+      (some-> (get-dom-element selector)
+              .focus))))
+
+(defn- focus-root [tree-id]
+  (let [selector (rfmt/format "#%s [data-row]:first-child" tree-id)]
+    (some-> (get-dom-element selector)
+            .focus)))
+
+(defn- focus-last [tree-id]
+  (let [selector (rfmt/format "#%s [data-row]:last-child" tree-id)]
+    (some-> (get-dom-element selector)
+            .focus)))
+
+(def ^:private key-shortcuts
+  #{"ArrowRight" "ArrowLeft" "ArrowDown" "ArrowUp" "Home" "End" "Enter"})
+
 (defn- tree-row [row tree]
-  (into [:tr {:data-row (:key row)
-              :class [(when-let [tr-class-fn (:tr-class tree)]
-                        (tr-class-fn (:value row)))
-                      (when (seq (:children row))
-                        :clickable)]
-              :on-click (when (seq (:children row))
-                          #(rf/dispatch [::toggle-row-expanded tree (:key row)]))}]
-        (for [column (:columns tree)]
-          (:td (get (:columns-by-key row) (:key column))))))
+  (let [element-ref (atom nil) ; not reactive, only used in keydown handler
+        row-key (:key row)
+        tree-id (:id tree)
+        parents (:parents row)
+        children (:children row)
+        expanded (when (seq children)
+                   @(rf/subscribe [::expanded-row tree row-key]))
+        toggle-expanded (when (seq children)
+                          #(rf/dispatch [::toggle-row-expanded tree row-key]))]
+    (into [:tr {:data-row row-key
+                :class [(when-let [tr-class-fn (:tr-class tree)]
+                          (tr-class-fn (:value row)))
+                        (when (seq children)
+                          :clickable)]
+                :on-click toggle-expanded
+                :tabIndex 0
+                :aria-label (when-let [aria-label-fn (:row-aria-label tree)]
+                              (aria-label-fn row))
+                :aria-describedby (when-let [aria-details-fn (:row-aria-details tree)]
+                                    (aria-details-fn row))
+                :role :treeitem
+                :aria-selected false ; implicit attribute for <tr>, we don't want screen reader to say "selected" when tree rows cannot be selected
+                :aria-expanded expanded
+                :aria-level (inc (:depth row 0)) ; NB: level must start from 1
+                :ref #(reset! element-ref %)
+                :on-key-down (fn handle-keydown-event [^js e]
+                               ;; dont intercept tabbing
+                               (when (not= "Tab" (.-code e))
+                                 ;; accept all but enter from bubbled events
+                                 (when (or (contains? (disj key-shortcuts "Enter") (.-code e))
+                                           (= @element-ref (.-target e)))
+                                   (.preventDefault e) ; prevent event bubbling when acting on key shortcuts
+                                   (case (.-code e)
+                                     ;; When focus is on a closed node, opens the node; focus does not move.
+                                     ;; When focus is on an open node, moves focus to the first child node.
+                                     "ArrowRight" (cond
+                                                    (true? expanded) (focus-next row-key (name tree-id))
+                                                    (false? expanded) (toggle-expanded)
+                                                    :else nil)
+
+                                     ;; When focus is on an open node, closes the node.
+                                     ;; When focus is on a child node that is also either an end node or a closed node, moves focus to its parent node.
+                                     "ArrowLeft" (if (true? expanded)
+                                                   (toggle-expanded)
+                                                   ;; last parent is the closest to this row
+                                                   (focus-parent (last parents) (name tree-id)))
+
+                                     ;; Moves focus to the next node that is focusable without opening or closing a node.
+                                     "ArrowDown" (focus-next row-key (name tree-id))
+
+                                     ;; Moves focus to the previous node that is focusable without opening or closing a node.
+                                     "ArrowUp" (focus-previous row-key (name tree-id))
+
+                                     ;; Moves focus to the first node in the tree without opening or closing a node.
+                                     "Home" (focus-root (name tree-id))
+
+                                     ;; Moves focus to the last node in the tree that is focusable without opening the node.
+                                     "End" (focus-last (name tree-id))
+
+                                     ;; Performs the default action of the currently focused node.
+                                     ;; For parent nodes, it opens or closes the node. 
+                                     ;; In single-select trees, if the node has no children, selects the current node if not already selected (which is the default action).
+                                     "Enter" (cond
+                                               (true? expanded) (toggle-expanded)
+                                               (false? expanded) (toggle-expanded)
+                                               :else
+                                               (when-let [row-action-fn (:row-action tree)]
+                                                 (row-action-fn row)))
+                                     nil))))}]
+          (for [column (:columns tree)]
+            (:td (get (:columns-by-key row) (:key column)))))))
 
 (defn tree [tree]
   (let [rows @(rf/subscribe [::displayed-rows tree])]
     [:div.table-border ; TODO duplicate or generalize styles?
      [:table.rems-table {:id (name (:id tree))
-                         :class (:id tree)}
-      [:thead
+                         :class (:id tree)
+                         :aria-label (:aria-label tree)
+                         :aria-labelledby (:aria-labelledby tree)
+                         :aria-keyshortcuts (str/join " " (sort key-shortcuts))}
+      [:thead {:role :presentation}
        [tree-header tree]]
-      [:tbody {:key @rems.config/current-language} ; performance optimization: rebuild instead of update existing components
+      [:tbody {:key @rems.config/current-language ; performance optimization: rebuild instead of update existing components
+               :role :tree}
        (for [row rows]
          ^{:key (:react-key row)} ; row key can be duplicated because it's a DAG
          [tree-row row tree])]]]))
@@ -436,7 +544,7 @@
    (example "empty tree"
             (rf/reg-sub ::empty-tree-rows (fn [_ _] []))
 
-            [tree {:id ::example0
+            [tree {:id "rems-tree-example0"
                    :columns [{:key :first-name
                               :title "First name"
                               :sortable? false
@@ -446,7 +554,8 @@
                               :sortable? false
                               :filterable? false}]
                    :rows [::empty-tree-rows]
-                   :default-sort-column :first-name}])
+                   :default-sort-column :first-name
+                   :aria-label "Empty tree"}])
 
    (example "static tree with a three level hierarchy"
             (defn- example-commands [text]
@@ -480,7 +589,7 @@
 
             (rf/reg-sub ::example-tree-rows (fn [_ _] example-data))
 
-            [tree {:id ::example1
+            [tree {:id "rems-tree-example1"
                    :columns [{:key :name
                               :title "Name"
                               :sortable? false
@@ -490,13 +599,14 @@
                               :sortable? false
                               :filterable? false}]
                    :rows [::example-tree-rows]
-                   :default-sort-column :title}])
+                   :default-sort-column :title
+                   :aria-label "Static tree with a three level hierarchy"}])
 
    (example "sortable and filterable tree"
 
             [:p "Filtering and search can be added by using the " [:code "rems.tree/search"] " component"]
 
-            (let [example2 {:id ::example2
+            (let [example2 {:id "rems-tree-example2"
                             :show-matching-parents? true
                             :columns [{:key :name
                                        :title "Name"}
@@ -505,7 +615,8 @@
                                        :sortable? false
                                        :filterable? false}]
                             :rows [::example-tree-rows]
-                            :default-sort-column :title}]
+                            :default-sort-column :title
+                            :aria-label "Sortable and filterable tree"}]
               [:div
                [search example2]
                [tree example2]]))])
