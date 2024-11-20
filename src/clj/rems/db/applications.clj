@@ -200,22 +200,36 @@
             :bar #{"user-1"}}
            (group-users-by-role apps)))))
 
+(defn- user-roles-frequencies [applications]
+  (when (seq applications)
+    (let [all-user-roles (->> applications
+                              (eduction (map val)
+                                        (mapcat :application/user-roles)))
+          roles-by-user (reduce (fn [m [user roles]]
+                                  (assoc! m
+                                          ::users (conj! (::users m) user)
+                                          user (reduce conj!
+                                                       (or (m user) (transient []))
+                                                       roles)))
+                                (transient {::users (transient #{})})
+                                all-user-roles)
+          users (persistent! (::users roles-by-user))]
+      (-> (reduce (fn [m user]
+                    (assoc! m user (frequencies (persistent! (m user)))))
+                  roles-by-user
+                  users)
+          (dissoc! ::users)
+          persistent!))))
+
 (defn- update-user-roles [updated-users old-roles-by-user old-updated-enriched-apps new-updated-enriched-apps]
-  (let [all-old-app-roles (->> old-updated-enriched-apps
-                               vals
-                               (mapv :application/user-roles))
-        all-new-app-roles (->> new-updated-enriched-apps
-                               vals
-                               (mapv :application/user-roles))]
+  (let [all-old-app-roles (user-roles-frequencies old-updated-enriched-apps)
+        all-new-app-roles (user-roles-frequencies new-updated-enriched-apps)]
+
     (into old-roles-by-user
           (for [userid updated-users
-                :let [old-user-roles (get old-roles-by-user userid {})
-                      old-app-roles (->> all-old-app-roles
-                                         (mapcat #(get % userid))
-                                         frequencies)
-                      new-app-roles (->> all-new-app-roles
-                                         (mapcat #(get % userid))
-                                         frequencies)]]
+                :let [old-user-roles (or (old-roles-by-user userid) {})
+                      old-app-roles (or (all-old-app-roles userid) {})
+                      new-app-roles (or (all-new-app-roles userid) {})]]
 
             [userid (as-> old-user-roles roles
                       (merge-with - roles old-app-roles)
