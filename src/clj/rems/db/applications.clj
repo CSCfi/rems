@@ -1,6 +1,7 @@
 (ns rems.db.applications
   "Query functions for forms and applications."
-  (:require [clojure.java.jdbc :as jdbc]
+  (:require [clojure.core.memoize :refer [memo]]
+            [clojure.java.jdbc :as jdbc]
             [clojure.set :as set]
             [clojure.test :refer [deftest is]]
             [clojure.tools.logging :as log]
@@ -200,24 +201,26 @@
            (group-users-by-role apps)))))
 
 (defn- update-user-roles [updated-users old-roles-by-user old-updated-enriched-apps new-updated-enriched-apps]
-  (into old-roles-by-user
-        (for [userid updated-users
-              :let [old-user-roles (get old-roles-by-user userid {})
-                    old-app-roles (->> old-updated-enriched-apps
-                                       vals
-                                       (eduction (map :application/user-roles)
-                                                 (mapcat #(get % userid)))
-                                       frequencies)
-                    new-app-roles (->> new-updated-enriched-apps
-                                       vals
-                                       (eduction (map :application/user-roles)
-                                                 (mapcat #(get % userid)))
-                                       frequencies)]]
+  (let [all-old-app-roles (->> old-updated-enriched-apps
+                               vals
+                               (mapv :application/user-roles))
+        all-new-app-roles (->> new-updated-enriched-apps
+                               vals
+                               (mapv :application/user-roles))]
+    (into old-roles-by-user
+          (for [userid updated-users
+                :let [old-user-roles (get old-roles-by-user userid {})
+                      old-app-roles (->> all-old-app-roles
+                                         (mapcat #(get % userid))
+                                         frequencies)
+                      new-app-roles (->> all-new-app-roles
+                                         (mapcat #(get % userid))
+                                         frequencies)]]
 
-          [userid (as-> old-user-roles roles
-                    (merge-with - roles old-app-roles)
-                    (merge-with + roles new-app-roles)
-                    (filter-vals pos? roles))])))
+            [userid (as-> old-user-roles roles
+                      (merge-with - roles old-app-roles)
+                      (merge-with + roles new-app-roles)
+                      (filter-vals pos? roles))]))))
 
 (deftest update-user-roles-test
   (is (= {"alice" {:applicant 1} "bob" {:applicant 1}}
@@ -256,6 +259,16 @@
   ;; - deleted      - applications that are going away
   (let [updated-app-ids (set (into updated-app-ids deleted-app-ids)) ; let's consider deleted to be automatically an app to update
 
+        ;; temporarily cached injections because a mass update may have a lot of same calls (e.g. handlers of the workflow of many applications)
+        cached-get-user (memo (:get-user fetcher-injections))
+        cached-get-workflow-handlers (memo (fn [workflow-id]
+                                             (model/get-workflow-handlers workflow-id
+                                                                          (:get-workflow fetcher-injections)
+                                                                          cached-get-user)))
+        cached-injections (assoc fetcher-injections
+                                 :get-user cached-get-user
+                                 :cached-get-workflow-handlers cached-get-workflow-handlers)
+
         old-raw-apps (::raw-apps state)
         old-enriched-apps (::enriched-apps state)
         old-updated-enriched-apps (select-keys old-enriched-apps updated-app-ids)
@@ -269,7 +282,7 @@
                        (apply dissoc apps deleted-app-ids)
                        (doall apps))
         new-updated-raw-apps (select-keys new-raw-apps updated-app-ids)
-        new-updated-enriched-apps (doall (map-vals #(model/enrich-with-injections % fetcher-injections) new-updated-raw-apps))
+        new-updated-enriched-apps (doall (map-vals #(model/enrich-with-injections % cached-injections) new-updated-raw-apps))
         new-enriched-apps (as-> new-updated-enriched-apps apps
                             (merge old-enriched-apps apps)
                             (apply dissoc apps deleted-app-ids)

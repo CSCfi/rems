@@ -210,15 +210,17 @@
                            :when (> sum-time hide-cutoff-ms)]
                        [(sym->id from) (sym->id to) {;;:color (if (and avg (< avg cutoff-ms)) "#gray" "black")
                                                      :weight (or (and min-time (number? min-time)) 0.01)
-                                                     :penwidth (max (or (and min-time (number? min-time) (Math/sqrt min-time)) 0.1)
-                                                                    0.1)
+                                                     :penwidth (min 30
+                                                                    ;;(max (or (and min-time (number? min-time) (Math/sqrt min-time)) 0.1)
+                                                                    (max (or (and sum-time (number? sum-time) (* 4.0 (- (Math/log sum-time) 1))) 0.1)
+                                                                         0.1))
                                                      :label (if (and max-time (< max-time cutoff-ms))
                                                               ""
                                                               [:table {:border 0}
                                                                (when (> c 1) [:tr [:td "count"] [:td c]])
-                                                               (when (> c 1) [:tr [:td "sum"] [:td (format "%.2f ms" sum-time)]])
+                                                               (when (>= c 1) [:tr [:td "sum"] [:td (format "%.2f ms" sum-time)]])
                                                                (when (> c 1) [:tr [:td "min"] [:td (format "%.2f ms" min-time)]])
-                                                               [:tr [:td (if (> c 1) "avg" "")] [:td (format "%.2f ms" avg)]]
+                                                               (when (> c 1) [:tr [:td (if (> c 1) "avg" "")] [:td (format "%.2f ms" avg)]])
                                                                (when (> c 1) [:tr [:td "max"] [:td (format "%.2f ms" max-time)]])
                                                                (cond (= lazy c) [:tr [:td "lazy"] [:td "true"]]
                                                                      (pos? lazy) [:tr [:td "lazy"] [:td (format "%d/%d (%.0f%%)" (int lazy) (int c) (* 100.0 (/ lazy (double c))))]])])}]))

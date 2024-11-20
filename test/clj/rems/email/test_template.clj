@@ -124,7 +124,7 @@
                                                              (assert (string? userid))
                                                              {:language lang})]
        (sort-emails (template/event-to-emails
-                     (model/enrich-event event get-user get-catalogue-item get-resource)
+                     (model/enrich-event event get-user get-catalogue-item get-resource get-config)
                      application)))))
   ([base-events event]
    (emails :en base-events event)))

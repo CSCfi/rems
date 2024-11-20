@@ -39,22 +39,27 @@
                        (assoc-some :notification-email (:notification-email data)))]
       (coerce-DbUserSettings settings))))
 
+(defn- merge-defaults [settings]
+  (merge (default-settings)
+         settings))
+
 (def user-settings-cache
   (cache/basic {:id ::user-settings-cache
                 :miss-fn (fn [userid]
                            (if-let [settings (db/get-user-settings {:user userid})]
                              (-> settings
                                  first
-                                 parse-user-settings-raw)
+                                 parse-user-settings-raw
+                                 merge-defaults)
                              cache/absent))
                 :reload-fn (fn []
                              (->> (db/get-user-settings {})
                                   (group-by :userid)
-                                  (map-vals parse-user-settings-raw)))}))
+                                  (map-vals parse-user-settings-raw)
+                                  (map-vals merge-defaults)))}))
 
 (defn get-user-settings [userid]
-  (merge (default-settings)
-         (cache/lookup-or-miss! user-settings-cache userid)))
+  (cache/lookup-or-miss! user-settings-cache userid))
 
 (defn validate-new-settings
   "Validates the new settings.
