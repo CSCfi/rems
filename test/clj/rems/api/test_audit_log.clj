@@ -2,7 +2,7 @@
   (:require [clj-time.core :as time]
             [clojure.test :refer :all]
             [rems.api.testing :refer :all]
-            [rems.db.api-key :as api-key]
+            [rems.db.api-key]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.handler :refer [handler]]
             [ring.mock.request :refer :all]))
@@ -10,7 +10,7 @@
 (use-fixtures :each api-fixture)
 
 (deftest test-audit-log
-  (api-key/add-api-key! "42" {})
+  (rems.db.api-key/add-api-key! "42" {})
   (test-helpers/create-user! {:userid "alice"})
   (test-helpers/create-user! {:userid "malice"})
   (test-helpers/create-user! {:userid "owner"} :owner)
@@ -53,7 +53,7 @@
                                        handler)))))
           (testing "> POST"
             (testing "> status 200, different api key"
-              (api-key/add-api-key! "43" {})
+              (rems.db.api-key/add-api-key! "43" {})
               ;; this is actually a {:success false} response since
               ;; the application doesn't exist, but here we only care
               ;; about the HTTP status.

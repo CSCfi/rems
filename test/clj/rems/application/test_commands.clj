@@ -1,5 +1,5 @@
 (ns rems.application.test-commands
-  (:require [clojure.test :refer :all]
+  (:require [clojure.test :refer [deftest is testing]]
             [rems.application.commands :as commands]
             [rems.application.events :as events]
             [rems.application.model :as model]
@@ -45,20 +45,21 @@
                       :fi {:title "fi title"
                            :textcontent "fi link"}}}})
 
+(defn dummy-get-user [userid]
+  (get {handler-user-id {:userid handler-user-id
+                         :name "user"
+                         :email "user@example.com"}}
+       userid
+       {:userid userid}))
+
 (def dummy-workflows
   {1 {:workflow {:type :workflow/default
-                 :handlers [{:userid handler-user-id
-                             :name "user"
-                             :email "user@example.com"}]}}
+                 :handlers [{:userid handler-user-id}]}}
    2 {:workflow {:type :workflow/default
-                 :handlers [{:userid handler-user-id
-                             :name "user"
-                             :email "user@example.com"}]
+                 :handlers [{:userid handler-user-id}]
                  :forms [{:form/id 1} {:form/id 3} {:form/id 4}]}}
    3 {:workflow {:type :workflow/decider
-                 :handlers [{:userid handler-user-id
-                             :name "user"
-                             :email "user@example.com"}]}}})
+                 :handlers [{:userid handler-user-id}]}}})
 
 (def dummy-forms
   {1 {:form/id 1
@@ -97,16 +98,24 @@
                                         :visibility/field {:field/id "7"}
                                         :visibility/values ["y"]}}]}})
 
+(def dummy-resources
+  {1 {:id 1 :resid "res1"}
+   2 {:id 2 :resid "res2"}
+   3 {:id 3 :resid "res3"}
+   4 {:id 4 :resid "res4"}
+   5 {:id 5 :resid "res5"}
+   6 {:id 6 :resid "res-disabled" :enabled false}})
+
 (defn dummy-get-catalogue-item [id]
   (when (< id 10000)
     (some->> id
-             (getx {1 {:resid "res1"}
-                    2 {:resid "res2"}
-                    3 {:resid "res3" :formid 2}
-                    4 {:resid "res4" :wfid 2}
-                    5 {:resid "res5" :formid 2 :wfid 2}
-                    6 {:resid "res5" :formid nil}
-                    7 {:resid "res-disabled" :enabled false}
+             (getx {1 {:resource-id 1}
+                    2 {:resource-id 2}
+                    3 {:resource-id 3 :formid 2}
+                    4 {:resource-id 4 :wfid 2}
+                    5 {:resource-id 5 :formid 2 :wfid 2}
+                    6 {:resource-id 5 :formid nil}
+                    7 {:resource-id 6 :enabled false}
                     42 nil})
              (merge {:enabled true :archived false :expired false
                      :id id :wfid 1 :formid 1}))))
@@ -132,7 +141,8 @@
    :get-catalogue-item dummy-get-catalogue-item
    :get-config (constantly {})
    :get-license dummy-licenses
-   :get-user (fn [userid] {:userid userid})
+   :get-resource dummy-resources
+   :get-user dummy-get-user
    :get-users-with-role (fn [role] (get {:expirer #{"expirer-bot"}} role))
    :get-workflow dummy-workflows
    :blacklisted? (constantly false)

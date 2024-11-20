@@ -3,12 +3,12 @@
             [clojure.java.io :as io]
             [clojure.string :as str]
             [clojure.test :refer [deftest is testing use-fixtures]]
-            [rems.service.attachment :as attachment]
-            [rems.service.catalogue :as catalogue]
+            [rems.service.attachment]
+            [rems.service.catalogue]
             [rems.api.testing :refer [api-call api-fixture api-response assert-response-is-ok authenticate get-csrf-token login-with-cookies read-body read-ok-body response-is-forbidden? response-is-not-found? response-is-ok? response-is-payload-too-large? response-is-unauthorized? response-is-unsupported-media-type? transit-body]]
             [rems.config]
             [rems.db.applications]
-            [rems.db.blacklist :as blacklist]
+            [rems.db.blacklist]
             [rems.db.core :as db]
             [rems.service.test-data :as test-data :refer [+test-api-key+]]
             [rems.db.test-data-helpers :as test-helpers]
@@ -742,8 +742,8 @@
 
     (testing "can't create application for disabled catalogue item"
       (with-user "owner"
-        (catalogue/set-catalogue-item-enabled! {:id cat-id
-                                                :enabled false}))
+        (rems.service.catalogue/set-catalogue-item-enabled! {:id cat-id
+                                                             :enabled false}))
       (rems.db.applications/reload-cache!)
       (is (= {:success false
               :errors [{:type "disabled-catalogue-item" :catalogue-item-id cat-id}]}
@@ -852,11 +852,11 @@
         form-id (test-helpers/create-form! {})
         cat-id (test-helpers/create-catalogue-item! {:form-id form-id})
         enable-catalogue-item! #(with-user owner
-                                  (catalogue/set-catalogue-item-enabled! {:id cat-id
-                                                                          :enabled %}))
+                                  (rems.service.catalogue/set-catalogue-item-enabled! {:id cat-id
+                                                                                       :enabled %}))
         archive-catalogue-item! #(with-user owner
-                                   (catalogue/set-catalogue-item-archived! {:id cat-id
-                                                                            :archived %}))]
+                                   (rems.service.catalogue/set-catalogue-item-archived! {:id cat-id
+                                                                                         :archived %}))]
     (testing "submit with archived & disabled catalogue item succeeds"
       ;; draft needs to be created before disabling & archiving
       (let [app-id (test-helpers/create-application! {:catalogue-item-ids [cat-id] :actor user-id})]
@@ -1385,10 +1385,10 @@
              (set (map #(select-keys % [:end :resid :userid])
                        (db/get-entitlements {:application app-id}))))))
     (testing "users are not blacklisted"
-      (is (not (blacklist/blacklisted? applicant-id ext1)))
-      (is (not (blacklist/blacklisted? applicant-id ext2)))
-      (is (not (blacklist/blacklisted? member-id ext1)))
-      (is (not (blacklist/blacklisted? member-id ext2))))
+      (is (not (rems.db.blacklist/blacklisted? applicant-id ext1)))
+      (is (not (rems.db.blacklist/blacklisted? applicant-id ext2)))
+      (is (not (rems.db.blacklist/blacklisted? member-id ext1)))
+      (is (not (rems.db.blacklist/blacklisted? member-id ext2))))
     (testing "revoke application"
       (is (= {:success true}
              (send-command handler-id {:type :application.command/revoke
@@ -1397,10 +1397,10 @@
     (testing "entitlements end"
       (is (every? :end (db/get-entitlements {:application app-id}))))
     (testing "users are blacklisted"
-      (is (blacklist/blacklisted? applicant-id ext1))
-      (is (blacklist/blacklisted? applicant-id ext2))
-      (is (blacklist/blacklisted? member-id ext1))
-      (is (blacklist/blacklisted? member-id ext2)))))
+      (is (rems.db.blacklist/blacklisted? applicant-id ext1))
+      (is (rems.db.blacklist/blacklisted? applicant-id ext2))
+      (is (rems.db.blacklist/blacklisted? member-id ext1))
+      (is (rems.db.blacklist/blacklisted? member-id ext2)))))
 
 (deftest test-hiding-sensitive-information
   (let [applicant-id "alice"
@@ -2851,7 +2851,7 @@
         app-id (test-helpers/create-application! {:time (time/date-time 2010)
                                                   :actor applicant
                                                   :catalogue-item-ids [cat-id]})
-        att-id (:id (attachment/add-application-attachment applicant app-id filecontent))]
+        att-id (:id (rems.service.attachment/add-application-attachment applicant app-id filecontent))]
     (test-helpers/fill-form! {:time (time/date-time 2010)
                               :application-id app-id
                               :actor applicant

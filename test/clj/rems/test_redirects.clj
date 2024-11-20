@@ -1,24 +1,22 @@
 (ns ^:integration rems.test-redirects
   (:require [clojure.test :refer :all]
-            [rems.service.attachment :as attachment]
-            [rems.service.licenses :as licenses]
+            [rems.service.attachment]
+            [rems.service.licenses]
             [rems.api.testing :refer :all]
-            [rems.db.api-key :as api-key]
-            [rems.db.core :as db]
+            [rems.db.api-key]
+            [rems.config]
+            [rems.db.catalogue]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.handler :refer [handler]]
             [ring.mock.request :refer :all]))
 
 (use-fixtures
-  :once
+  :each
   api-fixture
   (fn [f]
     ;; need to set an explicit public-url since dev and test configs use different ports
     (with-redefs [rems.config/env (assoc rems.config/env :public-url "https://public.url/")]
       (f))))
-
-(defn disable-catalogue-item [catid]
-  (db/set-catalogue-item-enabled! {:id catid :enabled false}))
 
 (deftest test-redirect-to-new-application
   (testing "redirects to new application page for catalogue item matching the resource ID"
@@ -76,8 +74,7 @@
 
   (testing "redirects to active catalogue item, ignoring disabled items for the same resource ID"
     (let [resid (test-helpers/create-resource! {:resource-ext-id "urn:enabled-and-disabled-items"})
-          old-catid (test-helpers/create-catalogue-item! {:resource-id resid})
-          _ (disable-catalogue-item old-catid)
+          old-catid (test-helpers/create-catalogue-item! {:resource-id resid :enabled false})
           new-catid (test-helpers/create-catalogue-item! {:resource-id resid})
           response (-> (request :get "/apply-for?resource=urn:enabled-and-disabled-items")
                        handler)]
@@ -90,11 +87,11 @@
                        :attachment/type "text/plain"})
 
 (deftest test-attachment-download
-  (api-key/add-api-key! "42" {})
+  (rems.db.api-key/add-api-key! "42" {})
   (test-helpers/create-user! {:userid "alice"})
-  (with-redefs [attachment/get-application-attachment (fn [& args]
-                                                        (is (= ["alice" 123] args))
-                                                        dummy-attachment)]
+  (with-redefs [rems.service.attachment/get-application-attachment (fn [& args]
+                                                                     (is (= ["alice" 123] args))
+                                                                     dummy-attachment)]
     (testing "download attachment when logged in"
       (let [response (-> (request :get "/applications/attachment/123")
                          (authenticate "42" "alice")
@@ -110,7 +107,7 @@
                (get-in response [:headers "Location"]))))))
 
   (testing "attachment not found"
-    (with-redefs [attachment/get-application-attachment (constantly nil)]
+    (with-redefs [rems.service.attachment/get-application-attachment (constantly nil)]
       (let [response (-> (request :get "/applications/attachment/123")
                          (authenticate "42" "alice")
                          handler)]
@@ -118,11 +115,11 @@
         (is (= "not found" (:body response)))))))
 
 (deftest test-license-attachment-download
-  (api-key/add-api-key! "42" {})
+  (rems.db.api-key/add-api-key! "42" {})
   (test-helpers/create-user! {:userid "alice"})
-  (with-redefs [licenses/get-application-license-attachment (fn [& args]
-                                                              (is (= ["alice" 1023 3 :en] args))
-                                                              dummy-attachment)]
+  (with-redefs [rems.service.attachment/get-application-license-attachment (fn [& args]
+                                                                             (is (= ["alice" 1023 3 :en] args))
+                                                                             dummy-attachment)]
     (testing "download attachment when logged in"
       (let [response (-> (request :get "/applications/1023/license-attachment/3/en")
                          (authenticate "42" "alice")
@@ -138,7 +135,7 @@
                (get-in response [:headers "Location"]))))))
 
   (testing "attachment not found"
-    (with-redefs [licenses/get-application-license-attachment (constantly nil)]
+    (with-redefs [rems.service.attachment/get-application-license-attachment (constantly nil)]
       (let [response (-> (request :get "/applications/1023/license-attachment/3/en")
                          (authenticate "42" "alice")
                          handler)]

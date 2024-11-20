@@ -1,20 +1,18 @@
 (ns rems.service.form
-  (:require [clojure.test :refer :all]
+  (:require [clojure.test :refer [deftest is]]
             [clojure.tools.logging :as log]
             [rems.service.dependencies :as dependencies]
-            [rems.service.util :as util]
+            [rems.service.util :refer [check-allowed-organization!]]
             [rems.common.form :as common-form]
             [rems.config :refer [env]]
-            [rems.db.core :as db]
-            [rems.db.form :as form]
-            [rems.db.organizations :as organizations]))
+            [rems.db.form]
+            [rems.db.organizations]))
 
 (defn form-editable [form-id]
   (or (dependencies/in-use-error {:form/id form-id})
       {:success true}))
 
-;; TODO should this be in rems.db.form?
-(defn- validation-error [form]
+(defn validation-error [form]
   (when-let [error-map (common-form/validate-form-template form (:languages env))]
     {:success false
      :errors [error-map]}))
@@ -38,55 +36,42 @@
 
 (defn create-form! [form]
   (let [organization (:organization form)]
-    (util/check-allowed-organization! organization)
+    (check-allowed-organization! organization)
     (or (validation-error form)
-        (let [form-id (form/save-form-template! (migrate-title form (:languages env)))]
-          ;; reset-cache! not strictly necessary since forms don't depend on anything, but here for consistency
-          (dependencies/reset-cache!)
+        (let [form-id (rems.db.form/save-form-template! (migrate-title form (:languages env)))]
           {:success (not (nil? form-id))
            :id form-id}))))
 
 (defn- join-dependencies [form]
   (when form
     (->> form
-         organizations/join-organization)))
+         rems.db.organizations/join-organization)))
 
 (defn get-form-template [id]
-  (-> (form/get-form-template id)
-      join-dependencies))
-
-(defn get-form-template-for-api [id]
-  (-> (form/get-form-template id)
-      form/add-validation-errors
+  (-> (rems.db.form/get-form-template id)
       join-dependencies))
 
 (defn get-form-templates [filters]
-  (->> (form/get-form-templates filters)
-       (mapv join-dependencies)))
-
-(defn get-form-templates-for-api [filters]
-  (->> (form/get-form-templates filters)
-       (mapv form/add-validation-errors)
+  (->> (rems.db.form/get-form-templates filters)
        (mapv join-dependencies)))
 
 (defn edit-form! [form]
   ;; need to check both previous and new organization
-  (util/check-allowed-organization! (:organization (get-form-template (:form/id form))))
-  (util/check-allowed-organization! (:organization form))
+  (check-allowed-organization! (:organization (get-form-template (:form/id form))))
+  (check-allowed-organization! (:organization form))
   (or (dependencies/in-use-error {:form/id (:form/id form)})
       (validation-error form)
-      (do (form/edit-form-template! form)
+      (do (rems.db.form/edit-form-template! form)
           {:success true})))
 
 (defn set-form-enabled! [{:keys [id enabled]}]
-  (util/check-allowed-organization! (:organization (get-form-template id)))
-  (db/set-form-template-enabled! {:id id :enabled enabled})
+  (check-allowed-organization! (:organization (get-form-template id)))
+  (rems.db.form/set-enabled! id enabled)
   {:success true})
 
 (defn set-form-archived! [{:keys [id archived]}]
-  (util/check-allowed-organization! (:organization (get-form-template id)))
+  (check-allowed-organization! (:organization (get-form-template id)))
   (or (dependencies/change-archive-status-error archived {:form/id id})
       (do
-        (db/set-form-template-archived! {:id id
-                                         :archived archived})
+        (rems.db.form/set-archived! id archived)
         {:success true})))

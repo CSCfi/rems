@@ -4,24 +4,25 @@
             [clojure.test :refer [deftest is]]
             [com.rpl.specter :refer [ALL must transform]]
             [clojure.string]
-            [rems.service.catalogue :as catalogue]
-            [rems.service.category :as category]
+            [rems.service.attachment]
+            [rems.service.catalogue]
+            [rems.service.category]
             [rems.service.command :as command]
-            [rems.service.form :as form]
-            [rems.service.licenses :as licenses]
-            [rems.service.organizations :as organizations]
-            [rems.service.resource :as resource]
-            [rems.service.workflow :as workflow]
-            [rems.common.util :refer [fix-filename]]
+            [rems.service.form]
+            [rems.service.licenses]
+            [rems.service.organizations]
+            [rems.service.resource]
+            [rems.service.workflow]
             [rems.config]
-            [rems.db.applications :as applications]
+            [rems.db.applications]
             [rems.db.core :as db]
-            [rems.db.roles :as roles]
+            [rems.db.roles]
             [rems.db.organizations]
             [rems.db.test-data-users :refer [+fake-user-data+]]
-            [rems.db.users :as users]
-            [rems.db.user-mappings :as user-mappings]
-            [rems.testing-util :refer [with-user]])
+            [rems.db.users]
+            [rems.db.user-mappings]
+            [rems.testing-util :refer [with-user]]
+            [rems.util :refer [to-bytes]])
   (:import [java.util UUID]))
 
 (defn select-config-langs [m]
@@ -59,11 +60,11 @@
   (let [mappings (:mappings user-attributes-and-mappings)
         user-attributes (dissoc user-attributes-and-mappings :mappings)
         user (:userid user-attributes)]
-    (users/add-user-raw! user user-attributes)
+    (rems.db.users/add-user! user user-attributes)
     (doseq [[k v] mappings]
-      (user-mappings/create-user-mapping! {:userid user :ext-id-attribute k :ext-id-value v}))
+      (rems.db.user-mappings/create-user-mapping! {:userid user :ext-id-attribute k :ext-id-value v}))
     (doseq [role roles]
-      (roles/add-role! user role))
+      (rems.db.roles/add-role! user role))
     user))
 
 (defn- create-owner! []
@@ -74,7 +75,7 @@
                              :organization/keys [id name short-name owners review-emails]
                              :as command}]
   (let [actor (or actor (create-owner!))
-        result (organizations/add-organization!
+        result (rems.service.organizations/add-organization!
                 {:organization/id (or id "default")
                  :organization/name (select-config-langs
                                      (or name {:fi "Oletusorganisaatio"
@@ -106,7 +107,7 @@
                         :as command}]
   (let [actor (or actor (create-owner!))
         result (with-user actor
-                 (licenses/create-license!
+                 (rems.service.licenses/create-license!
                   {:licensetype (name (or type :text))
                    :organization (or organization (ensure-default-organization!))
                    :localizations (select-config-langs
@@ -116,22 +117,20 @@
     (assert (:success result) {:command command :result result})
     (:id result)))
 
-(defn create-attachment-license! [{:keys [actor organization]}]
+(defn create-license-attachment! [{:keys [actor organization]}]
   (let [langs (set (:languages rems.config/env))
         fi-attachment (when (:fi langs)
-                        (:id (db/create-license-attachment!
-                              {:user (or actor "owner")
-                               :filename "license-fi.txt"
-                               :type "text/plain"
-                               :data (.getBytes "Suomenkielinen lisenssi.")
-                               :start (time/now)})))
+                        (:id (rems.service.attachment/create-license-attachment!
+                              {:user-id (or actor "owner")
+                               :file {:filename "license-fi.txt"
+                                      :content-type "text/plain"
+                                      :tempfile (to-bytes "Suomenkielinen lisenssi.")}})))
         en-attachment (when (:en langs)
-                        (:id (db/create-license-attachment!
-                              {:user (or actor "owner")
-                               :filename "license-en.txt"
-                               :type "text/plain"
-                               :data (.getBytes "License in English.")
-                               :start (time/now)})))]
+                        (:id (rems.service.attachment/create-license-attachment!
+                              {:user-id (or actor "owner")
+                               :file {:filename "license-en.txt"
+                                      :content-type "text/plain"
+                                      :tempfile (to-bytes "License in English.")}})))]
     (with-user actor
       (create-license! {:actor actor
                         :license/type :attachment
@@ -147,7 +146,7 @@
                      :as command}]
   (let [actor (or actor (create-owner!))
         result (with-user actor
-                 (form/create-form!
+                 (rems.service.form/create-form!
                   {:organization (or organization (ensure-default-organization!))
                    :form/internal-name (or internal-name "FORM")
                    :form/external-title (select-config-langs
@@ -169,7 +168,7 @@
                       (transform [:resource/duo (must :duo/codes) ALL (must :more-info)]
                                  select-config-langs))
         result (with-user actor
-                 (resource/create-resource!
+                 (rems.service.resource/create-resource!
                   (merge {:resid (or resource-ext-id (str "urn:uuid:" (UUID/randomUUID)))
                           :organization (or organization (ensure-default-organization!))
                           :licenses (or license-ids [])}
@@ -191,7 +190,7 @@
                          :as command}]
   (let [actor (or actor (create-owner!))
         result (with-user actor
-                 (workflow/create-workflow!
+                 (rems.service.workflow/create-workflow!
                   {:organization (or organization (ensure-default-organization!))
                    :title (or title "")
                    :type (or type :workflow/master)
@@ -211,7 +210,7 @@
                          :as command}]
   (let [actor (or actor (create-owner!))
         result (with-user actor
-                 (category/create-category!
+                 (rems.service.category/create-category!
                   (merge {:category/title (select-config-langs
                                            (or title {:en "Category"
                                                       :fi "Kategoria"
@@ -233,7 +232,7 @@
     (assert (:success result) {:command command :result result})
     (:category/id result)))
 
-(defn create-catalogue-item! [{:keys [actor title resource-id form-id workflow-id infourl organization start categories]
+(defn create-catalogue-item! [{:keys [actor enabled title resource-id form-id workflow-id infourl organization start categories]
                                :as command}]
   (let [actor (or actor (create-owner!))
         localizations (into {}
@@ -241,7 +240,7 @@
                               [lang {:title (get title lang)
                                      :infourl (get infourl lang)}]))
         result (with-user actor
-                 (catalogue/create-catalogue-item!
+                 (rems.service.catalogue/create-catalogue-item!
                   (-> {:start (or start (time/now))
                        :resid (or resource-id (create-resource! {:organization organization}))
                        :form (if (contains? command :form-id) ; support :form-id nil
@@ -250,7 +249,9 @@
                        :organization (or organization (ensure-default-organization!))
                        :wfid (or workflow-id (create-workflow! {:organization organization}))
                        :localizations (select-config-langs (or localizations {}))
-                       :enabled (:enabled command true)}
+                       :enabled (if (some? enabled)
+                                  enabled
+                                  true)}
                       (assoc-some :categories categories))))]
     (assert (:success result) {:command command :result result})
     (:id result)))
@@ -275,7 +276,7 @@
    :time (or time (time/now))})
 
 (defn fill-form! [{:keys [application-id actor field-value optional-fields attachment multiselect] :as command}]
-  (let [app (applications/get-application-for-user actor application-id)]
+  (let [app (rems.db.applications/get-application-for-user actor application-id)]
     (command! (assoc (base-command command)
                      :type :application.command/save-draft
                      :field-values (for [form (:application/forms app)
@@ -302,7 +303,7 @@
                                                (or field-value "x"))})))))
 
 (defn fill-duo-codes! [{:keys [application-id actor duos] :as command}]
-  (let [app (applications/get-application-for-user actor application-id)]
+  (let [app (rems.db.applications/get-application-for-user actor application-id)]
     (command! (assoc (base-command command)
                      :type :application.command/save-draft
                      ;; copy existing forms so as to not override
@@ -314,7 +315,7 @@
                      :duo-codes duos))))
 
 (defn accept-licenses! [{:keys [application-id actor] :as command}]
-  (let [app (applications/get-application-for-user actor application-id)]
+  (let [app (rems.db.applications/get-application-for-user actor application-id)]
     (command! (assoc (base-command command)
                      :type :application.command/accept-licenses
                      :accepted-licenses (map :license/id (:application/licenses app))))))
@@ -333,14 +334,10 @@
     app-id))
 
 (defn create-attachment! [{:keys [actor application-id filename filetype data]}]
-  (let [previous-attachments (db/get-attachments-for-application {:application-id application-id})
-        filename (->> (mapv :filename previous-attachments)
-                      (fix-filename (or filename "attachment.pdf")))
-        attachment (db/save-attachment! {:application application-id
-                                         :user actor
-                                         :filename filename
-                                         :type (or filetype "application/pdf")
-                                         :data (.getBytes (or data ""))})]
+  (let [file {:filename (or filename "attachment.pdf")
+              :content-type (or filetype "application/pdf")
+              :tempfile (to-bytes (or data ""))}
+        attachment (rems.service.attachment/add-application-attachment actor application-id file)]
     (:id attachment)))
 
 (defn assert-no-existing-data! []

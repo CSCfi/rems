@@ -15,23 +15,22 @@
             [com.rpl.specter :refer [select ALL]]
             [etaoin.keys]
             [medley.core :refer [find-first]]
-            [rems.service.catalogue :as catalogue]
-            [rems.service.form :as forms]
-            [rems.service.invitation :as invitations]
-            [rems.service.organizations :as organizations]
-            [rems.service.resource :as resources]
-            [rems.service.workflow :as workflows]
+            [rems.service.application]
+            [rems.service.catalogue]
+            [rems.service.form]
+            [rems.service.invitation]
+            [rems.service.organizations]
+            [rems.service.resource]
+            [rems.service.workflow]
             [rems.browser-test-util :as btu]
             [rems.common.util :refer [getx]]
-            [rems.context :as context]
-            [rems.db.applications :as applications]
+            [rems.db.applications]
             [rems.db.test-data-helpers :as test-helpers]
-            [rems.db.users :as users]
-            [rems.db.user-settings :as user-settings]
+            [rems.db.testing :refer [save-cache-statistics!]]
+            [rems.db.user-settings]
             [rems.main]
             [rems.testing-util :refer [with-user with-fake-login-users]]
-            [rems.text :refer [localize-time text with-language]]
-            [rems.service.todos :as todos]))
+            [rems.text :refer [localize-time text with-language]]))
 
 (comment ; convenience for development testing
   (btu/init-driver! :chrome "http://localhost:3000/" :development))
@@ -40,7 +39,10 @@
   :each
   btu/reset-context-fixture
   btu/smoke-test-fixture
-  btu/init-driver-fixture)
+  btu/init-driver-fixture
+  (fn [f] ; XXX: currently no cache reset per each test, so just export statistics for kaocha plugin
+    (f)
+    (save-cache-statistics!)))
 
 (use-fixtures
   :once
@@ -410,15 +412,15 @@
     (btu/scroll-and-click :licensetype-attachment)
     (btu/eventually-visible? :attachment-en) ; inputs are hidden
     (btu/upload-file :upload-license-button-en "test-data/test.txt")
-    (btu/wait-predicate #(= (set [(str "test.txt" attachment-load-text)])
+    (btu/wait-predicate #(= (set [(str attachment-load-text " test.txt")])
                             (set (get-attachments {:css ".page-create-license"})))
                         #(do {:attachments (set (get-attachments {:css ".page-create-license"}))}))
     (btu/upload-file :upload-license-button-fi "test-data/test-fi.txt")
-    (btu/wait-predicate #(= (set [(str "test.txt" attachment-load-text) (str "test-fi.txt" attachment-load-text)])
+    (btu/wait-predicate #(= (set [(str attachment-load-text " test.txt") (str attachment-load-text " test-fi.txt")])
                             (set (get-attachments {:css ".page-create-license"})))
                         #(do {:attachments (get-attachments {:css ".page-create-license"})}))
     (btu/upload-file :upload-license-button-sv "test-data/test-sv.txt")
-    (btu/wait-predicate #(= (set [(str "test.txt" attachment-load-text) (str "test-fi.txt" attachment-load-text) (str "test-sv.txt" attachment-load-text)])
+    (btu/wait-predicate #(= (set [(str attachment-load-text " test.txt") (str attachment-load-text " test-fi.txt") (str attachment-load-text " test-sv.txt")])
                             (set (get-attachments {:css ".page-create-license"})))
                         #(do {:attachments (get-attachments {:css ".page-create-license"})}))))
 
@@ -776,7 +778,7 @@
               "Email" "john.smith@generic.name"}
              (slurp-fields :invite0-info-collapsible)))
       (is (string? (-> (btu/context-getx :application-id)
-                       applications/get-application-internal
+                       rems.db.applications/get-application-internal
                        :application/invitation-tokens
                        keys
                        first)))
@@ -784,7 +786,7 @@
               :application/member {:name "John Smith"
                                    :email "john.smith@generic.name"}}
              (-> (btu/context-getx :application-id)
-                 applications/get-application-internal
+                 rems.db.applications/get-application-internal
                  :application/invitation-tokens
                  vals
                  first)))
@@ -801,7 +803,7 @@
       (btu/wait-invisible :invite0-info-collapsible)
 
       (is (empty? (-> (btu/context-getx :application-id)
-                      applications/get-application-internal
+                      rems.db.applications/get-application-internal
                       :application/invitation-tokens)))
       (is (btu/visible? {:css "div.event-description" :fn/text "Alice Applicant removed John Smith from the application."}))
       (is (btu/visible? {:css "div.event-comment" :fn/text "sorry but no"})))
@@ -827,7 +829,7 @@
 
       (testing "get invite token"
         (let [[token invitation] (-> (btu/context-getx :application-id)
-                                     applications/get-application-internal
+                                     rems.db.applications/get-application-internal
                                      :application/invitation-tokens
                                      second)]
           (is (string? token))
@@ -867,7 +869,7 @@
 
     (testing "get invite token"
       (let [[token invitation] (-> (btu/context-getx :application-id)
-                                   applications/get-application-internal
+                                   rems.db.applications/get-application-internal
                                    :application/invitation-tokens
                                    first)]
         (is (string? token))
@@ -892,7 +894,7 @@
       (is (= {:event/type :application.event/member-joined
               :event/actor "frank"}
              (-> (btu/context-getx :application-id)
-                 applications/get-application-internal
+                 rems.db.applications/get-application-internal
                  :application/events
                  last
                  (select-keys [:event/actor :event/type])))))
@@ -1003,7 +1005,7 @@
       (is (= #{{:userid "ionna" :name "Ionna Insprucker" :email "ionna@ins.mail"}
                {:userid "kayla" :name "Kayla Kale" :email "kale@is.good"}}
              (-> (btu/context-getx :application-id)
-                 applications/get-application-internal
+                 rems.db.applications/get-application-internal
                  :application/members)))
 
       (Thread/sleep 500)
@@ -1042,9 +1044,8 @@
                             :actor "alice"})
 
     (testing "disabling the 2nd item"
-      (binding [context/*user* {:userid "owner"}
-                context/*roles* #{:owner}]
-        (catalogue/set-catalogue-item-enabled! {:id (btu/context-getx :catalogue-id2) :enabled false}))))
+      (with-user "owner"
+        (rems.service.catalogue/set-catalogue-item-enabled! {:id (btu/context-getx :catalogue-id2) :enabled false}))))
 
   (btu/with-postmortem
     (login-as "developer")
@@ -1164,7 +1165,7 @@
       ;; NB: other tests may process applications too
       ;; the created 100 applications will be the latest
       (create-processed-application! 0 100)
-      (btu/context-assoc! :todos (todos/get-handled-todos "developer")) ; check against API
+      (btu/context-assoc! :todos (rems.service.application/get-handled-applications "developer")) ; check against API
       (btu/reload)
       (btu/wait-visible {:fn/text (str "There are " (count (btu/context-getx :todos)) " processed applications.")})
       (btu/screenshot "processed-applications-closed")
@@ -1251,7 +1252,7 @@
 
     (testing "get invite token"
       (let [[token invitation] (-> (btu/context-getx :application-id)
-                                   applications/get-application-internal
+                                   rems.db.applications/get-application-internal
                                    :application/invitation-tokens
                                    first)]
         (is (string? token))
@@ -1277,7 +1278,7 @@
       (is (= {:event/type :application.event/decider-joined
               :event/actor "new-decider"}
              (-> (btu/context-getx :application-id)
-                 applications/get-application-internal
+                 rems.db.applications/get-application-internal
                  :application/events
                  last
                  (select-keys [:event/actor :event/type])))))
@@ -1299,7 +1300,7 @@
               :event/actor "new-decider"
               :event/type :application.event/decided}
              (-> (btu/context-getx :application-id)
-                 applications/get-application-internal
+                 rems.db.applications/get-application-internal
                  :application/events
                  last
                  (select-keys [:application/decision :event/actor :event/type])))))
@@ -1347,13 +1348,13 @@
                                                                             :workflow-id (btu/context-getx :workflow-id)}))
     (test-helpers/create-user! {:userid "invited-person-id" :name "Invited Person Name" :email "invited-person-id@example.com"})
     (with-user "owner"
-      (btu/context-assoc! :invitation-id (getx (invitations/create-invitation! {:userid "owner"
-                                                                                :name "Dorothy Vaughan"
-                                                                                :email "dorothy.vaughan@nasa.gov"
-                                                                                :workflow-id (btu/context-getx :workflow-id)}) :invitation/id))))
+      (btu/context-assoc! :invitation-id (getx (rems.service.invitation/create-invitation! {:userid "owner"
+                                                                                            :name "Dorothy Vaughan"
+                                                                                            :email "dorothy.vaughan@nasa.gov"
+                                                                                            :workflow-id (btu/context-getx :workflow-id)}) :invitation/id))))
   (btu/with-postmortem
     (testing "get invitation token"
-      (let [invitation (-> (btu/context-getx :invitation-id) invitations/get-invitation-full)
+      (let [invitation (-> (btu/context-getx :invitation-id) rems.service.invitation/get-invitation-full)
             token (:invitation/token invitation)]
         (is (string? token))
         (btu/context-assoc! :token token)))
@@ -1492,7 +1493,7 @@
 
     (testing "accept invitation"
       (let [[token _] (-> (btu/context-getx :application-id)
-                          applications/get-application-internal
+                          rems.db.applications/get-application-internal
                           :application/invitation-tokens
                           first)]
         (btu/go (str (btu/get-server-url) "application/accept-invitation/" token))
@@ -1510,7 +1511,7 @@
 
     (testing "reviewer can use the link again"
       (let [[token _] (-> (btu/context-getx :application-id)
-                          applications/get-application-internal
+                          rems.db.applications/get-application-internal
                           :application/invitation-tokens
                           first)]
         (btu/go (str (btu/get-server-url) "application/accept-invitation/" token))
@@ -1528,7 +1529,7 @@
 
     (testing "another user can't use the invitation"
       (let [[token _] (-> (btu/context-getx :application-id)
-                          applications/get-application-internal
+                          rems.db.applications/get-application-internal
                           :application/invitation-tokens
                           first)]
         (btu/go (str (btu/get-server-url) "application/accept-invitation/" token))
@@ -1612,7 +1613,7 @@
       (btu/wait-page-loaded))
 
     (testing "wait for language change to show in the db"
-      (btu/wait-predicate #(= :fi (:language (user-settings/get-user-settings "alice")))))
+      (btu/wait-predicate #(= :fi (:language (rems.db.user-settings/get-user-settings "alice")))))
 
     (testing "changed language must have been saved for user"
       (logout)
@@ -1626,7 +1627,7 @@
       (change-language :en)
       (wait-page-title "Catalogue – REMS"))
 
-    (user-settings/delete-user-settings! "alice"))) ; clear language settings
+    (rems.db.user-settings/delete-user-settings! "alice"))) ; clear language settings
 
 (defn create-organization []
   (go-to-admin "Organizations")
@@ -1911,8 +1912,9 @@
     (testing "check that catalogue item is not visible before enabling"
       ;; technically we could check this from
       ;; the catalogue page but we'd need to search
-      (let [public-catalogue-items-by-name (->> (catalogue/get-catalogue-table {:enabled true})
-                                                (group-by (comp :title :en :localizations)))]
+      (let [public-catalogue-items-by-name (with-user "owner"
+                                             (->> (rems.service.catalogue/get-catalogue-table {:enabled true})
+                                                  (group-by (comp :title :en :localizations))))]
         (is (= nil (public-catalogue-items-by-name (btu/context-getx :catalogue-item-name))))))
     (testing "enable catalogue item"
       (enable-catalogue-item (btu/context-getx :catalogue-item-name)))
@@ -1994,10 +1996,10 @@
            (dissoc (slurp-fields :catalogue-item) "Start")))
     (testing "after disabling the components"
       (with-user "owner"
-        (organizations/set-organization-enabled! {:enabled false :organization/id (btu/context-getx :organization-id)})
-        (forms/set-form-enabled! {:id (btu/context-getx :form) :enabled false})
-        (resources/set-resource-enabled! {:id (btu/context-getx :resource) :enabled false})
-        (workflows/set-workflow-enabled! {:id (btu/context-getx :workflow) :enabled false}))
+        (rems.service.organizations/set-organization-enabled! {:enabled false :organization/id (btu/context-getx :organization-id)})
+        (rems.service.form/set-form-enabled! {:id (btu/context-getx :form) :enabled false})
+        (rems.service.resource/set-resource-enabled! {:id (btu/context-getx :resource) :enabled false})
+        (rems.service.workflow/set-workflow-enabled! {:id (btu/context-getx :workflow) :enabled false}))
       (testing "editing"
         (btu/go (str (btu/get-server-url) "administration/catalogue-items/edit/" (btu/context-getx :catalogue-item)))
         (btu/wait-page-loaded)
@@ -2293,15 +2295,16 @@
               (btu/fill-human (field-component (label-id :fi)) (format "Multi-select option %s (FI)" i))
               (btu/fill-human (field-component (label-id :sv)) (format "Multi-select option %s (SV)" i))))
           (testing "preview is updated when multi-select option order changes"
-            (is (= (map btu/value-of-el (btu/query-all [(field-preview) {:class :form-check}]))
-                   ["multi-select-option-0"
+            (is (= ["multi-select-option-0"
                     "multi-select-option-1"
-                    "multi-select-option-2"]))
+                    "multi-select-option-2"]
+                   (map btu/value-of-el (btu/query-all [(field-preview) {:class :form-check}]))))
             (btu/scroll-and-click [(field-editor) {:css (str ".form-field-option .move-up[data-index='1']")}])
-            (is (= (map btu/value-of-el (btu/query-all [(field-preview) {:class :form-check}]))
-                   ["multi-select-option-1"
+            (Thread/sleep 250) ; wait for re-frame + React
+            (is (= ["multi-select-option-1"
                     "multi-select-option-0"
-                    "multi-select-option-2"]))))
+                    "multi-select-option-2"]
+                   (map btu/value-of-el (btu/query-all [(field-preview) {:class :form-check}]))))))
 
         (testing "create table field"
           (add-form-field!)
@@ -2846,7 +2849,7 @@
   (btu/with-postmortem
     (testing "set up resource & user"
       (test-helpers/create-resource! {:resource-ext-id "blacklist-test"})
-      (users/add-user! {:userid "baddie" :name "Bruce Baddie" :email "bruce@example.com"}))
+      (test-helpers/create-user! {:userid "baddie" :name "Bruce Baddie" :email "bruce@example.com"}))
     (testing "add blacklist entry via resource page"
       (login-as "owner")
       (go-to-admin "Resources")
@@ -3189,7 +3192,7 @@
     (btu/scroll-and-click [:small-navbar {:tag :button :fn/text "FI"}])
     (btu/wait-invisible :small-navbar) ; menu should be hidden
     (wait-page-title "Hakemukset – REMS")
-    (user-settings/delete-user-settings! "alice"))) ; clear language settings
+    (rems.db.user-settings/delete-user-settings! "alice"))) ; clear language settings
 
 (defn slurp-categories-by-title []
   (->> (map #(get % "title") (slurp-rows :categories))
@@ -3336,9 +3339,8 @@
                       (slurp-rows :catalogue-tree)))
           "can't see root category either because it's empty")
 
-      (binding [context/*user* {:userid "owner"}
-                context/*roles* #{:owner}]
-        (catalogue/set-catalogue-item-enabled! {:id (btu/context-getx :catalogue-id) :enabled true}))
+      (with-user "owner"
+        (rems.service.catalogue/set-catalogue-item-enabled! {:id (btu/context-getx :catalogue-id) :enabled true}))
 
       ;; must reload to see
       (btu/reload)
@@ -3444,7 +3446,7 @@
           (select-option "Organisation" "NBN")
           (fill-license-fields {:title "E2E license with attachments"
                                 :attachments true
-                                :attachment-load-text "\nLadda ner fil"})
+                                :attachment-load-text "Ladda ner fil\n"})
           (btu/scroll-and-click :save)
           (btu/screenshot "after-saving-attachments-sv")
           (wait-page-title "Licens – REMS")
@@ -3550,5 +3552,5 @@
             (is (btu/eventually-visible? {:tag :p :fn/has-text "Denna sida hittades inte."})))))
 
       (change-language :en)
-      (user-settings/delete-user-settings! "alice")
-      (user-settings/delete-user-settings! "elsa")))) ; clear language settings
+      (rems.db.user-settings/delete-user-settings! "alice")
+      (rems.db.user-settings/delete-user-settings! "elsa")))) ; clear language settings

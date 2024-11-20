@@ -1,10 +1,10 @@
 (ns ^:integration rems.api.test-workflows
   (:require [clojure.test :refer [deftest is testing use-fixtures]]
-            [rems.service.licenses :as licenses]
-            [rems.service.workflow :as workflows]
+            [rems.service.licenses]
+            [rems.service.workflow]
             [rems.api.testing :refer [api-call api-fixture api-response assert-response-is-ok assert-success authenticate coll-is-not-empty? read-body read-ok-body response-is-forbidden? response-is-not-found? response-is-unauthorized?]]
             [rems.common.util :refer [replace-key]]
-            [rems.db.applications :as applications]
+            [rems.db.applications]
             [rems.db.test-data-users :refer [+fake-user-data+]]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.db.testing :refer [owners-fixture +test-api-key+]]
@@ -131,7 +131,7 @@
   (create-handlers!)
   (let [user-id "owner"
         lic-id (test-helpers/create-license! {:organization {:organization/id "organization1"}})
-        lic (-> (licenses/get-license lic-id)
+        lic (-> (rems.service.licenses/get-license lic-id)
                 (replace-key :id :license/id))
         wfid (test-helpers/create-workflow! {:organization {:organization/id "organization1"}
                                              :title "workflow title"
@@ -141,8 +141,8 @@
 
         fetch #(fetch +test-api-key+ user-id wfid)
         archive-license! #(with-user user-id
-                            (licenses/set-license-archived! {:id lic-id
-                                                             :archived %}))
+                            (rems.service.licenses/set-license-archived! {:id lic-id
+                                                                          :archived %}))
         set-enabled! #(api-call :put "/api/workflows/enabled"
                                 {:id wfid
                                  :enabled %1}
@@ -213,7 +213,7 @@
         application->handler-user-ids
         (fn [app] (set (mapv :userid (get-in app [:application/workflow :workflow.dynamic/handlers]))))]
     (testing "application is initialized with the correct set of handlers"
-      (let [app (applications/get-application app-id)]
+      (let [app (rems.db.applications/get-application app-id)]
         (is (= #{"handler" "carl"}
                (application->handler-user-ids app)))))
 
@@ -272,7 +272,7 @@
                                       handler))))
 
     (testing "application is updated when handlers are changed"
-      (let [app (applications/get-application app-id)]
+      (let [app (rems.db.applications/get-application app-id)]
         (is (= #{"owner" "alice"}
                (application->handler-user-ids app)))))
 
@@ -295,8 +295,8 @@
   (let [enabled-wf (test-helpers/create-workflow! {})
         disabled-wf (test-helpers/create-workflow! {})
         _ (with-user "owner"
-            (workflows/set-workflow-enabled! {:id disabled-wf
-                                              :enabled false}))
+            (rems.service.workflow/set-workflow-enabled! {:id disabled-wf
+                                                          :enabled false}))
         enabled-and-disabled-wfs (set (map :id (-> (request :get "/api/workflows" {:disabled true})
                                                    (authenticate +test-api-key+ "owner")
                                                    handler

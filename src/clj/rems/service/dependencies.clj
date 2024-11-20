@@ -1,141 +1,124 @@
 (ns rems.service.dependencies
-  "Tracking dependencies between catalogue items, resources, forms, workflows and licenses."
-  (:require [rems.common.util :refer [build-index]]
-            [rems.db.catalogue :as catalogue]
-            [rems.db.form :as form]
-            [rems.db.licenses :as licenses]
-            [rems.db.organizations :as organizations]
-            [rems.db.resource :as resource]
-            [rems.db.workflow :as workflow]
-            [rems.db.category :as categories]))
-
-(defn enrich-dependency [dep]
-  (cond
-    (:license/id dep) (licenses/get-license (:license/id dep))
-    (:resource/id dep) (resource/get-resource (:resource/id dep))
-    (:workflow/id dep) (workflow/get-workflow (:workflow/id dep))
-    (:catalogue-item/id dep) (catalogue/get-localized-catalogue-item (:catalogue-item/id dep))
-    (:form/id dep) (form/get-form-template (:form/id dep))
-    (:organization/id dep) (organizations/getx-organization-by-id (:organization/id dep))
-    (:category/id dep) (categories/get-category (:category/id dep))
-    :else (assert false dep)))
+  "Tracking dependencies between entities."
+  (:require [clojure.set]
+            [rems.common.dependency :as dep]
+            [rems.common.util :refer [build-index]]
+            [rems.db.catalogue]
+            [rems.db.form]
+            [rems.db.licenses]
+            [rems.db.organizations]
+            [rems.db.resource]
+            [rems.db.workflow]
+            [rems.db.category]))
 
 (defn- list-dependencies []
   (concat
 
-   (for [lic (licenses/get-all-licenses nil)
-         dep [{:organization/id (:organization lic)}]]
-     {:from {:license/id (:id lic)} :to dep})
+   (for [lic (rems.db.licenses/get-licenses)]
+     {:from {:license/id (:id lic)}
+      :to (list
+           {:organization/id (:organization lic)})})
 
-   (for [form (form/get-form-templates nil)
-         dep [(:organization form)]]
-     {:from {:form/id (:form/id form)} :to dep})
+   (for [form (rems.db.form/get-form-templates)]
+     {:from {:form/id (:form/id form)}
+      :to (list
+           {:organization/id (-> form :organization :organization/id)})})
 
-   (for [res (resource/get-resources {})
-         dep (concat
-              (mapv (fn [license] {:license/id (:id license)}) (licenses/get-resource-licenses (:id res)))
-              [(:organization res)])]
-     {:from {:resource/id (:id res)} :to dep})
+   (for [res (rems.db.resource/get-resources)]
+     {:from {:resource/id (:id res)}
+      :to (list
+           {:organization/id (-> res :organization :organization/id)}
+           (for [lic (:licenses res)]
+             {:license/id (:license/id lic)}))})
 
-   (for [cat (catalogue/get-localized-catalogue-items {:archived true :expand-catalogue-data? true})
-         dep (concat [{:form/id (:formid cat)}
-                      {:resource/id (:resource-id cat)}
-                      {:workflow/id (:wfid cat)}
-                      {:organization/id (:organization cat)}]
-                     (for [category (:categories cat)]
-                       {:category/id (:category/id category)}))
-         :when (some? (val (first dep)))] ; remove nil dependencies, e.g. optional formid
-     {:from {:catalogue-item/id (:id cat)} :to dep})
+   (for [cat (rems.db.catalogue/get-catalogue-items)]
+     {:from {:catalogue-item/id (:id cat)}
+      :to (list
+           {:resource/id (:resource-id cat)}
+           {:workflow/id (:wfid cat)}
+           {:organization/id (-> cat :organization :organization/id)}
+           (when-let [id (:formid cat)]
+             {:form/id id})
+           (for [category (:categories cat)]
+             {:category/id (:category/id category)}))})
 
-   (for [workflow (workflow/get-workflows {})
-         dep (concat
-              (->> (get-in workflow [:workflow :licenses])
-                   (mapv #(select-keys % [:license/id])))
-              (get-in workflow [:workflow :forms])
-              [(:organization workflow)])]
-     {:from {:workflow/id (:id workflow)} :to dep})
+   (for [wf (rems.db.workflow/get-workflows)
+         :let [forms (-> wf :workflow :forms)
+               licenses (-> wf :workflow :licenses)]]
+     {:from {:workflow/id (:id wf)}
+      :to (list
+           {:organization/id (-> wf :organization :organization/id)}
+           (for [form forms]
+             {:form/id (:form/id form)})
+           (for [lic licenses]
+             {:license/id (:license/id lic)}))})
 
-   (for [cat (categories/get-categories)
-         dep (mapv (fn [category] {:category/id (:category/id category)}) (:category/children cat))]
-     {:from {:category/id (:category/id cat)} :to dep})))
+   (for [category (rems.db.category/get-categories)]
+     {:from {:category/id (:category/id category)}
+      :to (for [child (:category/children category)]
+            {:category/id (:category/id child)})})))
 
-(defn- add-status-bits [dep]
-  (merge dep
-         (select-keys (enrich-dependency dep) [:archived :enabled])))
+(defn db-dependency-graph []
+  (reduce #(dep/depend %1 (:from %2) (:to %2))
+          (dep/make-graph)
+          (list-dependencies)))
 
-(defn- list-to-maps [lst]
-  {:dependencies (build-index {:keys [:from] :value-fn :to :collect-fn set} lst)
-   :reverse-dependencies (build-index {:keys [:to] :value-fn :from :collect-fn set} lst)})
+(defn- format-dependency [x]
+  (cond
+    (:license/id x) (select-keys x [:license/id :localizations])
+    (:resource/id x) (select-keys x [:resource/id :resid])
+    (:workflow/id x) (select-keys x [:workflow/id :title])
+    (:catalogue-item/id x) (select-keys x [:catalogue-item/id :localizations])
+    (:form/id x) (select-keys x [:form/id :form/internal-name :form/external-title])
+    (:organization/id x) (select-keys x [:organization/id :organization/name])
+    (:category/id x) (select-keys x [:category/id :category/title])))
 
-(defn- compute-dependencies []
-  (-> (list-dependencies)
-      list-to-maps))
+(defn enrich-dependency [x]
+  (cond
+    (:license/id x) (rems.db.licenses/get-license (:license/id x))
+    (:resource/id x) (rems.db.resource/get-resource (:resource/id x))
+    (:workflow/id x) (rems.db.workflow/get-workflow (:workflow/id x))
+    (:catalogue-item/id x) (rems.db.catalogue/get-catalogue-item (:catalogue-item/id x))
+    (:form/id x) (rems.db.form/get-form-template (:form/id x))
+    (:organization/id x) (rems.db.organizations/getx-organization-by-id (:organization/id x))
+    (:category/id x) (rems.db.category/get-category (:category/id x))
+    :else (assert false x)))
 
-;; A note about caching: It makes sense to cache the dependency graph
-;; since we only need to rebuild it when a new item is created.
-;; The :archived and :enabled bits are not stored in the graph because
-;; that would mean invalidating the whole graph on every status bit
-;; change, _or_ implementing partial rebuilding.
-;;
-;; TODO: is this caching necessary? Computing the dependencies takes
-;; 500ms with performance test data.
-(def ^:private dependencies-cache (atom nil))
+(defn join-dependency [x]
+  (merge x (enrich-dependency x)))
 
-;; For now, all public uses are via the error helpers below
-(defn- dependencies []
-  (when-not @dependencies-cache
-    (reset! dependencies-cache (compute-dependencies)))
-  @dependencies-cache)
-
-(defn reset-cache! []
-  (reset! dependencies-cache nil))
-
-;; TODO change format of errors so we can get rid of this conversion
-(defn- format-deps-for-errors [deps]
-  (apply merge-with concat
-         (for [dep deps]
-           (cond (:license/id dep)
-                 {:licenses [(select-keys (enrich-dependency dep) [:id :localizations])]}
-
-                 (:resource/id dep)
-                 {:resources [(select-keys (enrich-dependency dep) [:id :resid])]}
-
-                 (:workflow/id dep)
-                 {:workflows [(select-keys (enrich-dependency dep) [:id :title])]}
-
-                 (:catalogue-item/id dep)
-                 {:catalogue-items [(select-keys (enrich-dependency dep) [:id :localizations])]}
-
-                 (:form/id dep)
-                 {:forms [(select-keys (enrich-dependency dep) [:form/id :form/internal-name :form/external-title])]}
-
-                 (:organization/id dep)
-                 {:organizations [(select-keys (enrich-dependency dep) [:organization/id :organization/name])]}
-
-                 (:category/id dep)
-                 {:categories [(select-keys (enrich-dependency dep) [:category/id :category/title])]}))))
+(defn- format-dependencies [deps]
+  (let [find-group (partial some {:catalogue-item/id :catalogue-items
+                                  :category/id :categories
+                                  :form/id :forms
+                                  :license/id :licenses
+                                  :organization/id :organizations
+                                  :resource/id :resources
+                                  :workflow/id :workflows})]
+    (->> deps
+         (build-index {:keys [(comp find-group keys)]
+                       :value-fn format-dependency
+                       :collect-fn conj}))))
 
 (defn- archive-errors
   "Return errors if given item is depended on by non-archived items"
   [item]
-  (when-let [users (->> (get-in (dependencies) [:reverse-dependencies item])
-                        (mapv add-status-bits)
-                        (remove :archived)
-                        seq)]
+  (when-let [dependents (->> (dep/get-all-dependents (db-dependency-graph) item)
+                             (eduction (map join-dependency)
+                                       (remove :archived))
+                             seq)]
     {:success false
-     :errors [(merge {:type :t.administration.errors/in-use-by}
-                     (format-deps-for-errors users))]}))
+     :errors [(merge {:type :t.administration.errors/in-use-by} (format-dependencies dependents))]}))
 
 (defn- unarchive-errors
   "Return errors if given item depends on archived items"
   [item]
-  (when-let [used (->> (get-in (dependencies) [:dependencies item])
-                       (mapv add-status-bits)
-                       (filter :archived)
-                       seq)]
+  (when-let [dependencies (->> (dep/get-all-dependencies (db-dependency-graph) item)
+                               (eduction (map join-dependency)
+                                         (filter :archived))
+                               seq)]
     {:success false
-     :errors [(merge {:type :t.administration.errors/dependencies-archived}
-                     (format-deps-for-errors used))]}))
+     :errors [(merge {:type :t.administration.errors/dependencies-archived} (format-dependencies dependencies))]}))
 
 (defn change-archive-status-error
   "Returns an error structure {:success false :errors [...]} if
@@ -149,7 +132,8 @@
 (defn in-use-error
   "Returns an error structure {:success false :errors [...]} if given item is depended on by anything"
   [item]
-  (when-let [users (seq (get-in (dependencies) [:reverse-dependencies item]))]
+  (when-let [dependencies (->> (dep/get-all-dependents (db-dependency-graph) item)
+                               (map join-dependency)
+                               seq)]
     {:success false
-     :errors [(merge {:type :t.administration.errors/in-use-by}
-                     (format-deps-for-errors users))]}))
+     :errors [(merge {:type :t.administration.errors/in-use-by} (format-dependencies dependencies))]}))

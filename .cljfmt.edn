@@ -1,3 +1,6 @@
 {:paths ["project.clj" "src/clj" "src/cljc" "src/cljs" "test/clj" "test/cljc" "test/cljs"] ; need explicit paths to include cljs
- :extra-indents {delay [[:inner 0]]}
+ :extra-indents {delay [[:inner 0]]
+                 ;; macros, originally defined in rems.api.test-catalogue-items
+                 is-logged? [[:block 3]] ; :default indent for arguments [0 1 2], and :inner afterwards
+                 is-not-logged? [[:block 3]]}
  :remove-consecutive-blank-lines? false} ; too many changes for now, probably not desirable

@@ -3,8 +3,9 @@
             [re-frame.core :as rf]
             [rems.administration.administration :as administration]
             [rems.administration.components :refer [localized-text-field localized-textarea-autosize organization-field radio-button-group]]
-            [rems.atoms :as atoms :refer [failure-symbol file-download document-title]]
+            [rems.atoms :as atoms :refer [document-title failure-symbol file-download]]
             [rems.collapsible :as collapsible]
+            [rems.common.atoms :refer [nbsp]]
             [rems.common.attachment-util :as attachment-util]
             [rems.config]
             [rems.globals]
@@ -77,7 +78,9 @@
          {:body form-data
           :handler (fn [response]
                      (rf/dispatch [::attachment-saved language (:id response)]))
-          :error-handler (flash-message/default-error-handler :top "Save attachment")}))
+          :error-handler (fn [response]
+                           (rf/dispatch [::set-form-field [:localizations language :attachment-filename] nil])
+                           ((flash-message/default-error-handler :top "Save attachment") response))}))
 
 (rf/reg-event-db
  ::attachment-saved
@@ -185,7 +188,7 @@
                [:a.attachment-link.btn.btn-secondary.mr-2
                 {:href (str "/api/licenses/attachments/" attachment-id)
                  :target :_blank}
-                filename " " [file-download]]
+                [file-download] nbsp filename]
                [:button.btn.btn-secondary.mr-2 {:type :button
                                                 :on-click (remove-attachment-event language attachment-id)}
                 (text :t.form/attachment-remove)]])

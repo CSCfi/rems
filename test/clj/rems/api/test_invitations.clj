@@ -1,6 +1,6 @@
 (ns ^:integration rems.api.test-invitations
   (:require [clojure.test :refer :all]
-            [rems.service.invitation :as invitation]
+            [rems.service.invitation]
             [rems.api.testing :refer :all]
             [rems.db.applications]
             [rems.service.test-data :as test-data]
@@ -55,7 +55,7 @@
                        :invitation/sent)))   ; should be checked in service
 
         (testing "accepting"
-          (let [token (:invitation/token (invitation/get-invitation-full (:invitation/id invitation)))] ; not available in API
+          (let [token (:invitation/token (rems.service.invitation/get-invitation-full (:invitation/id invitation)))] ; not available in API
             (is (= {:success true
                     :invitation/workflow {:workflow/id workflow-id}}
                    (api-call :post "/api/invitations/accept-invitation" {:token token} test-data/+test-api-key+ "katherine"))))
@@ -86,11 +86,11 @@
   (test-helpers/create-user! {:userid "katherine" :email "katherine.johnson@nasa.gov" :name "Katherine Johnson"})
   (let [workflow-id (test-helpers/create-workflow! {:organization {:organization/id "test-organization"}})
         invitation-id (:invitation/id (with-user "owner"
-                                        (invitation/create-invitation! {:userid "owner"
-                                                                        :name "Katherine Johnson"
-                                                                        :email "katherine.johnson@nasa.gov"
-                                                                        :workflow-id workflow-id})))
-        token (:invitation/token (with-user "owner" (invitation/get-invitation-full invitation-id)))]
+                                        (rems.service.invitation/create-invitation! {:userid "owner"
+                                                                                     :name "Katherine Johnson"
+                                                                                     :email "katherine.johnson@nasa.gov"
+                                                                                     :workflow-id workflow-id})))
+        token (:invitation/token (with-user "owner" (rems.service.invitation/get-invitation-full invitation-id)))]
     (testing "without authentication"
       (testing "list"
         (let [response (api-response :get "/api/invitations")]

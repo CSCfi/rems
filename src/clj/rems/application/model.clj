@@ -10,9 +10,6 @@
             [rems.common.roles :refer [+handling-roles+]]
             [rems.common.util :refer [assoc-some-in conj-vec getx getx-in into-vec]]
             [rems.permissions :as permissions]
-            [rems.json :as json]
-            [rems.schema-base :as schema-base]
-            [schema.coerce :as coerce]
             [rems.ext.duo :as duo]))
 
 ;;;; Application
@@ -473,38 +470,47 @@
 (defn enrich-forms [forms get-form-template]
   (mapv #(enrich-form % get-form-template) forms))
 
-(defn- set-application-description [application]
+(defn- enrich-application-forms [application get-form-template]
+  (update application
+          :application/forms
+          #(enrich-forms % get-form-template)))
+
+(defn- enrich-application-description [application]
   (let [fields (select [:application/forms ALL :form/fields ALL] application)
         description (->> fields
                          (find-first #(= :description (:field/type %)))
                          :field/value)]
     (assoc application :application/description (str description))))
 
-(def ^:private coerce-DuoCodesDb
-  (coerce/coercer! [schema-base/DuoCode] coerce/string-coercion-matcher))
-
-(defn- enrich-resources [resources get-catalogue-item]
+(defn- enrich-resources [resources get-catalogue-item get-resource get-config]
   (->> resources
        (map (fn [resource]
               (let [item (get-catalogue-item (:catalogue-item/id resource))
-                    duo-codes (-> (:resourcedata item)
-                                  json/parse-string
-                                  (get-in [:resource/duo :duo/codes])
-                                  coerce-DuoCodesDb)]
-                (-> {:catalogue-item/id (:catalogue-item/id resource)
-                     :resource/ext-id (:resource/ext-id resource)
-                     :resource/id (:resource-id item)
-                     :catalogue-item/title (localization-for :title item)
-                     :catalogue-item/infourl (localization-for :infourl item)
-                 ;; TODO: remove unused keys
-                     :catalogue-item/start (:start item)
-                     :catalogue-item/end (:end item)
-                     :catalogue-item/enabled (:enabled item)
-                     :catalogue-item/expired (:expired item)
-                     :catalogue-item/archived (:archived item)}
-                    (assoc-some-in [:resource/duo :duo/codes] (seq (duo/enrich-duo-codes duo-codes)))))))
+                    enriched-resource {:catalogue-item/id (:catalogue-item/id resource)
+                                       :resource/ext-id (:resource/ext-id resource)
+                                       :resource/id (:resource-id item)
+                                       :catalogue-item/title (localization-for :title item)
+                                       :catalogue-item/infourl (localization-for :infourl item)
+                                       ;; TODO: remove unused keys
+                                       :catalogue-item/start (:start item)
+                                       :catalogue-item/end (:end item)
+                                       :catalogue-item/enabled (:enabled item)
+                                       :catalogue-item/expired (:expired item)
+                                       :catalogue-item/archived (:archived item)}]
+
+                (if (:enable-duo (get-config))
+                  (let [resource-id (:resource-id item) ; this is a bit backwards approach
+                        duo-codes (-> (get-resource resource-id) :resource/duo :duo/codes)]
+                    (assoc-some-in enriched-resource [:resource/duo :duo/codes] (seq (duo/enrich-duo-codes duo-codes))))
+
+                  enriched-resource))))
        (sort-by :catalogue-item/id)
        vec))
+
+(defn- enrich-application-resources [application get-catalogue-item get-resource get-config]
+  (update application
+          :application/resources
+          #(enrich-resources % get-catalogue-item get-resource get-config)))
 
 (defn- validate-duo-match [dataset-code query-code resource]
   (let [validity (duo/check-duo-code dataset-code query-code)]
@@ -532,17 +538,15 @@
      :resource/id (:resource/id resource)
      :duo/validation (validate-duo-match dataset-code query-code resource)}))
 
-(defn- hide-duos-if-not-enabled [application get-config]
+(defn- enrich-duos [application get-config]
   (if (:enable-duo (get-config))
-    application
     (-> application
+        (update-existing-in [:application/duo :duo/codes] duo/enrich-duo-codes)
+        (update-existing :application/duo assoc-some :duo/matches (seq (get-duo-matches application))))
+
+    (-> application ; hide instead
         (dissoc :application/duo)
         (update :application/resources (partial mapv #(dissoc % :resource/duo))))))
-
-(defn- enrich-duos [application]
-  (-> application
-      (update-existing-in [:application/duo :duo/codes] duo/enrich-duo-codes)
-      (update-existing :application/duo assoc-some :duo/matches (seq (get-duo-matches application)))))
 
 (defn- enrich-workflow-licenses [application get-workflow]
   (let [wf (get-workflow (get-in application [:application/workflow :workflow/id]))]
@@ -574,6 +578,11 @@
                                                           :license/attachment-filename (localization-for :textcontent license)})))))
                            (sort-by :license/id))]
     (merge-lists-by :license/id rich-licenses app-licenses)))
+
+(defn- enrich-application-licenses [application get-license]
+  (update application
+          :application/licenses
+          #(enrich-licenses % get-license)))
 
 (def ^:private sensitive-events #{:application.event/review-requested
                                   :application.event/reviewed
@@ -633,14 +642,14 @@
     :else
     :visibility/public))
 
-(defn enrich-event [event get-user get-catalogue-item]
+(defn enrich-event [event get-user get-catalogue-item get-resource get-config]
   (let [event-type (:event/type event)]
     (merge event
            {:event/actor-attributes (get-user (:event/actor event))
             :event/visibility (get-event-visibility event)}
            (case event-type
              :application.event/resources-changed
-             {:application/resources (enrich-resources (:application/resources event) get-catalogue-item)}
+             {:application/resources (enrich-resources (:application/resources event) get-catalogue-item get-resource get-config)}
 
              :application.event/decision-requested
              {:application/deciders (mapv get-user (:application/deciders event))}
@@ -712,9 +721,15 @@
             :application/members
             enrich-members)))
 
-(defn enrich-workflow-handlers [application get-workflow]
-  (let [workflow (get-workflow (get-in application [:application/workflow :workflow/id]))
-        handlers (get-in workflow [:workflow :handlers])
+(defn get-workflow-handlers [workflow-id get-workflow get-user]
+  (let [workflow (get-workflow workflow-id)
+        handlers (->> (get-in workflow [:workflow :handlers])
+                      (mapv (comp get-user :userid)))]
+    handlers))
+
+(defn enrich-workflow-handlers [application get-workflow-handlers]
+  (let [workflow-id (get-in application [:application/workflow :workflow/id])
+        handlers (get-workflow-handlers workflow-id)
         active-users (set (map :event/actor (:application/events application)))
         handlers (map (fn [handler]
                         (if (contains? active-users (:userid handler))
@@ -825,11 +840,6 @@
       :else
       #{:handler})))
 
-(defn- enrich-attachments [application get-user]
-  (->> application
-       (transform [:application/attachments ALL] #(update % :attachment/user get-user))
-       (transform [:application/attachments ALL] #(assoc % :attachment/redact-roles (allowed-redact-roles application %)))))
-
 (defn- enrich-workflow-anonymize-handling [application get-workflow]
   (let [workflow-id (get-in application [:application/workflow :workflow/id])
         workflow (get-workflow workflow-id)
@@ -875,39 +885,59 @@
     (-> application
         (assoc :application/invited-members (set members)))))
 
+(defn- enrich-events [application get-user get-catalogue-item get-resource get-config]
+  (let [events (mapv #(enrich-event % get-user get-catalogue-item get-resource get-config)
+                     (:application/events application))]
+    (assoc application :application/events events)))
+
+(defn- enrich-attachments [application get-attachments-for-application get-user]
+  (->> (update application
+               :application/attachments
+               #(merge-lists-by :attachment/id
+                                %
+                                (get-attachments-for-application (getx application :application/id))))
+       (transform [:application/attachments ALL] #(update % :attachment/user get-user))
+       (transform [:application/attachments ALL] #(assoc % :attachment/redact-roles (allowed-redact-roles application %)))))
+
+(defn- enrich-applicant [application get-user]
+  (assoc application
+         :application/applicant
+         (get-user (get-in application [:application/applicant :userid]))))
+
 (defn enrich-with-injections
   [application {:keys [blacklisted?
-                       get-form-template
+                       get-attachments-for-application
                        get-catalogue-item
+                       get-config
+                       get-form-template
                        get-license
+                       get-resource
                        get-user
                        get-users-with-role
                        get-workflow
-                       get-attachments-for-application
-                       get-config]
+                       cached-get-workflow-handlers]
                 :as _injections}]
   (-> application
-      (update :application/forms enrich-forms get-form-template)
+      (enrich-application-forms get-form-template)
       enrich-answers ; uses enriched form
       enrich-field-visible ; uses enriched answers
-      set-application-description ; uses enriched answers
-      (update :application/resources enrich-resources get-catalogue-item)
-      (hide-duos-if-not-enabled get-config)
-      enrich-duos ; uses enriched resources
+      enrich-application-description ; uses enriched answers
+      (enrich-application-resources get-catalogue-item get-resource get-config)
+      (enrich-duos get-config) ; uses enriched resources
       (enrich-workflow-licenses get-workflow)
-      (update :application/licenses enrich-licenses get-license)
-      (update :application/events (partial mapv #(enrich-event % get-user get-catalogue-item)))
-      (assoc :application/applicant (get-user (get-in application [:application/applicant :userid])))
-      (update :application/attachments #(merge-lists-by :attachment/id % (get-attachments-for-application (getx application :application/id))))
+      (enrich-application-licenses get-license)
+      (enrich-events get-user get-catalogue-item get-resource get-config)
+      (enrich-applicant get-user)
       (enrich-user-attributes get-user)
       (enrich-blacklist blacklisted?) ; uses enriched users
-      (enrich-workflow-handlers get-workflow)
+      (enrich-workflow-handlers (or cached-get-workflow-handlers
+                                    #(get-workflow-handlers % get-workflow get-user)))
       (enrich-workflow-anonymize-handling get-workflow)
       (enrich-deadline get-config)
       (enrich-super-users get-users-with-role)
       (enrich-workflow-disable-commands get-config get-workflow)
       (enrich-workflow-voting get-config get-workflow)
-      (enrich-attachments get-user)
+      (enrich-attachments get-attachments-for-application get-user) ; users enriched roles
       (enrich-processing-states get-config get-workflow)
       enrich-invited-members))
 

@@ -7,6 +7,7 @@
             [rems.api.schema :as schema]
             [rems.application.events :as events]
             [rems.application.model :as model]
+            [rems.common.atoms :refer [nbsp nbhy]]
             [rems.common.application-util :as application-util]
             [rems.common.util :refer [deep-merge]]
             [rems.permissions :as permissions]
@@ -136,6 +137,14 @@
        :archived false
        :expired false}})
 
+(def ^:private get-resource
+  {11 {:id 11
+       :resid "urn:11"}
+   21 {:id 21
+       :resid "urn:21"}
+   31 {:id 31
+       :resid "urn:31"}})
+
 (def ^:private get-config
   (constantly {:application-deadline-days 1}))
 
@@ -228,10 +237,6 @@
        :enabled true
        :archived false}})
 
-;; XXX: no attachments here for now
-(defn ^:private get-attachments-for-application [id]
-  [])
-
 (defn blacklisted? [user resource]
   (contains? #{["applicant" "urn:11"]
                ["applicant" "urn:31"]
@@ -241,12 +246,15 @@
 (def injections {:blacklisted? blacklisted?
                  :get-form-template get-form-template
                  :get-catalogue-item get-catalogue-item
+                 :get-catalogue-item-licenses (constantly [])
                  :get-config get-config
                  :get-license get-license
+                 :get-resource get-resource
                  :get-user get-user
                  :get-users-with-role get-users-with-role
                  :get-workflow get-workflow
-                 :get-attachments-for-application get-attachments-for-application})
+                 :get-attachments-for-application (constantly [])
+                 :get-attachment-metadata (constantly nil)})
 
 (deftest test-dummies-schema
   (doseq [[description schema dummies] [["form template" schema/FormTemplate get-form-template]
@@ -364,8 +372,8 @@
         nowrap (fn [s]
                  ;; GitHub will strip all CSS from markdown, so we cannot use CSS for nowrap
                  (-> s
-                     (str/replace " " "\u00A0") ;  non-breaking space
-                     (str/replace "-" "\u2011")))] ; non-breaking hyphen
+                     (str/replace " " nbsp) ;  non-breaking space
+                     (str/replace "-" nbhy)))] ; non-breaking hyphen
     (hiccup/html
      [:table {:border 1}
       [:tr
@@ -1373,7 +1381,7 @@
                                 :application/id 1
                                 :application/resources [{:catalogue-item/id 10 :resource/ext-id "urn:11"}
                                                         {:catalogue-item/id 20 :resource/ext-id "urn:21"}]}
-                               get-user get-catalogue-item))))
+                               get-user get-catalogue-item get-resource get-config))))
   (testing "decision-requested"
     (is (= {:event/type :application.event/decision-requested
             :event/time (DateTime. 1)
@@ -1388,7 +1396,7 @@
                                 :event/actor "handler"
                                 :application/id 1
                                 :application/deciders ["decider" "reviewer"]}
-                               get-user get-catalogue-item))))
+                               get-user get-catalogue-item get-resource get-config))))
   (testing "review-requested"
     (is (= {:event/type :application.event/review-requested
             :event/time (DateTime. 1)
@@ -1403,7 +1411,7 @@
                                 :event/actor "handler"
                                 :application/id 1
                                 :application/reviewers ["decider" "reviewer"]}
-                               get-user get-catalogue-item))))
+                               get-user get-catalogue-item get-resource get-config))))
   (testing "member-added"
     (is (= {:event/type :application.event/member-added
             :event/time (DateTime. 1)
@@ -1417,7 +1425,7 @@
                                 :event/actor "handler"
                                 :application/id 1
                                 :application/member {:userid "member"}}
-                               get-user get-catalogue-item))))
+                               get-user get-catalogue-item get-resource get-config))))
 
   (testing "member-removed"
     (is (= {:event/type :application.event/member-removed
@@ -1432,7 +1440,7 @@
                                 :event/actor "handler"
                                 :application/id 1
                                 :application/member {:userid "member"}}
-                               get-user get-catalogue-item)))))
+                               get-user get-catalogue-item get-resource get-config)))))
 
 (deftest test-enrich-answers
   (testing "draft"
@@ -1481,17 +1489,19 @@
                      :application/events [{:event/actor "applicant"} ; should ignore active non-handlers
                                           {:event/actor "edward"}
                                           {:event/actor "reviewer"}]}
-        get-workflow {1 {:workflow {:handlers [{:userid "alphonse" ; should ignore inactive handlers
-                                                :name "Alphonse Elric"}
-                                               {:userid "edward"
-                                                :name "Edward Elric"}]}}}]
+        get-workflow {1 {:workflow {:handlers [{:userid "alphonse"} ; should ignore inactive handlers
+                                               {:userid "edward"}]}}}
+        get-user {"alphonse" {:userid "alphonse"
+                              :name "Alphonse Elric"}
+                  "edward" {:userid "edward"
+                            :name "Edward Elric"}}]
     (is (= {:application/workflow {:workflow/id 1
                                    :workflow.dynamic/handlers [{:userid "alphonse"
                                                                 :name "Alphonse Elric"}
                                                                {:userid "edward"
                                                                 :name "Edward Elric"
                                                                 :handler/active? true}]}}
-           (-> (model/enrich-workflow-handlers application get-workflow)
+           (-> (model/enrich-workflow-handlers application #(model/get-workflow-handlers % get-workflow get-user))
                (select-keys [:application/workflow]))))))
 
 (deftest test-enrich-deadline

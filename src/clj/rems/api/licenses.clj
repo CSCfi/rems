@@ -1,8 +1,8 @@
 (ns rems.api.licenses
   (:require [compojure.api.sweet :refer :all]
             [rems.api.schema :as schema]
-            [rems.service.attachment :as attachment]
-            [rems.service.licenses :as licenses]
+            [rems.service.attachment]
+            [rems.service.licenses]
             [rems.api.util :refer [extended-logging not-found-json-response]] ; required for route :roles
             [rems.common.roles :refer [+admin-read-roles+ +admin-write-roles+]]
             [rems.schema-base :as schema-base]
@@ -29,8 +29,9 @@
    :organization schema-base/OrganizationId
    :localizations LicenseLocalizations})
 
-(s/defschema AttachmentMetadata
-  {:id s/Int})
+(s/defschema AddLicenseAttachmentResponse
+  {:success s/Bool
+   :id s/Int})
 
 (s/defschema CreateLicenseResponse
   {:success s/Bool
@@ -47,15 +48,15 @@
       :query-params [{disabled :- (describe s/Bool "whether to include disabled licenses") false}
                      {archived :- (describe s/Bool "whether to include archived licenses") false}]
       :return schema/Licenses
-      (ok (licenses/get-all-licenses (merge (when-not disabled {:enabled true})
-                                            (when-not archived {:archived false})))))
+      (ok (rems.service.licenses/get-all-licenses (merge (when-not disabled {:enabled true})
+                                                         (when-not archived {:archived false})))))
 
     (GET "/:license-id" []
       :summary "Get license"
       :roles +admin-read-roles+
       :path-params [license-id :- (describe s/Int "license id")]
       :return schema/License
-      (if-let [license (licenses/get-license license-id)]
+      (if-let [license (rems.service.licenses/get-license license-id)]
         (ok license)
         (not-found-json-response)))
 
@@ -65,7 +66,7 @@
       :body [command CreateLicenseCommand]
       :return CreateLicenseResponse
       (extended-logging request)
-      (ok (licenses/create-license! command)))
+      (ok (rems.service.licenses/create-license! command)))
 
     (PUT "/archived" request
       :summary "Archive or unarchive license"
@@ -73,7 +74,7 @@
       :body [command schema/ArchivedCommand]
       :return schema/SuccessResponse
       (extended-logging request)
-      (ok (licenses/set-license-archived! command)))
+      (ok (rems.service.licenses/set-license-archived! command)))
 
     (PUT "/enabled" request
       :summary "Enable or disable license"
@@ -81,15 +82,16 @@
       :body [command schema/EnabledCommand]
       :return schema/SuccessResponse
       (extended-logging request)
-      (ok (licenses/set-license-enabled! command)))
+      (ok (rems.service.licenses/set-license-enabled! command)))
 
     (POST "/add_attachment" request
       :summary "Add an attachment file that will be used in a license"
       :roles +admin-write-roles+
       :multipart-params [file :- schema/FileUpload]
-      :return AttachmentMetadata
+      :return AddLicenseAttachmentResponse
       (extended-logging request)
-      (ok (licenses/create-license-attachment! file (getx-user-id))))
+      (ok (rems.service.attachment/create-license-attachment! {:file file
+                                                               :user-id (getx-user-id)})))
 
     (POST "/remove_attachment" request
       :summary "Remove an attachment that could have been used in a license."
@@ -97,12 +99,12 @@
       :query-params [attachment-id :- (describe s/Int "attachment id")]
       :return schema/SuccessResponse
       (extended-logging request)
-      (ok {:success (some? (licenses/remove-license-attachment! attachment-id))}))
+      (ok (rems.service.attachment/remove-license-attachment! attachment-id)))
 
     (GET "/attachments/:attachment-id" []
       :summary "Get a license's attachment"
       :roles +admin-write-roles+
       :path-params [attachment-id :- (describe s/Int "attachment id")]
-      (if-let [attachment (licenses/get-license-attachment attachment-id)]
-        (attachment/download attachment)
+      (if-let [attachment (rems.service.attachment/get-license-attachment attachment-id)]
+        (rems.service.attachment/download attachment)
         (not-found-json-response)))))

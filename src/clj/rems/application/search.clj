@@ -5,9 +5,10 @@
             [com.rpl.specter :refer [ALL select]]
             [mount.core :as mount]
             [rems.common.application-util :as application-util]
+            [rems.common.util :refer [not-blank]]
             [rems.config :refer [env]]
-            [rems.db.applications :as applications]
-            [rems.db.events :as events]
+            [rems.db.applications]
+            [rems.db.events]
             [rems.text :as text]
             [rems.util :refer [delete-directory-contents-recursively]]
             [clj-time.core :as time-core])
@@ -100,14 +101,14 @@
 (defn refresh! []
   (locking index-lock
     (let [{::keys [directory ^SearcherManager searcher-manager last-processed-event-id]} @search-index
-          events (events/get-all-events-since last-processed-event-id)]
+          events (rems.db.events/get-all-events-since last-processed-event-id)]
       (when-not (empty? events)
         (with-open [writer (IndexWriter. directory (-> (IndexWriterConfig. analyzer)
                                                        (.setOpenMode IndexWriterConfig$OpenMode/APPEND)))]
           (let [app-ids (distinct (map :application/id events))]
             (log/info "Start indexing" (count app-ids) "applications...")
             (doseq [app-id app-ids]
-              (index-application! writer (applications/get-application app-id)))
+              (index-application! writer (rems.db.applications/get-application app-id)))
             (log/info "Finished indexing" (count app-ids) "applications")))
         (.maybeRefresh searcher-manager)
         (swap! search-index assoc ::last-processed-event-id (:event/id (last events)))))))
@@ -142,3 +143,10 @@
         (->> (.search searcher query Integer/MAX_VALUE)
              (get-application-ids searcher)
              set)))))
+
+(defn filter-with-search [query]
+  (let [app-ids (some-> query not-blank find-applications)]
+    (cond
+      (not app-ids) (filter (constantly true))
+      (empty? app-ids) (filter (constantly false))
+      :else (filter #(contains? app-ids %)))))

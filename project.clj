@@ -25,6 +25,7 @@
                  [com.cognitect/transit-clj "1.0.333"]
                  [javax.xml.bind/jaxb-api "2.4.0-b180830.0359"]
                  [lambdaisland/deep-diff "0.0-47"]
+                 [lambdaisland/kaocha "1.91.1392"]
                  [luminus-jetty "0.2.3"]
                  [luminus-migrations "0.7.2"] ; 0.7.3 switches to next.jdbc, 0.7.5 fails: No such var: prepare/statement
                  [luminus-nrepl "0.1.7"]
@@ -116,7 +117,6 @@
                                 [com.clojure-goes-fast/clj-async-profiler "1.2.0"] ; also check extra :jvm-opts https://github.com/clojure-goes-fast/clj-async-profiler?tab=readme-ov-file#tuning-for-better-accuracy
                                 [com.clojure-goes-fast/clj-memory-meter "0.3.0"]
                                 [criterium "0.4.6"]
-                                [lambdaisland/kaocha "1.91.1392"]
                                 [lambdaisland/kaocha-junit-xml "1.17.101"]
                                 [etaoin "1.1.41"]
                                 [ring/ring-mock "0.4.0" :exclusions [cheshire]]

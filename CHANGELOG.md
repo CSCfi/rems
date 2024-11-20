@@ -12,6 +12,9 @@ Changes since v2.37
 - Catalogue tree now supports keyboard interactions for ARIA role="tree". Navigation works with arrow keys and Home/End, tree nodes can be opened/closed with Enter key, and default action (like add to cart) works with Enter key. (#3336)
 
 ### Changes
+- The logging of the simultaneous request count (`rqc:`) is now done for the request and response
+  log lines only, and separately. Previously the same value was used for all logging in a request,
+  which could be confusing as the actual request count can change between the lines.
 - The performance has been improved when there are many handlers. (#3283)
 - The error message "shake" animation has been removed. (#3298)
 - The collapsible component no longer animates on open/close.
@@ -19,6 +22,11 @@ Changes since v2.37
   REMS will not try sending it again, but gives up immediately. This should
   avoid having many hopeless retries, if there is a typo in an email address.
 - Form editor performance has been significantly improved. To give rough numbers, the editor now works smoothly with 200 form fields in test data. (#3105)
+- The wording about experimental is removed from GA4GH API. It is already used in production. (#3299)
+- Licenses are ordered consistently (alphabetically) wherever they appear. (#3302)
+
+### Fixes
+- Empty the license attachment field if the upload fails. (#3292)
 
 ## v2.37 "Laivapojankatu" 2024-05-16
 

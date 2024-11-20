@@ -1,11 +1,11 @@
 (ns rems.layout
   (:require [clojure.string :as str]
             [hiccup.page :refer [html5 include-css include-js]]
-            [rems.service.public :as public]
+            [rems.service.public]
             [rems.common.git :as git]
             [rems.config :refer [env]]
             [rems.context :as context]
-            [rems.service.organizations :as organizations]
+            [rems.service.organizations]
             [cognitect.transit]
             [rems.text :refer [text with-language]]
             [ring.middleware.anti-forgery :refer [*anti-forgery-token*]]
@@ -123,11 +123,11 @@
     (include-js (cache-bust "/js/app.js"))
     [:script {:type "text/javascript"} "rems.app.init();"]
     (inline-value "rems.app.setIdentity" {:user context/*user* :roles context/*roles*})
-    (inline-value "rems.app.setConfig" (public/get-config))
-    (inline-value "rems.app.setTranslations" (public/get-translations))
-    (inline-value "rems.app.setTheme" (public/get-theme))
+    (inline-value "rems.app.setConfig" (rems.service.public/get-config))
+    (inline-value "rems.app.setTranslations" (rems.service.public/get-translations))
+    (inline-value "rems.app.setTheme" (rems.service.public/get-theme))
     (when (contains? context/*roles* :handler)
-      (inline-value "rems.app.setHandledOrganizations" (organizations/get-handled-organizations (select-keys context/*user* [:userid]))))
+      (inline-value "rems.app.setHandledOrganizations" (rems.service.organizations/get-handled-organizations (select-keys context/*user* [:userid]))))
     [:script {:type "text/javascript"} "rems.app.mount();"])))
 
 (defn- error-content

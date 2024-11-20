@@ -3,7 +3,7 @@
             [rems.api.schema :as schema]
             [rems.api.util]
             [rems.common.roles :refer [has-roles? +admin-read-roles+]]
-            [rems.service.entitlements :refer [get-entitlements-for-api get-entitlements-for-csv-export]]
+            [rems.service.entitlements]
             [rems.util :refer [getx-user-id]]
             [ring.util.http-response :refer :all]
             [ring.util.response :as response]
@@ -30,9 +30,9 @@
                      {resource :- (describe s/Str "return entitlements for this resource (optional)") nil}
                      {expired :- (describe s/Bool "whether to include expired entitlements") false}]
       :return [schema/Entitlement]
-      (let [entitlements (get-entitlements-for-api {:user-id (getx-query-user user)
-                                                    :resource-ext-id resource
-                                                    :expired expired})]
+      (let [entitlements (rems.service.entitlements/get-entitlements-for-api {:user-id (getx-query-user user)
+                                                                              :resource-ext-id resource
+                                                                              :expired expired})]
         (ok entitlements)))
 
     (GET "/export-csv" []
@@ -44,9 +44,9 @@
                      {separator :- (describe s/Str "which separator to use in returned csv (optional)") ","}]
       :produces ["text/csv"]
       :return s/Str
-      (let [entitlements (get-entitlements-for-csv-export {:user-id (getx-query-user user)
-                                                           :resource-ext-id resource
-                                                           :expired expired
-                                                           :separator separator})]
+      (let [entitlements (rems.service.entitlements/get-entitlements-for-csv-export {:user-id (getx-query-user user)
+                                                                                     :resource-ext-id resource
+                                                                                     :expired expired
+                                                                                     :separator separator})]
         (-> (ok entitlements)
             (response/content-type "text/csv"))))))

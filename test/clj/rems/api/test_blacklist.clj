@@ -1,15 +1,16 @@
 (ns ^:integration rems.api.test-blacklist
-  (:require [clojure.test :refer :all]
-            [rems.api.testing :refer :all]
-            [rems.db.api-key :as api-key]
-            [rems.db.applications :as applications]
+  (:require [clojure.test :refer [deftest is testing use-fixtures]]
+            [clojure.tools.logging.test :as log-test]
+            [rems.api.testing :refer [api-fixture assert-response-is-ok assert-response-is-unprocessable-entity authenticate read-ok-body]]
+            [rems.db.api-key]
+            [rems.db.applications]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.handler :refer [handler]]
-            [ring.mock.request :refer :all])
+            [ring.mock.request :refer [json-body request]])
   (:import [org.joda.time DateTimeUtils]))
 
 (use-fixtures
-  :once
+  :each
   api-fixture
   (fn [f]
     ;; TODO this needs to be in the future so that we can use the
@@ -53,7 +54,7 @@
                                                          remove!))
 
 (deftest test-blacklist
-  (api-key/add-api-key! "42")
+  (rems.db.api-key/add-api-key! "42")
   (test-helpers/create-user! {:userid +command-user+ :name "Owner" :email "owner@example.com"} :owner)
   (test-helpers/create-user! {:userid +fetch-user+} :reporter)
   (test-helpers/create-user! {:userid "user1" :mappings {"alt-id" "user1-alt-id"}})
@@ -66,21 +67,27 @@
         cat-id (test-helpers/create-catalogue-item! {:resource-id res-id-2})
         app-id (test-helpers/create-application! {:catalogue-item-ids [cat-id]
                                                   :actor "user2"})
-        get-app #(applications/get-application app-id)]
+        get-app #(rems.db.applications/get-application app-id)]
     (testing "initially no blacklist"
       (is (= [] (fetch {})))
       (is (= []
              (:application/blacklist (get-app)))))
     (testing "add three entries"
-      (assert-add-ok! {:blacklist/user {:userid "user1"}
-                       :blacklist/resource {:resource/ext-id "A"}
-                       :comment "bad"})
-      (assert-add-ok! {:blacklist/user {:userid "user1-alt-id"}
-                       :blacklist/resource {:resource/ext-id "B"}
-                       :comment "quite bad"})
-      (assert-add-ok! {:blacklist/user {:userid "user2"}
-                       :blacklist/resource {:resource/ext-id "B"}
-                       :comment "very bad"})
+      (log-test/with-log
+        (assert-add-ok! {:blacklist/user {:userid "user1"}
+                         :blacklist/resource {:resource/ext-id "A"}
+                         :comment "bad"})
+        (is (log-test/logged? "rems.db.applications" :info "Reloading 0 applications because of user changes")))
+      (log-test/with-log
+        (assert-add-ok! {:blacklist/user {:userid "user1-alt-id"}
+                         :blacklist/resource {:resource/ext-id "B"}
+                         :comment "quite bad"})
+        (is (log-test/logged? "rems.db.applications" :info "Reloading 0 applications because of user changes")))
+      (log-test/with-log
+        (assert-add-ok! {:blacklist/user {:userid "user2"}
+                         :blacklist/resource {:resource/ext-id "B"}
+                         :comment "very bad"})
+        (is (log-test/logged? "rems.db.applications" :info "Reloading 1 applications because of user changes")))
       (is (= [{:blacklist/resource {:resource/ext-id "A"}
                :blacklist/user {:userid "user1" :name nil :email nil}
                :blacklist/added-by {:userid "owner" :name "Owner" :email "owner@example.com"}
@@ -118,9 +125,11 @@
       (is (= [{:resource/ext-id "B" :userid "user2"}]
              (simplify (fetch {:resource "B" :user "user2"})))))
     (testing "remove entry"
-      (assert-remove-ok! {:blacklist/user {:userid "user2"}
-                          :blacklist/resource {:resource/ext-id "B"}
-                          :comment "oops"})
+      (log-test/with-log
+        (assert-remove-ok! {:blacklist/user {:userid "user2"}
+                            :blacklist/resource {:resource/ext-id "B"}
+                            :comment "oops"})
+        (is (log-test/logged? "rems.db.applications" :info "Reloading 1 applications because of user changes")))
       (is (= []
              (fetch {:resource "B" :user "user2"}))))
     (testing "application is updated when user is removed from blacklist"
@@ -133,9 +142,11 @@
       (is (= [{:resource/ext-id "B" :userid "user2"}]
              (simplify (fetch {:resource "B" :user "user2"})))))
     (testing "remove nonexistent entry"
-      (assert-remove-ok! {:blacklist/user {:userid "user3"}
-                          :blacklist/resource {:resource/ext-id "C"}
-                          :comment "undo"})
+      (log-test/with-log
+        (assert-remove-ok! {:blacklist/user {:userid "user3"}
+                            :blacklist/resource {:resource/ext-id "C"}
+                            :comment "undo"})
+        (is (log-test/logged? "rems.db.applications" :info "Reloading 0 applications because of user changes")))
       (is (= [{:resource/ext-id "A" :userid "user1"}
               {:resource/ext-id "B" :userid "user1"}
               {:resource/ext-id "B" :userid "user2"}]
@@ -145,19 +156,27 @@
         (is (= [{:resource/ext-id "A" :userid "user1"}
                 {:resource/ext-id "B" :userid "user1"}
                 {:resource/ext-id "B" :userid "user2"}] blacklist))
-        (assert-add-unprocessable-entity! {:blacklist/user {:userid "definitely-not-found"}
-                                           :blacklist/resource {:resource/ext-id "A"}
-                                           :comment "not found"})
-        (is (= blacklist (simplify (fetch {}))))
-        (assert-add-unprocessable-entity! {:blacklist/user {:userid "user1"}
-                                           :blacklist/resource {:resource/ext-id "definitely-not-found"}
-                                           :comment "not found"})
-        (is (= blacklist (simplify (fetch {}))))
-        (assert-remove-unprocessable-entity! {:blacklist/user {:userid "definitely-not-found"}
-                                              :blacklist/resource {:resource/ext-id "B"}
-                                              :comment "not found"})
-        (is (= blacklist (simplify (fetch {}))))
-        (assert-remove-unprocessable-entity! {:blacklist/user {:userid "user2"}
-                                              :blacklist/resource {:resource/ext-id "definitely-not-found"}
-                                              :comment "not found"})
-        (is (= blacklist (simplify (fetch {}))))))))
+
+        (log-test/with-log
+          (assert-add-unprocessable-entity! {:blacklist/user {:userid "definitely-not-found"}
+                                             :blacklist/resource {:resource/ext-id "A"}
+                                             :comment "not found"})
+          (is (= blacklist (simplify (fetch {}))))
+
+          (assert-add-unprocessable-entity! {:blacklist/user {:userid "user1"}
+                                             :blacklist/resource {:resource/ext-id "definitely-not-found"}
+                                             :comment "not found"})
+          (is (= blacklist (simplify (fetch {}))))
+
+          (assert-remove-unprocessable-entity! {:blacklist/user {:userid "definitely-not-found"}
+                                                :blacklist/resource {:resource/ext-id "B"}
+                                                :comment "not found"})
+          (is (= blacklist (simplify (fetch {}))))
+
+          (assert-remove-unprocessable-entity! {:blacklist/user {:userid "user2"}
+                                                :blacklist/resource {:resource/ext-id "definitely-not-found"}
+                                                :comment "not found"})
+          (is (= blacklist (simplify (fetch {}))))
+
+          (is (not (log-test/logged? "rems.db.applications" :info #"Reloading"))
+              "application reloading should not be triggered"))))))

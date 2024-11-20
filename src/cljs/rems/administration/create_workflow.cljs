@@ -18,7 +18,7 @@
             [rems.flash-message :as flash-message]
             [rems.focus :as focus]
             [rems.spinner :as spinner]
-            [rems.text :refer [localized localize-command localize-role localize-state text text-format text-format-map]]
+            [rems.text :refer [get-localized-title localized localize-command localize-role localize-state text text-format text-format-map]]
             [rems.util :refer [navigate! post! put! trim-when-string]]))
 
 (rf/reg-event-fx ::enter-page
@@ -265,9 +265,11 @@
 (rf/reg-event-db ::set-licenses (fn [db [_ licenses]] (assoc-in db [::form :licenses] licenses)))
 
 (defn- render-readonly-licenses [id licenses]
-  (let [licenses (for [license licenses
-                       :let [uri (str "/administration/licenses/" (:license/id license))
-                             title (:title (localized (:localizations license)))]]
+  (let [licenses (for [license (->> licenses
+                                    (mapv #(assoc % ::title (get-localized-title %)))
+                                    (sort-by ::title))
+                       :let [uri (str "/administration/licenses/" (:id license))
+                             title (::title license)]]
                    [atoms/link {} uri title])]
     [fields/readonly-field-raw {:id id
                                 :value (if (seq licenses)
@@ -298,7 +300,8 @@
          :items (->> @(rf/subscribe [::licenses])
                      (mapv #(assoc % ::label (text-format :t.label/parens
                                                           (:title (localized (:localizations %)))
-                                                          (localize-org-short %)))))
+                                                          (localize-org-short %))))
+                     (sort-by ::label))
          :item-key :id
          :item-label ::label
          :item-selected? #(contains? selected-ids (:id %))

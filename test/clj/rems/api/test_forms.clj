@@ -1,13 +1,14 @@
 (ns ^:integration rems.api.test-forms
-  (:require [clojure.test :refer :all]
+  (:require [clojure.test :refer [deftest is testing use-fixtures]]
             [medley.core :refer [dissoc-in]]
             [rems.api.schema :as schema]
-            [rems.api.testing :refer :all]
+            [rems.api.testing :refer [api-call api-fixture api-response assert-response-is-ok authenticate coll-is-not-empty? read-body read-ok-body response-is-bad-request? response-is-forbidden? response-is-ok? response-is-unauthorized?]]
             [rems.handler :refer [handler]]
-            [rems.db.core :as db]
+            [rems.db.form]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.db.testing :refer [owners-fixture]]
-            [ring.mock.request :refer :all])
+            [rems.service.form]
+            [ring.mock.request :refer [json-body request]])
   (:import (java.util UUID)))
 
 (use-fixtures
@@ -245,7 +246,7 @@
         (testing "Form is non-editable after in use by a catalogue item"
           (is (= {:success false
                   :errors [{:type "t.administration.errors/in-use-by"
-                            :catalogue-items [{:id cat-id :localizations {}}]}]}
+                            :catalogue-items [{:catalogue-item/id cat-id :localizations {}}]}]}
                  (api-call :get (str "/api/forms/" form-id "/editable") nil
                            api-key user-id)))
           (testing "even if catalogue item is archived & disabled"
@@ -255,7 +256,7 @@
                       api-key user-id)
             (is (= {:success false
                     :errors [{:type "t.administration.errors/in-use-by"
-                              :catalogue-items [{:id cat-id :localizations {}}]}]}
+                              :catalogue-items [{:catalogue-item/id cat-id :localizations {}}]}]}
                    (api-call :get (str "/api/forms/" form-id "/editable") nil
                              api-key user-id)))))))
     (let [form-id (:id (api-call :post "/api/forms/create"
@@ -274,7 +275,7 @@
                                                    :title "wf with form"})]
           (is (= {:success false
                   :errors [{:type "t.administration.errors/in-use-by"
-                            :workflows [{:id wfid :title "wf with form"}]}]}
+                            :workflows [{:workflow/id wfid :title "wf with form"}]}]}
                  (api-call :get (str "/api/forms/" form-id "/editable") nil
                            api-key user-id)))
           (testing "even if catalogue item is archived & disabled"
@@ -284,7 +285,7 @@
                       api-key user-id)
             (is (= {:success false
                     :errors [{:type "t.administration.errors/in-use-by"
-                              :workflows [{:id wfid :title "wf with form"}]}]}
+                              :workflows [{:workflow/id wfid :title "wf with form"}]}]}
                    (api-call :get (str "/api/forms/" form-id "/editable") nil
                              api-key user-id)))))))))
 
@@ -301,15 +302,15 @@
                                  api-key user-id))]
       (testing "organization owner"
         (testing "can edit name and title in own organization"
-          (is (true? (:success (api-call :put "/api/forms/edit"
-                                         {:form/id form-id
-                                          :organization {:organization/id "organization1"}
-                                          :form/internal-name "changed name"
-                                          :form/external-title {:en "en changed title"
-                                                                :fi "fi changed title"
-                                                                :sv "sv changed title"}
-                                          :form/fields []}
-                                         api-key "organization-owner1"))))
+          (is (= {:success true} (api-call :put "/api/forms/edit"
+                                           {:form/id form-id
+                                            :organization {:organization/id "organization1"}
+                                            :form/internal-name "changed name"
+                                            :form/external-title {:en "en changed title"
+                                                                  :fi "fi changed title"
+                                                                  :sv "sv changed title"}
+                                            :form/fields []}
+                                           api-key "organization-owner1")))
           (is (= {:form/internal-name "changed name"
                   :form/external-title {:en "en changed title"
                                         :fi "fi changed title"
@@ -645,18 +646,20 @@
                      (:form/fields form))))))))))
 
 (deftest forms-api-filtering-test
-  (db/set-form-template-archived! {:id (test-helpers/create-form! {:form/internal-name "archived 1"
-                                                                   :form/external-title {:en "en archived 1"
-                                                                                         :fi "fi archived 1"
-                                                                                         :sv "sv archived 1"}
-                                                                   :form/keys []})
-                                   :archived true})
-  (db/set-form-template-archived! {:id (test-helpers/create-form! {:form/internal-name "archived 2"
-                                                                   :form/external-title {:en "en archived 2"
-                                                                                         :fi "fi archived 2"
-                                                                                         :sv "sv archived 2"}
-                                                                   :form/keys []})
-                                   :archived true})
+  (as-> (test-helpers/create-form! {:form/internal-name "archived 1"
+                                    :form/external-title {:en "en archived 1"
+                                                          :fi "fi archived 1"
+                                                          :sv "sv archived 1"}
+                                    :form/keys []})
+        id (rems.db.form/set-archived! id true))
+
+  (as-> (test-helpers/create-form! {:form/internal-name "archived 2"
+                                    :form/external-title {:en "en archived 2"
+                                                          :fi "fi archived 2"
+                                                          :sv "sv archived 2"}
+                                    :form/keys []})
+        id (rems.db.form/set-archived! id true))
+
   (test-helpers/create-form! {:form/internal-name "unarchived 1"
                               :form/external-title {:en "en unarchived 1"
                                                     :fi "fi unarchived 1"

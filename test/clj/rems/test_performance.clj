@@ -7,15 +7,16 @@
             [rems.application.model]
             [rems.common.util :refer [recursive-keys to-keyword]]
             [rems.config]
-            [rems.db.applications :as applications]
-            [rems.db.events :as events]
+            [rems.db.applications]
+            [rems.db.events]
             [rems.db.user-settings]
             [rems.db.test-data-users :refer [+fake-users+ +fake-user-data+]]
             [rems.email.template]
             [rems.locales]
             [rems.markdown]
+            [rems.service.application]
+            [rems.service.caches]
             [rems.service.test-data :as test-data]
-            [rems.service.todos :as todos]
             [rems.tempura]
             [rems.text])
   (:import [java.util Locale]))
@@ -46,10 +47,10 @@
                     (map-vals #(String/format Locale/ENGLISH "%.3f ms" (to-array [(* 1000 %)]))))))))
 
 (defn benchmark-get-events []
-  (let [last-event-id (:event/id (last (events/get-all-events-since 0)))
-        test-get-all-events-since-beginning #(doall (events/get-all-events-since 0))
-        test-get-all-events-since-end #(doall (events/get-all-events-since last-event-id))
-        test-get-application-events #(doall (events/get-application-events 12))]
+  (let [last-event-id (:event/id (last (rems.db.events/get-all-events-since 0)))
+        test-get-all-events-since-beginning #(doall (rems.db.events/get-all-events-since 0))
+        test-get-all-events-since-end #(doall (rems.db.events/get-all-events-since last-event-id))
+        test-get-application-events #(doall (rems.db.events/get-application-events 12))]
     (run-benchmarks [{:name "get-all-events-since, all events"
                       :benchmark test-get-all-events-since-beginning}
                      {:name "get-all-events-since, zero new events"
@@ -58,19 +59,20 @@
                       :benchmark test-get-application-events}])))
 
 (defn benchmark-get-all-applications []
-  (let [test-get-all-unrestricted-applications #(doall (applications/get-all-unrestricted-applications))
-        test-get-all-applications #(doall (applications/get-all-applications "alice"))
-        test-get-all-application-roles #(doall (applications/get-all-application-roles "developer"))
-        test-get-my-applications #(doall (applications/get-my-applications "alice"))
+  (let [test-get-all-unrestricted-applications #(doall (rems.db.applications/get-all-unrestricted-applications))
+        test-get-all-applications #(doall (rems.db.applications/get-all-applications-full "alice"))
+        test-get-all-application-roles #(doall (rems.db.applications/get-all-application-roles "developer"))
+        test-get-my-applications #(doall (rems.db.applications/get-my-applications-full "alice"))
         ;; developer can view much more applications than alice, so it takes longer to filter reviews from all apps
-        test-get-todos #(doall (todos/get-todos "developer"))
+        test-get-todos #(doall (rems.service.application/get-todos "developer"))
         no-cache (fn []
                    (mount/stop #'rems.db.applications/all-applications-cache
-                               #'rems.db.events/low-level-events-cache
-                               #'rems.db.user-settings/low-level-user-settings-cache))
+                               #'rems.db.events/low-level-events-cache)
+                   (rems.service.caches/reset-all-caches!))
         cached (fn []
-                 (mount/stop #'rems.db.applications/all-applications-cache #'rems.db.events/low-level-events-cache #'rems.db.user-settings/low-level-user-settings-cache)
-                 (mount/start #'rems.db.applications/all-applications-cache #'rems.db.events/low-level-events-cache #'rems.db.user-settings/low-level-user-settings-cache)
+                 (mount/stop #'rems.db.applications/all-applications-cache #'rems.db.events/low-level-events-cache)
+                 (mount/start #'rems.db.applications/all-applications-cache #'rems.db.events/low-level-events-cache)
+                 (rems.service.caches/start-all-caches!)
                  (test-get-all-unrestricted-applications))]
     (run-benchmarks [{:name "get-all-unrestricted-applications, no cache"
                       :benchmark test-get-all-unrestricted-applications
@@ -90,10 +92,10 @@
                      {:name "get-todos, cached"
                       :benchmark test-get-todos
                       :setup cached}])
-    (println "cache size" (mm/measure applications/all-applications-cache))))
+    (println "cache size" (mm/measure rems.db.applications/all-applications-cache))))
 
 (defn benchmark-get-application []
-  (let [test-get-application #(applications/get-application-for-user "developer" 12)]
+  (let [test-get-application #(rems.db.applications/get-application-for-user "developer" 12)]
     (run-benchmarks [{:name "get-application"
                       :benchmark test-get-application}])))
 
@@ -115,7 +117,7 @@
                      :event/type :application.event/decided
                      :event/actor (:decider +fake-users+)
                      :application/decision :approved}
-                    (rems.application.model/enrich-event (into +fake-user-data+ fake-handlers) nil))]
+                    (rems.application.model/enrich-event (into +fake-user-data+ fake-handlers) nil nil (fn [] {})))]
     {:application application
      :event decided}))
 
@@ -190,24 +192,27 @@
                                (mapv (juxt :handler-count mean low high)))})]
         (println row)))))
 
+(defn- format-memory-size [size]
+  ((var-get #'mm/convert-to-human-readable) size))
+
 (defn- get-cache-sizes []
   (doall
-   (for [s ['rems.db.applications/all-applications-cache
-            'rems.db.events/event-cache
-            'rems.db.user-settings/user-settings-cache
-            'rems.db.category/categories-cache
-            'rems.db.catalogue/cached
-            'rems.db.user-mappings/user-mappings-by-value
-            'rems.ext.duo/code-by-id
-            'rems.ext.mondo/code-by-id
-            'rems.ext.mondo/codes-dag
-            'rems.service.dependencies/dependencies-cache
-            'rems.text/cached-tr]
-         :let [size (mm/measure (-> s requiring-resolve var-get)
-                                {:bytes true})]]
-     {:name (str s)
-      :bytes size
-      :size ((var-get #'mm/convert-to-human-readable) size)})))
+   (concat (for [c (rems.service.caches/get-all-caches)
+                 :let [size (mm/measure c {:bytes true})]]
+             {:name (:id c "unknown cache?")
+              :bytes size
+              :size (format-memory-size size)})
+
+           (for [s ['rems.db.applications/all-applications-cache
+                    'rems.db.events/event-cache
+                    'rems.ext.duo/code-by-id
+                    'rems.ext.mondo/code-by-id
+                    'rems.ext.mondo/codes-dag
+                    'rems.text/cached-tr]
+                 :let [size (mm/measure (var-get (requiring-resolve s)) {:bytes true})]]
+             {:name s
+              :bytes size
+              :size (format-memory-size size)}))))
 
 (defn- get-all-translations []
   (let [key-paths (recursive-keys rems.locales/translations)
@@ -296,15 +301,16 @@
 
   (def cache-stats (get-cache-sizes))
   ;; additional table formatting
-  (do (println "")
-      (println "cache sizes")
-      (println "---")
-      (doseq [row (rems.markdown/markdown-table
-                   {:header ["cache" "size"]
-                    :rows (->> cache-stats
-                               (sort-by :bytes >)
-                               (mapv (juxt :name :size)))})]
-        (println row)))
+  (let [total-size (format-memory-size (reduce + 0 (mapv :bytes cache-stats)))]
+    (println "")
+    (println "cache sizes")
+    (println "---")
+    (doseq [row (rems.markdown/markdown-table
+                 {:header ["cache" (format "size (total: %s)" total-size) "statistics"]
+                  :rows (->> (or cache-stats (get-cache-sizes))
+                             (sort-by :bytes >)
+                             (mapv (juxt :name :size :statistics)))})]
+      (println row)))
 
   (prof/clear-results)
   (prof/serve-ui 8080))

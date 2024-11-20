@@ -120,11 +120,13 @@
      [:label.administration-field-label {:for licenses-dropdown-id} (text :t.create-resource/licenses-selection)]
      [dropdown/dropdown
       {:id licenses-dropdown-id
-       :items (vec (for [license licenses
+       :items (->> (for [license licenses
                          :let [title (get-localized-title license)
                                org-short (localize-org-short license)]]
                      (assoc license
-                            ::label (text-format :t.label/default title org-short))))
+                            ::label (text-format :t.label/default title org-short)))
+                   (sort-by ::label)
+                   vec)
        :item-key :id
        :item-label ::label
        :item-selected? #(contains? (set selected-licenses) %)

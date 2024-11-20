@@ -16,16 +16,14 @@
     (f)
     (DateTimeUtils/setCurrentMillisSystem)))
 
-(defn dummy-blacklisted? [_user _resource]
-  false)
-
 (def injections
   (-> test-model/injections
-      (assoc :blacklisted? dummy-blacklisted?)
+      (assoc :blacklisted? (constantly false))
+      (update :get-user assoc "approver-bot" {:userid "approver-bot"
+                                              :name "Approver Bot"
+                                              :email "approver-bot"})
       (update-in [:get-workflow 50 :workflow :handlers]
-                 conj {:userid "approver-bot"
-                       :name "Approver Bot"
-                       :email "approver-bot"})))
+                 conj {:userid "approver-bot"})))
 
 (defn apply-events [events injections]
   (-> events

@@ -5,7 +5,7 @@
             [rems.application.model :as model]
             [rems.common.application-util :as application-util]
             [rems.config]
-            [rems.db.user-settings :as user-settings]
+            [rems.db.user-settings]
             [rems.email.template :as template]
             [rems.locales]
             [rems.text]
@@ -36,6 +36,9 @@
                             :title "en title 21"}
                        :fi {:langcode :fi
                             :title "fi title 21"}}}})
+
+(def ^:private get-resource
+  (constantly {}))
 
 (def ^:private get-config
   (constantly {}))
@@ -112,15 +115,16 @@
                                                         :get-config get-config
                                                         :get-form-template get-form-template
                                                         :get-license get-license
+                                                        :get-resource get-resource
                                                         :get-user get-user
                                                         :get-users-with-role get-nothing
                                                         :get-attachments-for-application get-nothing}))]
      (with-redefs [rems.config/env (assoc rems.config/env :public-url "http://example.com/")
-                   user-settings/get-user-settings (fn [userid]
-                                                     (assert (string? userid))
-                                                     {:language lang})]
+                   rems.db.user-settings/get-user-settings (fn [userid]
+                                                             (assert (string? userid))
+                                                             {:language lang})]
        (sort-emails (template/event-to-emails
-                     (model/enrich-event event get-user #{})
+                     (model/enrich-event event get-user get-catalogue-item get-resource get-config)
                      application)))))
   ([base-events event]
    (emails :en base-events event)))

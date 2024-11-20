@@ -1,14 +1,15 @@
 (ns ^:integration rems.api.test-catalogue
-  (:require [clojure.test :refer :all]
-            [rems.service.catalogue :as catalogue]
-            [rems.api.testing :refer :all]
-            [rems.db.category :as category]
-            [rems.service.test-data :as test-data]
+  (:require [clojure.test :refer [deftest is testing use-fixtures]]
+            [rems.api.testing :refer [api-call api-fixture api-response authenticate read-body read-ok-body]]
+            [rems.config]
+            [rems.db.category]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.handler :refer [handler]]
+            [rems.service.catalogue]
+            [rems.service.test-data :as test-data]
             [rems.testing-util :refer [with-user]]
             [rems.text :refer [format-utc-datetime]]
-            [ring.mock.request :refer :all]))
+            [ring.mock.request :refer [request]]))
 
 (use-fixtures
   :each
@@ -53,16 +54,17 @@
       (is (= "unauthorized" (read-body (api-response :get "/api/catalogue" nil "invalid-api-key" nil))) "should not work with wrong api key")
       (is (= "unauthorized" (read-body (api-response :get "/api/catalogue" nil "42" nil))) "should not work without a user"))))
 
+(defn- get-item [id]
+  (with-user "owner"
+    (-> (rems.service.catalogue/get-catalogue-item id)
+        (update :start format-utc-datetime))))
+
 (deftest test-get-catalogue-tree
   (test-data/create-test-api-key!)
   (test-data/create-test-users-and-roles!)
 
-  (let [get-item (fn [id]
-                   (-> (catalogue/get-localized-catalogue-item id)
-                       (update :start format-utc-datetime)
-                       (dissoc :resource-name :form-name :workflow-name)))
-        get-category (fn [category]
-                       (-> (category/get-category (:category/id category))))
+  (let [get-category (fn [category]
+                       (-> (rems.db.category/get-category (:category/id category))))
         child {:category/id (test-helpers/create-category! {})}
         parent {:category/id (test-helpers/create-category! {:category/children [child]})}
         _empty {:category/id (test-helpers/create-category! {})} ; should not be seen
@@ -97,8 +99,8 @@
 
       (testing "even after disabling more"
         (with-user "owner"
-          (catalogue/set-catalogue-item-enabled! {:id (:id item1) :enabled false}) ; top level
-          (catalogue/set-catalogue-item-enabled! {:id (:id item4) :enabled false})) ; inside category
+          (rems.service.catalogue/set-catalogue-item-enabled! {:id (:id item1) :enabled false}) ; top level
+          (rems.service.catalogue/set-catalogue-item-enabled! {:id (:id item4) :enabled false})) ; inside category
 
         (is (= {:roots [(-> (get-category parent)
                             (assoc :category/items [item7])

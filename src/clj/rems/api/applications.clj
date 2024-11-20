@@ -1,28 +1,21 @@
 (ns rems.api.applications
   (:require [clj-time.core :as time]
-            [clj-time.coerce :as time-coerce]
             [clojure.string :as str]
             [compojure.api.sweet :refer :all]
             [medley.core :refer [update-existing]]
             [rems.api.schema :as schema]
-            [rems.service.attachment :as attachment]
+            [rems.service.application]
+            [rems.service.attachment]
             [rems.service.command :as command]
-            [rems.service.licenses :as licenses]
-            [rems.service.todos :as todos]
+            [rems.service.licenses]
+            [rems.service.users]
             [rems.api.util :as api-util :refer [extended-logging]] ; required for route :roles
             [rems.application.commands :as commands]
-            [rems.application.search :as search]
-            [rems.auth.auth :as auth]
             [rems.common.roles :refer [+admin-read-roles+]]
-            [rems.config :as config]
-            [rems.context :as context]
-            [rems.db.applications :as applications]
-            [rems.db.csv :as csv]
-            [rems.db.user-settings :as user-settings]
-            [rems.db.users :as users]
+            [rems.db.applications]
             [rems.pdf :as pdf]
             [rems.schema-base :as schema-base]
-            [rems.text :refer [with-language]]
+            [rems.text :as text]
             [rems.util :refer [getx-user-id]]
             [ring.util.http-response :refer :all]
             [schema.core :as s])
@@ -75,22 +68,7 @@
 (s/defschema Count
   s/Int)
 
-(defn- overview-only-active-handlers [app]
-  (update-in app
-             [:application/workflow :workflow.dynamic/handlers]
-             #(filter :handler/active? %)))
-
 ;; Api implementation
-
-(def last-activity (comp time-coerce/to-long :application/last-activity))
-
-(defn- filter-with-search [query apps]
-  (if (str/blank? query)
-    apps
-    (let [app-ids (search/find-applications query)]
-      (filter (fn [app]
-                (contains? app-ids (:application/id app)))
-              apps))))
 
 (defn- coerce-command-from-api [cmd]
   ;; TODO: schema could do these coercions for us
@@ -123,25 +101,16 @@
        (ok (api-command ~command body#)))))
 
 (defn accept-invitation [invitation-token]
-  (if-let [application-id (applications/get-application-by-invitation-token invitation-token)]
+  (if-let [application-id (rems.service.application/get-application-by-invitation-token invitation-token)]
     (api-command :application.command/accept-invitation
                  {:application-id application-id
                   :token invitation-token})
     {:success false
      :errors [{:type :t.actions.errors/invalid-token :token invitation-token}]}))
 
-(defn validate-application [request]
-  (let [application (applications/get-application-for-user (getx-user-id) (:application-id request))]
-    (merge {:success true}
-           (commands/validate-application application (:field-values request)))))
-
-(defn- get-handled-applications [{:keys [query only-active-handlers limit]}]
-  (time
-   (cond->> (todos/get-handled-todos (getx-user-id))
-     only-active-handlers (map overview-only-active-handlers)
-     query (filter-with-search query)
-     true (sort-by last-activity >)
-     limit (take limit))))
+(defn get-applicants [] (rems.service.users/get-users))
+(defn get-reviewers [] (rems.service.users/get-users))
+(defn get-deciders [] (rems.service.users/get-users))
 
 (def my-applications-api
   (context "/my-applications" []
@@ -152,8 +121,7 @@
       :roles #{:logged-in}
       :return [schema/ApplicationOverview]
       :query-params [{query :- (describe s/Str "search query [documentation](https://github.com/CSCfi/rems/blob/master/docs/search.md)") nil}]
-      (ok (->> (applications/get-my-applications (getx-user-id))
-               (filter-with-search query))))))
+      (ok (rems.service.application/get-my-applications (getx-user-id) query)))))
 
 (def applications-api
   (context "/applications" []
@@ -164,22 +132,20 @@
       :roles #{:logged-in}
       :return [schema/ApplicationOverview]
       :query-params [{query :- (describe s/Str "search query [documentation](https://github.com/CSCfi/rems/blob/master/docs/search.md)") nil}]
-      (ok (->> (applications/get-all-applications (getx-user-id))
-               (filter-with-search query))))
+      (ok (rems.service.application/get-all-applications (getx-user-id) query)))
 
     (GET "/todo" []
       :summary "Get all applications that the current user needs to act on."
       :roles #{:logged-in}
       :return [schema/ApplicationOverview]
       :query-params [{query :- (describe s/Str "search query [documentation](https://github.com/CSCfi/rems/blob/master/docs/search.md)") nil}]
-      (ok (->> (todos/get-todos (getx-user-id))
-               (filter-with-search query))))
+      (ok (rems.service.application/get-todos (getx-user-id) query)))
 
     (GET "/handled/count" []
       :summary "Get count of all applications that the current user no more needs to act on."
       :roles #{:logged-in}
       :return Count
-      (ok (todos/get-handled-todos-count (getx-user-id))))
+      (ok (rems.service.application/get-handled-applications-count (getx-user-id))))
 
     (GET "/handled" []
       :summary "Get all applications that the current user no more needs to act on."
@@ -189,9 +155,10 @@
       :query-params [{query :- (describe s/Str "search query [documentation](https://github.com/CSCfi/rems/blob/master/docs/search.md)") nil}
                      {only-active-handlers :- (describe s/Bool "return only workflow handlers that are active making a smaller result") false}
                      {limit :- (describe s/Int "how many results to return") nil}]
-      (ok (get-handled-applications {:query query
-                                     :only-active-handlers only-active-handlers
-                                     :limit limit})))
+      (let [query-params {:query query
+                          :only-active-handlers only-active-handlers
+                          :limit limit}]
+        (ok (rems.service.application/get-handled-applications (getx-user-id) query-params))))
 
     (POST "/create" request
       :summary "Create a new application"
@@ -213,36 +180,35 @@
       :summary "Available reviewers"
       :roles #{:handler}
       :return Reviewers
-      (ok (users/get-reviewers)))
+      (ok (get-reviewers)))
 
     (GET "/export" []
       :summary "Export all submitted applications of a given form as CSV"
       :roles #{:owner :reporter}
       :query-params [form-id :- (describe s/Int "form id")]
-      (-> (ok (applications/export-applications-for-form-as-csv (getx-user-id)
-                                                                form-id
-                                                                (:language (user-settings/get-user-settings (getx-user-id)))))
-          (header "Content-Disposition" (str "filename=\"" (csv/applications-filename) "\""))
-          (content-type "text/csv")))
+      (let [formatted-time-now (str/replace (text/localize-time (time/now)) " " "_")]
+        (-> (ok (rems.service.application/export-applications-for-form-as-csv (getx-user-id) form-id))
+            (header "Content-Disposition" (format "filename=\"applications_%s.csv\"" formatted-time-now))
+            (content-type "text/csv"))))
 
     (GET "/members" []
       :summary "Existing REMS users available for application membership"
       :roles #{:handler}
       :return [Applicant]
-      (ok (users/get-applicants)))
+      (ok (get-applicants)))
 
     (GET "/deciders" []
       :summary "Available deciders"
       :roles #{:handler}
       :return Deciders
-      (ok (users/get-deciders)))
+      (ok (get-deciders)))
 
     (GET "/attachment/:attachment-id" []
       :summary "Get an attachment"
       :roles #{:logged-in}
       :path-params [attachment-id :- (describe s/Int "attachment id")]
-      (if-let [attachment (attachment/get-application-attachment (getx-user-id) attachment-id)]
-        (attachment/download attachment)
+      (if-let [attachment (rems.service.attachment/get-application-attachment (getx-user-id) attachment-id)]
+        (rems.service.attachment/download attachment)
         (api-util/not-found-json-response)))
 
     (POST "/add-attachment" request
@@ -252,7 +218,7 @@
       :query-params [application-id :- (describe s/Int "application id")]
       :return SaveAttachmentResponse
       (extended-logging request)
-      (ok (attachment/add-application-attachment (getx-user-id) application-id file)))
+      (ok (rems.service.attachment/add-application-attachment (getx-user-id) application-id file)))
 
     (POST "/accept-invitation" request
       :summary "Accept an invitation by token"
@@ -268,7 +234,11 @@
       :body [request ValidateRequest]
       :return schema/SuccessResponse
       (extended-logging request) ; this is for completeness, nothing should be saved
-      (ok (validate-application request)))
+      (if-let [validation (rems.service.application/validate (getx-user-id)
+                                                             (:application-id request)
+                                                             (:field-values request))]
+        (ok validation)
+        (api-util/not-found-json-response)))
 
     (GET "/commands" []
       :summary "List of application commands"
@@ -312,7 +282,7 @@
       :path-params [application-id :- (describe s/Int "application id")]
       :responses {200 {:schema schema/Application}
                   404 {:schema s/Str :description "Not found"}}
-      (if-let [app (applications/get-application-for-user (getx-user-id) application-id)]
+      (if-let [app (rems.db.applications/get-application-for-user (getx-user-id) application-id)]
         (ok app)
         (api-util/not-found-json-response)))
 
@@ -322,7 +292,7 @@
       :path-params [application-id :- (describe s/Int "application id")]
       :responses {200 {:schema schema/ApplicationRaw}
                   404 {:schema s/Str :description "Not found"}}
-      (if-let [app (applications/get-application application-id)]
+      (if-let [app (rems.db.applications/get-application application-id)]
         (ok app)
         (api-util/not-found-json-response)))
 
@@ -333,8 +303,8 @@
       :query-params [{all :- (describe s/Bool "Defaults to true. If set to false, the zip will only contain latest application attachments: no previous versions of attachments, and no event attachments.") true}]
       :responses {200 {}
                   404 {:schema s/Str :description "Not found"}}
-      (if-let [app (applications/get-application-for-user (getx-user-id) application-id)]
-        (attachment/zip-attachments app all)
+      (if-let [app (rems.db.applications/get-application-for-user (getx-user-id) application-id)]
+        (rems.service.attachment/zip-attachments app all)
         (api-util/not-found-json-response)))
 
     (GET "/:application-id/pdf" []
@@ -342,15 +312,14 @@
       :roles #{:logged-in}
       :path-params [application-id :- (describe s/Int "application id")]
       :produces ["application/pdf"]
-      (if-let [app (applications/get-application-for-user (getx-user-id) application-id)]
-        (with-language context/*lang*
-          (-> app
-              (pdf/application-to-pdf-bytes)
-              (ByteArrayInputStream.)
-              (ok)
-              ;; could also set "attachment" here to force download:
-              (header "Content-Disposition" (str "filename=\"" application-id ".pdf\""))
-              (content-type "application/pdf")))
+      (if-let [app (rems.db.applications/get-application-for-user (getx-user-id) application-id)]
+        (-> app
+            (pdf/application-to-pdf-bytes)
+            (ByteArrayInputStream.)
+            (ok)
+            ;; could also set "attachment" here to force download:
+            (header "Content-Disposition" (str "filename=\"" application-id ".pdf\""))
+            (content-type "application/pdf"))
         (api-util/not-found-json-response)))
 
     (GET "/:application-id/license-attachment/:license-id/:language" []
@@ -359,6 +328,6 @@
       :path-params [application-id :- (describe s/Int "application id")
                     license-id :- (describe s/Int "license id")
                     language :- (describe s/Keyword "language code")]
-      (if-let [attachment (licenses/get-application-license-attachment (getx-user-id) application-id license-id language)]
-        (attachment/download attachment)
+      (if-let [attachment (rems.service.attachment/get-application-license-attachment (getx-user-id) application-id license-id language)]
+        (rems.service.attachment/download attachment)
         (api-util/not-found-json-response)))))
