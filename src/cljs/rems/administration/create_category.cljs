@@ -3,7 +3,7 @@
             [re-frame.core :as rf]
             [medley.core :refer [assoc-some]]
             [rems.administration.administration :as administration]
-            [rems.administration.components :refer [localized-text-field number-field]]
+            [rems.administration.components :refer [localized-text-field perform-action-button number-field]]
             [rems.atoms :as atoms :refer [document-title]]
             [rems.collapsible :as collapsible]
             [rems.config]
@@ -104,15 +104,13 @@
        :clearable? true
        :on-change #(rf/dispatch [::set-selected-categories %])}]]))
 
-(defn- save-category-button [form]
+(defn- save-category [form]
   (let [request (build-request form)]
-    [:button#save.btn.btn-primary
-     {:type :button
-      :on-click (fn []
-                  (rf/dispatch [:rems.app/user-triggered-navigation])
-                  (rf/dispatch [::create-category request]))
-      :disabled (nil? request)}
-     (text :t.administration/save)]))
+    (atoms/save-action
+     {:id :save
+      :on-click (when request
+                  #(rf/dispatch [::create-category request]))
+      :disabled (nil? request)})))
 
 (defn- cancel-button []
   [atoms/link {:class "btn btn-secondary"}
@@ -140,4 +138,4 @@
 
                    [:div.col.commands
                     [cancel-button]
-                    [save-category-button form]]])]}]]))
+                    [perform-action-button (save-category form)]]])]}]]))

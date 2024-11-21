@@ -3,7 +3,7 @@
             [medley.core :refer [indexed map-vals remove-nth]]
             [re-frame.core :as rf]
             [rems.administration.administration :as administration]
-            [rems.administration.components :refer [localized-text-field text-field]]
+            [rems.administration.components :refer [localized-text-field perform-action-button text-field]]
             [rems.administration.items :as items]
             [rems.atoms :as atoms :refer [enrich-user document-title]]
             [rems.common.util :refer [+email-regex+ conj-vec]]
@@ -14,7 +14,7 @@
             [rems.flash-message :as flash-message]
             [rems.spinner :as spinner]
             [rems.text :refer [text text-format]]
-            [rems.util :refer [fetch navigate! post! put! trim-when-string]]))
+            [rems.util :refer [navigate! post! put! trim-when-string]]))
 
 (rf/reg-event-fx
  ::enter-page
@@ -150,23 +150,19 @@
   [localized-text-field context {:keys [:organization/name]
                                  :label (text :t.administration/title)}])
 
-(defn- save-organization-button []
+(defn- save-organization []
   (let [form @(rf/subscribe [::form])
         id @(rf/subscribe [::organization-id])
         languages @rems.config/languages
         request (if id
                   (build-edit-request id form languages)
                   (build-create-request form languages))]
-    [:button.btn.btn-primary
-     {:type :button
-      :id :save
-      :on-click (fn []
-                  (rf/dispatch [:rems.app/user-triggered-navigation])
-                  (if id
-                    (rf/dispatch [::edit-organization request])
-                    (rf/dispatch [::create-organization request])))
-      :disabled (nil? request)}
-     (text :t.administration/save)]))
+    (atoms/save-action {:id :save
+                        :disabled (nil? request)
+                        :on-click (when request
+                                    (if id
+                                      #(rf/dispatch [::edit-organization request])
+                                      #(rf/dispatch [::create-organization request])))})))
 
 (defn- cancel-button []
   [atoms/link {:class "btn btn-secondary"}
@@ -267,4 +263,4 @@
                   [organization-review-emails-field]
                   [:div.col.commands
                    [cancel-button]
-                   [save-organization-button]]])}]]))
+                   [perform-action-button (save-organization)]]])}]]))

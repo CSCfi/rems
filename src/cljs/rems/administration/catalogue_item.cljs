@@ -2,7 +2,7 @@
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
             [rems.administration.administration :as administration]
-            [rems.administration.components :refer [inline-info-field]]
+            [rems.administration.components :refer [inline-info-field perform-action-button]]
             [rems.administration.status-flags :as status-flags]
             [rems.atoms :as atoms :refer [document-title readonly-checkbox]]
             [rems.collapsible :as collapsible]
@@ -47,6 +47,16 @@
   [atoms/link {:class "btn btn-primary"}
    "/administration/categories"
    (text :t.administration/manage-categories)])
+
+(defn- toggle-enabled [catalogue-item]
+  (status-flags/enabled-toggle-action
+   {:on-change #(rf/dispatch [:rems.administration.catalogue-items/set-catalogue-item-enabled %1 %2 [::enter-page (:id catalogue-item)]])}
+   catalogue-item))
+
+(defn- toggle-archived [catalogue-item]
+  (status-flags/archived-toggle-action
+   {:on-change #(rf/dispatch [:rems.administration.catalogue-items/set-catalogue-item-archived %1 %2 [::enter-page (:id catalogue-item)]])}
+   catalogue-item))
 
 (defn catalogue-item-view [catalogue-item]
   [:div.spaced-vertically-3
@@ -96,8 +106,8 @@
       [administration/back-button "/administration/catalogue-items"]
       [roles/show-when roles/+admin-write-roles+
        [edit-button id]
-       [status-flags/enabled-toggle catalogue-item #(rf/dispatch [:rems.administration.catalogue-items/set-catalogue-item-enabled %1 %2 [::enter-page id]])]
-       [status-flags/archived-toggle catalogue-item #(rf/dispatch [:rems.administration.catalogue-items/set-catalogue-item-archived %1 %2 [::enter-page id]])]]
+       [perform-action-button (toggle-enabled catalogue-item)]
+       [perform-action-button (toggle-archived catalogue-item)]]
       [manage-categories-button]])])
 
 (defn catalogue-item-page []

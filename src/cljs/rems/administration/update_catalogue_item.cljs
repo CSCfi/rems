@@ -1,6 +1,7 @@
 (ns rems.administration.update-catalogue-item
   (:require [re-frame.core :as rf]
             [rems.administration.administration :as administration]
+            [rems.administration.components :refer [perform-action-button]]
             [rems.atoms :as atoms :refer [document-title]]
             [rems.dropdown :as dropdown]
             [rems.flash-message :as flash-message]
@@ -139,14 +140,12 @@
                      (= (:id workflow) (:wfid item)))))
           items))
 
-(defn- update-catalogue-item-button [items {:keys [form workflow]}]
-  [atoms/rate-limited-action-button
-   {:id :update-catalogue-item
-    :class "btn-primary"
-    :on-click (fn [] (item-update-loop items form workflow))
-    :disabled (or (empty? items)
-                  (all-items-have-the-form-and-workflow-already? items form workflow))
-    :label [text :t.administration/update-catalogue-item]}])
+(defn- update-catalogue-items [items form workflow]
+  {:id :update-catalogue-item
+   :on-click #(item-update-loop items form workflow)
+   :disabled (or (empty? items)
+                 (all-items-have-the-form-and-workflow-already? items form workflow))
+   :label [text :t.administration/update-catalogue-item]})
 
 
 
@@ -220,7 +219,9 @@
   ;; catalogue items must be setup in the previous page
   ;; it can be empty when we reload or relogin
   ;; then we can redirect back to the previous page
-  (let [catalogue-items @(rf/subscribe [::catalogue-items])]
+  (let [catalogue-items @(rf/subscribe [::catalogue-items])
+        form @(rf/subscribe [::form])
+        workflow @(rf/subscribe [::workflow])]
     (when (empty? catalogue-items)
       (navigate! "/administration/catalogue-items"))
     [:div
@@ -234,6 +235,4 @@
       [workflow-select]
       [:div.col.commands
        [administration/back-button "/administration/catalogue-items"]
-       [update-catalogue-item-button catalogue-items
-        {:form @(rf/subscribe [::form])
-         :workflow @(rf/subscribe [::workflow])}]]]]))
+       [perform-action-button (update-catalogue-items catalogue-items form workflow)]]]]))

@@ -2848,8 +2848,8 @@
 (deftest test-blacklist
   (btu/with-postmortem
     (testing "set up resource & user"
-      (test-helpers/create-resource! {:resource-ext-id "blacklist-test"})
-      (test-helpers/create-user! {:userid "baddie" :name "Bruce Baddie" :email "bruce@example.com"}))
+      (is (test-helpers/create-resource! {:resource-ext-id "blacklist-test"}))
+      (is (test-helpers/create-user! {:userid "baddie" :name "Bruce Baddie" :email "bruce@example.com"})))
     (testing "add blacklist entry via resource page"
       (login-as "owner")
       (go-to-admin "Resources")
@@ -2858,7 +2858,8 @@
       (wait-page-title "Resource – REMS")
       (btu/wait-page-loaded)
       (is (btu/eventually-visible? :blacklist))
-      (is (= [] (slurp-rows :blacklist)))
+      (is (= [{"rems-no-rows" "No rows"}]
+             (slurp-rows :blacklist)))
       (btu/fill-human :blacklist-user "baddie\n")
       (btu/fill-human :blacklist-comment "This is a test.")
       (btu/screenshot "test-blacklist-1")
@@ -2894,7 +2895,8 @@
       (is (btu/eventually-visible? {:css ".alert-success"}))
       (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
       (is (btu/eventually-visible? :blacklist))
-      (is (= [] (slurp-rows :blacklist))))))
+      (is (= [{"rems-no-rows" "No rows"}]
+             (slurp-rows :blacklist))))))
 
 (deftest test-report
   (btu/with-postmortem

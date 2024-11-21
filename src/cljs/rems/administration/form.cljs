@@ -2,7 +2,7 @@
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
             [rems.administration.administration :as administration]
-            [rems.administration.components :refer [inline-info-field]]
+            [rems.administration.components :refer [inline-info-field perform-action-button]]
             [rems.administration.create-form :refer [form-preview format-validation-errors]]
             [rems.administration.status-flags :as status-flags]
             [rems.atoms :as atoms :refer [readonly-checkbox document-title]]
@@ -53,9 +53,7 @@
 (defn edit-action [form-id]
   (atoms/edit-action
    {:class "edit-form"
-    :on-click (fn []
-                (rf/dispatch [:rems.app/user-triggered-navigation])
-                (rf/dispatch [::edit-form form-id]))}))
+    :on-click #(rf/dispatch [::edit-form form-id])}))
 
 (defn edit-button [form-id]
   [atoms/action-button (edit-action form-id)])
@@ -64,6 +62,16 @@
   [atoms/link {:class "btn btn-secondary"}
    (str "/administration/forms/create/" id)
    (text :t.administration/copy-as-new)])
+
+(defn- toggle-enabled [form]
+  (status-flags/enabled-toggle-action
+   {:on-change #(rf/dispatch [:rems.administration.forms/set-form-enabled %1 %2 [::enter-page (:form/id form)]])}
+   form))
+
+(defn- toggle-archived [form]
+  (status-flags/archived-toggle-action
+   {:on-change #(rf/dispatch [:rems.administration.forms/set-form-archived %1 %2 [::enter-page (:form/id form)]])}
+   form))
 
 (defn form-view [form]
   [:div.spaced-vertically-3
@@ -85,8 +93,8 @@
       [roles/show-when roles/+admin-write-roles+
        [edit-button id]
        [copy-as-new-button id]
-       [status-flags/enabled-toggle form #(rf/dispatch [:rems.administration.forms/set-form-enabled %1 %2 [::enter-page id]])]
-       [status-flags/archived-toggle form #(rf/dispatch [:rems.administration.forms/set-form-archived %1 %2 [::enter-page id]])]]])
+       [perform-action-button (toggle-enabled form)]
+       [perform-action-button (toggle-archived form)]]])
    (when-let [errors (:form/errors form)]
      [:div.alert.alert-danger
       [text :t.administration/has-errors]

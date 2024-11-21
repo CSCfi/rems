@@ -45,7 +45,7 @@
                        :top
                        description
                        (fn []
-                         (rf/dispatch [::fetch-blacklist])
+                         (rf/dispatch [::fetch-blacklist {:resource (:resource/ext-id resource)}])
                          (rf/dispatch [::set-validation-errors nil])
                          (rf/dispatch [::set-selected-user nil])
                          (rf/dispatch [::set-comment nil])))
@@ -63,7 +63,7 @@
              :handler (flash-message/default-success-handler
                        :top
                        description
-                       #(rf/dispatch [::fetch-blacklist]))
+                       #(rf/dispatch [::fetch-blacklist {:resource (:resource/ext-id resource)}]))
              :error-handler (flash-message/default-error-handler :top description)}))
    {}))
 

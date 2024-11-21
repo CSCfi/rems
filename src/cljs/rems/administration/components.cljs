@@ -23,8 +23,9 @@
             [rems.fields :as fields]
             [rems.globals]
             [rems.common.roles :as roles]
-            [rems.common.util :refer [andstr clamp parse-int]]
+            [rems.common.util :refer [clamp parse-int]]
             [rems.text :refer [localized text text-format]]
+            [rems.spinner]
             [rems.util :refer [event-checked event-value]]))
 
 (defn- key-to-id [key]
@@ -370,8 +371,17 @@
                                             on-change)}]
      [field-validation-message error label]]))
 
-(defn perform-action-button [{:keys [loading?] :as props}]
-  [atoms/rate-limited-button
-   (-> props
-       (dissoc (when (or loading? @(rf/subscribe [:rems.app/any-pending-request?]))
-                 :on-click)))])
+(defn perform-action-button [{:keys [class disabled id label loading? on-click] :as action}]
+  (let [loading? (if (some? loading?)
+                   loading?
+                   @(rf/subscribe [:rems.app/any-pending-request?]))
+        label (or label (:text action))]
+    [atoms/rate-limited-action-button
+     {:class class
+      :disabled disabled
+      :id id
+      :label (if loading?
+               [:span.d-flex.align-items-center.gap-1 label [rems.spinner/small]]
+               label)
+      :on-click (when-not loading?
+                  on-click)}]))

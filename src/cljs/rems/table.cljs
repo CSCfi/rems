@@ -228,6 +228,13 @@
         (s/validate Rows))))
 
 (rf/reg-sub
+ ::has-rows?
+ (fn [[_ table] _]
+   [(rf/subscribe (:rows table))])
+ (fn [[rows] _]
+   (some? (seq rows))))
+
+(rf/reg-sub
  ::sorted-rows
  (fn [[_ table] _]
    [(rf/subscribe [::rows table])
@@ -471,16 +478,21 @@
       [:thead
        [table-header table]]
       [:tbody {:key @rems.config/current-language} ; performance optimization: rebuild instead of update existing components
-       (for [row rows]
-         ^{:key (:key row)} [table-row row table columns])]]]))
+       (if (empty? rows)
+         ^{:key :rems-empty-table} [:tr [:td.rems-no-rows {:col-span (count columns)}
+                                         (text :t.form/no-rows)]]
+         (for [row rows]
+           ^{:key (:key row)} [table-row row table columns]))]]]))
 
 (defn standard
   "Standard table component, a combination of `search`, `table` and `paging`."
   [table]
   [:div.mt-2rem
-   [search table]
+   (when @(rf/subscribe [::has-rows? table])
+     [search table])
    [rems.table/table table]
-   [paging table]])
+   (when @(rf/subscribe [::has-rows? table])
+     [paging table])])
 
 ;;; guide
 
