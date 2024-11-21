@@ -201,7 +201,7 @@
            (group-users-by-role apps)))))
 
 (defn- user-roles-frequencies [applications]
-  (when (seq applications)
+  (if (seq applications)
     (let [all-user-roles (->> applications
                               (eduction (map val)
                                         (mapcat :application/user-roles)))
@@ -219,7 +219,8 @@
                   roles-by-user
                   users)
           (dissoc! ::users)
-          persistent!))))
+          persistent!))
+    {}))
 
 (defn- update-user-roles [updated-users old-roles-by-user old-updated-enriched-apps new-updated-enriched-apps]
   (let [all-old-app-roles (user-roles-frequencies old-updated-enriched-apps)
