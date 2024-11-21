@@ -11,22 +11,6 @@
       (:title item)
       (localized (:organization/name item))))
 
-;; XXX: consider rename to enabled-toggle-button
-(defn enabled-toggle
-  ([item on-change] (enabled-toggle {} item on-change))
-  ([opts item on-change]
-   (let [enabled? (:enabled item false)
-         label (if enabled?
-                 :t.administration/disable
-                 :t.administration/enable)]
-     [:button.btn.btn-primary.button-min-width
-      {:id (:id opts)
-       :type :button
-       :on-click #(on-change (update item :enabled not)
-                             [:span [text label]
-                              " \""  [get-localized-title-for-anything item] "\""])}
-      (text label)])))
-
 (defn enabled-toggle-action [{:keys [id on-change]} item]
   (let [enabled? (:enabled item false)
         label (if enabled?
@@ -38,22 +22,6 @@
                            [:span [text label]
                             " \""  [get-localized-title-for-anything item] "\""])
      :label [text label]}))
-
-;; XXX: consider rename to archived-toggle-button
-(defn archived-toggle
-  ([item on-change] (archived-toggle {} item on-change))
-  ([opts item on-change]
-   (let [archived? (:archived item false)
-         label (if archived?
-                 :t.administration/unarchive
-                 :t.administration/archive)]
-     [:button.btn.btn-primary.button-min-width
-      {:id (:id opts)
-       :type :button
-       :on-click #(on-change (update item :archived not)
-                             [:span [text label]
-                              " \"" [get-localized-title-for-anything item] "\""])}
-      (text label)])))
 
 (defn archived-toggle-action [{:keys [id on-change]} item]
   (let [archived? (:archived item false)
