@@ -3556,3 +3556,23 @@
       (change-language :en)
       (rems.db.user-settings/delete-user-settings! "alice")
       (rems.db.user-settings/delete-user-settings! "elsa")))) ; clear language settings
+
+(deftest test-hooks
+  (btu/with-postmortem
+    (login-as "owner")
+
+    ;; XXX: could test all the hook types and in more places
+
+    (testing "navigation shows up in hooks"
+      ;; install navigation hook
+      (btu/js-execute "window.test_navigations = [];
+                       window.rems.hooks.navigate = (url) => test_navigations.push(url);")
+
+
+      (go-to-admin "Workflows")
+      (is (= ["/administration/workflows"]
+             (btu/js-execute "return window.test_navigations;")))
+      (go-to-catalogue)
+      (is (= ["/administration/workflows"
+              "/catalogue"]
+             (btu/js-execute "return window.test_navigations;"))))))
