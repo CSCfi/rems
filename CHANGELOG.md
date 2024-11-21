@@ -27,6 +27,7 @@ Changes since v2.37
 
 ### Fixes
 - Empty the license attachment field if the upload fails. (#3292)
+- Hooks set in extra scripts were overridden by initialization. (#3351)
 
 ## v2.37 "Laivapojankatu" 2024-05-16
 
