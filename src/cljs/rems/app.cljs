@@ -52,7 +52,7 @@
             [rems.globals]
             [rems.common.git :as git]
             [rems.guide-page :refer [guide-page]]
-            [rems.hooks] ; for the empty hooks
+            [rems.hooks]
             [rems.keepalive :as keepalive]
             [rems.navbar :as nav]
             [rems.new-application :refer [new-application-page]]
@@ -576,7 +576,7 @@
   (events/listen accountant/history
                  HistoryEventType/NAVIGATE
                  (fn [^js event]
-                   (js/window.rems.hooks.navigate (.-token event))))
+                   (rems.hooks/on-navigate (.-token event))))
 
   (accountant/configure-navigation!
    {:nav-handler (let [previous-path (atom nil)]

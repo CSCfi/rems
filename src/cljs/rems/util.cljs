@@ -8,6 +8,7 @@
             [medley.core :refer [assoc-some]]
             [re-frame.core :as rf]
             [reagent.impl.util]
+            [rems.hooks]
             ["react" :as react]))
 
 (defn replace-url!
@@ -15,7 +16,7 @@
   [url]
   (.replaceState js/window.history nil "" url)
   ;; when manipulating history, secretary won't catch the changes automatically
-  (js/window.rems.hooks.navigate url)
+  (rems.hooks/on-navigate url)
   (accountant/dispatch-current!))
 
 (defn navigate!
@@ -81,7 +82,7 @@
   [url opts]
   (let [fetch-defaults {:response-format :transit
                         :handler (constantly nil)}]
-    (js/window.rems.hooks.get url (clj->js opts))
+    (rems.hooks/on-get url (clj->js opts))
     (GET url (merge fetch-defaults
                     (wrap-default-handlers opts)))))
 
@@ -99,7 +100,7 @@
   (let [put-defaults {:format :transit
                       :response-format :transit}
         opts (update opts :request-id (fnil identity url))]
-    (js/window.rems.hooks.put url (clj->js opts))
+    (rems.hooks/on-put url (clj->js opts))
     (rf/dispatch [:rems.app/on-request (:request-id opts)])
     (PUT url (merge put-defaults
                     (wrap-default-handlers opts)))))
@@ -118,7 +119,7 @@
   (let [post-defaults {:format :transit
                        :response-format :transit}
         opts (update opts :request-id (fnil identity url))]
-    (js/window.rems.hooks.put url (clj->js opts))
+    (rems.hooks/on-put url (clj->js opts))
     (rf/dispatch [:rems.app/on-request (:request-id opts)])
     (POST url (merge post-defaults
                      (wrap-default-handlers opts)))))
