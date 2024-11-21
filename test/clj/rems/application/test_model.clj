@@ -1302,7 +1302,7 @@
                                 :event/actor-attributes {:userid "handler" :email "handler@example.com" :name "Handler" :secret "secret"}
                                 :event/visibility :visibility/public}]
           :application/user-roles {"handler" #{:handler}, "reporter1" #{:reporter}}
-          :application/role-permissions nil
+          :application/role-permissions {}
           :application/description "foo"
           :application/forms [{:form/id 40
                                :form/title "form name" ; deprecated

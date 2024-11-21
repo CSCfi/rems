@@ -1,8 +1,8 @@
 (ns rems.permissions
-  (:require [clojure.set :as set]
+  (:require [clojure.core.memoize :refer [memo]]
+            [clojure.set :as set]
             [clojure.test :refer [deftest is testing]]
-            [medley.core :refer [map-vals map-kv-vals]]
-            [rems.common.util :refer [conj-set]]))
+            [medley.core :refer [map-vals]]))
 
 (defn give-role-to-users [application role users]
   (assert (keyword? role) {:role role})
@@ -63,6 +63,13 @@
       (is (= #{:role-2} (user-roles app "user-2")))
       (is (= #{:everyone-else} (user-roles app "user-3"))))))
 
+(defn- set-role-permissions [app-role-permissions permission-map]
+  (reduce-kv (fn [m role permissions]
+               (assert (keyword? role) {:role role})
+               (assoc m role (set permissions)))
+             app-role-permissions
+             permission-map))
+
 (defn update-role-permissions
   "Sets role specific permissions for the application.
 
@@ -72,11 +79,7 @@
    or they may be used to specify whether the user can see all events and
    comments from the reviewers (e.g. `:see-everything`)."
   [application permission-map]
-  (reduce (fn [application [role permissions]]
-            (assert (keyword? role) {:role role})
-            (assoc-in application [:application/role-permissions role] (set permissions)))
-          application
-          permission-map))
+  (update application :application/role-permissions set-role-permissions permission-map))
 
 (deftest test-update-role-permissions
   (testing "adding"
@@ -119,11 +122,7 @@
   (assert (keyword? permission)
           {:message "invalid permission" :rule rule}))
 
-(defn compile-rules
-  "Compiles rules of the format `[{:role keyword :permission keyword}]`
-  to the format expected by the `whitelist` and `blacklist` functions.
-  If `:role` is missing or nil, it means every role."
-  [rules]
+(defn- validate-and-compile [rules]
   (doseq [rule rules]
     (validate-rule rule))
   (->> rules
@@ -131,19 +130,34 @@
        (map-vals (fn [rules]
                    (set (map :permission rules))))))
 
-(defn- map-permissions [application f]
-  (update application :application/role-permissions #(map-kv-vals f %)))
+(def compile-rules
+  "Compiles rules of the format `[{:role keyword :permission keyword}]`
+  to the format expected by the `whitelist` and `blacklist` functions.
+  If `:role` is missing or nil, it means every role."
+  (memo validate-and-compile))
 
 (defn- permissions-for-role [rules role]
-  (set/union (get rules role #{})
-             (get rules nil #{})))
+  (let [role-permissions (or (rules role) #{})]
+    (if-some [every-permissions (rules nil)]
+      (set/union role-permissions
+                 every-permissions)
+      role-permissions)))
+
+(defn- blacklist-permissions [role-permissions rules]
+  (reduce-kv (fn [m role permissions]
+               (assoc m role (if-some [role-permissions (permissions-for-role rules role)]
+                               (set/difference permissions role-permissions)
+                               permissions)))
+             {}
+             role-permissions))
+
+(def ^:private memoized-blacklist-permissions (memo blacklist-permissions))
 
 (defn blacklist
   "Applies rules for restricting the possible permissions.
   `rules` is what `compile-rules` returns."
   [application rules]
-  (map-permissions application (fn [role permissions]
-                                 (set/difference permissions (permissions-for-role rules role)))))
+  (update application :application/role-permissions memoized-blacklist-permissions rules))
 
 (deftest test-blacklist
   (let [app (-> {}
@@ -163,12 +177,21 @@
              (blacklist app (compile-rules [{:role :role-1 :permission :foo}
                                             {:role :role-2 :permission :bar}])))))))
 
+(defn- whitelist-permissions [role-permissions rules]
+  (reduce-kv (fn [m role permissions]
+               (assoc m role (if-some [role-permissions (permissions-for-role rules role)]
+                               (set/intersection permissions role-permissions)
+                               permissions)))
+             {}
+             role-permissions))
+
+(def ^:private memoized-whitelist-permissions (memo whitelist-permissions))
+
 (defn whitelist
   "Applies rules for restricting the possible permissions.
   `rules` is what `compile-rules` returns."
   [application rules]
-  (map-permissions application (fn [role permissions]
-                                 (set/intersection permissions (permissions-for-role rules role)))))
+  (update application :application/role-permissions memoized-whitelist-permissions rules))
 
 (deftest test-whitelist
   (let [app (-> {}
