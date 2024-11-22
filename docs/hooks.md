@@ -24,13 +24,16 @@ function logIt(e) {
   console.log(e);
 }
 
-window.rems.hooks.get = logIt;
-window.rems.hooks.put = logIt;
-window.rems.hooks.navigate = logIt;
+window.rems_hooks = {};
+window.rems_hooks.get = logIt;
+window.rems_hooks.put = logIt;
+window.rems_hooks.navigate = logIt;
 ```
 
-`window.rems.hooks.get` is called when more data is fetched from the API.
-`window.rems.hooks.put` is called when a command is sent to the API.
-`window.rems.hooks.navigate` is called whenever the Single-Page App changes page i.e. route.
+`window.rems_hooks.get` is called when more data is fetched from the API.
+`window.rems_hooks.put` is called when a command is sent to the API.
+`window.rems_hooks.navigate` is called whenever the Single-Page App changes page i.e. route.
 
 All callbacks get the request path as first parameter. Both `get` and `put` callbacks get an additional parameter that is a map containing other request parameters. You can find query parameters and such from there.
+
+At the moment, manipulation of the query is not possible. Neither is accessing the response.
