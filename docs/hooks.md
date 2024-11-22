@@ -24,6 +24,7 @@ function logIt(e) {
   console.log(e);
 }
 
+window.rems.hooks = {};
 window.rems.hooks.get = logIt;
 window.rems.hooks.put = logIt;
 window.rems.hooks.navigate = logIt;
@@ -34,3 +35,5 @@ window.rems.hooks.navigate = logIt;
 `window.rems.hooks.navigate` is called whenever the Single-Page App changes page i.e. route.
 
 All callbacks get the request path as first parameter. Both `get` and `put` callbacks get an additional parameter that is a map containing other request parameters. You can find query parameters and such from there.
+
+At the moment, manipulation of the query is not possible. Neither is accessing the response.

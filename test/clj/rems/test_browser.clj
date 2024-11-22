@@ -3566,6 +3566,7 @@
     (testing "navigation shows up in hooks"
       ;; install navigation hook
       (btu/js-execute "window.test_navigations = [];
+                       window.rems.hooks = {};
                        window.rems.hooks.navigate = (url) => test_navigations.push(url);")
 
 
