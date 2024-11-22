@@ -9,16 +9,16 @@
   (:require [better-cond.core :as b]))
 
 (defn on-get [& args]
-  (b/when-let [hooks (.. js/window -rems -hooks)
+  (b/when-let [hooks (.-rems_hooks js/window)
                hook (.-get hooks)]
     (apply hook args)))
 
 (defn on-put [& args]
-  (b/when-let [hooks (.. js/window -rems -hooks)
+  (b/when-let [hooks (.-rems_hooks js/window)
                hook (.-put hooks)]
     (apply hook args)))
 
 (defn on-navigate [& args]
-  (b/when-let [hooks (.. js/window -rems -hooks)
+  (b/when-let [hooks (.-rems_hooks js/window)
                hook (.-navigate hooks)]
     (apply hook args)))

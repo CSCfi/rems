@@ -15,6 +15,7 @@
             [com.rpl.specter :refer [select ALL]]
             [etaoin.keys]
             [medley.core :refer [find-first]]
+            [mount.core :as mount]
             [rems.service.application]
             [rems.service.catalogue]
             [rems.service.form]
@@ -3557,23 +3558,50 @@
       (rems.db.user-settings/delete-user-settings! "alice")
       (rems.db.user-settings/delete-user-settings! "elsa")))) ; clear language settings
 
+(defn- restart-handler! []
+  (mount/stop #'rems.handler/handler #'rems.main/http-server)
+  (mount/start #'rems.handler/handler #'rems.main/http-server))
+
 (deftest test-hooks
   (btu/with-postmortem
-    (login-as "owner")
+    (testing "install navigation hook via extra scripts"
+      (try
+        (with-redefs [rems.config/env (assoc rems.config/env
+                                             :extra-scripts {:root "./" :files ["/test-data/extra-scripts/hooks.js"]})]
+          (restart-handler!)
 
-    ;; XXX: could test all the hook types and in more places
+          (btu/with-postmortem
+            (login-as "owner")
 
-    (testing "navigation shows up in hooks"
-      ;; install navigation hook
-      (btu/js-execute "window.test_navigations = [];
-                       window.rems.hooks = {};
-                       window.rems.hooks.navigate = (url) => test_navigations.push(url);")
+            (testing "navigation shows up in hooks"
+              (go-to-admin "Workflows")
+              (is (= ["/administration/workflows"]
+                     (take-last 1 (btu/js-execute "return window.test_navigations;"))))
+              (go-to-catalogue)
+              (is (= ["/administration/workflows"
+                      "/catalogue"]
+                     (take-last 2 (btu/js-execute "return window.test_navigations;")))))))
+        (finally
+          (restart-handler!)
+          (logout)
+          (btu/reload))))
+
+    (testing "install navigation hook via console"
+      (login-as "owner")
+
+      ;; XXX: could test all the hook types and in more places
+
+      (testing "navigation shows up in hooks"
+        ;; install navigation hook
+        (btu/js-execute "window.test_navigations = [];
+                         window.rems_hooks = {};
+                         window.rems_hooks.navigate = (url) => test_navigations.push(url);")
 
 
-      (go-to-admin "Workflows")
-      (is (= ["/administration/workflows"]
-             (btu/js-execute "return window.test_navigations;")))
-      (go-to-catalogue)
-      (is (= ["/administration/workflows"
-              "/catalogue"]
-             (btu/js-execute "return window.test_navigations;"))))))
+        (go-to-admin "Workflows")
+        (is (= ["/administration/workflows"]
+               (btu/js-execute "return window.test_navigations;")))
+        (go-to-catalogue)
+        (is (= ["/administration/workflows"
+                "/catalogue"]
+               (btu/js-execute "return window.test_navigations;")))))))
