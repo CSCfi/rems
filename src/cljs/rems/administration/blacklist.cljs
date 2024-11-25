@@ -1,6 +1,7 @@
 (ns rems.administration.blacklist
   "Implements both a blacklist component and the blacklist-page"
-  (:require [re-frame.core :as rf]
+  (:require [medley.core :refer [assoc-some]]
+            [re-frame.core :as rf]
             [rems.administration.administration :as administration]
             [rems.administration.components :refer [perform-action-button]]
             [rems.common.application-util]
@@ -31,7 +32,9 @@
             {:url-params params
              :handler #(rf/dispatch [::fetch-result %])
              :error-handler (flash-message/default-error-handler :top description)}))
-   {:db (assoc db ::loading? true)}))
+   {:db (assoc db
+               ::loading? true
+               ::resource (:resource params))}))
 
 (rf/reg-event-fx
  ::add-to-blacklist
@@ -45,7 +48,7 @@
                        :top
                        description
                        (fn []
-                         (rf/dispatch [::fetch-blacklist {:resource (:resource/ext-id resource)}])
+                         (rf/dispatch [::fetch-blacklist (assoc-some {} :resource (::resource db))])
                          (rf/dispatch [::set-validation-errors nil])
                          (rf/dispatch [::set-selected-user nil])
                          (rf/dispatch [::set-comment nil])))
@@ -63,7 +66,7 @@
              :handler (flash-message/default-success-handler
                        :top
                        description
-                       #(rf/dispatch [::fetch-blacklist {:resource (:resource/ext-id resource)}]))
+                       #(rf/dispatch [::fetch-blacklist (assoc-some {} :resource (::resource db))]))
              :error-handler (flash-message/default-error-handler :top description)}))
    {}))
 
