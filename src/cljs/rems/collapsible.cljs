@@ -36,7 +36,7 @@
 
 (defn- base-action
   "Base attributes for collapsible action."
-  [{:keys [collapsible-id label] :as action}]
+  [{:keys [collapsible-id] :as action}]
   (let [state @(rf/subscribe [::expanded collapsible-id])]
     (-> action
         (dissoc :collapsible-id :hide? :on-close :on-open :show?)
@@ -44,9 +44,11 @@
                :aria-expanded (if state
                                 "true"
                                 "false"))
-        (assoc-some :label (cond label nil
-                                 state (text :t.collapse/hide)
-                                 :else (text :t.collapse/show))))))
+        (assoc-some :label (when-not (or (:label action)
+                                         (:text action))
+                             (if state
+                               (text :t.collapse/hide)
+                               (text :t.collapse/show)))))))
 
 (defn focus-on-first-input [id]
   (focus/scroll-into-view-and-focus (rfmt/format "#%s .collapse-open :is(textarea, input)" id)))
