@@ -1,7 +1,9 @@
 (ns rems.administration.status-flags
-  (:require [re-frame.core :as rf]
-            [rems.atoms :refer [checkbox]]
-            [rems.text :refer [text get-localized-title localized]]))
+  (:require [better-cond.core :as b]
+            [re-frame.core :as rf]
+            [reagent.core :as r]
+            [rems.atoms :as atoms]
+            [rems.text :refer [text text-format get-localized-title localized]]))
 
 ;; TODO this should be in some util namespace
 (defn- get-localized-title-for-anything [item]
@@ -52,10 +54,10 @@
                     (rf/dispatch [::set-display-archived? (not display-archived?)])
                     (when on-change (on-change)))]
     [:div.form-check.form-check-inline.pointer
-     [checkbox {:id :display-archived
-                :class :form-check-input
-                :value display-archived?
-                :on-change on-change}]
+     [atoms/checkbox {:id :display-archived
+                      :class :form-check-input
+                      :value display-archived?
+                      :on-change on-change}]
      [:label.form-check-label {:for :display-archived :on-click on-change}
       (text :t.administration/display-archived)]]))
 
@@ -72,70 +74,73 @@
        (not (:expired item))
        (not (:archived item))))
 
-(defn- plus-others [item-count]
-  (when (> item-count 5)
-    [:li (str "... plus " (- item-count 5) " more")]))
+(defn- find-item-id [item]
+  (some #(when-let [id (% item)] [% id])
+        #{:catalogue-item/id :category/id :form/id :license/id :organization/id :resource/id :workflow/id}))
 
-(defn- take-preview-sample [items]
-  (take 5 items))
+(defn- render-error-item [item]
+  (let [[item-type id] (find-item-id item)]
+    (case item-type
+      :catalogue-item/id [:li
+                          (text :t.administration/catalogue-item) ": "
+                          [atoms/link {:target :_blank
+                                       :href (str "/administration/catalogue-items/" id)
+                                       :label (get-localized-title-for-anything item)}]]
+      :category/id [:li
+                    (text :t.administration/category) ": "
+                    [atoms/link {:target :_blank
+                                 :href (str "/administration/categories/" id)
+                                 :label (localized (:category/title item))}]]
+      :form/id [:li
+                (text :t.administration/form) ": "
+                [atoms/link {:target :_blank
+                             :href (str "/administration/forms/" id)
+                             :label (get-localized-title-for-anything item)}]]
+      :license/id [:li
+                   (text :t.administration/license) ": "
+                   [atoms/link {:target :_blank
+                                :href (str "/administration/licenses/" id)
+                                :label (get-localized-title-for-anything item)}]]
+      :organization/id [:li
+                        (text :t.administration/organization) ": "
+                        [atoms/link {:target :_blank
+                                     :href (str "/administration/organizations/" id)
+                                     :label (get-localized-title-for-anything item)}]]
+      :resource/id [:li
+                    (text :t.administration/resource) ": "
+                    [atoms/link {:target :_blank
+                                 :href (str "/administration/resources/" id)
+                                 :label (get-localized-title-for-anything item)}]]
+      :workflow/id [:li
+                    (text :t.administration/workflow) ": "
+                    [atoms/link {:target :_blank
+                                 :href (str "/administration/workflows/" id)
+                                 :label (get-localized-title-for-anything item)}]])))
+
+(defn- render-with-preview [items]
+  (r/with-let [expanded? (r/atom false)]
+    (when (seq items)
+      (let [item-count (count items)
+            shown-items (cond->> items
+                          (not @expanded?) (take 5))]
+        [:div
+         (into [:ul] (map render-error-item) shown-items)
+         (when (> item-count 5)
+           [atoms/action-link
+            {:on-click #(swap! expanded? not)
+             :label (if @expanded?
+                      (text :t.collapse/hide)
+                      (text-format :t.label/parens (text :t.collapse/show) (- item-count 5)))}])]))))
 
 (defn- format-update-error [{:keys [type catalogue-items forms licenses resources workflows categories]}]
   [:<>
    [:p (text type)]
-   (when (seq catalogue-items)
-     [:ul
-      (into [:<>] (for [ci (take-preview-sample catalogue-items)]
-                    [:li
-                     (text :t.administration/catalogue-item) ": "
-                     [:a {:target :_blank
-                          :href (str "/administration/catalogue-items/" (:id ci))}
-                      (get-localized-title-for-anything ci)]]))
-      [plus-others (count catalogue-items)]])
-   (when (seq forms)
-     [:ul
-      (into [:<>] (for [f (take-preview-sample forms)]
-                    [:li
-                     (text :t.administration/form) ": "
-                     [:a {:target :_blank
-                          :href (str "/administration/forms/" (:id f))}
-                      (get-localized-title-for-anything f)]]))
-      [plus-others (count forms)]])
-   (when (seq licenses)
-     [:ul
-      (into [:<>] (for [lic (take-preview-sample licenses)]
-                    [:li
-                     (text :t.administration/license) ": "
-                     [:a {:target :_blank
-                          :href (str "/administration/licenses/" (:id lic))}
-                      (get-localized-title-for-anything lic)]]))
-      [plus-others (count licenses)]])
-   (when (seq resources)
-     [:ul
-      (into [:<>] (for [r (take-preview-sample resources)]
-                    [:li
-                     (text :t.administration/resource) ": "
-                     [:a {:target :_blank
-                          :href (str "/administration/resources/" (:id r))}
-                      (get-localized-title-for-anything r)]]))
-      [plus-others (count resources)]])
-   (when (seq workflows)
-     [:ul
-      (into [:<>] (for [w (take-preview-sample workflows)]
-                    [:li
-                     (text :t.administration/workflow) ": "
-                     [:a {:target :_blank
-                          :href (str "/administration/workflows/" (:id w))}
-                      (get-localized-title-for-anything w)]]))
-      [plus-others (count workflows)]])
-   (when (seq categories)
-     [:ul
-      (into [:<>] (for [cat (take-preview-sample categories)]
-                    [:li
-                     (text :t.administration/category) ": "
-                     [:a {:target :_blank
-                          :href (str "/administration/categories/" (:category/id cat))}
-                      (localized (:category/title cat))]]))
-      [plus-others (count categories)]])])
+   [render-with-preview catalogue-items]
+   [render-with-preview forms]
+   [render-with-preview licenses]
+   [render-with-preview resources]
+   [render-with-preview workflows]
+   [render-with-preview categories]])
 
 (defn format-update-failure [{:keys [errors]}]
   (into [:div]
