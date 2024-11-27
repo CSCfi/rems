@@ -117,30 +117,25 @@
                                  :href (str "/administration/workflows/" id)
                                  :label (get-localized-title-for-anything item)}]])))
 
-(defn- render-with-preview [items]
+(defn- format-update-error [errors]
   (r/with-let [expanded? (r/atom false)]
-    (when (seq items)
-      (let [item-count (count items)
-            shown-items (cond->> items
-                          (not @expanded?) (take 5))]
-        [:div
-         (into [:ul] (map render-error-item) shown-items)
+    (when-some [items (seq (concat (:catalogue-items errors)
+                                   (:forms errors)
+                                   (:licenses errors)
+                                   (:resources errors)
+                                   (:workflows errors)
+                                   (:categories errors)))]
+      [:div
+       [:p (text (:type errors))]
+       (into [:ul] (map render-error-item) (cond->> items
+                                             (not @expanded?) (take 5)))
+       (let [item-count (count items)]
          (when (> item-count 5)
            [atoms/action-link
             {:on-click #(swap! expanded? not)
              :label (if @expanded?
                       (text :t.collapse/hide)
-                      (text-format :t.label/parens (text :t.collapse/show) (- item-count 5)))}])]))))
-
-(defn- format-update-error [{:keys [type catalogue-items forms licenses resources workflows categories]}]
-  [:<>
-   [:p (text type)]
-   [render-with-preview catalogue-items]
-   [render-with-preview forms]
-   [render-with-preview licenses]
-   [render-with-preview resources]
-   [render-with-preview workflows]
-   [render-with-preview categories]])
+                      (text-format :t.label/parens (text :t.collapse/show) (- item-count 5)))}]))])))
 
 (defn format-update-failure [{:keys [errors]}]
   (into [:div]
