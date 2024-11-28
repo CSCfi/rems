@@ -6,7 +6,9 @@ have notable changes.
 
 ## Unreleased
 
-Changes since v2.37
+Changes since v2.38
+
+## v2.38 "Välimerenkatu" 2024-11-28
 
 ### Additions
 - Catalogue tree now supports keyboard interactions for ARIA role="tree". Navigation works with arrow keys and Home/End, tree nodes can be opened/closed with Enter key, and default action (like add to cart) works with Enter key. (#3336)
