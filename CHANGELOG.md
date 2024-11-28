@@ -6,29 +6,32 @@ have notable changes.
 
 ## Unreleased
 
-Changes since v2.37
+Changes since v2.38
+
+## v2.38 "Välimerenkatu" 2024-11-28
+
+This release contains major changes to the REMS internal architecture regarding the caching of information. We have improved the caching behavior previously during the year, but now we drop the requirement for REMS to reload the application cache every hour or so. This was problematic, if the reload was slow, because it would stop REMS for a while and could lead to running out of memory. REMS got slower with more data, handlers and so on which made the problem worse.
+
+The fundamental idea is that most information in REMS is cached, and can be served from the cache. We have tried to make this the fastest REMS release by going through all the previously sluggish actions. While this does not change the UI, the API or functionality, it is large enough to warrant this note. The release passes all our tests and has also been manually tested. Before deploying this release, consider doing some additional manual testing for your use cases.
+
+About the REMS performance and test data. We have tested REMS performance using 1000+ catalogue items, 3000+ applications with 20+ largeish events each. The workflow contains 100 handlers each. We also test the forms with 200 fields. With these numbers, REMS performance is fine with any modern server with around 4 GB of memory.
 
 ### Additions
-- Catalogue tree now supports keyboard interactions for ARIA role="tree". Navigation works with arrow keys and Home/End, tree nodes can be opened/closed with Enter key, and default action (like add to cart) works with Enter key. (#3336)
+- Catalogue tree now supports keyboard interactions for ARIA `role="tree"`. Navigation works with arrow keys and Home/End, tree nodes can be opened/closed with Enter key, and default action (like add to cart) works with Enter key. (#3336)
 
 ### Changes
-- The logging of the simultaneous request count (`rqc:`) is now done for the request and response
-  log lines only, and separately. Previously the same value was used for all logging in a request,
-  which could be confusing as the actual request count can change between the lines.
+- The logging of the simultaneous request count (`rqc:`) is now done for the request and response log lines only, and separately. Previously the same value was used for all logging in a request, which could be confusing as the actual request count can change between the lines.
 - The performance has been improved when there are many handlers. (#3283)
 - The error message "shake" animation has been removed. (#3298)
 - The collapsible component no longer animates on open/close.
-- If REMS is trying to send email, and if the address has an obvious problem,
-  REMS will not try sending it again, but gives up immediately. This should
-  avoid having many hopeless retries, if there is a typo in an email address.
+- If REMS is trying to send email, and if the address has an obvious problem, REMS will not try sending it again, but gives up immediately. This should avoid having many hopeless retries, if there is a typo in an email address.
 - Form editor performance has been significantly improved. To give rough numbers, the editor now works smoothly with 200 form fields in test data. (#3105)
 - The wording about experimental is removed from GA4GH API. It is already used in production. (#3299)
 - Licenses are ordered consistently (alphabetically) wherever they appear. (#3302)
 
 ### Fixes
 - Empty the license attachment field if the upload fails. (#3292)
-- Hooks set in extra scripts were overridden by initialization. The new place for them
-  is `rems_hooks`. See `docs/hooks.md` for details. (#3351)
+- Hooks set in extra scripts were overridden by initialization. The new place for them is `rems_hooks`. See `docs/hooks.md` for details. (#3351)
 
 ## v2.37 "Laivapojankatu" 2024-05-16
 
