@@ -1,9 +1,13 @@
 (ns rems.administration.test-create-license
   (:require [clojure.test :refer [deftest is testing use-fixtures]]
+            [reagent.core :as r]
             [rems.administration.create-license :refer [parse-textcontent build-request]]
+            [rems.globals]
             [rems.testing :refer [init-spa-fixture]]))
 
 (use-fixtures :each init-spa-fixture)
+
+(defn- set-languages! [languages] (r/rswap! rems.globals/config assoc :languages languages))
 
 (deftest parse-textcontent-test
   (testing "linked license"
@@ -26,6 +30,8 @@
                                              "text")))))
 
 (deftest build-request-test
+  (set-languages! [:en :fi])
+
   (let [form {:licensetype "link"
               :organization {:organization/id "default"}
               :localizations {:en {:title "en title"
@@ -37,30 +43,23 @@
                                    :link "fi link"
                                    :text "fi text"
                                    :attachment-filename "something_fi.pdf"
-                                   :attachment-id 2}}}
-        languages [:en :fi]]
+                                   :attachment-id 2}}}]
     (testing "linked license"
       (is (= {:licensetype "link"
               :organization {:organization/id "default"}
               :localizations {:en {:title "en title"
-                                   :textcontent "en link"
-                                   :attachment-id 1}
+                                   :textcontent "en link"}
                               :fi {:title "fi title"
-                                   :textcontent "fi link"
-                                   :attachment-id 2}}}
-             (build-request (assoc-in form [:licensetype] "link")
-                            languages))))
+                                   :textcontent "fi link"}}}
+             (build-request form))))
     (testing "inline license"
       (is (= {:licensetype "text"
               :organization {:organization/id "default"}
               :localizations {:en {:title "en title"
-                                   :textcontent "en text"
-                                   :attachment-id 1}
+                                   :textcontent "en text"}
                               :fi {:title "fi title"
-                                   :textcontent "fi text"
-                                   :attachment-id 2}}}
-             (build-request (assoc-in form [:licensetype] "text")
-                            languages))))
+                                   :textcontent "fi text"}}}
+             (build-request (assoc-in form [:licensetype] "text")))))
 
     (testing "attachment license"
       (is (= {:licensetype "attachment"
@@ -71,24 +70,16 @@
                               :fi {:title "fi title"
                                    :textcontent "something_fi.pdf"
                                    :attachment-id 2}}}
-             (build-request (assoc-in form [:licensetype] "attachment")
-                            languages))))
+             (build-request (assoc-in form [:licensetype] "attachment")))))
     (testing "missing organization"
-      (is (nil? (build-request (assoc-in form [:organization] nil)
-                               languages))))
+      (is (nil? (build-request (assoc-in form [:organization] nil)))))
     (testing "missing license type"
-      (is (nil? (build-request (assoc-in form [:licensetype] nil)
-                               languages))))
+      (is (nil? (build-request (assoc-in form [:licensetype] nil)))))
     (testing "missing title"
-      (is (nil? (build-request (assoc-in form [:localizations :en :title] "")
-                               languages)))
-      (is (nil? (build-request (assoc-in form [:localizations :fi :title] "")
-                               languages))))
+      (is (nil? (build-request (assoc-in form [:localizations :en :title] ""))))
+      (is (nil? (build-request (assoc-in form [:localizations :fi :title] "")))))
     (testing "missing license"
-      (is (nil? (build-request (assoc-in form [:localizations :en :link] "")
-                               languages)))
-      (is (nil? (build-request (assoc-in form [:localizations :fi :link] "")
-                               languages))))
+      (is (nil? (build-request (assoc-in form [:localizations :en :link] ""))))
+      (is (nil? (build-request (assoc-in form [:localizations :fi :link] "")))))
     (testing "missing language"
-      (is (nil? (build-request (update-in form [:localizations] dissoc :fi)
-                               languages))))))
+      (is (nil? (build-request (update-in form [:localizations] dissoc :fi)))))))

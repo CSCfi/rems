@@ -4,6 +4,7 @@
             [rems.application :as application]
             [rems.application-list :as application-list]
             [rems.atoms :as atoms :refer [document-title]]
+            [rems.attachment :as attachment]
             [rems.auth.auth :as auth]
             [rems.cart :as cart]
             [rems.collapsible :as collapsible]
@@ -135,4 +136,5 @@
     [dropdown/guide]
     [phase/guide]
     [atoms/guide]
-    [user/guide]]])
+    [user/guide]
+    [attachment/guide]]])
