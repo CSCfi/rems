@@ -24,7 +24,7 @@
             [rems.service.resource]
             [rems.service.workflow]
             [rems.browser-test-util :as btu]
-            [rems.common.util :refer [getx]]
+            [rems.common.util :refer [getx not-blank]]
             [rems.db.applications]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.db.testing :refer [save-cache-statistics!]]
@@ -382,8 +382,13 @@
 (defn get-validation-summary []
   (mapv btu/get-element-text-el (btu/query-all {:css "#flash-message-top-validation ul li"})))
 
-(defn get-error-summary []
-  (mapv btu/get-element-text-el (btu/query-all {:css "#flash-message-actions > *"})))
+(defn get-error-summary [& [location]]
+  (let [error-element-id (case location
+                           :top :flash-message-top
+                           :flash-message-actions)]
+    (some-> (btu/get-element-text error-element-id)
+            not-blank
+            str/split-lines)))
 
 (defn get-validation-for-field [label]
   (let [el (first (btu/query-all [{:css ".fields"}
@@ -411,16 +416,18 @@
     (btu/fill-human :localizations-sv-text (str inline-text " (SV)")))
   (when attachments
     (btu/scroll-and-click :licensetype-attachment)
-    (btu/eventually-visible? :attachment-en) ; inputs are hidden
-    (btu/upload-file :upload-license-button-en "test-data/test.txt")
+    (btu/eventually-visible? :upload-license-button-en)
+    (btu/eventually-visible? :upload-license-button-fi)
+    (btu/eventually-visible? :upload-license-button-sv)
+    (btu/upload-file :upload-license-button-en-input "test-data/test.txt")
     (btu/wait-predicate #(= (set [(str attachment-load-text " test.txt")])
                             (set (get-attachments {:css ".page-create-license"})))
                         #(do {:attachments (set (get-attachments {:css ".page-create-license"}))}))
-    (btu/upload-file :upload-license-button-fi "test-data/test-fi.txt")
+    (btu/upload-file :upload-license-button-fi-input "test-data/test-fi.txt")
     (btu/wait-predicate #(= (set [(str attachment-load-text " test.txt") (str attachment-load-text " test-fi.txt")])
                             (set (get-attachments {:css ".page-create-license"})))
                         #(do {:attachments (get-attachments {:css ".page-create-license"})}))
-    (btu/upload-file :upload-license-button-sv "test-data/test-sv.txt")
+    (btu/upload-file :upload-license-button-sv-input "test-data/test-sv.txt")
     (btu/wait-predicate #(= (set [(str attachment-load-text " test.txt") (str attachment-load-text " test-fi.txt") (str attachment-load-text " test-sv.txt")])
                             (set (get-attachments {:css ".page-create-license"})))
                         #(do {:attachments (get-attachments {:css ".page-create-license"})}))))
@@ -562,9 +569,9 @@
             (btu/upload-file attachment-field-upload-selector "resources/public/img/rems_logo_fi.png")
             (is (btu/eventually-visible? :status-failed))
             (is (= ["Upload an attachment: Failed"
-                    (str/join "\n" ["The attachment is too large."
-                                    "rems_logo_fi.png 10.34 KB"
-                                    "Allowed maximum size of an attachment: 0.9 KB."])]
+                    "The attachment is too large."
+                    "rems_logo_fi.png 10.34 KB"
+                    "Allowed maximum size of an attachment: 0.9 KB."]
                    (get-error-summary)))))
 
         (testing "answers to conditional fields are retained"
@@ -3447,6 +3454,16 @@
           (btu/screenshot "before-filling-attachments-sv")
           (wait-page-title "Ny licens – REMS")
           (select-option "Organisation" "NBN")
+
+          (testing "uploading oversized attachment should display error"
+            (btu/with-client-config {:attachment-max-size 900}
+              (btu/scroll-and-click :licensetype-attachment)
+              (btu/upload-file :upload-license-button-en-input "resources/public/img/rems_logo_fi.png")
+              (is (btu/eventually-visible? :status-failed))
+              (is (= ["Save attachment: Misslyckades"
+                      "Payload Too Large"]
+                     (get-error-summary :top)))))
+
           (fill-license-fields {:title "E2E license with attachments"
                                 :attachments true
                                 :attachment-load-text "Ladda ner fil\n"})
