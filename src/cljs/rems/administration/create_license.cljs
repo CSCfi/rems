@@ -1,18 +1,17 @@
 (ns rems.administration.create-license
   (:require [clojure.string :as str]
+            [medley.core :refer [map-vals]]
             [re-frame.core :as rf]
             [rems.administration.administration :as administration]
             [rems.administration.components :refer [localized-text-field localized-textarea-autosize organization-field perform-action-button radio-button-group]]
-            [rems.atoms :as atoms :refer [document-title failure-symbol file-download]]
+            [rems.atoms :as atoms :refer [document-title]]
+            [rems.attachment]
             [rems.collapsible :as collapsible]
-            [rems.common.atoms :refer [nbsp]]
-            [rems.common.attachment-util :as attachment-util]
             [rems.config]
             [rems.globals]
             [rems.flash-message :as flash-message]
-            [rems.spinner :as spinner]
-            [rems.text :refer [text text-format]]
-            [rems.util :refer [format-file-size navigate! post! trim-when-string]]))
+            [rems.text :refer [text]]
+            [rems.util :refer [navigate! post! trim-when-string]]))
 
 (rf/reg-event-fx
  ::enter-page
@@ -25,6 +24,12 @@
  ::set-form-field
  (fn [db [_ keys value]]
    (assoc-in db (concat [::form] keys) value)))
+
+(rf/reg-sub
+ ::attachment
+ :<- [::form]
+ (fn [form [_ language]]
+   (get-in form [:localizations language])))
 
 (def license-type-link "link")
 (def license-type-text "text")
@@ -42,16 +47,21 @@
    :textcontent (parse-textcontent data license-type)
    :attachment-id (:attachment-id data)})
 
-(defn- valid-localization? [data]
-  (and (not (str/blank? (:title data)))
-       (not (str/blank? (:textcontent data)))))
+(defn- valid-localization? [request data]
+  (case (:licensetype request)
+    license-type-attachment (and (not (str/blank? (:title data)))
+                                 (not (str/blank? (:textcontent data)))
+                                 (some? (:attachment-id data)))
+    ; else
+    (and (not (str/blank? (:title data)))
+         (not (str/blank? (:textcontent data))))))
 
 (defn- valid-request? [request languages]
   (and (not (str/blank? (get-in request [:organization :organization/id])))
        (not (str/blank? (:licensetype request)))
        (= (set languages)
           (set (keys (:localizations request))))
-       (every? valid-localization? (vals (:localizations request)))))
+       (every? #(valid-localization? request %) (vals (:localizations request)))))
 
 (defn build-request [form languages]
   (let [license-type (:licensetype form)
@@ -73,38 +83,56 @@
              :error-handler (flash-message/default-error-handler :top description)}))
    {}))
 
-(defn- save-attachment [language form-data]
+(rf/reg-event-db
+ ::clear-attachment-errors
+ (fn [db _]
+   (update-in db
+              [::form :localizations]
+              (partial map-vals (fn [language]
+                                  (if (= :error (:attachment-upload-status language))
+                                    (dissoc language :attachment-upload-status)
+                                    language))))))
+
+(defn- clear-attachment-errors! []
+  (rf/dispatch [::clear-attachment-errors])
+  (flash-message/clear-message! :top))
+
+(rf/reg-event-db
+ ::attachment-saved
+ (fn [db [_ language attachment-id]]
+   (-> db
+       (assoc-in [::form :localizations language :attachment-id] attachment-id)
+       ;; filename set earlier already
+       (assoc-in [::form :localizations language :attachment-upload-status] :success))))
+
+(defn- save-attachment! [{:keys [language filename form-data]}]
+  (clear-attachment-errors!)
+  (rf/dispatch [::set-form-field [:localizations language :attachment-filename] filename])
+  (rf/dispatch [::set-form-field [:localizations language :attachment-upload-status] :pending])
   (post! "/api/licenses/add_attachment"
          {:body form-data
           :handler (fn [response]
                      (rf/dispatch [::attachment-saved language (:id response)]))
           :error-handler (fn [response]
                            (rf/dispatch [::set-form-field [:localizations language :attachment-filename] nil])
+                           (rf/dispatch [::set-form-field [:localizations language :attachment-upload-status] :error])
                            ((flash-message/default-error-handler :top "Save attachment") response))}))
 
 (rf/reg-event-db
- ::attachment-saved
- (fn [db [_ language attachment-id]]
-   (assoc-in db [::form :localizations language :attachment-id] attachment-id)))
+ ::attachment-removed
+ (fn [db [_ language]]
+   (-> db
+       (assoc-in [::form :localizations language :attachment-id] nil)
+       (assoc-in [::form :localizations language :attachment-filename] nil)
+       (assoc-in [::form :localizations language :attachment-upload-status] nil))))
 
-(defn- remove-attachment [attachment-id]
+(defn- remove-attachment! [{:keys [attachment-id language]}]
+  (clear-attachment-errors!)
   (post! "/api/licenses/remove_attachment"
          {:url-params {:attachment-id attachment-id}
           :body {}
+          :handler #(rf/dispatch [::attachment-removed language])
           :error-handler (flash-message/default-error-handler :top "Remove attachment")}))
-
-(rf/reg-event-fx
- ::save-attachment
- (fn [_ [_ language file]]
-   (save-attachment language file)
-   {}))
-
-(rf/reg-event-db
- ::remove-attachment
- (fn [db [_ language attachment-id]]
-   (when attachment-id
-     (remove-attachment attachment-id))
-   (assoc-in db [::form :localizations language :attachment-id] nil)))
 
 
 ;;;; UI
@@ -140,64 +168,55 @@
   [localized-textarea-autosize context {:localizations-key :text
                                         :label (text :t.create-license/license-text)}])
 
-(defn- set-attachment-event [language]
-  (fn [event]
-    (let [filecontent (aget (.. event -target -files) 0)
-          form-data (doto (js/FormData.)
-                      (.append "file" filecontent))]
-      (rf/dispatch [::set-form-field [:localizations language :attachment-filename] (.-name filecontent)])
-      (rf/dispatch [::save-attachment language form-data]))))
+(defn- upload-attachment-action [language]
+  (let [attachment @(rf/subscribe [::attachment language])]
+    {:id (str "upload-license-button-" (name language))
+     :hide-info? true
+     :filename (:attachment-filename attachment)
+     :status (:attachment-upload-status attachment)
+     :on-upload (fn [{:keys [filecontent form-data]}]
+                  (save-attachment! {:language language
+                                     :form-data form-data
+                                     :filename (.-name filecontent)}))}))
 
-(defn- remove-attachment-event [language attachment-id]
-  (fn [_]
-    (rf/dispatch [::set-form-field [:localizations language :attachment-filename] nil])
-    (rf/dispatch [::remove-attachment language attachment-id])))
+(defn- preview-attachment-action [language]
+  (let [attachment @(rf/subscribe [::attachment language])]
+    (atoms/download-action
+     {:class :attachment-link
+      :url (str "/api/licenses/attachments/" (:attachment-id attachment))
+      :label (:attachment-filename attachment)})))
+
+(defn- remove-attachment-action [language]
+  (let [attachment @(rf/subscribe [::attachment language])]
+    (atoms/delete-action
+     {:label (text :t.form/attachment-remove)
+      :on-click (fn [_]
+                  (remove-attachment! {:attachment-id (:attachment-id attachment)
+                                       :language language}))})))
+
+(defn- license-attachment [language]
+  (let [id (str "attachment-" (name language))
+        attachment @(rf/subscribe [::attachment language])]
+    [:div.form-group.row
+     [:label.col-sm-1.col-form-label {:for id}
+      (str/upper-case (name language))]
+     [:div.col-sm-11.d-flex.flex-wrap.align-items-center {:id id}
+      (if (or (str/blank? (:attachment-filename attachment))
+              (not= :success (:attachment-upload-status attachment)))
+        [rems.attachment/upload-button (upload-attachment-action language)]
+        [:div.d-flex.justify-content-start.gap-1
+         [atoms/action-button (preview-attachment-action language)]
+         [atoms/action-button (remove-attachment-action language)]])]]))
 
 (defn- license-attachment-field []
-  (into [:div.form-group.field
-         [:label.administration-field-label
-          (text :t.create-license/license-attachment)]
-         (let [allowed-extensions (->> attachment-util/allowed-extensions-string
-                                       (text-format :t.form/upload-extensions))]
-           [:div.mb-3
-            [:p allowed-extensions]
-            [:p (->> (format-file-size (:attachment-max-size @rems.globals/config))
-                     (text-format :t.form/attachment-max-size))]])]
-        (for [language @rems.config/languages
-              :let [form @(rf/subscribe [::form])
-                    filename (get-in form [:localizations language :attachment-filename])
-                    attachment-id (get-in form [:localizations language :attachment-id])
-                    id (str "attachment-" (name language))
-                    input-id (str "upload-license-button-" (name language))
-                    upload-status (get-in form [:localizations language :attachment-upload-status])]]
-          [:div.form-group.row
-           [:label.col-sm-1.col-form-label {:for id}
-            (str/upper-case (name language))]
-           [:div.col-sm-11.d-flex.flex-wrap.align-items-center {:id id}
-            (if (empty? filename)
-              [:div.upload-file.mr-2
-               [:input {:style {:display "none"}
-                        :type "file"
-                        :id input-id
-                        :accept attachment-util/allowed-extensions-string
-                        :on-change (set-attachment-event language)}]
-               [:button.btn.btn-secondary {:type :button
-                                           :on-click #(.click (.getElementById js/document input-id))}
-                (text :t.form/upload)]]
-              [:div.d-flex.justify-content-start
-               [:a.attachment-link.btn.btn-secondary.mr-2
-                {:href (str "/api/licenses/attachments/" attachment-id)
-                 :target :_blank}
-                [file-download] nbsp filename]
-               [:button.btn.btn-secondary.mr-2 {:type :button
-                                                :on-click (remove-attachment-event language attachment-id)}
-                (text :t.form/attachment-remove)]])
-            [:span.ml-2
-             (case upload-status
-               :pending [spinner/small]
-               :success nil ; the new attachment row appearing is confirmation enough
-               :error [failure-symbol]
-               nil)]]])))
+  [:div.form-group.field
+   [:label.administration-field-label
+    (text :t.create-license/license-attachment)]
+   [:div.mb-3
+    [rems.attachment/allowed-extensions-info]]
+   (into [:<>]
+         (for [language @rems.config/languages]
+           [license-attachment language]))])
 
 (defn- save-license []
   (let [request (build-request @(rf/subscribe [::form])

@@ -51,7 +51,7 @@
                                (text :t.collapse/show)))))))
 
 (defn focus-on-first-input [id]
-  (focus/scroll-into-view-and-focus (rfmt/format "#%s .collapse-open :is(textarea, input)" id)))
+  (focus/scroll-into-view-and-focus (rfmt/format "#%s .collapse-open :is(textarea, input)" (name id))))
 
 (defn show-action
   "Action that shows collapsible on click. Use together with `action-link` or `action-button` atom."
