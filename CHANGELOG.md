@@ -8,6 +8,12 @@ have notable changes.
 
 Changes since v2.38
 
+### Changes
+- Create license admin page:
+  - When creating attachment license, the save button no longer activates until all attachments have been successfully uploaded. (#3292)
+  - Attachment upload error is indicated by small icon next to the upload button (detailed error is still shown in top of the page).
+  - Pending attachment upload is indicated by spinner next to the upload button.
+
 ## v2.38 "Välimerenkatu" 2024-11-28
 
 This release contains major changes to the REMS internal architecture regarding the caching of information. We have improved the caching behavior previously during the year, but now we drop the requirement for REMS to reload the application cache every hour or so. This was problematic, if the reload was slow, because it would stop REMS for a while and could lead to running out of memory. REMS got slower with more data, handlers and so on which made the problem worse.
