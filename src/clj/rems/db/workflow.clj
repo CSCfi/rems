@@ -120,11 +120,11 @@
                            (-> (:workflow wf)
                                ;; cache uses formatted values but db does not
                                (assoc :handlers (or handlers old-handlers)
-                                      :licenses old-licenses)
+                                      :licenses old-licenses
+                                      :voting voting)
                                (assoc-some :anonymize-handling anonymize-handling
                                            :disable-commands disable-commands
-                                           :processing-states processing-states
-                                           :voting voting)))}]
+                                           :processing-states processing-states)))}]
     (db/edit-workflow! (update new-wf :workflow json/generate-string))
     (cache/miss! workflow-cache id)
     {:success true}))
