@@ -321,7 +321,8 @@
                                         @current-b)
                                      (:ab (nth (last @reader-dependent-ab-events) 2))))
 
-          cache-transactions-thread-pool (concurrency/cached-thread-pool {:thread-prefix "test-cache-transactions"})]
+          cache-transactions-thread-pool (concurrency/cached-thread-pool {:thread-prefix "test-cache-transactions"})
+          transactions-end-time (atom nil)]
       (try
         (logr/info "number of available processors:" (concurrency/get-available-processors))
 
@@ -405,18 +406,23 @@
 
         (finally
           (println "terminating test thread pool")
+          (reset! transactions-end-time (System/nanoTime))
           (concurrency/shutdown-now! cache-transactions-thread-pool {:timeout-ms 5000})))
 
       (let [get-event-duration #(format "%.3fms" (/ (- (:end %) (:start %))
                                                     (* 1000.0 1000.0)))
             event-end (fn [[_ _ _ opts]] (:end opts))
+            before-transactions-end? (comp #(< % @transactions-end-time) event-end)
             raw-events (->> (get-all-events)
+                            (filter before-transactions-end?)
                             (sort-by event-end)
                             (map (fn [[event-type id state-kv opts]]
                                    {:type event-type
                                     :id id
                                     :state state-kv
                                     :time (assoc opts :duration (get-event-duration opts))})))]
+
+        (is (seq raw-events) "no events before transactions end")
 
         (testing "all cache reads see monotonically growing results"
           (testing "reader a"
