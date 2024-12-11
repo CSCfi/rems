@@ -420,6 +420,7 @@
 (def accept-alert (wrap-etaoin et/accept-alert))
 (def reload (wrap-etaoin et/reload))
 (def get-title (wrap-etaoin et/get-title))
+(def exists? (wrap-etaoin et/exists?))
 ;; TODO add more of etaoin here
 
 ;;; etaoin extensions
@@ -434,6 +435,10 @@
    (catch [:type :etaoin/timeout] e
      (log/error e)
      false)))
+
+(defn eventually-exists? [& args]
+  (wait-for-idle)
+  (no-timeout? #(apply exists? args)))
 
 (defn eventually-visible? [& args]
   (wait-for-idle)

@@ -3458,7 +3458,8 @@
           (testing "uploading oversized attachment should display error"
             (btu/with-client-config {:attachment-max-size 900}
               (btu/scroll-and-click :licensetype-attachment)
-              (btu/upload-file :upload-license-button-en-input "resources/public/img/rems_logo_fi.png")
+              (is (btu/eventually-exists? :upload-license-button-fi-input))
+              (btu/upload-file :upload-license-button-fi-input "resources/public/img/rems_logo_fi.png")
               (is (btu/eventually-visible? :status-failed))
               (is (= ["Save attachment: Misslyckades"
                       "Payload Too Large"]
