@@ -3461,8 +3461,10 @@
               (is (btu/eventually-exists? :upload-license-button-fi-input))
               (btu/upload-file :upload-license-button-fi-input "resources/public/img/rems_logo_fi.png")
               (is (btu/eventually-visible? :status-failed))
-              (is (= ["Save attachment: Misslyckades"
-                      "Payload Too Large"]
+              (is (= ["Spara bilaga: Misslyckades"
+                      "Bilagan är för stort."
+                      "rems_logo_fi.png 10.34 KB"
+                      "Maximal storlek på bilaga: 0.9 KB."]
                      (get-error-summary :top)))))
 
           (fill-license-fields {:title "E2E license with attachments"

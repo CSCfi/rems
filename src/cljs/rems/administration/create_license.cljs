@@ -138,9 +138,10 @@
           :error-handler (fn [response]
                            (rf/dispatch [::set-form-field [:localizations language :attachment-filename] nil])
                            (rf/dispatch [::set-form-field [:localizations language :attachment-upload-status] :error])
-                           ;; XXX: flash message error should be localized
-                           ;; XXX: consider handling "Payload Too Large" error separately
-                           ((flash-message/default-error-handler :top "Save attachment") response))}))
+                           (-> (rems.attachment/upload-error-handler :top [text :t.administration/save-attachment]
+                                                                     {:file-name (.-name filecontent)
+                                                                      :file-size (.-size filecontent)})
+                               (apply [response])))}))
 
 (rf/reg-event-db
  ::attachment-removed
@@ -156,8 +157,7 @@
          {:url-params {:attachment-id attachment-id}
           :body {}
           :handler #(rf/dispatch [::attachment-removed language])
-          ;; XXX: flash message error should be localized
-          :error-handler (flash-message/default-error-handler :top "Remove attachment")}))
+          :error-handler (flash-message/default-error-handler :top (text :t.administration/remove-attachment))}))
 
 
 ;;;; UI
@@ -217,7 +217,7 @@
       (if-not (= :success (:upload-status attachment))
         [rems.attachment/upload-button {:id upload-button-id
                                         :hide-info? true
-                                        :filename (:filename attachment)
+                                        :label (:filename attachment)
                                         :status (:upload-status attachment)
                                         :on-upload (r/partial save-attachment! language)}]
         [:div.d-flex.justify-content-start.gap-1

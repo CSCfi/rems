@@ -151,6 +151,7 @@
                    :processing-state "Ansökans delstad" ; TODO: check
                    :processing-states "Ansökans delstater" ; TODO: check
                    :remove "Radera"
+                   :remove-attachment "Radera bilaga"
                    :reports "Rapporter"
                    :resource "Resurs"
                    :resources "Resurser"
@@ -158,6 +159,7 @@
                    :review-emails "E-postadresser för granskning"
                    :reviewers-vote "Granskarna röstar"
                    :save "Spara"
+                   :save-attachment "Spara bilaga"
                    :short-name "Förkortning"
                    :start "Början"
                    :technical-value "Tekniskt värde"

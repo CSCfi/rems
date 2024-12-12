@@ -2,13 +2,14 @@
   (:require [clojure.string :as str]
             [reagent.core :as r]
             [rems.atoms :as atoms]
+            [rems.collapsible :as collapsible]
             [rems.common.attachment-util :as attachment-util]
             [rems.config]
-            [rems.collapsible :as collapsible]
+            [rems.flash-message :as flash-message]
             [rems.globals]
             [rems.guide-util :refer [component-info example]]
-            [rems.text :refer [text text-format]]
             [rems.spinner :as spinner]
+            [rems.text :refer [text text-format]]
             [rems.util :refer [format-file-size]]))
 
 (defn allowed-extensions-info []
@@ -30,6 +31,23 @@
      :class :info-collapsible
      :collapse [:div [allowed-extensions-info]]}]])
 
+(defn upload-error-handler [location description & [{:keys [file-name file-size]}]]
+  (fn [response]
+    (cond (= 413 (:status response))
+          (flash-message/show-default-error! location description
+                                             [:div
+                                              [:p [text :t.form/too-large-attachment]]
+                                              [:p (str file-name " " (format-file-size file-size))]
+                                              [:p [text-format :t.form/attachment-max-size (format-file-size (:attachment-max-size @rems.globals/config))]]])
+
+          (= 415 (:status response))
+          (flash-message/show-default-error! location description
+                                             [:div
+                                              [:p [text :t.form/invalid-attachment]]
+                                              [:p [text-format :t.form/upload-extensions attachment-util/allowed-extensions-string]]])
+
+          :else ((flash-message/default-error-handler location description) response))))
+
 (defn upload-button [{:keys [hide-info? id label status on-upload]}]
   (let [upload-id (str id "-input")]
     [:div.upload-file
@@ -48,10 +66,12 @@
                                            :filename (.-name filecontent)
                                            :filecontent filecontent}))))}]
      [atoms/action-button
-      (atoms/new-action {:id id
-                         :outline? true
-                         :label (or label (text :t.form/upload))
-                         :on-click #(.click (.getElementById js/document upload-id))})]
+      (cond-> {:id id
+               :outline? true
+               :label (or label (text :t.form/upload))
+               :on-click #(.click (.getElementById js/document upload-id))}
+        (or (= status :error) (nil? status))
+        atoms/new-action)]
      [:span.ml-2
       (case status
         :pending [spinner/small]
