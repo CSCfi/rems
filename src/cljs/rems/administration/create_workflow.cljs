@@ -347,7 +347,7 @@
     [:div.fields.voting
      [select-voting-type-field {:label (text :t.administration/voting)
                                 :value (:type voting)
-                                :on-change #(rf/dispatch [::set-voting (assoc voting :type %)])}]]))
+                                :on-change #(rf/dispatch [::set-voting (some->> % (assoc voting :type))])}]]))
 
 (rf/reg-sub ::disable-commands (fn [db _] (get-in db [::form :disable-commands])))
 (rf/reg-event-db ::new-disable-command (fn [db _] (update-in db [::form :disable-commands] conj-vec {})))

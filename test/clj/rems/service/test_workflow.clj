@@ -90,15 +90,29 @@
 
   (with-user "owner"
     (test-helpers/create-organization! {:organization/id "abc" :organization/name {:en "ABC"} :organization/short-name {:en "ABC"}})
-    (testing "change title"
+    (testing "change title and remove voting"
       (let [licid (test-helpers/create-license! {:organization {:organization/id "abc"}})
             wf-id (test-helpers/create-workflow! {:organization {:organization/id "abc"}
                                                   :type :workflow/master
                                                   :title "original title"
                                                   :handlers ["user1"]
-                                                  :licenses [licid]})]
+                                                  :licenses [licid]
+                                                  :voting {:type :handlers-vote}})]
+        (is (= {:id wf-id
+                :title "original title"
+                :workflow {:type :workflow/master
+                           :handlers [{:userid "user1" :name "User 1" :email "user1@example.com"}]
+                           :forms []
+                           :licenses [{:license/id licid}]
+                           :voting {:type :handlers-vote}}}
+               (-> (rems.service.workflow/get-workflow wf-id)
+                   (select-keys [:id :title :workflow])
+                   (update-in [:workflow :licenses]
+                              (partial map #(select-keys % [:license/id]))))))
+
         (rems.service.workflow/edit-workflow! {:id wf-id
-                                               :title "changed title"})
+                                               :title "changed title"
+                                               :voting nil})
         (is (= {:id wf-id
                 :title "changed title"
                 :workflow {:type :workflow/master
