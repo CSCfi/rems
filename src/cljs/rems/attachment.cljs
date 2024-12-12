@@ -70,14 +70,17 @@
                :outline? true
                :label (or label (text :t.form/upload))
                :on-click #(.click (.getElementById js/document upload-id))}
-        (or (= status :error) (nil? status))
-        atoms/new-action)]
-     [:span.ml-2
-      (case status
-        :pending [spinner/small]
-        :success nil ; the new attachment row appearing is confirmation enough
-        :error [atoms/failure-symbol]
-        nil)]
+        (or (= :error status) (nil? status))
+        atoms/new-action
+
+        (= :pending status)
+        (update :label (fn [s]
+                         [:span.d-flex.align-items-center.gap-1 s [spinner/small]])))]
+
+     (when (= :error status)
+       [:span.ml-2
+        [atoms/failure-symbol]])
+
      (when-not hide-info?
        [allowed-extensions-collapsible {:id (str id "-info-collapsible")}])]))
 
