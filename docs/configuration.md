@@ -54,6 +54,7 @@ The `:oidc` authentication method has the following configuration options:
 * `:oidc-additional-authorization-parameters` - additional query parameters to add to the OIDC authorization_endpoint url when logging in
 * `:oidc-logout-redirect-url` - to which URL a user is redirected to after a successful logout? (defaults to "/")
 * `:oidc-perform-revoke-on-logout` - should REMS POST to the `revocation_endpoint` received from OIDC metadata? (defaults to true)
+* `:oidc-use-state` – (optional) when the value is `:csrf-token`, REMS will pass a random CSRF token to login server using `state` parameter. Then REMS will check the return value in callback. (default is not to send)
 
 See details and formats from [config-defaults.edn](https://github.com/CSCfi/rems/blob/master/resources/config-defaults.edn).
 

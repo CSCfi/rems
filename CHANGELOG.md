@@ -8,6 +8,9 @@ have notable changes.
 
 Changes since v2.38
 
+### Additions
+- Use `:oidc-use-state` and value `:csrf-token`to configure REMS to send a CSRF token in `state` parameter to the login server and then check its value in the callback. (#3367)
+
 ### Fixes
 - Resolved issue where workflow voting could not be removed, which caused UI to display raw translation keys due to nil voting values. (#3357)
 
