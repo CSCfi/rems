@@ -4,6 +4,8 @@
             [medley.core :refer [assoc-some remove-vals update-existing]]
             [reagent.core :as r]
             [reagent.impl.util]
+            [rems.common.atoms :refer [nbsp]]
+            [rems.globals]
             [rems.guide-util :refer [component-info example]]
             [rems.text :refer [text text-format localized localize-attachment]]
             [rems.util :refer [class-names]]))
@@ -276,14 +278,16 @@
 
 (defn action-button
   "Takes an `action` description and creates a button that triggers it."
-  [{:keys [class id label on-click url] :as action}]
+  [{:keys [class id label on-click outline? url] :as action}]
   [link (-> action
-            (dissoc :on-click :text :url)
+            (dissoc :on-click :outline? :text :url)
             (assoc-some :on-click on-click)
             (assoc :id id
                    :label (:text action label) ; XXX: consider refactoring :text -> :label
                    :href (or url "#")
-                   :class (class-names :btn :btn-secondary class)))])
+                   :class (class-names :btn class (if outline?
+                                                    :btn-outline-secondary
+                                                    :btn-secondary))))])
 
 (defn action-link
   "Takes an `action` description and creates a link that triggers it."
@@ -312,7 +316,7 @@
   "Standard new action helper, to use with e.g. `action-button` or `action-link`."
   [{:keys [label] :as action}]
   (assoc action
-         :label [:<> [add-symbol] " " (or label (text :t.administration/add))]))
+         :label [:<> [add-symbol] nbsp (or label (text :t.administration/add))]))
 
 (defn cancel-action
   "Standard cancel action helper, to use with e.g. `action-button` or `action-link`."
@@ -337,6 +341,13 @@
   [action]
   (assoc action
          :label [text :t.administration/delete]))
+
+(defn download-action
+  "Action helper for download link, to use with `action-link`."
+  [{:keys [label] :as action}]
+  (assoc action
+         :target :_blank
+         :label [:<> [file-download] nbsp (or label (text :t.link/download-file))]))
 
 (defn commands
   "Creates a standard commands group with left alignment."

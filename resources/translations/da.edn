@@ -154,6 +154,7 @@
                    :processing-state nil
                    :processing-states nil
                    :remove "Slet"
+                   :remove-attachment nil
                    :reports "Rapporter"
                    :resource "Ressource"
                    :resources "Ressourcer"
@@ -162,6 +163,7 @@
                    :review-emails "E-mailadresser til gennemsyn"
                    :reviewers-vote nil
                    :save "Gem"
+                   :save-attachment nil
                    :short-name "Forkortelse"
                    :start "Begyndelse"
                    :technical-value nil
