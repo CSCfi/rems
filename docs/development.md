@@ -205,3 +205,16 @@ lein migratus up 20211105110533
 ```
 
 NB: The migrations can also be written in Clojure. Then you should replace the `.sql` files with a `.edn` file. See examples in the migrations-directory.
+
+## Performance testing
+
+REMS includes `user simulator`, which is a developer tool intended for load testing REMS. Currently the tool is fairly basic and does not have a lot of features, but it can be used to simulate multiple users accessing the system simultaneously. Only fake login users are supported currently.
+
+User simulator works by running concurrent headless browser instances on target REMS instance. Starting the simulator from command line is simple:
+
+```sh
+lein run user-simulator http://localhost:3000/ alice,elsa,frank
+```
+
+This will set local REMS instance as the target and start 3 concurrent browser instances, each logging in as alice, elsa or frank.
+
