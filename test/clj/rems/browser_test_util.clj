@@ -21,7 +21,6 @@
             [rems.db.test-data-users :as test-users]
             [rems.service.test-data :as test-data]
             [rems.json :as json]
-            [rems.main]
             [rems.testing-util :refer [get-current-test-name]]
             [rems.util :refer [ensure-empty-directory!]]
             [slingshot.slingshot :refer [try+]])
@@ -29,47 +28,58 @@
 
 ;;; test setup
 
-(defonce test-context
-  (atom {:url "http://localhost:3001/"
-         :mode :test
-         :seed "circle"
-         :reporting-dir (io/file "browsertest-errors")
-         :accessibility-report-dir (io/file "browsertest-accessibility-report")
-         :download-dir (io/file "browsertest-downloads")}))
+(defn create-test-context []
+  {:url "http://localhost:3001/"
+   :mode :test
+   :seed "circle"
+   :reporting-dir (io/file "browsertest-errors")
+   :accessibility-report-dir (io/file "browsertest-accessibility-report")
+   :download-dir (io/file "browsertest-downloads")})
 
-(defn get-driver [] (:driver @test-context))
-(defn get-server-url [] (:url @test-context))
-(defn get-seed [] (:seed @test-context))
+(defonce global-test-context (atom (create-test-context)))
+
+(def ^:dynamic *test-context*)
+
+(defn test-ctx
+  ([] (if (bound? #'rems.browser-test-util/*test-context*)
+        *test-context*
+        global-test-context))
+  ([& ks]
+   (get-in @(test-ctx) ks)))
+
+(defn get-driver [] (test-ctx :driver))
+(defn get-server-url [] (test-ctx :url))
+(defn get-seed [] (test-ctx :seed))
 
 ;; test data uses separate key path to avoid conflicts with configuration data
 
-(defn reset-context! [] (swap! test-context dissoc :test-data))
+(defn reset-context! [] (swap! (test-ctx) dissoc :test-data))
 
-(defn context-get [k] (get (:test-data @test-context) k))
-(defn context-getx [k] (getx (:test-data @test-context) k))
-(defn context-update! [& args] (apply swap! test-context update :test-data args))
-(defn context-assoc! [& args] (apply context-update! assoc args))
-(defn context-dissoc! [& args] (apply context-update! dissoc args))
+(defn context-get [k] (test-ctx :test-data k))
+(defn context-getx [k] (getx (test-ctx :test-data) k))
+(defn context-update! [f & args] (apply swap! (test-ctx) update :test-data f args))
+(defn context-assoc! [k v & kvs] (apply context-update! assoc k v kvs))
+(defn context-dissoc! [k & ks] (apply context-update! dissoc k ks))
 
 (defn- ensure-empty-directories! []
-  (ensure-empty-directory! (:reporting-dir @test-context))
-  (ensure-empty-directory! (:accessibility-report-dir @test-context))
-  (ensure-empty-directory! (:download-dir @test-context)))
+  (ensure-empty-directory! (test-ctx :reporting-dir))
+  (ensure-empty-directory! (test-ctx :accessibility-report-dir))
+  (ensure-empty-directory! (test-ctx :download-dir)))
 
 (defn downloaded-files
-  ([] (for [file (.listFiles (:download-dir @test-context))]
+  ([] (for [file (.listFiles (test-ctx :download-dir))]
         file))
   ([name-or-regex] (if (string? name-or-regex)
-                     (let [f (io/file (:download-dir @test-context) name-or-regex)]
+                     (let [f (io/file (test-ctx :download-dir) name-or-regex)]
                        (when (.exists f) [f]))
-                     (for [file (.listFiles (:download-dir @test-context))
+                     (for [file (.listFiles (test-ctx :download-dir))
                            :when (re-matches name-or-regex (.getName file))]
                        file))))
 
 (defn delete-downloaded-files! [name-or-regex]
   (let [files (if (string? name-or-regex)
-                [(io/file (:download-dir @test-context) name-or-regex)]
-                (for [file (.listFiles (:download-dir @test-context))
+                [(io/file (test-ctx :download-dir) name-or-regex)]
+                (for [file (.listFiles (test-ctx :download-dir))
                       :when (re-matches name-or-regex (.getName file))]
                   file))]
     (doseq [file files]
@@ -92,7 +102,7 @@
                :path [:session (:session driver) "chromium/send_command"]
                :data {:cmd "Page.setDownloadBehavior"
                       :params {:behavior "allow"
-                               :downloadPath (.getAbsolutePath (:download-dir @test-context))}}}))
+                               :downloadPath (.getAbsolutePath (test-ctx :download-dir))}}}))
 
 (defn- reset-window-size!
   "Sets window size big enough to show the whole page in the screenshots."
@@ -117,7 +127,7 @@
                          (get (System/getenv) "HEADLESS"))
         dev? (= :development mode)]
     (assoc driver-defaults
-           :download-dir (.getAbsolutePath (:download-dir @test-context))
+           :download-dir (.getAbsolutePath (test-ctx :download-dir))
            :headless (cond
                        non-headless? false
                        dev? false
@@ -137,7 +147,7 @@
     (try
       (et/quit (get-driver))
       (catch Exception e)))
-  (swap! test-context
+  (swap! (test-ctx)
          assoc-some
          :driver (et/with-wait-timeout 60
                    (-> browser-id
@@ -151,7 +161,7 @@
   "Executes a test running a fresh driver except when in development."
   [f]
   (letfn [(run []
-            (when-not (= :development (:mode @test-context))
+            (when-not (= :development (test-ctx :mode))
               (init-driver! :chrome))
             (f))]
     (try
@@ -280,7 +290,7 @@
   run them for real, we use an existing server and db or
   boot everything up and recreate test data too."
   [f]
-  (if (= :development (:mode @test-context))
+  (if (= :development (test-ctx :mode))
     (f)
     ((compose-fixtures standalone-fixture create-test-data) f)))
 
@@ -289,7 +299,7 @@
   (f))
 
 (defn- get-sequence-number []
-  (:sequence-number (swap! test-context update :sequence-number (fnil inc 0))))
+  (:sequence-number (swap! (test-ctx) update :sequence-number (fnil inc 0))))
 
 ;;; etaoin exported
 
@@ -316,11 +326,11 @@
           (get-sequence-number)
           (get-current-test-name)))
 
-(defn screenshot [filename]
+(defn ^:dynamic screenshot [filename]
   (let [driver (get-driver)
         _ (wait-for-idle driver 500)
         full-filename (str (get-file-base) filename ".png")
-        file (io/file (:reporting-dir @test-context) full-filename)
+        file (io/file (test-ctx :reporting-dir) full-filename)
 
         window-size (et/get-window-rect driver)
         empty-space (if (et/exists? driver :empty-space) ; if page has not rendered, screenshot can fail due to missing element
@@ -344,12 +354,12 @@
     (when need-to-adjust?
       (et/set-window-rect driver window-size))))
 
-(defn screenshot-element [filename q]
+(defn ^:dynamic screenshot-element [filename q]
   (let [full-filename (format "%03d-%s-%s"
                               (get-sequence-number)
                               (get-current-test-name)
                               filename)
-        file (io/file (:reporting-dir @test-context) full-filename)]
+        file (io/file (test-ctx :reporting-dir) full-filename)]
     (et/screenshot-element (get-driver)
                            q
                            file)))
@@ -366,7 +376,7 @@
                                 (get-current-test-name)
                                 filename
                                 ".txt")
-          file (io/file (:reporting-dir @test-context) full-filename)]
+          file (io/file (test-ctx :reporting-dir) full-filename)]
       (spit file (json/generate-string-pretty content)))))
 
 (defn wait-predicate [pred & [explainer]]
@@ -377,6 +387,9 @@
                                 (when explainer
                                   {:explanation (explainer)}))
                          ex)))))
+
+(defn running? []
+  (et/running? (get-driver)))
 
 (defn wrap-etaoin [f]
   (fn [& args] (apply f (get-driver) args)))
@@ -575,7 +588,7 @@
                               ['body > div:not(#app)']]
    }).then(callback);")
 
-(defn check-axe
+(defn ^:dynamic check-axe
   "Runs automated accessibility tests using axe.
 
   Returns the test report.
@@ -614,7 +627,7 @@
         (doseq [[target original] originals]
           (when original
             (js-execute (str "var x = document.querySelector('" target "'); if (x && x.style) x.style.outline = \"" original "\";"))))))
-    (swap! test-context update :axe conj-vec results)))
+    (swap! (test-ctx) update :axe conj-vec results)))
 
 (defn accessibility-report-fixture
   "Runs the tests and finally stores the gathered accessibility
@@ -623,20 +636,20 @@
   NB: the individual tests must call `gather-axe-results` in each
   interesting spot to have a sensible report to write."
   [f]
-  (swap! test-context dissoc :axe)
+  (swap! (test-ctx) dissoc :axe)
   (try
     (f)
     (finally
       (let [violations (atom nil)]
-        (doseq [k (->> (:axe @test-context)
+        (doseq [k (->> (test-ctx :axe)
                        (mapcat keys)
                        distinct)
                 :let [filename (str (str/lower-case (name k)) ".json")
-                      content (->> (:axe @test-context)
+                      content (->> (test-ctx :axe)
                                    (mapcat #(get % k))
                                    distinct
                                    (sort-by :impact))]]
-          (spit (io/file (:accessibility-report-dir @test-context) filename)
+          (spit (io/file (test-ctx :accessibility-report-dir) filename)
                 (json/generate-string-pretty content))
           (when (and (= :violations k) (seq content))
             (reset! violations content)))
@@ -656,11 +669,11 @@
 (defn autosave-enabled? []
   (get env :enable-autosave false))
 
-(defn postmortem-handler
+(defn ^:dynamic postmortem-handler
   "Simplified version of `etaoin.api/postmortem-handler`"
   [ex]
   (let [driver (get-driver)
-        dir (:reporting-dir @test-context)]
+        dir (test-ctx :reporting-dir)]
 
     (io/make-parents dir)
 

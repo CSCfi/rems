@@ -8,6 +8,9 @@ have notable changes.
 
 Changes since v2.38
 
+### Additions
+- REMS now includes user simulator, which is a developer tool intended for load testing REMS. The initial version is fairly basic and does not have a lot of features, but it can be used to test system performance and stability. See `docs/development.md` for more details.
+
 ### Changes
 - Create license admin page:
   - When creating attachment license, the save button no longer activates until all attachments have been successfully uploaded. (#3292)
