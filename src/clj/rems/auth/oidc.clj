@@ -159,7 +159,9 @@
               (redirect "/error?key=:t.login.errors/unknown"))
 
           :else
-          (let [response (-> (http/post (:token_endpoint oidc-configuration)
+          (let [_ (maybe-check-csrf-token request)
+
+                response (-> (http/post (:token_endpoint oidc-configuration)
                                         ;; NOTE Some IdPs don't support client id and secret in form params,
                                         ;;      and require us to use HTTP basic auth
                                         {:basic-auth [(str (getx env :oidc-client-id))
@@ -195,8 +197,6 @@
                 user-data (merge id-data user-info researcher-status)
                 user-data (plugins/transform :extension-point/transform-user-data user-data)
                 user (find-or-create-user! user-data)]
-
-            (maybe-check-csrf-token request)
 
             (when (:log-authentication-details env)
               (log/info "logged in" user-data user))
