@@ -226,8 +226,7 @@
             (log/error "received HTTP status" (:status response) "from" endpoint)))))))
 
 (defn oidc-login [request]
-  (let [session (get request :session)
-        oidc-csrf-token (get-oidc-csrf-token)]
+  (let [oidc-csrf-token (get-oidc-csrf-token)]
     (-> (redirect (login-url {:oidc-csrf-token oidc-csrf-token}))
         (update :session assoc :oidc-csrf-token oidc-csrf-token))))
 

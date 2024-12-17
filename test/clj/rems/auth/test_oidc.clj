@@ -7,8 +7,7 @@
             [rems.ga4gh]
             [rems.jwt]
             [rems.json :as json]
-            [rems.testing-util :refer [with-fake-login-users]])
-  (:import [java.util.regex Pattern]))
+            [rems.testing-util :refer [with-fake-login-users]]))
 
 (defn- with-special-setup [params f]
   (let [id-data (:id-data params)
