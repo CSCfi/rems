@@ -17,7 +17,7 @@
   (:import [java.util UUID]
            [java.time Instant]))
 
-(defn get-oidc-csrf-token []
+(defn maybe-create-oidc-csrf-token []
   (case (get env :oidc-use-state)
     :csrf-token (UUID/randomUUID)
 
@@ -226,7 +226,7 @@
             (log/error "received HTTP status" (:status response) "from" endpoint)))))))
 
 (defn oidc-login [request]
-  (let [oidc-csrf-token (get-oidc-csrf-token)]
+  (let [oidc-csrf-token (maybe-create-oidc-csrf-token)]
     (-> (redirect (login-url {:oidc-csrf-token oidc-csrf-token}))
         (update :session assoc :oidc-csrf-token oidc-csrf-token))))
 

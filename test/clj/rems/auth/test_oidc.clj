@@ -24,7 +24,7 @@
                                                 :oidc-client-secret "special.client-secret")
                                          (when oidc-csrf-token {:oidc-use-state :csrf-token})
                                          config)
-                  rems.auth.oidc/get-oidc-csrf-token (constantly oidc-csrf-token)
+                  rems.auth.oidc/maybe-create-oidc-csrf-token (constantly oidc-csrf-token)
                   rems.config/oidc-configuration {:token_endpoint "https://special.case/token"
                                                   :issuer "https://special.case/issuer"
                                                   :userinfo_endpoint "https://special.case/user-info"}
