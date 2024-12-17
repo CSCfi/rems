@@ -34,7 +34,7 @@
             [rems.application-list :as application-list]
             [rems.administration.duo :refer [duo-field duo-info-field]]
             [rems.common.application-util :refer [accepted-licenses? can-see-everything? form-fields-editable? get-member-name is-handler? is-handling-user?]]
-            [rems.common.attachment-util :as attachment-util]
+            [rems.attachment]
             [rems.atoms :as atoms :refer [document-title external-link file-download info-field make-empty-symbol readonly-checkbox success-symbol]]
             [rems.common.atoms :refer [nbsp]]
             [rems.common.catalogue-util :refer [catalogue-item-more-info-url]]
@@ -395,20 +395,10 @@
                            (rf/dispatch [::save-application description #(rf/dispatch [::set-attachment-status form-id field-id :success])])))
               :error-handler (fn [response]
                                (rf/dispatch [::set-attachment-status form-id field-id :error])
-                               (cond (= 413 (:status response))
-                                     (flash-message/show-default-error! :actions description
-                                                                        [:div
-                                                                         [:p [text :t.form/too-large-attachment]]
-                                                                         [:p (str file-name " " (format-file-size file-size))]
-                                                                         [:p [text-format :t.form/attachment-max-size (format-file-size (:attachment-max-size @rems.globals/config))]]])
-
-                                     (= 415 (:status response))
-                                     (flash-message/show-default-error! :actions description
-                                                                        [:div
-                                                                         [:p [text :t.form/invalid-attachment]]
-                                                                         [:p [text-format :t.form/upload-extensions attachment-util/allowed-extensions-string]]])
-
-                                     :else ((flash-message/default-error-handler :actions description) response)))})))
+                               (-> (rems.attachment/upload-error-handler :actions description
+                                                                         {:file-name file-name
+                                                                          :file-size file-size})
+                                   (apply [response])))})))
   {})
 
 (rf/reg-event-fx ::save-attachment save-attachment)

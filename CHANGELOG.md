@@ -10,6 +10,13 @@ Changes since v2.38
 
 ### Additions
 - Use `:oidc-use-state` and value `:csrf-token`to configure REMS to send a CSRF token in `state` parameter to the login server and then check its value in the callback. (#3367)
+- REMS now includes user simulator, which is a developer tool intended for load testing REMS. The initial version is fairly basic and does not have a lot of features, but it can be used to test system performance and stability. See `docs/development.md` for more details.
+
+### Changes
+- Create license admin page:
+  - When creating attachment license, the save button no longer activates until all attachments have been successfully uploaded. (#3292)
+  - Attachment upload error is indicated by small icon next to the upload button (detailed error is still shown in top of the page).
+  - Pending attachment upload is indicated by spinner next to the upload button.
 
 ### Fixes
 - Resolved issue where workflow voting could not be removed, which caused UI to display raw translation keys due to nil voting values. (#3357)
