@@ -150,8 +150,8 @@
         (testing "state is checked in callback"
 
           (testing "state is configured but not in session"
-            (let [request {:params {:code "special-case-code"}
-                           :state token
+            (let [request {:params {:code "special-case-code"
+                                    :state token}
                            :session {}}]
               (is (thrown-with-msg? IllegalArgumentException
                                     #"\{:original-csrf-token nil\}"
@@ -165,16 +165,16 @@
                                     (oidc/oidc-callback request)))))
 
           (testing "state does not match"
-            (let [request {:params {:code "special-case-code"}
-                           :state "wrong-token"
+            (let [request {:params {:code "special-case-code"
+                                    :state "wrong-token"}
                            :session {:oidc-csrf-token token}}]
               (is (thrown-with-msg? IllegalArgumentException
                                     #"\{:original-csrf-token \"oidc-csrf-token-for-test\", :received-csrf-token \"wrong-token\"\}"
                                     (oidc/oidc-callback request)))))
 
           (testing "success"
-            (let [request {:params {:code "special-case-code"}
-                           :state token
+            (let [request {:params {:code "special-case-code"
+                                    :state token}
                            :session {:oidc-csrf-token token}}
                   response (oidc/oidc-callback request)]
               (is (= {:status 302

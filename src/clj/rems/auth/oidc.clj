@@ -132,7 +132,7 @@
 
 (defn maybe-check-csrf-token [request]
   (let [original-csrf-token (get-in request [:session :oidc-csrf-token])
-        received-csrf-token (:state request)]
+        received-csrf-token (get-in request [:params :state])]
     (cond
       (not= :csrf-token (:oidc-use-state env))
       nil ; nothing to check
