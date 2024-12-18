@@ -19,7 +19,7 @@
 
 (defn maybe-create-oidc-csrf-token []
   (case (get env :oidc-use-state)
-    :csrf-token (UUID/randomUUID)
+    :csrf-token (str (UUID/randomUUID))
 
     nil))
 
