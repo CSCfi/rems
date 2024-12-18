@@ -107,6 +107,10 @@
  :oidc-logout-redirect-url "/"
  ;; Should REMS POST to the revocation_endpoint received from OIDC metadata?
  :oidc-perform-revoke-on-logout true
+ ;; Should REMS use `state` parameter in the OIDC login.
+ ;; If set to `:csrf-token` then REMS will send the `state` parameter
+ ;; and check the return value in the callback. (default is not to send)
+ :oidc-use-state nil
 
  ;; Sending email.
  ;;

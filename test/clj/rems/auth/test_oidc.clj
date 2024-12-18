@@ -12,7 +12,8 @@
 (defn- with-special-setup [params f]
   (let [id-data (:id-data params)
         config (:config params)
-        user-info {:unrelated 42}]
+        user-info {:unrelated 42}
+        oidc-csrf-token (:oidc-csrf-token params)]
 
     (with-redefs [rems.config/env (merge (assoc rems.config/env
                                                 :oidc-userid-attributes [{:attribute "sub" :rename "elixirId"}
@@ -21,7 +22,9 @@
                                                 :public-url "http://special:3000/"
                                                 :oidc-client-id "special.client-id"
                                                 :oidc-client-secret "special.client-secret")
+                                         (when oidc-csrf-token {:oidc-use-state :csrf-token})
                                          config)
+                  rems.auth.oidc/maybe-create-oidc-csrf-token (constantly oidc-csrf-token)
                   rems.config/oidc-configuration {:token_endpoint "https://special.case/token"
                                                   :issuer "https://special.case/issuer"
                                                   :userinfo_endpoint "https://special.case/user-info"}
@@ -125,3 +128,57 @@
                 :body ""}
                response)
             "can't log in when an error happens")))))
+
+(deftest test-state
+  (let [token "oidc-csrf-token-for-test"]
+    (with-special-setup {:id-data {:sub "user" :name "User" :email "user@example.com"}
+                         :config {:oidc-use-state :csrf-token}
+                         :oidc-csrf-token token}
+      (fn []
+
+        (testing "state is sent to provider"
+          (let [request {}
+                response (oidc/oidc-login request)]
+
+            (is (= {:status 302
+                    :headers {"Location" (str "?response_type=code&client_id=special.client-id&redirect_uri=http://special:3000/oidc-callback&scope=openid profile email&state=" token)}
+                    :body ""
+                    :session {:oidc-csrf-token token}}
+                   response))))
+
+        (testing "state is checked in callback"
+
+          (testing "state is configured but not in session"
+            (let [request {:params {:code "special-case-code"
+                                    :state token}
+                           :session {}}]
+              (is (thrown-with-msg? IllegalArgumentException
+                                    #"\{:original-csrf-token nil\}"
+                                    (oidc/oidc-callback request)))))
+
+          (testing "state is not passed to callback"
+            (let [request {:params {:code "special-case-code"}
+                           :session {:oidc-csrf-token token}}]
+              (is (thrown-with-msg? IllegalArgumentException
+                                    #"\{:received-csrf-token nil\}"
+                                    (oidc/oidc-callback request)))))
+
+          (testing "state does not match"
+            (let [request {:params {:code "special-case-code"
+                                    :state "wrong-token"}
+                           :session {:oidc-csrf-token token}}]
+              (is (thrown-with-msg? IllegalArgumentException
+                                    #"\{:original-csrf-token \"oidc-csrf-token-for-test\", :received-csrf-token \"wrong-token\"\}"
+                                    (oidc/oidc-callback request)))))
+
+          (testing "success"
+            (let [request {:params {:code "special-case-code"
+                                    :state token}
+                           :session {:oidc-csrf-token token}}
+                  response (oidc/oidc-callback request)]
+              (is (= {:status 302
+                      :headers {"Location" "/redirect"}
+                      :body ""
+                      :session {:access-token "special.access-token"
+                                :identity {:userid "user" :name "User" :email "user@example.com"}}}
+                     response)))))))))

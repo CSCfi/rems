@@ -9,6 +9,7 @@ have notable changes.
 Changes since v2.38
 
 ### Additions
+- Use `:oidc-use-state` and value `:csrf-token`to configure REMS to send a CSRF token in `state` parameter to the login server and then check its value in the callback. (#3367)
 - REMS now includes user simulator, which is a developer tool intended for load testing REMS. The initial version is fairly basic and does not have a lot of features, but it can be used to test system performance and stability. See `docs/development.md` for more details.
 
 ### Changes

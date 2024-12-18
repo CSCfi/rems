@@ -134,6 +134,10 @@ Even though in security contexts using well known and tested implementations is 
 
 HTTP GET operations must not be used for any mutable operations in the future. Before, the strict cookie policy protected against this, but in the future the lax policy will allow cross site GET requests to be done with the session that the user already has on REMS. Our CORS should protect against data leaks with cross site GET requests.
 
+# Update 2024-12-13 `state` parameter
+
+It's now possible to configure REMS to pass and check a CSRF token into the IdP using the `state` parameter. This is a requirement in some cases.
+
 # Future considerations
 
 ## Single sign out
