@@ -4,8 +4,8 @@
             [clojure.test :refer :all]
             [clojure.tools.logging :as log]
             [compojure.core :refer [GET defroutes]]
-            [medley.core :refer [find-first]]
-            [rems.common.util :refer [getx]]
+            [medley.core :refer [dissoc-in find-first]]
+            [rems.common.util :refer [andstr getx]]
             [rems.config :refer [env oidc-configuration]]
             [rems.db.user-mappings]
             [rems.ga4gh :as ga4gh]
@@ -14,16 +14,23 @@
             [rems.plugins :as plugins]
             [rems.service.users]
             [ring.util.response :refer [redirect]])
-  (:import [java.time Instant]))
+  (:import [java.util UUID]
+           [java.time Instant]))
 
-(defn login-url []
+(defn maybe-create-oidc-csrf-token []
+  (case (get env :oidc-use-state)
+    :csrf-token (str (UUID/randomUUID))
+
+    nil))
+
+(defn login-url [{:keys [oidc-csrf-token]}]
   (str (:authorization_endpoint oidc-configuration)
        "?response_type=code"
        "&client_id=" (getx env :oidc-client-id)
        "&redirect_uri=" (getx env :public-url) "oidc-callback"
        "&scope=" (getx env :oidc-scopes)
        (getx env :oidc-additional-authorization-parameters)
-       #_"&state=STATE")) ; FIXME We could use the state for intelligent redirect. Also check if we need it for CSRF protection as Auth0 docs say.
+       (andstr "&state=" oidc-csrf-token)))
 
 (defn logout-url []
   "/oidc-logout")
@@ -123,6 +130,23 @@
     (save-user-mappings! user-data (:userid user))
     user))
 
+(defn maybe-check-csrf-token [request]
+  (let [original-csrf-token (get-in request [:session :oidc-csrf-token])
+        received-csrf-token (get-in request [:params :state])]
+    (cond
+      (not= :csrf-token (:oidc-use-state env))
+      nil ; nothing to check
+
+      (nil? original-csrf-token)
+      (throw (IllegalArgumentException. (pr-str {:original-csrf-token original-csrf-token})))
+
+      (nil? received-csrf-token)
+      (throw (IllegalArgumentException. (pr-str {:received-csrf-token received-csrf-token})))
+
+      (not= original-csrf-token received-csrf-token)
+      (throw (IllegalArgumentException. (pr-str {:original-csrf-token original-csrf-token
+                                                 :received-csrf-token received-csrf-token}))))))
+
 (defn oidc-callback [request]
   (let [error (get-in request [:params :error])
         code (get-in request [:params :code])]
@@ -135,7 +159,9 @@
               (redirect "/error?key=:t.login.errors/unknown"))
 
           :else
-          (let [response (-> (http/post (:token_endpoint oidc-configuration)
+          (let [_ (maybe-check-csrf-token request)
+
+                response (-> (http/post (:token_endpoint oidc-configuration)
                                         ;; NOTE Some IdPs don't support client id and secret in form params,
                                         ;;      and require us to use HTTP basic auth
                                         {:basic-auth [(str (getx env :oidc-client-id))
@@ -177,6 +203,7 @@
 
             (-> (redirect "/redirect")
                 (assoc :session (:session request))
+                (dissoc-in [:session :oidc-csrf-token]) ; cleanup, not used again
                 (assoc-in [:session :access-token] access-token)
                 (assoc-in [:session :identity] user))))))
 
@@ -198,21 +225,29 @@
           (when-not (= 200 (:status response))
             (log/error "received HTTP status" (:status response) "from" endpoint)))))))
 
+(defn oidc-login [request]
+  (let [oidc-csrf-token (maybe-create-oidc-csrf-token)]
+    (-> (redirect (login-url {:oidc-csrf-token oidc-csrf-token}))
+        (update :session assoc :oidc-csrf-token oidc-csrf-token))))
+
+(defn oidc-logout [request]
+  (let [session (get request :session)
+        redirect-url (:oidc-logout-redirect-url env)]
+    (when (:log-authentication-details env)
+      (log/info "logging out" (:identity session)))
+
+    (when (:oidc-perform-revoke-in-logout env)
+      (oidc-revoke (:access-token session)))
+
+    (when (:log-authentication-details env)
+      (log/info "redirecting to" redirect-url))
+
+    (assoc (redirect redirect-url)
+           :session (dissoc session :identity :access-token))))
+
 (defroutes routes
-  (GET "/oidc-login" _req (redirect (login-url)))
-  (GET "/oidc-logout" req
-    (let [session (get req :session)
-          redirect-url (:oidc-logout-redirect-url env)]
-      (when (:log-authentication-details env)
-        (log/info "logging out" (:identity session)))
+  (GET "/oidc-login" req (oidc-login req))
 
-      (when (:oidc-perform-revoke-in-logout env)
-        (oidc-revoke (:access-token session)))
+  (GET "/oidc-logout" req (oidc-logout req))
 
-      (when (:log-authentication-details env)
-        (log/info "redirecting to" redirect-url))
-
-      (assoc (redirect redirect-url)
-             :session (dissoc session :identity :access-token))))
   (GET "/oidc-callback" req (oidc-callback req)))
-
