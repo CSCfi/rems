@@ -67,7 +67,8 @@
 (def ^:private created-permissions
   {:applicant (conj submittable-application-commands
                     :application.command/delete)
-   :member #{:application.command/accept-licenses
+   :member #{:application.command/save-draft
+             :application.command/accept-licenses
              :application.command/copy-as-new}
    :reporter #{:see-everything}
    :expirer #{:application.command/delete

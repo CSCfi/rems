@@ -19,7 +19,8 @@
             [rems.util :refer [getx-user-id]]
             [ring.util.http-response :refer :all]
             [schema.core :as s])
-  (:import java.io.ByteArrayInputStream))
+  (:import rems.InvalidRequestException
+           java.io.ByteArrayInputStream))
 
 ;; Response models
 
@@ -68,7 +69,29 @@
 (s/defschema Count
   s/Int)
 
-;; Api implementation
+(s/defschema ApplicationUpdatedResponse
+  {:status (s/enum :all-quiet :updated)
+   :application-id s/Int
+   :user-id s/Str
+   :client-id s/Uuid
+   (s/optional-key :clients) [{:client-id s/Uuid
+                               :user schema-base/UserWithAttributes
+                               (s/optional-key :form-id) schema-base/FormId
+                               (s/optional-key :field-id) schema-base/FieldId}]
+   (s/optional-key :full-reload) s/Bool
+   (s/optional-key :field-values) [{:form schema-base/FormId
+                                    :field schema-base/FieldId
+                                    :value schema-base/FieldValue}]
+   (s/optional-key :application/attachments) [schema/ApplicationAttachment]})
+
+(s/defschema ApplicationFocusRequest
+  {:client-id s/Uuid
+   :application-id s/Int
+   :form-id (s/maybe schema-base/FormId)
+   :field-id (s/maybe schema-base/FieldId)})
+
+(s/defschema ApplicationFocusResponse
+  {:success s/Bool})
 
 (defn- coerce-command-from-api [cmd]
   ;; TODO: schema could do these coercions for us
@@ -295,6 +318,28 @@
       (if-let [app (rems.db.applications/get-application application-id)]
         (ok app)
         (api-util/not-found-json-response)))
+
+    (GET "/:application-id/long-poll" []
+      :summary "Get application `application-id` changes via long polling."
+      :roles #{:logged-in}
+      :path-params [application-id :- (describe s/Int "application id")]
+      :query-params [{client-id :- (describe s/Uuid "client (tab) identity") nil}]
+      :responses {200 {:schema ApplicationUpdatedResponse}
+                  404 {:schema s/Str :description "Not found"}}
+      (if (some? client-id)
+        (ok (applications/long-poll client-id (getx-user-id) application-id))
+        (throw (InvalidRequestException. "invalid client-id"))))
+
+    (POST "/:application-id/focus" []
+      :summary "Notify which field is focused by a user."
+      :roles #{:logged-in}
+      :path-params [application-id :- (describe s/Int "application id")]
+      :body [request ApplicationFocusRequest]
+      :responses {200 {:schema ApplicationFocusResponse}
+                  404 {:schema s/Str :description "Not found"}}
+      (if (some? (:client-id request))
+        (ok (applications/application-focus (assoc request :user-id (getx-user-id))))
+        (throw (InvalidRequestException. "invalid client-id"))))
 
     (GET "/:application-id/attachments" []
       :summary "Get attachments for an application as a zip file"

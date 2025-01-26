@@ -34,8 +34,9 @@
             [rems.application-list :as application-list]
             [rems.administration.duo :refer [duo-field duo-info-field]]
             [rems.common.application-util :refer [accepted-licenses? can-see-everything? form-fields-editable? get-member-name is-handler? is-handling-user?]]
-            [rems.common.attachment-util :as attachment-util]
-            [rems.atoms :as atoms :refer [external-link file-download info-field readonly-checkbox document-title success-symbol make-empty-symbol]]
+            [rems.attachment]
+            [rems.atoms :as atoms :refer [document-title external-link file-download info-field make-empty-symbol readonly-checkbox success-symbol]]
+            [rems.common.atoms :refer [nbsp]]
             [rems.common.catalogue-util :refer [catalogue-item-more-info-url]]
             [rems.collapsible :as collapsible]
             [rems.common.form :as form]
@@ -54,61 +55,6 @@
             [rems.text :refer [localize-attachment localize-decision localize-event localized localize-state localize-processing-states localize-time localize-time-with-seconds text text-format]]
             [rems.user :as user]
             [rems.util :refer [navigate! fetch post! format-file-size]]))
-
-;;;; Helpers
-
-(defn reload! [application-id & [full-reload?]]
-  (rf/dispatch [::fetch-application application-id full-reload?]))
-
-(defn- blacklist-warning [application]
-  (let [resources-by-id (group-by :resource/ext-id (:application/resources application))
-        blacklist (:application/blacklist application)]
-    (when (seq blacklist)
-      [:div.alert.alert-danger
-       (text :t.form/alert-blacklisted-users)
-       (into [:ul]
-             (for [entry blacklist
-                   resource (get resources-by-id (get-in entry [:blacklist/resource :resource/ext-id]))]
-               [:li (get-member-name (:blacklist/user entry))
-                ": " (localized (:catalogue-item/title resource))]))])))
-
-(defn- format-validations [{:keys [fields label validations]}]
-  [:div label
-   (into [:ul]
-         (for [{:keys [type form-id field-id]} validations]
-           [:li (if-some [field (get-in fields [form-id field-id])]
-                  [:a {:href "#"
-                       :on-click (fn [event]
-                                   (.preventDefault event)
-                                   (focus/focus (case (:field/type field)
-                                                  ;; workaround for tables: there's no single input to focus
-                                                  :table (str "#container-" (fields/field-name field))
-                                                  :attachment (str "#upload-" (fields/field-name field))
-                                                  (fields/field-name field))))}
-                   (text-format type (localized (:field/title field)))]
-                  (text type))]))])
-
-(defn- validations [{:keys [application warnings errors]}]
-  (let [fields-index (index-by [:form/id :field/id]
-                               (for [form (:application/forms application)
-                                     field (:form/fields form)]
-                                 (assoc field :form/id (:form/id form))))]
-    [:<>
-     (when (seq errors)
-       [format-validations {:fields fields-index
-                            :label (text :t.actions.errors/validation-errors)
-                            :validations errors}])
-     (when (seq warnings)
-       [format-validations {:fields fields-index
-                            :label (text :t.actions.errors/validation-warnings)
-                            :validations warnings}])]))
-
-;;;; State
-
-(rf/reg-sub ::application-id (fn [db _] (::application-id db)))
-(rf/reg-sub ::application (fn [db [_ k]] (get-in db [::application (or k :data)])))
-(rf/reg-sub ::edit-application (fn [db _] (::edit-application db)))
-(rf/reg-sub ::readonly? :<- [::application] (comp not form-fields-editable?))
 
 (rf/reg-event-fx
  ::enter-application-page
@@ -146,6 +92,23 @@
   ::update-application-attachments
   (fn [db [_ attachments]]
     (assoc-in db [::application :data :application/attachments] attachments)))
+
+ (rf/reg-event-fx
+  ::long-poll
+  (fn [{:keys [db]} [_ client-id application-id]]
+    (fetch (str "/api/applications/" application-id "/long-poll?client-id=" client-id)
+           {:handler (fn [result]
+                       (rf/dispatch [::set-server-connection result])
+                       (when-some [full-reload (:full-reload result)]
+                         (reload! application-id full-reload))
+                       (when-some [field-values (seq (:field-values result))]
+                         (rf/dispatch [::update-edit-application field-values]))
+                       (when-some [attachments (:application/attachments result)]
+                         (rf/dispatch [::update-application-attachments attachments]))
+                       (.setTimeout js/window #(rf/dispatch [::long-poll client-id application-id]) 100))
+            :error-handler #(rf/dispatch [::set-server-connection {:status :error
+                                                                   :error %}])})
+    {:db (assoc-in db [::server-connection :status] :fetching)}))
 
  (rf/reg-event-fx
   ::set-application-focus
@@ -220,32 +183,32 @@
          :when (form/field-visible? field (get field-values form-id))]
      {:form form-id :field field-id :value (get-in field-values [form-id field-id])}))
 
- (defn- handle-validations!
-   [{:keys [errors warnings success] :as _response}
-    description
-    application
-    & [{:keys [on-success default-success? focus? warn-about-missing?]
-        :or {default-success? true
-             focus? true
-             warn-about-missing? true}}]]
-   (let [warnings (if warn-about-missing? warnings (remove (comp #{:t.form.validation/required} :type) warnings))]
-     (flash-message/clear-message! :top-validation)
-     (flash-message/clear-message! :actions)
-     (rf/dispatch [::set-validations errors warnings])
-     (if-not success
-       (flash-message/show-default-error! :top-validation
-                                          description
-                                          [validations {:application application
-                                                        :errors errors}])
-       (do
-         (if (seq warnings)
-           (flash-message/show-default-warning! :top-validation
-                                                description
-                                                {:focus? focus?
-                                                 :content [[validations {:application application
-                                                                         :warnings warnings}]]})
-           (when default-success? (flash-message/show-default-success! :actions description)))
-         (when on-success (on-success))))))
+(defn- handle-validations!
+  [{:keys [errors warnings success] :as _response}
+   description
+   application
+   & [{:keys [on-success default-success? focus? warn-about-missing?]
+       :or {default-success? true
+            focus? true
+            warn-about-missing? true}}]]
+  (let [warnings (if warn-about-missing? warnings (remove (comp #{:t.form.validation/required} :type) warnings))]
+    (flash-message/clear-message! :top-validation)
+    (flash-message/clear-message! :actions)
+    (rf/dispatch [::set-validations errors warnings])
+    (if-not success
+      (flash-message/show-default-error! :top-validation
+                                         description
+                                         [validations {:application application
+                                                       :errors errors}])
+      (do
+        (if (seq warnings)
+          (flash-message/show-default-warning! :top-validation
+                                               description
+                                               {:focus? focus?
+                                                :content [[validations {:application application
+                                                                        :warnings warnings}]]})
+          (when default-success? (flash-message/show-default-success! :actions description)))
+        (when on-success (on-success))))))
 
  (defn- duo-codes-to-api [duo-codes]
    (for [duo duo-codes]
@@ -269,6 +232,24 @@
                        :field-values (field-values-to-api application (:field-values edit-application))
                        :duo-codes (duo-codes-to-api (vals (:duo-codes edit-application)))}
               :handler (fn [response]
+<<<<<<< Updated upstream
+                         ;; no need to check (:success response) - the API can't fail at the moment
+                         ;; no race condition here: events are handled in a FIFO manner
+                         (rf/dispatch [::set-field-value form-id field-id (form/unparse-attachment-ids
+                                                                           (conj current-attachments (:id response)))])
+                         (if (:enable-autosave @rems.globals/config)
+                           (do
+                             (always-on-change (:id response))
+                             (rf/dispatch [::set-attachment-status form-id field-id :success]))
+                           (rf/dispatch [::save-application description #(rf/dispatch [::set-attachment-status form-id field-id :success])])))
+              :error-handler (fn [response]
+                               (rf/dispatch [::set-attachment-status form-id field-id :error])
+                               (-> (rems.attachment/upload-error-handler :actions description
+                                                                         {:file-name file-name
+                                                                          :file-size file-size})
+                                   (apply [response])))})))
+  {})
+=======
                          (handle-validations! (dissoc response :errors) ; only use the warnings in this step
                                               description application {:default-success? false
                                                                        :warn-about-missing? false})) ; don't complain about unfilled required fields
@@ -299,6 +280,7 @@
     {:db (-> db
              (assoc-in [::edit-application :validation :errors] nil)
              (assoc-in [::edit-application :validation :warnings] nil))}))
+>>>>>>> Stashed changes
 
  (rf/reg-event-db ::set-autosaving (fn [db [_ value]] (assoc db ::autosaving value)))
  (rf/reg-sub ::autosaving (fn [db _] (::autosaving db)))
@@ -478,6 +460,21 @@
 
 ;;;; UI components
 
+<<<<<<< Updated upstream
+(defn- pdf-button [app-id]
+  (when app-id
+    [:a.btn.btn-secondary
+     {:href (str "/api/applications/" app-id "/pdf")
+      :target :_blank}
+     [external-link] " " (text :t.actions/download-pdf)]))
+
+(defn- attachment-zip-button [application]
+  (when-not (empty? (:application/attachments application))
+    [:a.btn.btn-secondary
+     {:href (str "/api/applications/" (:application/id application) "/attachments?all=false")
+      :target :_blank}
+     [file-download] nbsp (text :t.form/attachments-as-zip)]))
+=======
  (defn- pdf-button [app-id]
    (when app-id
      [:a.btn.btn-secondary
@@ -491,6 +488,7 @@
       {:href (str "/api/applications/" (:application/id application) "/attachments?all=false")
        :target :_blank}
       [file-download] " " (text :t.form/attachments-as-zip)]))
+>>>>>>> Stashed changes
 
  (defn- link-license [license]
    (let [title (localized (:license/title license))
@@ -528,11 +526,21 @@
       :attachment [attachment-license application license]
       [fields/unsupported-field license])])
 
+<<<<<<< Updated upstream
+(defn- attachment-license [application license]
+  (let [title (localized (:license/title license))
+        link (str "/applications/" (:application/id application)
+                  "/license-attachment/" (:license/id license)
+                  "/" (name @rems.config/current-language))]
+    [:a.license-title {:href link :target :_blank}
+     [file-download] nbsp title]))
+=======
  (defn- save-button []
    [perform-action-button {:id "save"
                            :text (text :t.form/save)
                            :loading? @(rf/subscribe [::autosaving])
                            :on-click #(rf/dispatch [::save-application [text :t.form/save]])}])
+>>>>>>> Stashed changes
 
  (defn- submit-button []
    [perform-action-button {:id "submit"

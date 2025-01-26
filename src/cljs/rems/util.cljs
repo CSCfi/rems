@@ -66,6 +66,7 @@
 
 (defn- wrap-default-handlers [opts]
   (-> opts
+      (update :handler (fn [handler] (or handler (fn [_response]))))
       (update :error-handler wrap-default-error-handler opts)
       (update :finally wrap-default-finally-handler opts)))
 

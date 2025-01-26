@@ -135,6 +135,7 @@
   (not (or (contains? #{"/api/keepalive"
                         "/robots.txt"}
                       path)
+           (str/includes? path "/long-poll")
            (str/starts-with? path "/assets/")
            (str/starts-with? path "/font/")
            (str/starts-with? path "/js/")
@@ -146,7 +147,7 @@
            (str/ends-with? path ".woff2"))))
 
 (defn- read-only? [request]
-  (not (contains? #{:put :post} (:request-method request))))
+  (not (contains? #{:put :post :delete} (:request-method request))))
 
 ;; This should be run outside transaction-middleware since we want to
 ;; write even on GET queries. We're only running one insert statement
