@@ -76,5 +76,7 @@
                         (pr-str {:cmd cmd2 :result result :parent-cmd cmd}))
                 (log/error "process manager command failed"
                            (pr-str {:cmd cmd2 :result result :parent-cmd cmd}))))))
+
+        (applications/notify-update {:application app :command cmd :result result})
         (assoc result :events events-from-db)) ; replace with events with id
       result)))

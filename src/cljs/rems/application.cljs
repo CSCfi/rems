@@ -34,9 +34,8 @@
             [rems.application-list :as application-list]
             [rems.administration.duo :refer [duo-field duo-info-field]]
             [rems.common.application-util :refer [accepted-licenses? can-see-everything? form-fields-editable? get-member-name is-handler? is-handling-user?]]
-            [rems.attachment]
-            [rems.atoms :as atoms :refer [document-title external-link file-download info-field make-empty-symbol readonly-checkbox success-symbol]]
-            [rems.common.atoms :refer [nbsp]]
+            [rems.common.attachment-util :as attachment-util]
+            [rems.atoms :as atoms :refer [external-link file-download info-field readonly-checkbox document-title success-symbol make-empty-symbol]]
             [rems.common.catalogue-util :refer [catalogue-item-more-info-url]]
             [rems.collapsible :as collapsible]
             [rems.common.form :as form]
@@ -114,128 +113,123 @@
 (rf/reg-event-fx
  ::enter-application-page
  (fn [{:keys [db]} [_ id]]
-   {:db (-> db
-            (assoc ::application-id (parse-int id))
-            (dissoc ::application
-                    ::edit-application
-                    ::duo-codes
-                    ::autosaving))
-    :dispatch-n (if (:enable-duo @rems.globals/config)
-                  [[::fetch-application id true] [::duo-codes]]
-                  [[::fetch-application id true]])}))
-
-(rf/reg-event-fx
- ::fetch-application
- (fn [{:keys [db]} [_ id full-reload?]]
-   (fetch (str "/api/applications/" id)
-          {:handler #(rf/dispatch [::fetch-application-result % full-reload?])
-           :error-handler (comp #(rf/dispatch [::fetch-application-result nil full-reload?])
-                                (flash-message/default-error-handler :top [text :t.applications/application]))})
-   {:db (update db ::application fetcher/started)}))
-
-(defn- index-duo-restrictions [restrictions]
-  (->> restrictions
-       (build-index {:keys [:type]
-                     :value-fn (fn [restriction]
-                                 (case (:type restriction)
-                                   :mondo (:values restriction)
-                                   (->> (:values restriction)
-                                        first
-                                        :value)))})))
-
-(defn- initialize-edit-application [db]
-  (let [application (get-in db [::application :data])
-        field-values (for [form (:application/forms application)
-                           field (:form/fields form)]
-                       {:form (:form/id form)
-                        :field (:field/id field)
-                        :value (:field/value field)})
-        field-values-by-form-field (->> field-values
-                                        (build-index {:keys [:form :field] :value-fn :value}))
-        duo-codes (->> (get-in application [:application/duo :duo/codes])
-                       (map #(update-existing % :restrictions index-duo-restrictions))
-                       (build-index {:keys [:id]}))
-        any-field-answer? (some (fn [{:keys [value]}]
-                                  (cond (string? value) (not (str/blank? value))
-                                        (coll? value) (seq value)
-                                        :else (some? value)))
-                                field-values)
-        any-duo-answer? (seq duo-codes)]
-    (when (and (form-fields-editable? application)
-               (or any-field-answer? any-duo-answer?))
-      (rf/dispatch [::validate-application]))
-    (assoc db ::edit-application {:duo-codes duo-codes
-                                  :field-values field-values-by-form-field
-                                  :show-diff {}
-                                  :validation nil
-                                  :attachment-status {}})))
-
-(rf/reg-event-fx
- ::fetch-application-result
- (fn [{:keys [db]} [_ application full-reload?]]
-   (let [initial-fetch? (not (:initialized? (::application db)))]
+   (let [client-id (random-uuid)]
      {:db (-> db
-              (update ::application fetcher/finished application)
-              (cond-> (or initial-fetch? full-reload?) (initialize-edit-application)))})))
+              (assoc ::application-id (parse-int id)
+                     ::client-id client-id)
+              (dissoc ::application
+                      ::edit-application
+                      ::duo-codes
+                      ::autosaving))
+      :dispatch-n (vec (remove nil?
+                               [[::fetch-application id true]
+                                (when (:enable-duo @rems.globals/config) [::duo-codes])
+                                [::long-poll client-id id]]))})))
 
-(rf/reg-event-db
- ::set-validations
- (fn [db [_ errors warnings]]
-   (-> db
-       (assoc-in [::edit-application :validation :errors] errors)
-       (assoc-in [::edit-application :validation :warnings] warnings))))
+ (rf/reg-event-fx
+  ::fetch-application
+  (fn [{:keys [db]} [_ id full-reload?]]
+    (fetch (str "/api/applications/" id)
+           {:handler #(rf/dispatch [::fetch-application-result % full-reload?])
+            :error-handler (comp #(rf/dispatch [::fetch-application-result nil full-reload?])
+                                 (flash-message/default-error-handler :top [text :t.applications/application]))})
+    {:db (update db ::application fetcher/started)}))
 
-(defn- field-values-to-api [application field-values]
-  (for [form (:application/forms application)
-        :let [form-id (:form/id form)]
-        field (:form/fields form)
-        :let [field-id (:field/id field)]
-        :when (form/field-visible? field (get field-values form-id))]
-    {:form form-id :field field-id :value (get-in field-values [form-id field-id])}))
+ (rf/reg-event-db
+  ::update-edit-application
+  (fn [db [_ field-values]]
+    (let [field-values-by-form-field (->> field-values
+                                          (build-index {:keys [:form :field] :value-fn :value}))]
+      (assoc-in db [::edit-application :field-values] field-values-by-form-field))))
 
-(defn- handle-validations!
-  [{:keys [errors warnings success] :as _response}
-   description
-   application
-   & [{:keys [on-success default-success? focus? warn-about-missing?]
-       :or {default-success? true
-            focus? true
-            warn-about-missing? true}}]]
-  (let [warnings (if warn-about-missing? warnings (remove (comp #{:t.form.validation/required} :type) warnings))]
-    (flash-message/clear-message! :top-validation)
-    (flash-message/clear-message! :actions)
-    (rf/dispatch [::set-validations errors warnings])
-    (if-not success
-      (flash-message/show-default-error! :top-validation
-                                         description
-                                         [validations {:application application
-                                                       :errors errors}])
-      (do
-        (if (seq warnings)
-          (flash-message/show-default-warning! :top-validation
-                                               description
-                                               {:focus? focus?
-                                                :content [[validations {:application application
-                                                                        :warnings warnings}]]})
-          (when default-success? (flash-message/show-default-success! :actions description)))
-        (when on-success (on-success))))))
+ (rf/reg-event-db
+  ::update-application-attachments
+  (fn [db [_ attachments]]
+    (assoc-in db [::application :data :application/attachments] attachments)))
 
-(defn- duo-codes-to-api [duo-codes]
-  (for [duo duo-codes]
-    {:id (:id duo)
-     :restrictions (for [restriction (:restrictions duo)
-                         :let [values (val restriction)]]
-                     {:type (key restriction)
-                      :values (case (key restriction)
-                                :mondo (map #(select-keys % [:id]) values)
-                                (if (some? values) [{:value values}] []))})}))
+ (rf/reg-event-fx
+  ::set-application-focus
+  (fn [{:keys [db]} [_ client-id application-id form-id field-id]]
+    (post! (str "/api/applications/" application-id "/focus")
+           {:params {:client-id client-id
+                     :application-id application-id
+                     :form-id form-id
+                     :field-id field-id}
+            :error-handler #(rf/dispatch [::set-server-connection {:status :error
+                                                                   :error %}])})
+    {:db (assoc-in db [::server-connection :status] :fetching)}))
 
-(rf/reg-event-fx
- ::validate-application
- (fn [{:keys [db]} [_]]
-   (let [application (:data (::application db))
-         edit-application (::edit-application db)
-         description [text :t.applications/continue-existing-application]]
+ (defn- index-duo-restrictions [restrictions]
+   (->> restrictions
+        (build-index {:keys [:type]
+                      :value-fn (fn [restriction]
+                                  (case (:type restriction)
+                                    :mondo (:values restriction)
+                                    (->> (:values restriction)
+                                         first
+                                         :value)))})))
+
+ (defn- initialize-edit-application [db]
+   (let [application (get-in db [::application :data])
+         field-values (for [form (:application/forms application)
+                            field (:form/fields form)]
+                        {:form (:form/id form)
+                         :field (:field/id field)
+                         :value (:field/value field)})
+         field-values-by-form-field (->> field-values
+                                         (build-index {:keys [:form :field] :value-fn :value}))
+         duo-codes (->> (get-in application [:application/duo :duo/codes])
+                        (map #(update-existing % :restrictions index-duo-restrictions))
+                        (build-index {:keys [:id]}))
+         any-field-answer? (some (fn [{:keys [value]}]
+                                   (cond (string? value) (not (str/blank? value))
+                                         (coll? value) (seq value)
+                                         :else (some? value)))
+                                 field-values)
+         any-duo-answer? (seq duo-codes)]
+     (when (and (form-fields-editable? application)
+                (or any-field-answer? any-duo-answer?))
+       (rf/dispatch [::validate-application]))
+     (assoc db ::edit-application {:duo-codes duo-codes
+                                   :field-values field-values-by-form-field
+                                   :show-diff {}
+                                   :validation nil
+                                   :attachment-status {}})))
+
+
+ (rf/reg-event-fx
+  ::fetch-application-result
+  (fn [{:keys [db]} [_ application full-reload?]]
+    (let [initial-fetch? (not (:initialized? (::application db)))]
+      {:db (-> db
+               (update ::application fetcher/finished application)
+               (cond-> (or initial-fetch? full-reload?) (initialize-edit-application)))})))
+
+ (rf/reg-event-db
+  ::set-validations
+  (fn [db [_ errors warnings]]
+    (-> db
+        (assoc-in [::edit-application :validation :errors] errors)
+        (assoc-in [::edit-application :validation :warnings] warnings))))
+
+ (defn- field-values-to-api [application field-values]
+   (for [form (:application/forms application)
+         :let [form-id (:form/id form)]
+         field (:form/fields form)
+         :let [field-id (:field/id field)]
+         :when (form/field-visible? field (get field-values form-id))]
+     {:form form-id :field field-id :value (get-in field-values [form-id field-id])}))
+
+ (defn- handle-validations!
+   [{:keys [errors warnings success] :as _response}
+    description
+    application
+    & [{:keys [on-success default-success? focus? warn-about-missing?]
+        :or {default-success? true
+             focus? true
+             warn-about-missing? true}}]]
+   (let [warnings (if warn-about-missing? warnings (remove (comp #{:t.form.validation/required} :type) warnings))]
+     (flash-message/clear-message! :top-validation)
      (flash-message/clear-message! :actions)
      (post! "/api/applications/validate"
             {:params {:application-id (:application/id application)
@@ -274,7 +268,6 @@
             (assoc-in [::edit-application :validation :warnings] nil))}))
 
 (rf/reg-event-db ::set-autosaving (fn [db [_ value]] (assoc db ::autosaving value)))
-
 (rf/reg-sub ::autosaving (fn [db _] (::autosaving db)))
 
 (rf/reg-event-fx
@@ -289,20 +282,12 @@
                     edit-application
                     (fn [response]
                       (rf/dispatch [::fetch-application (:application/id application) false])
-                      (handle-validations! response
-                                           description
-                                           application
-                                           {:on-success
-                                            #(do (rf/dispatch [::set-autosaving false])
-                                                 (flash-message/show-quiet-success! :actions
-                                                                                    [text :t.form/autosave-confirmed]
-                                                                                    {:content [[text-format
-                                                                                                :t.form/last-save
-                                                                                                (localize-time-with-seconds (time-core/now))]]}))
-                                            :default-success? false
-                                            :focus? false
-                                            :warn-about-missing? false}))
-                    {:error-handler (fn [_err]
+                      (handle-validations! response description application {:on-success #(do (rf/dispatch [::set-autosaving false])
+                                                                                              (flash-message/show-quiet-success! :actions [text :t.form/autosave-confirmed] {:content [[text-format :t.form/last-save (localize-time-with-seconds (time-core/now))]]}))
+                                                                             :default-success? false
+                                                                             :focus? false
+                                                                             :warn-about-missing? false}))
+                    {:error-handler (fn [err]
                                       (rf/dispatch [::set-autosaving false]))})
        {:db (-> db
                 (assoc ::autosaving true)
@@ -327,266 +312,395 @@
                                          (handle-validations!
                                           response
                                           description
-                                          application
-                                          {:on-success (fn [] (rf/dispatch [::fetch-application (:application/id application)]))}))
-                              :error-handler (flash-message/default-error-handler :actions description)})))))
-   {:db (-> db
-            (assoc-in [::edit-application :validation :errors] nil)
-            (assoc-in [::edit-application :validation :warnings] nil))}))
+                                          [validations {:application application
+                                                        :errors errors}])
+       (do
+         (if (seq warnings)
+           (flash-message/show-default-warning! :top-validation
+                                                description
+                                                {:focus? focus?
+                                                 :content [[validations {:application application
+                                                                         :warnings warnings}]]})
+           (when default-success? (flash-message/show-default-success! :actions description)))
+         (when on-success (on-success))))))
 
-(rf/reg-event-fx
- ::copy-as-new-application
- (fn [{:keys [db]} _]
-   (let [application-id (get-in db [::application :data :application/id])
-         description [text :t.form/copy-as-new]]
-     (post! "/api/applications/copy-as-new"
-            {:params {:application-id application-id}
-             :handler (flash-message/default-success-handler
-                       :top ; the message will be shown on the new application's page
-                       description
-                       #(navigate! (str "/application/" (:application-id %))))
-             :error-handler (flash-message/default-error-handler :actions description)}))
-   {}))
+ (defn- duo-codes-to-api [duo-codes]
+   (for [duo duo-codes]
+     {:id (:id duo)
+      :restrictions (for [restriction (:restrictions duo)
+                          :let [values (val restriction)]]
+                      {:type (key restriction)
+                       :values (case (key restriction)
+                                 :mondo (map #(select-keys % [:id]) values)
+                                 (if (some? values) [{:value values}] []))})}))
 
-(defn- clear-message []
-  (flash-message/clear-message! :actions-form-flash))
-
-(def ^:private rate-limited-clear-message
-  (rateLimit clear-message 1000))
-
-(defn- notify-activity []
-  (rf/dispatch [:rems.application/autosave-application]))
-
-(def ^:private debounced-notify-activity
-  (debounce notify-activity 1000))
-
-(defn always-on-change
-  "Triggers autosave related functions.
-
-  Should be called always when something is changed in the application, that doesn't explicitly also save.
-  For example, add member internally also \"saves\" the state, but changing a text field value doesn't."
-  [event-value]
-  (rate-limited-clear-message) ; clear status as soon as possible
-  (debounced-notify-activity) ; try autosave only every second or so
-  event-value)
-
-(defn- save-attachment [{:keys [db]} [_ form-id field-id file]]
-  (let [application-id (get-in db [::application :data :application/id])
-        current-attachments (form/parse-attachment-ids (get-in db [::edit-application :field-values form-id field-id]))
-        description [text :t.form/upload]
-        file-size (.. file (get "file") -size)
-        file-name (.. file (get "file") -name)]
-    (rf/dispatch [::set-attachment-status form-id field-id :pending])
-    (if (some-> (:attachment-max-size @rems.globals/config)
-                (< file-size))
-      (do
-        (rf/dispatch [::set-attachment-status form-id field-id :error])
-        (flash-message/show-default-error! :actions description
-                                           [:div
-                                            [:p [text :t.form/too-large-attachment]]
-                                            [:p (str file-name " " (format-file-size file-size))]
-                                            [:p [text-format :t.form/attachment-max-size (format-file-size (:attachment-max-size @rems.globals/config))]]]))
-      (post! "/api/applications/add-attachment"
-             {:url-params {:application-id application-id}
-              :body file
-              ;; force saving a draft when you upload an attachment.
-              ;; this ensures that the attachment is not left
-              ;; dangling (with no references to it)
+ (rf/reg-event-fx
+  ::validate-application
+  (fn [{:keys [db]} [_]]
+    (let [application (get-in db [::application :data])
+          edit-application (::edit-application db)
+          description [text :t.applications/continue-existing-application]]
+      (flash-message/clear-message! :actions)
+      (post! "/api/applications/validate"
+             {:params {:application-id (:application/id application)
+                       :field-values (field-values-to-api application (:field-values edit-application))
+                       :duo-codes (duo-codes-to-api (vals (:duo-codes edit-application)))}
               :handler (fn [response]
-                         ;; no need to check (:success response) - the API can't fail at the moment
-                         ;; no race condition here: events are handled in a FIFO manner
-                         (rf/dispatch [::set-field-value form-id field-id (form/unparse-attachment-ids
-                                                                           (conj current-attachments (:id response)))])
-                         (if (:enable-autosave @rems.globals/config)
-                           (do
-                             (always-on-change (:id response))
-                             (rf/dispatch [::set-attachment-status form-id field-id :success]))
-                           (rf/dispatch [::save-application description #(rf/dispatch [::set-attachment-status form-id field-id :success])])))
-              :error-handler (fn [response]
-                               (rf/dispatch [::set-attachment-status form-id field-id :error])
-                               (-> (rems.attachment/upload-error-handler :actions description
-                                                                         {:file-name file-name
-                                                                          :file-size file-size})
-                                   (apply [response])))})))
-  {})
+                         (handle-validations! (dissoc response :errors) ; only use the warnings in this step
+                                              description application {:default-success? false
+                                                                       :warn-about-missing? false})) ; don't complain about unfilled required fields
+              :error-handler (flash-message/default-error-handler :actions description)})
+      {})))
 
-(rf/reg-event-fx ::save-attachment save-attachment)
+ (defn- save-draft! [description application edit-application handler & [{:keys [error-handler]}]]
+   (flash-message/clear-message! :actions)
+   (post! "/api/applications/save-draft"
+          {:params {:application-id (:application/id application)
+                    :field-values (field-values-to-api application (:field-values edit-application))
+                    :duo-codes (duo-codes-to-api (vals (:duo-codes edit-application)))}
+           :handler handler
+           :error-handler (or error-handler
+                              (flash-message/default-error-handler :actions description))}))
 
-(rf/reg-event-fx
- ::remove-attachment
- (fn [{:keys [db]} [_ form-id field-id attachment-id]]
-   (always-on-change attachment-id)
-   {:db (update-in db [::edit-application :field-values form-id field-id]
-                   (comp form/unparse-attachment-ids
-                         (partial remove #{attachment-id})
-                         form/parse-attachment-ids))}))
+ (rf/reg-event-fx
+  ::save-application
+  (fn [{:keys [db]} [_ description on-success]]
+    (let [application (get-in db [::application :data])
+          edit-application (::edit-application db)]
+      (save-draft! description
+                   application
+                   edit-application
+                   (fn [response]
+                     (rf/dispatch [::fetch-application (:application/id application)])
+                     (handle-validations! response description application {:on-success on-success}))))
+    {:db (-> db
+             (assoc-in [::edit-application :validation :errors] nil)
+             (assoc-in [::edit-application :validation :warnings] nil))}))
 
-(rf/reg-event-db
- ::set-field-value
- (fn [db [_ form-id field-id value]]
-   (assoc-in db [::edit-application :field-values form-id field-id] value)))
+ (rf/reg-event-db ::set-autosaving (fn [db [_ value]] (assoc db ::autosaving value)))
+ (rf/reg-sub ::autosaving (fn [db _] (::autosaving db)))
 
-(rf/reg-event-db
- ::set-attachment-status
- (fn [db [_ form-id field-id value]]
-   (assoc-in db [::edit-application :attachment-status form-id field-id] value)))
+ (rf/reg-event-fx
+  ::autosave-application
+  (fn [{:keys [db]} [_]]
+    (if (:enable-autosave @rems.globals/config)
+      (let [application (-> db ::application :data)
+            edit-application (::edit-application db)
+            description [text :t.form/autosave]]
+        (save-draft! description
+                     application
+                     edit-application
+                     (fn [response]
+                       (rf/dispatch [::fetch-application (:application/id application) false])
+                       (handle-validations! response description application {:on-success #(do (rf/dispatch [::set-autosaving false])
+                                                                                               (flash-message/show-quiet-success! :actions [text :t.form/autosave-confirmed] {:content [[text-format :t.form/last-save (localize-time-with-seconds (time-core/now))]]}))
+                                                                              :default-success? false
+                                                                              :focus? false
+                                                                              :warn-about-missing? false}))
+                     {:error-handler (fn [err]
+                                       (rf/dispatch [::set-autosaving false]))})
+        {:db (-> db
+                 (assoc ::autosaving true)
+                 (assoc-in [::edit-application :validation :errors] nil)
+                 (assoc-in [::edit-application :validation :warnings] nil))})
+      {})))
 
-(rf/reg-event-db
- ::toggle-diff
- (fn [db [_ form-id field-id]]
-   (update-in db [::edit-application :show-diff form-id field-id] not)))
+ (rf/reg-event-fx
+  ::submit-application
+  (fn [{:keys [db]} [_ description]]
+    (let [application (get-in db [::application :data])
+          edit-application (::edit-application db)]
+      (save-draft! description
+                   application
+                   edit-application
+                   (fn [response] ; because warnings are treated as errors in submit, skip validation handling here
+                     (if-not (:success response)
+                       (handle-validations! response description application)
+                       (post! "/api/applications/submit"
+                              {:params {:application-id (:application/id application)}
+                               :handler (fn [response]
+                                          (handle-validations!
+                                           response
+                                           description
+                                           application
+                                           {:on-success (fn [] (rf/dispatch [::fetch-application (:application/id application)]))}))
+                               :error-handler (flash-message/default-error-handler :actions description)})))))
+    {:db (-> db
+             (assoc-in [::edit-application :validation :errors] nil)
+             (assoc-in [::edit-application :validation :warnings] nil))}))
 
-(rf/reg-event-db
- ::set-duo-codes
- (fn [db [_ duos]]
-   (let [existing-codes (-> db ::edit-application :duo-codes)
-         duos (for [duo duos]
-                (update duo :restrictions #(build-index {:keys [:type] :value-fn :values} %)))]
-     (-> db
-         (assoc-in [::edit-application :duo-codes]
-                   (->> duos
-                        (map #(get existing-codes (:id %) %))
-                        (build-index {:keys [:id]})))))))
+ (rf/reg-event-fx
+  ::copy-as-new-application
+  (fn [{:keys [db]} _]
+    (let [application-id (get-in db [::application :data :application/id])
+          description [text :t.form/copy-as-new]]
+      (post! "/api/applications/copy-as-new"
+             {:params {:application-id application-id}
+              :handler (flash-message/default-success-handler
+                        :top ; the message will be shown on the new application's page
+                        description
+                        #(navigate! (str "/application/" (:application-id %))))
+              :error-handler (flash-message/default-error-handler :actions description)}))
+    {}))
 
-(fetcher/reg-fetcher ::previous-applications "/api/applications")
-(fetcher/reg-fetcher ::duo-codes "/api/resources/duo-codes")
 
-(rf/reg-sub
- ::previous-applications-except-current
- (fn [& _]
-   [(rf/subscribe [::application-id])
-    (rf/subscribe [::previous-applications])
-    (rf/subscribe [::previous-applications :error])
-    (rf/subscribe [::previous-applications :initialized?])
-    (rf/subscribe [::previous-applications :fetching?])
-    (rf/subscribe [::previous-applications :searching?])])
- (fn [[application-id data error initialized? fetching? searching?]
-      [_id key]]
-   (case key
-     :error error
-     :initialized? initialized?
-     :fetching? fetching?
-     :searching? searching?
-     nil (filterv #(not= application-id (:application/id %)) data))))
+ (defn- save-attachment [{:keys [db]} [_ form-id field-id file]]
+   (let [application-id (get-in db [::application :data :application/id])
+         current-attachments (form/parse-attachment-ids (get-in db [::edit-application :field-values form-id field-id]))
+         description [text :t.form/upload]
+         file-size (.. file (get "file") -size)
+         file-name (.. file (get "file") -name)]
+     (rf/dispatch [::set-attachment-status form-id field-id :pending])
+     (if (some-> (:attachment-max-size @rems.globals/config)
+                 (< file-size))
+       (do
+         (rf/dispatch [::set-attachment-status form-id field-id :error])
+         (flash-message/show-default-error! :actions description
+                                            [:div
+                                             [:p [text :t.form/too-large-attachment]]
+                                             [:p (str file-name " " (format-file-size file-size))]
+                                             [:p [text-format :t.form/attachment-max-size (format-file-size (:attachment-max-size @rems.globals/config))]]]))
+       (post! "/api/applications/add-attachment"
+              {:url-params {:application-id application-id}
+               :body file
+               ;; force saving a draft when you upload an attachment.
+               ;; this ensures that the attachment is not left
+               ;; dangling (with no references to it)
+               :handler (fn [response]
+                          ;; no need to check (:success response) - the API can't fail at the moment
+                          ;; no race condition here: events are handled in a FIFO manner
+                          (rf/dispatch [::set-field-value form-id field-id (form/unparse-attachment-ids
+                                                                            (conj current-attachments (:id response)))])
+                          (if (:enable-autosave @rems.globals/config)
+                            (do
+                              (fields/always-on-change (:id response))
+                              (rf/dispatch [::set-attachment-status form-id field-id :success]))
+                            (rf/dispatch [::save-application description #(rf/dispatch [::set-attachment-status form-id field-id :success])])))
+               :error-handler (fn [response]
+                                (rf/dispatch [::set-attachment-status form-id field-id :error])
+                                (cond (= 413 (:status response))
+                                      (flash-message/show-default-error! :actions description
+                                                                         [:div
+                                                                          [:p [text :t.form/too-large-attachment]]
+                                                                          [:p (str file-name " " (format-file-size file-size))]
+                                                                          [:p [text-format :t.form/attachment-max-size (format-file-size (:attachment-max-size @rems.globals/config))]]])
+
+                                      (= 415 (:status response))
+                                      (flash-message/show-default-error! :actions description
+                                                                         [:div
+                                                                          [:p [text :t.form/invalid-attachment]]
+                                                                          [:p [text-format :t.form/upload-extensions attachment-util/allowed-extensions-string]]])
+
+                                      :else ((flash-message/default-error-handler :actions description) response)))})))
+   {})
+
+ (rf/reg-event-fx ::save-attachment save-attachment)
+
+ (rf/reg-event-fx
+  ::remove-attachment
+  (fn [{:keys [db]} [_ form-id field-id attachment-id]]
+    (fields/always-on-change attachment-id)
+    {:db (update-in db [::edit-application :field-values form-id field-id]
+                    (comp form/unparse-attachment-ids
+                          (partial remove #{attachment-id})
+                          form/parse-attachment-ids))}))
+
+ (rf/reg-event-db
+  ::set-field-value
+  (fn [db [_ form-id field-id value]]
+    (assoc-in db [::edit-application :field-values form-id field-id] value)))
+
+ (rf/reg-event-db
+  ::set-attachment-status
+  (fn [db [_ form-id field-id value]]
+    (assoc-in db [::edit-application :attachment-status form-id field-id] value)))
+
+ (rf/reg-event-db
+  ::toggle-diff
+  (fn [db [_ form-id field-id]]
+    (update-in db [::edit-application :show-diff form-id field-id] not)))
+
+ (rf/reg-event-db
+  ::set-duo-codes
+  (fn [db [_ duos]]
+    (let [existing-codes (-> db ::edit-application :duo-codes)
+          duos (for [duo duos]
+                 (update duo :restrictions #(build-index {:keys [:type] :value-fn :values} %)))]
+      (-> db
+          (assoc-in [::edit-application :duo-codes]
+                    (->> duos
+                         (map #(get existing-codes (:id %) %))
+                         (build-index {:keys [:id]})))))))
+
+ (fetcher/reg-fetcher ::previous-applications "/api/applications")
+ (fetcher/reg-fetcher ::duo-codes "/api/resources/duo-codes")
+
+ (rf/reg-sub
+  ::previous-applications-except-current
+  (fn [& _]
+    [(rf/subscribe [::application-id])
+     (rf/subscribe [::previous-applications])
+     (rf/subscribe [::previous-applications :error])
+     (rf/subscribe [::previous-applications :initialized?])
+     (rf/subscribe [::previous-applications :fetching?])
+     (rf/subscribe [::previous-applications :searching?])])
+  (fn [[application-id data error initialized? fetching? searching?]
+       [_id key]]
+    (case key
+      :error error
+      :initialized? initialized?
+      :fetching? fetching?
+      :searching? searching?
+      nil (filterv #(not= application-id (:application/id %)) data))))
 
 ;;;; UI components
 
-(defn- pdf-button [app-id]
-  (when app-id
-    [:a.btn.btn-secondary
-     {:href (str "/api/applications/" app-id "/pdf")
-      :target :_blank}
-     [external-link] " " (text :t.actions/download-pdf)]))
+ (defn- pdf-button [app-id]
+   (when app-id
+     [:a.btn.btn-secondary
+      {:href (str "/api/applications/" app-id "/pdf")
+       :target :_blank}
+      [external-link] " PDF"]))
 
-(defn- attachment-zip-button [application]
-  (when-not (empty? (:application/attachments application))
-    [:a.btn.btn-secondary
-     {:href (str "/api/applications/" (:application/id application) "/attachments?all=false")
-      :target :_blank}
-     [file-download] nbsp (text :t.form/attachments-as-zip)]))
+ (defn- attachment-zip-button [application]
+   (when-not (empty? (:application/attachments application))
+     [:a.btn.btn-secondary
+      {:href (str "/api/applications/" (:application/id application) "/attachments?all=false")
+       :target :_blank}
+      [file-download] " " (text :t.form/attachments-as-zip)]))
 
-(defn- link-license [license]
-  (let [title (localized (:license/title license))
-        link (localized (:license/link license))]
-    [:div
+ (defn- link-license [license]
+   (let [title (localized (:license/title license))
+         link (localized (:license/link license))]
+     [:div
+      [:a.license-title {:href link :target :_blank}
+       title " " [external-link]]]))
+
+ (defn- text-license [license]
+   (let [collapsible-id (str "license-" (:license/id license) "-collapsible")]
+     [:div.license-panel
+      [collapsible/expander
+       {:id collapsible-id
+        :title (localized (:license/title license))
+        :collapse [:div.license-block
+                   (str/trim (localized (:license/text license)))]}]]))
+
+ (defn- attachment-license [application license]
+   (let [title (localized (:license/title license))
+         link (str "/applications/" (:application/id application)
+                   "/license-attachment/" (:license/id license)
+                   "/" (name @rems.config/current-language))]
      [:a.license-title {:href link :target :_blank}
-      title " " [external-link]]]))
+      title " " [file-download]]))
 
-(defn- text-license [license]
-  (let [collapsible-id (str "license-" (:license/id license) "-collapsible")]
-    [:div.license-panel
-     [collapsible/expander
-      {:id collapsible-id
-       :title (localized (:license/title license))
-       :collapse [:div.license-block
-                  (str/trim (localized (:license/text license)))]}]]))
+ (defn license-field [application license show-accepted-licenses?]
+   [:div.license.flex-row.d-flex
+    [:div.mr-2 (when show-accepted-licenses?
+                 (if (:accepted license)
+                   (success-symbol)
+                   (make-empty-symbol (success-symbol))))]
+    (case (:license/type license)
+      :link [link-license license]
+      :text [text-license license]
+      :attachment [attachment-license application license]
+      [fields/unsupported-field license])])
 
-(defn- attachment-license [application license]
-  (let [title (localized (:license/title license))
-        link (str "/applications/" (:application/id application)
-                  "/license-attachment/" (:license/id license)
-                  "/" (name @rems.config/current-language))]
-    [:a.license-title {:href link :target :_blank}
-     [file-download] nbsp title]))
+ (defn- save-button []
+   [perform-action-button {:id "save"
+                           :text (text :t.form/save)
+                           :loading? @(rf/subscribe [::autosaving])
+                           :on-click #(rf/dispatch [::save-application [text :t.form/save]])}])
 
-(defn license-field [application license show-accepted-licenses?]
-  [:div.license.flex-row.d-flex
-   [:div.mr-2 (when show-accepted-licenses?
-                (if (:accepted license)
-                  (success-symbol)
-                  (make-empty-symbol (success-symbol))))]
-   (case (:license/type license)
-     :link [link-license license]
-     :text [text-license license]
-     :attachment [attachment-license application license]
-     [fields/unsupported-field license])])
+ (defn- submit-button []
+   [perform-action-button {:id "submit"
+                           :text (text :t.form/submit)
+                           :class :btn-primary
+                           :loading? @(rf/subscribe [::autosaving])
+                           :on-click #(rf/dispatch [::submit-application [text :t.form/submit]])}])
 
-(defn- save-button []
-  [perform-action-button {:id "save"
-                          :text (text :t.form/save)
-                          :loading? @(rf/subscribe [::autosaving])
-                          :on-click #(rf/dispatch [::save-application [text :t.form/save]])}])
+ (defn- copy-as-new-button []
+   [perform-action-button {:id "copy-as-new"
+                           :text (text :t.form/copy-as-new)
+                           :loading? @(rf/subscribe [::autosaving])
+                           :on-click #(rf/dispatch [::copy-as-new-application])}])
 
-(defn- submit-button []
-  [perform-action-button {:id "submit"
-                          :text (text :t.form/submit)
-                          :class :btn-primary
-                          :loading? @(rf/subscribe [::autosaving])
-                          :on-click #(rf/dispatch [::submit-application [text :t.form/submit]])}])
+ (rf/reg-sub
+  ::get-field-value
+  (fn [db [_ form-id field-id]]
+    (get-in db [::edit-application :field-values form-id field-id])))
 
-(defn- copy-as-new-button []
-  [perform-action-button {:id "copy-as-new"
-                          :text (text :t.form/copy-as-new)
-                          :loading? @(rf/subscribe [::autosaving])
-                          :on-click #(rf/dispatch [::copy-as-new-application])}])
+ (rf/reg-sub
+  ::get-field-diff
+  (fn [db [_ form-id field-id]]
+    (get-in db [::edit-application :show-diff form-id field-id])))
 
-(rf/reg-sub
- ::get-field-value
- (fn [db [_ form-id field-id]]
-   (get-in db [::edit-application :field-values form-id field-id])))
+ (rf/reg-sub
+  ::field-validations
+  (fn [db _]
+    (let [validations (get-in db [::edit-application :validation])]
+      (index-by [:form-id :field-id]
+                (some seq [(:errors validations) (:warnings validations)])))))
 
-(rf/reg-sub
- ::get-field-diff
- (fn [db [_ form-id field-id]]
-   (get-in db [::edit-application :show-diff form-id field-id])))
+ (rf/reg-sub
+  ::get-field-validation
+  :<- [::field-validations]
+  (fn [field-validations [_ form-id field-id]]
+    (get-in field-validations [form-id field-id])))
 
-(rf/reg-sub
- ::field-validations
- (fn [db _]
-   (let [validations (get-in db [::edit-application :validation])]
-     (index-by [:form-id :field-id]
-               (some seq [(:errors validations) (:warnings validations)])))))
+ (rf/reg-sub
+  ::get-field-attachment-status
+  (fn [db [_ form-id field-id]]
+    (get-in db [::edit-application :attachment-status form-id field-id])))
 
-(rf/reg-sub
- ::get-field-validation
- :<- [::field-validations]
- (fn [field-validations [_ form-id field-id]]
-   (get-in field-validations [form-id field-id])))
+ (rf/reg-sub
+  ::application-attachments
+  :<- [::application]
+  (fn [application _]
+    (:application/attachments application)))
 
-(rf/reg-sub
- ::get-field-attachment-status
- (fn [db [_ form-id field-id]]
-   (get-in db [::edit-application :attachment-status form-id field-id])))
+ (rf/reg-sub
+  ::application-attachments-by-id
+  :<- [::application-attachments]
+  (fn [attachments _]
+    (index-by [:attachment/id] attachments)))
 
-(rf/reg-sub
- ::application-attachments-by-id
- :<- [::application]
- (fn [application _]
-   (index-by [:attachment/id] (:application/attachments application))))
+ (rf/reg-sub
+  ::get-attachment-by-id
+  :<- [::application-attachments-by-id]
+  (fn [attachments-by-id [_ attachment-id]]
+    (attachments-by-id attachment-id)))
 
-(rf/reg-sub
- ::get-attachment-by-id
- :<- [::application-attachments-by-id]
- (fn [attachments-by-id [_ attachment-id]]
-   (attachments-by-id attachment-id)))
+ (rf/reg-sub
+  ::client-id
+  (fn [db _]
+    (::client-id db)))
+
+ (rf/reg-sub
+  ::get-field-editor-by-field
+  :<- [::server-connection]
+  (fn [server-connection _]
+    (build-index {:keys [:form-id :field-id]}
+                 (:clients server-connection))))
+
+ (rf/reg-sub
+  ::get-field-editor
+  :<- [::get-field-editor-by-field]
+  (fn [index [_ form-id field-id]]
+    (get-in index [form-id field-id])))
 
 (defn- field-container
   "A container component for field that isolates the pure render component
   from re-frame state. Only depends on relevant fields, not the whole application
   to limit re-rendering and improve performance."
   [field]
-  (let [form-id (:form/id field)
+  (let [client-id (:client-id field)
+        _ (assert client-id)
+        application-id (:application-id field)
+        _ (assert application-id)
+        form-id (:form/id field)
+        _ (assert form-id)
         field-id (:field/id field)
+        _ (assert field-id)
         field-value @(rf/subscribe [::get-field-value form-id field-id])
         attachments-by-ids (fn [ids]
                              (mapv (fn [id]
@@ -595,30 +709,48 @@
         depended-field-id (form/field-depends-on-field field)
         depended-value (when depended-field-id
                          {depended-field-id @(rf/subscribe [::get-field-value form-id depended-field-id])})
+        focus-update (debounce #(rf/dispatch [::set-application-focus client-id application-id %1 %2]) 1000)
         set-field-value #(rf/dispatch [::set-field-value form-id field-id %])]
 
     (when (and (form/field-visible? field depended-value)
                (not (:field/private field))) ; private fields will have empty value anyway
-      [fields/field (merge field
-                           {:field/value field-value
-                            :diff @(rf/subscribe [::get-field-diff form-id field-id])
-                            :validation @(rf/subscribe [::get-field-validation form-id field-id])
-                            :on-change (comp set-field-value always-on-change)
-                            :on-toggle-diff #(rf/dispatch [::toggle-diff form-id field-id])}
-                           (when (= :attachment (:field/type field))
-                             {:field/attachments (->> field-value
-                                                      form/parse-attachment-ids
-                                                      attachments-by-ids
-                                                      ;; The field value can contain an id that's not in attachments when a new attachment has been
-                                                      ;; uploaded, but the application hasn't yet been refetched.
-                                                      (remove nil?))
-                              :field/previous-attachments (when-let [prev (:field/previous-value field)]
-                                                            (->> prev
-                                                                 form/parse-attachment-ids
-                                                                 attachments-by-ids))
-                              :field/attachment-status @(rf/subscribe [::get-field-attachment-status form-id field-id])
-                              :on-attach #(rf/dispatch [::save-attachment form-id field-id %1 %2])
-                              :on-remove-attachment #(rf/dispatch [::remove-attachment form-id field-id %1])}))])))
+      (let [editor @(rf/subscribe [::get-field-editor form-id field-id])
+            other-editor #_(= field-id "fld3")
+            (when (and editor (not= (:client-id editor) @(rf/subscribe [::client-id]))) editor)]
+        [:div (if other-editor
+                {:class "locked" :style {:position :relative :padding "0.5rem" :margin "-0.5rem" :margin-bottom "1rem" :border-radius "0.25rem"}}
+                {:class "mb-4"})
+         (when other-editor
+           [:div {:style {:position :absolute :top 0 :bottom 0 :left 0 :right 0 :pointer-events :none :z-index 1 :text-align :right :line-height "1.5" :margin "0.5rem"}}
+            [text-format :t.applications/is-editing (get-in other-editor [:user :name])]])
+
+         [fields/field (merge field
+                              {:field/value field-value
+                               :diff @(rf/subscribe [::get-field-diff form-id field-id])
+                               :validation @(rf/subscribe [::get-field-validation form-id field-id])
+                               :on-change (comp set-field-value fields/always-on-change)
+                               :on-focus #(focus-update form-id field-id)
+                               :on-blur #(focus-update nil nil)
+                               :on-toggle-diff #(rf/dispatch [::toggle-diff form-id field-id])}
+                              (if other-editor ; show diff only when someone is not editing right now
+                                {:locked true}
+                                {:diff @(rf/subscribe [::get-field-diff form-id field-id])
+                                 :on-toggle-diff #(rf/dispatch [::toggle-diff form-id field-id])})
+
+                              (when (= :attachment (:field/type field))
+                                {:field/attachments (->> field-value
+                                                         form/parse-attachment-ids
+                                                         attachments-by-ids
+                                                         ;; The field value can contain an id that's not in attachments when a new attachment has been
+                                                         ;; uploaded, but the application hasn't yet been refetched.
+                                                         (remove nil?))
+                                 :field/previous-attachments (when-let [prev (:field/previous-value field)]
+                                                               (->> prev
+                                                                    form/parse-attachment-ids
+                                                                    attachments-by-ids))
+                                 :field/attachment-status @(rf/subscribe [::get-field-attachment-status form-id field-id])
+                                 :on-attach #(rf/dispatch [::save-attachment form-id field-id %1 %2])
+                                 :on-remove-attachment #(rf/dispatch [::remove-attachment form-id field-id %1])}))]]))))
 
 (defn- application-fields [application]
   (into [:div]
@@ -635,7 +767,8 @@
                             [field-container (merge field
                                                     {:form/id form-id
                                                      :readonly @(rf/subscribe [::readonly?])
-                                                     :app-id (:application/id application)})]))}])))
+                                                     :client-id @(rf/subscribe [::client-id])
+                                                     :application-id (:application/id application)})]))}])))
 
 (defn- application-licenses [application userid]
   (when-let [licenses (not-empty (:application/licenses application))]
@@ -1108,7 +1241,17 @@
                   [assign-external-id-form app-id reload]
                   [delete-form app-id go-to-applications]
                   [vote-form app-id application reload]
-                  [change-processing-state-form app-id application reload]]]}])))
+                  [change-processing-state-form app-id application reload]]
+
+                 [:div.mt-5
+                  [:h5 "Server Connection"]
+                  [:ul.list-unstyled
+                   (for [[k v] @(rf/subscribe [::server-connection])]
+                     ^{:key (name k)}
+                     (case k
+                       :clients
+                       [:li [:strong (name k)] " " (str/join ", " (mapv (comp :name :user) v))]
+                       [:li [:strong (name k)] " " (pr-str v)]))]]]}])))
 
 (defn- render-resource [resource]
   (let [config @rems.globals/config
@@ -1221,7 +1364,7 @@
                   :multi? true
                   :on-change (fn [items]
                                (let [duos (mapv #(dissoc % ::label) items)]
-                                 (always-on-change duos)
+                                 (fields/always-on-change duos)
                                  (rf/dispatch [::set-duo-codes duos])))}]]
                (into [:<>]
                      (for [edit-duo (sort-by :id selected-duos)
@@ -1229,7 +1372,7 @@
                                                   (filter (fn [match] (= (:id edit-duo) (:duo/id match)))))]]
                        [:div.form-field
                         [duo-field edit-duo {:context duo-context
-                                             :on-change always-on-change
+                                             :on-change fields/always-on-change
                                              :duo/statuses (map (comp :validity :duo/validation) duo-matches)
                                              :duo/errors (mapcat (comp :errors :duo/validation) duo-matches)
                                              :duo/more-infos (find-duo-more-info edit-duo)}]]))]}]))

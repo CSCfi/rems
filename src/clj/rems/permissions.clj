@@ -2,7 +2,8 @@
   (:require [clojure.core.memoize :refer [memo]]
             [clojure.set :as set]
             [clojure.test :refer [deftest is testing]]
-            [medley.core :refer [map-vals]]))
+            [medley.core :refer [map-vals map-kv-vals]]
+            [rems.common.util :refer [conj-set dissoc-if-empty]]))
 
 (defn give-role-to-users [application role users]
   (assert (keyword? role) {:role role})
@@ -11,11 +12,6 @@
                                 (assoc! user-roles user (conj (set (user-roles user)) role)))
                               (transient (or (:application/user-roles application) {}))
                               users))))
-
-(defn- dissoc-if-empty [m k]
-  (if (empty? (get m k))
-    (dissoc m k)
-    m))
 
 (defn remove-role-from-user [application role user]
   (assert (keyword? role) {:role role})
