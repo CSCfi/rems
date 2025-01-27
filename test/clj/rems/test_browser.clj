@@ -11,29 +11,149 @@
   (:require [clj-http.client :as http]
             [clojure.string :as str]
             [clojure.set :refer [intersection]]
-            [clojure.test :refer [deftest is testing use-fixtures]]
+            [clojure.test :refer [compose-fixtures deftest is testing use-fixtures]]
             [com.rpl.specter :refer [select ALL]]
             [etaoin.keys]
             [medley.core :refer [find-first]]
             [mount.core :as mount]
+            [rems.api.testing :refer [standalone-fixture]]
+            [rems.browser-test-util :as btu]
+            [rems.common.util :refer [getx not-blank]]
+            [rems.config]
+            [rems.db.api-key]
+            [rems.db.applications]
+            [rems.db.testing :refer [save-cache-statistics!]]
+            [rems.db.test-data-helpers :as test-helpers]
+            [rems.db.test-data-users :as test-users]
+            [rems.db.user-settings]
+            [rems.handler]
             [rems.service.application]
             [rems.service.catalogue]
             [rems.service.form]
             [rems.service.invitation]
             [rems.service.organizations]
             [rems.service.resource]
+            [rems.service.test-data :as test-data]
             [rems.service.workflow]
-            [rems.browser-test-util :as btu]
-            [rems.common.util :refer [getx not-blank]]
-            [rems.db.applications]
-            [rems.db.test-data-helpers :as test-helpers]
-            [rems.db.testing :refer [save-cache-statistics!]]
-            [rems.db.user-settings]
             [rems.testing-util :refer [with-user with-fake-login-users]]
             [rems.text :refer [localize-time text with-language]]))
 
 (comment ; convenience for development testing
   (btu/init-driver! :chrome "http://localhost:3000/" :development))
+
+(defn- create-test-data [f]
+  (test-helpers/assert-no-existing-data!)
+  (rems.db.api-key/add-api-key! 42 {:comment "test data"})
+  ;; Organizations
+  (test-helpers/create-organization! {:actor "owner"})
+  (test-helpers/create-organization! {:actor "owner"
+                                      :organization/id "nbn"
+                                      :organization/name {:fi "NBN" :en "NBN" :sv "NBN"}
+                                      :organization/short-name {:fi "NBN" :en "NBN" :sv "NBN"}
+                                      :organization/owners [{:userid "organization-owner2"}]
+                                      :organization/review-emails []})
+  ;; Users
+  (test-helpers/create-user! (get test-users/+fake-user-data+ "owner"))
+  (test-helpers/create-user! (get test-users/+fake-user-data+ "carl"))
+  (test-helpers/create-user! (get test-users/+fake-user-data+ "handler"))
+  (test-helpers/create-user! (get test-users/+fake-user-data+ "reporter") :reporter)
+  (test-helpers/create-user! {:userid "applicant" :organizations [{:organization/id "default"}]})
+  (test-helpers/create-user! (get test-users/+fake-user-data+ "alice"))
+  (test-helpers/create-user! (get test-users/+fake-user-data+ "developer"))
+  (test-helpers/create-workflow! nil) ;;master workflow
+  ;; Forms, workflows etc.
+  ;; These should match the rems.service.test-data closely enough
+  ;; so that one can use also development mode and dev db
+  ;; with the tests
+  (let [link (test-helpers/create-license! {:actor "owner"
+                                            :license/type :link
+                                            :organization {:organization/id "nbn"}
+                                            :license/title {:en "CC Attribution 4.0"
+                                                            :fi "CC Nimeä 4.0"
+                                                            :sv "CC Erkännande 4.0"}
+                                            :license/link {:en "https://creativecommons.org/licenses/by/4.0/legalcode"
+                                                           :fi "https://creativecommons.org/licenses/by/4.0/legalcode.fi"
+                                                           :sv "https://creativecommons.org/licenses/by/4.0/legalcode.sv"}})
+        text (test-helpers/create-license! {:actor "owner"
+                                            :license/type :text
+                                            :organization {:organization/id "nbn"}
+                                            :license/title {:en "General Terms of Use"
+                                                            :fi "Yleiset käyttöehdot"
+                                                            :sv "Allmänna villkor"}
+                                            :license/text {:en (apply str (repeat 10 "License text in English. "))
+                                                           :fi (apply str (repeat 10 "Suomenkielinen lisenssiteksti. "))
+                                                           :sv (apply str (repeat 10 "Licens på svenska. "))}})
+        wfid (test-helpers/create-workflow! {:type :workflow/default
+                                             :title "Default workflow"
+                                             :handlers ["handler" "developer"]
+                                             :licenses [link text]})
+        decider-wf (test-helpers/create-workflow! {:actor "owner"
+                                                   :organization {:organization/id "nbn"}
+                                                   :title "Decider workflow"
+                                                   :type :workflow/decider
+                                                   :handlers ["carl" "handler"]
+                                                   :licenses [link text]})
+        form (test-data/create-all-field-types-example-form! "owner" {:organization/id "nbn"} "Example form with all field types" {:en "Example form with all field types"
+                                                                                                                                   :fi "Esimerkkilomake kaikin kenttätyypein"
+                                                                                                                                   :sv "Exempelblankett med alla fälttyper"})
+        _simple-form (test-helpers/create-form! {:actor "owner"
+                                                 :organization {:organization/id "nbn"}
+                                                 :form/internal-name "Simple form"
+                                                 :form/external-title {:en "Simple Form"
+                                                                       :fi "Yksinkertainen lomake"
+                                                                       :sv "Enkelt Blankett"}
+                                                 :form/fields [{:field/title {:en "Simple text field"
+                                                                              :fi "Yksinkertainen tekstikenttä"
+                                                                              :sv "Textfält"}
+                                                                :field/optional false
+                                                                :field/type :text
+                                                                :field/max-length 100
+                                                                :field/privacy :private}]})
+        res-id1 (test-helpers/create-resource! nil)
+        res-id2 (test-helpers/create-resource! nil)
+        ;; duo-resource (test-helpers/create-resource! {:resource-ext-id "All DUO codes with restrictions"
+        ;;                                              :organization {:organization/id "nbn"}
+        ;;                                              :resource/duo {:duo/codes [{:id "DUO:0000007" :restrictions [{:type :mondo
+        ;;                                                                                                            :values ["MONDO:0000015"]}]}
+        ;;                                                                         {:id "DUO:0000012" :restrictions [{:type :topic
+        ;;                                                                                                            :values ["my research type"]}]}
+        ;;                                                                         {:id "DUO:0000020" :restrictions [{:type :collaboration
+        ;;                                                                                                            :values ["developers"]}]}
+        ;;                                                                         {:id "DUO:0000022" :restrictions [{:type :location
+        ;;                                                                                                            :values ["egentliga finland"]}]}
+        ;;                                                                         {:id "DUO:0000024" :restrictions [{:type :date
+        ;;                                                                                                            :values ["2021-10-29"]}]}
+        ;;                                                                         {:id "DUO:0000025" :restrictions [{:type :months
+        ;;                                                                                                            :values ["120"]}]}
+        ;;                                                                         {:id "DUO:0000026" :restrictions [{:type :users
+        ;;                                                                                                            :values ["alice"]}]}
+        ;;                                                                         {:id "DUO:0000027" :restrictions [{:type :project
+        ;;                                                                                                            :values ["rems"]}]}
+        ;;                                                                         {:id "DUO:0000028" :restrictions [{:type :institute
+        ;;                                                                                                            :values ["csc"]}]}]}})
+        item-id1 (test-helpers/create-catalogue-item! {:form-id form :workflow-id wfid :title {:en "Default workflow" :fi "Oletustyövuo"
+                                                                                               :sv "Standard arbetsflöde"} :resource-id res-id1})
+        _ (test-helpers/create-catalogue-item! {:form-id _simple-form
+                                                :workflow-id wfid
+                                                :title {:en "Default workflow with private form"
+                                                        :fi "Oletustyövuo yksityisellä lomakkeella"
+                                                        :sv "Standard arbetsflöde med privat blankett"}
+                                                :resource-id res-id2})
+        ;; item-id3 (test-helpers/create-catalogue-item! {:form-id _simple-form :workflow-id wfid :title {:en "Default workflow with DUO codes" :fi "Oletustyövuo DUO-koodeilla"
+        ;;                                                                                                :sv "Standard blankettarbetsflöde med DUO-koder"} :resource-id duo-resource})
+        app-id (test-helpers/create-draft! "applicant" [item-id1] "draft")]
+    (test-helpers/submit-application {:application-id app-id
+                                      :actor "applicant"}))
+  (f))
+
+(defn test-dev-or-standalone-fixture
+  "Depending on if we are trying to develop browser tests or
+  run them for real, we use an existing server and db or
+  boot everything up and recreate test data too."
+  [f]
+  (if (= :development (btu/test-ctx :mode))
+    (f)
+    ((compose-fixtures standalone-fixture create-test-data) f)))
 
 (use-fixtures
   :each
@@ -47,7 +167,7 @@
 (use-fixtures
   :once
   btu/ensure-empty-directories-fixture
-  btu/test-dev-or-standalone-fixture
+  test-dev-or-standalone-fixture
   btu/accessibility-report-fixture)
 
 ;;; common functionality

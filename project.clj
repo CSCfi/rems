@@ -20,6 +20,7 @@
                  [conman "0.8.4"] ; 0.8.5 switches to next.jdbc, which breaks stuff and requires proper testing in production
                  [cprop "0.1.20"]
                  [dev.weavejester/medley "1.7.0"]
+                 [etaoin "1.1.41"]
                  [garden "1.3.10"]
                  [hiccup "1.0.5"]
                  [com.cognitect/transit-clj "1.0.333"]
@@ -118,7 +119,6 @@
                                 [com.clojure-goes-fast/clj-memory-meter "0.3.0"]
                                 [criterium "0.4.6"]
                                 [lambdaisland/kaocha-junit-xml "1.17.101"]
-                                [etaoin "1.1.41"]
                                 [ring/ring-mock "0.4.0" :exclusions [cheshire]]
                                 [se.haleby/stub-http "0.2.14"]
                                 [com.icegreen/greenmail "1.6.15"]
