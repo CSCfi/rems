@@ -20,6 +20,7 @@ Changes since v2.38
 
 ### Fixes
 - Resolved issue where workflow voting could not be removed, which caused UI to display raw translation keys due to nil voting values. (#3357)
+- Fixed bug in user settings cache that caused notification emails to not show up in the UI, API or CLI until modified.
 
 ## v2.38 "Välimerenkatu" 2024-11-28
 
