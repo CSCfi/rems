@@ -1,5 +1,6 @@
 (ns ^:integration rems.db.test-user-settings
   (:require [clojure.test :refer [deftest is testing use-fixtures]]
+            [rems.cache :as cache]
             [rems.db.testing :refer [rollback-db-fixture test-db-fixture]]
             [rems.db.user-settings]
             [rems.db.users]
@@ -58,7 +59,19 @@
            (rems.db.user-settings/update-user-settings! "user" {:notification-email "changed@example.com"})))
     (is (= {:language :en
             :notification-email "unrelated@example.com"}
-           (rems.db.user-settings/get-user-settings "unrelated")))))
+           (rems.db.user-settings/get-user-settings "unrelated"))))
+
+  (testing "initial cache reload"
+    (rems.db.user-settings/update-user-settings! "user" {:language :fi
+                                                         :notification-email "user@example.com"})
+    (rems.db.user-settings/update-user-settings! "unrelated" {:language :en
+                                                              :notification-email "unrelated@example.com"})
+    (cache/set-uninitialized! rems.db.user-settings/user-settings-cache)
+    (is (= {"user" {:language :fi
+                    :notification-email "user@example.com"}
+            "unrelated" {:language :en
+                         :notification-email "unrelated@example.com"}}
+           (into {} (cache/entries! rems.db.user-settings/user-settings-cache))))))
 
 (deftest test-language
   (testing "valid language"
