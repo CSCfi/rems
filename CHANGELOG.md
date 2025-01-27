@@ -6,7 +6,7 @@ have notable changes.
 
 ## Unreleased
 
-Changes since v2.38
+Changes since v2.38.1
 
 ### Additions
 - Use `:oidc-use-state` and value `:csrf-token`to configure REMS to send a CSRF token in `state` parameter to the login server and then check its value in the callback. (#3367)
@@ -20,6 +20,10 @@ Changes since v2.38
 
 ### Fixes
 - Resolved issue where workflow voting could not be removed, which caused UI to display raw translation keys due to nil voting values. (#3357)
+
+## v2.38.1 "Välimerenkatu +1" 2025-01-27
+
+### Fixes
 - Fixed bug in user settings cache that caused notification emails to not show up in the UI, API or CLI until modified.
 
 ## v2.38 "Välimerenkatu" 2024-11-28
