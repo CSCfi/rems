@@ -6,7 +6,9 @@ have notable changes.
 
 ## Unreleased
 
-Changes since v2.38
+Changes since v2.38.1
+
+## v2.38.1 "Välimerenkatu +1" 2025-01-27
 
 ### Fixes
 - Fixed bug in user settings cache that caused notification emails to not show up in the UI, API or CLI until modified.
