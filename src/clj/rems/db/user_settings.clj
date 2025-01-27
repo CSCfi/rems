@@ -2,7 +2,7 @@
   (:require [clojure.string :as str]
             [medley.core :refer [assoc-some map-vals]]
             [rems.cache :as cache]
-            [rems.common.util :refer [+email-regex+]]
+            [rems.common.util :refer [+email-regex+ index-by]]
             [rems.config :refer [env]]
             [rems.db.core :as db]
             [rems.json :as json]
@@ -54,7 +54,7 @@
                              cache/absent))
                 :reload-fn (fn []
                              (->> (db/get-user-settings {})
-                                  (group-by :userid)
+                                  (index-by [:userid])
                                   (map-vals parse-user-settings-raw)
                                   (map-vals merge-defaults)))}))
 

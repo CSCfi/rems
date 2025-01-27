@@ -8,6 +8,9 @@ have notable changes.
 
 Changes since v2.38
 
+### Fixes
+- Fixed bug in user settings cache that caused notification emails to not show up in the UI, API or CLI until modified.
+
 ## v2.38 "Välimerenkatu" 2024-11-28
 
 This release contains major changes to the REMS internal architecture regarding the caching of information. We have improved the caching behavior previously during the year, but now we drop the requirement for REMS to reload the application cache every hour or so. This was problematic, if the reload was slow, because it would stop REMS for a while and could lead to running out of memory. REMS got slower with more data, handlers and so on which made the problem worse.
