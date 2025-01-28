@@ -1,6 +1,7 @@
 (ns ^:integration rems.db.test-blacklist
   (:require [clj-time.core :as time]
             [clojure.test :refer [deftest is testing use-fixtures]]
+            [rems.cache :as cache]
             [rems.db.blacklist]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.db.testing :refer [test-db-fixture rollback-db-fixture]]))
@@ -15,24 +16,48 @@
   (test-helpers/create-resource! {:resource-ext-id "urn.fi/123"})
   (test-helpers/create-resource! {:resource-ext-id "urn.fi/124"})
 
-  (rems.db.blacklist/add-event! {:event/type :blacklist.event/add
-                                 :event/actor "handler"
-                                 :event/time (time/date-time 2019 1 2 8 0 0)
-                                 :userid "user1"
-                                 :resource/ext-id "urn.fi/123"
-                                 :event/comment "1"})
-  (rems.db.blacklist/add-event! {:event/type :blacklist.event/remove
-                                 :event/actor "handler"
-                                 :event/time (time/date-time 2019 2 3 9 0 0)
-                                 :userid "user1"
-                                 :resource/ext-id "urn.fi/123"
-                                 :event/comment "2"})
-  (rems.db.blacklist/add-event! {:event/type :blacklist.event/add
-                                 :event/actor "handler"
-                                 :event/time (time/date-time 2019 1 1 1 0 0)
-                                 :userid "user2"
-                                 :resource/ext-id "urn.fi/124"
-                                 :event/comment "3"})
+  (let [event-1 (rems.db.blacklist/add-event! {:event/type :blacklist.event/add
+                                               :event/actor "handler"
+                                               :event/time (time/date-time 2019 1 2 8 0 0)
+                                               :userid "user1"
+                                               :resource/ext-id "urn.fi/123"
+                                               :event/comment "1"})
+        event-2 (rems.db.blacklist/add-event! {:event/type :blacklist.event/remove
+                                               :event/actor "handler"
+                                               :event/time (time/date-time 2019 2 3 9 0 0)
+                                               :userid "user1"
+                                               :resource/ext-id "urn.fi/123"
+                                               :event/comment "2"})
+        event-3 (rems.db.blacklist/add-event! {:event/type :blacklist.event/add
+                                               :event/actor "handler"
+                                               :event/time (time/date-time 2019 1 1 1 0 0)
+                                               :userid "user2"
+                                               :resource/ext-id "urn.fi/124"
+                                               :event/comment "3"})]
+    (testing "cache reload works"
+      (cache/set-uninitialized! rems.db.blacklist/blacklist-event-cache)
+      (is (= {event-1 {:event/id event-1
+                       :event/type :blacklist.event/add
+                       :event/actor "handler"
+                       :event/time (time/date-time 2019 1 2 8 0 0)
+                       :userid "user1"
+                       :resource/ext-id "urn.fi/123"
+                       :event/comment "1"}
+              event-2 {:event/id event-2
+                       :event/type :blacklist.event/remove
+                       :event/actor "handler"
+                       :event/time (time/date-time 2019 2 3 9 0 0)
+                       :userid "user1"
+                       :resource/ext-id "urn.fi/123"
+                       :event/comment "2"}
+              event-3 {:event/id event-3
+                       :event/type :blacklist.event/add
+                       :event/actor "handler"
+                       :event/time (time/date-time 2019 1 1 1 0 0)
+                       :userid "user2"
+                       :resource/ext-id "urn.fi/124"
+                       :event/comment "3"}}
+             (into {} (cache/entries! rems.db.blacklist/blacklist-event-cache))))))
 
   (let [events (rems.db.blacklist/get-events {:resource/ext-id "urn.fi/123"})]
     ;; event id sequence numbers aren't predictable since even
