@@ -18,7 +18,7 @@
     :always (keyword)))
 
 (defn split-test-ids [test-plan]
-  (->> (sh/sh "circleci" "tests" "split" "--split-by=timings"
+  (->> (sh/sh "circleci" "tests" "split" "--split-by=timings" "--timings-type=testname"
               :in (str/join "\n" (for [test (test-seq test-plan)
                                        :when (is-kaocha-var test)]
                                    (:kaocha.testable/id test))))
