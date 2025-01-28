@@ -84,6 +84,8 @@ jobs:
       - run: lein kaocha --reporter kaocha.report/documentation --plugin rems.kaocha/cache-statistics-plugin integration
       - store_test_results:
           path: target/test-results
+      - store_artifacts:
+          path: target/cache-statistics-plugin
 
   browser-test:
     executor: db
@@ -98,7 +100,7 @@ jobs:
           at: .
       - restore_cache:
           key: *cache-key
-      - run: lein kaocha --reporter kaocha.report/documentation --plugin rems.kaocha/cache-statistics-plugin --plugin rems.kaocha/circleci-plugin browser
+      - run: lein kaocha --reporter kaocha.report/documentation --plugin rems.kaocha/cache-statistics-plugin --plugin rems.kaocha/circleci-parallel-plugin browser
       - store_test_results:
           path: target/test-results
       - store_artifacts:
@@ -107,6 +109,10 @@ jobs:
           path: browsertest-downloads
       - store_artifacts:
           path: browsertest-accessibility-report
+      - store_artifacts:
+          path: target/cache-statistics-plugin
+      - store_artifacts:
+          path: target/circleci-parallel-plugin
 
   build:
     executor: clojure
