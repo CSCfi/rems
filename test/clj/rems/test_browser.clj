@@ -27,6 +27,7 @@
             [rems.db.test-data-users :as test-users]
             [rems.db.user-settings]
             [rems.handler]
+            [rems.main]
             [rems.service.application]
             [rems.service.catalogue]
             [rems.service.form]
