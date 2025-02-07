@@ -5,15 +5,14 @@
             [clojure.set :as set]
             [clojure.test :refer [deftest is]]
             [clojure.tools.logging :as log]
-            [clj-time.core :as time]
             [conman.core :as conman]
-            [medley.core :refer [distinct-by filter-vals map-kv map-vals remove-vals]]
+            [medley.core :refer [distinct-by filter-vals map-vals]]
             [mount.core :as mount]
             [rems.application.events-cache :as events-cache]
             [rems.application.model :as model]
             [rems.auth.util :refer [throw-forbidden]]
             [rems.common.application-util :as application-util]
-            [rems.common.util :refer [conj-set dissoc-if-empty getx getx-in nil-if-empty]]
+            [rems.common.util :refer [conj-set]]
             [rems.config :refer [env]]
             [rems.db.attachments]
             [rems.db.blacklist]
@@ -106,126 +105,6 @@
   (when-let [application (get-application-internal application-id)]
     (or (model/apply-user-permissions application user-id)
         (throw-forbidden))))
-
-(def application-subscribers (atom {}))
-
-#_(defn- application-subscribers-timeout
-  "Check which subscriptions have timed out and remove them."
-  []
-  (let [too-old (time/minus (time/now) (time/minutes 1))]
-    (swap! application-subscribers
-           (fn [subscribers]
-             (let [new-clients (->> (map-kv (fn [client-id client-state]
-                                              [client-id
-                                               (-> client-state
-                                                   (assoc :applications (->> (map-kv (fn [application-id {:keys [last-seen] :as application-state}]
-                                                                                       [application-id (when (and last-seen
-                                                                                                                  (time/after? last-seen too-old))
-                                                                                                         application-state)])
-                                                                                     (:applications client-state))
-                                                                             (remove-vals empty?)
-                                                                             nil-if-empty))
-                                                   (dissoc-if-empty :applications))])
-                                            (:clients subscribers))
-                                    (remove-vals empty?)
-                                    nil-if-empty)
-                   new-clients-set (set (keys new-clients))
-                   new-applications (->> (map-kv (fn [application-id application-state]
-                                                   [application-id (-> application-state
-                                                                       (update :clients (fn [clients]
-                                                                                          (prn clients new-clients-set)
-                                                                                          (-> (clojure.set/intersection clients new-clients-set)
-                                                                                              nil-if-empty)))
-                                                                       (dissoc-if-empty :clients))])
-                                                 (:applications subscribers))
-                                         (remove-vals empty?))]
-               (-> subscribers
-                   (assoc :clients new-clients)
-                   (dissoc-if-empty :clients)
-                   (assoc :applications new-applications)
-                   (dissoc-if-empty :applications)))))))
-
-(defn notify-update
-  "Notifies any possibly listening clients the application state has changed."
-  [application-update]
-  (let [application-id (get-in application-update [:application :application/id])
-        subscribers @application-subscribers]
-    (doseq [[_client-id client-state] (get-in subscribers [:clients])
-            :when (= (:application-id client-state) application-id)
-            :let [q (:queue client-state)]
-            :when q]
-      (.offer q application-update))))
-
-(defn- subscribed-clients
-  "Calculate other visible `subscribers` for this `client-id`."
-  [subscribers client-id application-id]
-  (vec (for [[other-client-id other-client-state] (:clients subscribers)
-             :when (= (:application-id other-client-state) application-id)]
-         (remove-vals nil? {:client-id other-client-id
-                            :user (:user other-client-state)
-                            :form-id (:form-id other-client-state)
-                            :field-id (:field-id other-client-state)}))))
-
-(defn application-focus [{:keys [client-id application-id form-id field-id]}]
-  (swap! application-subscribers
-         (fn [subscribers]
-           (-> subscribers (update-in [:clients client-id]
-                                      merge
-                                      {:form-id form-id
-                                       :field-id field-id}))))
-
-  (notify-update {:application {:application/id application-id}})
-
-  {:success true})
-
-
-(defn long-poll [client-id user-id application-id]
-  ;; fetch existing client data
-  (let [existing-client-state (get-in @application-subscribers [:clients client-id])
-        queue (if existing-client-state
-                (do (assert (= user-id (getx-in existing-client-state [:user :userid]))) ; don't let other users in even with right client-id
-                    (getx existing-client-state :queue))
-
-                ;; the first poll
-                (do (assert (get-application-for-user user-id application-id)) ; check the user has rights
-                    (notify-update {:application {:application/id application-id}}) ; let everyone know of the new user
-                    (new java.util.concurrent.ArrayBlockingQueue 10)))]
-
-    ;; refresh server state about client
-    (swap! application-subscribers
-           (fn [subscribers]
-             (-> subscribers
-                 (update-in [:clients client-id]
-                            merge
-                            {:last-seen (time/now)
-                             :application-id application-id
-                             :user (cache/lookup-or-miss user-cache user-id users/get-user)
-                             :queue queue}))))
-
-    ;; return results or wait
-    (merge ;; constant data
-     {:status :all-quiet
-      :application-id application-id
-      :client-id client-id
-      :user-id user-id}
-
-     ;; command data
-     (when existing-client-state ; first request returns immediately
-       (if-some [application-update (.poll queue 15 java.util.concurrent.TimeUnit/SECONDS)]
-         (let [{:keys [command]} application-update]
-           (if (= :application.command/save-draft  (:type command))
-             (merge
-              {:status :updated :field-values (mapv #(select-keys % [:form :field :value]) (:field-values command))}
-
-              (when-let [attachments (:application/attachments (:application application-update))]
-                {:application/attachments attachments}))
-
-             {:status :updated :full-reload false}))
-
-         {:status :all-quiet}))
-
-     ;; refreshed latest data (always, but after poll)
-     {:clients (subscribed-clients @application-subscribers client-id application-id)})))
 
 ;;; Listing all applications
 

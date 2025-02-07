@@ -603,6 +603,8 @@
          :autosave-in-progress "Saving"
          :checkbox-checked "Yes"
          :checkbox-unchecked "No"
+         :clients "Users"
+         :clients-intro "Users currently viewing or editing the application:"
          :comment "Comment"
          :copy-as-new "Copy as a new application"
          :current-value "Current"

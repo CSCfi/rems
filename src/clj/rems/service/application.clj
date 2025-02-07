@@ -1,12 +1,14 @@
 (ns rems.service.application
   (:require [clj-time.coerce :as time-coerce]
-            [rems.db.applications]
             [rems.application.commands :as commands]
             [rems.application.search :as search]
             [rems.csv]
+            [rems.db.applications]
             [rems.db.attachments]
             [rems.db.events]
-            [rems.db.user-settings]))
+            [rems.db.user-settings]
+            [rems.db.users]
+            [rems.subscriptions]))
 
 (defn format-overview [app]
   (dissoc app
@@ -83,3 +85,16 @@
   (when-let [app (rems.db.applications/get-application-for-user userid application-id)]
     (merge {:success true}
            (commands/validate-application app field-values))))
+
+(defn get-application-for-user [userid application-id]
+  (rems.db.applications/get-application-for-user userid application-id))
+
+(comment
+  (rems.subscriptions/get-application-subscribed-clients 29))
+
+(defn application-focus [{:keys [client-id userid application-id form-id field-id]}]
+  (rems.subscriptions/update-subscriber! {:client-id client-id
+                                          :user (rems.db.users/get-user userid)
+                                          :form-id form-id
+                                          :field-id field-id})
+  (rems.subscriptions/notify-update {:application-update {:application {:application/id application-id}}}))
