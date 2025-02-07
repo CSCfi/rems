@@ -23,6 +23,7 @@
             [rems.api.permissions :refer [permissions-api]]
             [rems.api.public :as public]
             [rems.api.resources :refer [resources-api]]
+            [rems.api.subscriptions :refer [subscriptions-api]]
             [rems.api.user-settings :refer [user-settings-api]]
             [rems.api.users :refer [users-api]]
             [rems.api.workflows :refer [workflows-api]]
@@ -234,6 +235,7 @@
       organizations-api
       permissions-api
       resources-api
+      subscriptions-api
       user-settings-api
       users-api
       workflows-api
