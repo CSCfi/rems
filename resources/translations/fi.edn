@@ -502,6 +502,8 @@
          :autosave-in-progress "Tallennetaan"
          :checkbox-checked "Kyllä"
          :checkbox-unchecked "Ei"
+         :clients "Käyttäjät"
+         :clients-intro "Käyttäjät jotka ovat katsomassa tai muokkaamassa hakemusta:"
          :comment "Kommentti"
          :copy-as-new "Kopioi uudeksi hakemukseksi"
          :current-value "Nykyinen"

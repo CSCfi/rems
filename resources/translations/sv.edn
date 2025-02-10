@@ -502,6 +502,8 @@
          :autosave-in-progress "Sparar"
          :checkbox-checked "Ja"
          :checkbox-unchecked "Nej"
+         :clients "Användare"
+         :clients-intro "Användare som visar eller redigerar ansökan:"
          :comment "Kommentar"
          :copy-as-new "Kopiera som nytt"
          :current-value "Nuvarande"

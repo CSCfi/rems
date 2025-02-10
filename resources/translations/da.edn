@@ -548,6 +548,8 @@
          :autosave-in-progress "Gemmer"
          :checkbox-checked "Ja"
          :checkbox-unchecked "Nej"
+         :clients nil
+         :clients-intro nil
          :comment "Kommentar"
          :copy-as-new "Kopier som en ny ansøgning"
          :current-value "Nuværende"

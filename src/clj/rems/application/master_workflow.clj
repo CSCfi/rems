@@ -3,6 +3,7 @@
   allowed to execute them. Workflows for production use can be derived from
   the master workflow by restricting the possible commands (permissions)."
   (:require [rems.application.commands :as commands]
+            [rems.config :refer [env]]
             [rems.permissions :as permissions]))
 
 (def whitelist
@@ -64,12 +65,10 @@
         :application.command/reject
         :application.command/request-decision))
 
-(def ^:private created-permissions
+(defn- created-permissions []
   {:applicant (conj submittable-application-commands
                     :application.command/delete)
-   :member #{:application.command/save-draft
-             :application.command/accept-licenses
-             :application.command/copy-as-new}
+   :member (set (:member-created-permissions env))
    :reporter #{:see-everything}
    :expirer #{:application.command/delete
               :application.command/send-expiration-notifications}
@@ -152,7 +151,7 @@
   [application event]
   (-> application
       (permissions/give-role-to-users :applicant [(:event/actor event)])
-      (permissions/update-role-permissions created-permissions)))
+      (permissions/update-role-permissions (created-permissions))))
 
 (defmethod application-permissions-view :application.event/member-added
   [application event]

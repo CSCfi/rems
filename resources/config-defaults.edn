@@ -370,6 +370,15 @@
  ;; :disable-commands [:application.command/assign-external-id :application.command/change-resources]
  :disable-commands []
 
+ ;; List of commands available for the member in the draft/returned states.
+ ;;
+ ;; These can be further narrowed down by the workflow disabled commands.
+ ;;
+ ;; By default the member has very limited permissions compared to the applicant.
+ ;; See docs/application-permissions.md for the defaults in each state and role.
+ :member-created-permissions [:application.command/accept-licenses
+                              :application.command/copy-as-new]
+
  ;; Show "Assign external id" action button in UI for handlers
  :enable-assign-external-id-ui false
 
