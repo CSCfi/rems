@@ -3,7 +3,8 @@
             [clojure.set]
             [medley.core :refer [remove-vals]]
             [rems.db.users :as users]
-            [rems.common.util :refer [getx getx-in]]))
+            [rems.common.util :refer [getx getx-in]]
+            [rems.db.applications :as applications]))
 
 (def subscribers-a (atom {}))
 
@@ -110,10 +111,11 @@
                                    ;; if command happened
                                    (when (and application command)
                                      (merge (if (= :application.command/save-draft  (:type command))
-                                              (merge {:field-values (mapv #(select-keys % [:form :field :value]) (:field-values command))}
+                                              (let [personalized-application (applications/personalize-application-for-user user-id application)]
+                                                (merge {:field-values (mapv #(select-keys % [:form :field :value]) (:field-values command))}
 
-                                                     (when-let [attachments (:application/attachments application)]
-                                                       {:application/attachments attachments}))
+                                                       (when-let [attachments (:application/attachments personalized-application)]
+                                                         {:application/attachments attachments})))
 
                                               {:full-reload false})))))}))
 
