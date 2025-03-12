@@ -7,6 +7,7 @@
             [rems.flash-message :as flash-message]
             [rems.administration.items :as items]
             [rems.atoms :as atoms :refer [add-symbol attachment-link download-button close-symbol failure-symbol textarea]]
+            [rems.attachment :as attachment]
             [rems.collapsible :as collapsible]
             [rems.common.attachment-util :as attachment-util]
             [rems.common.form :as common-form]
@@ -349,7 +350,8 @@
                                   form-data (doto (js/FormData.)
                                               (.append "file" filecontent))]
                               (set! (.. event -target -value) nil) ; empty selection to fix uploading the same file twice
-                              (on-upload form-data)))}]
+                              (when on-upload
+                                (on-upload form-data))))}]
       [:button.btn.btn-outline-secondary
        {:id id
         :type :button
@@ -389,11 +391,12 @@
               [close-symbol]
               " "
               (text :t.form/attachment-remove)]]]))
-   [upload-button {:id (str "upload-" id)
-                   :status status
-                   :on-focus on-focus
-                   :on-blur on-blur
-                   :on-change on-attach}]])
+   [:div.mt-2
+    [upload-button {:id (str "upload-" id)
+                    :status status
+                    :on-focus on-focus
+                    :on-blur on-blur
+                    :on-upload on-attach}]]])
 
 (defn render-attachments [attachments]
   (into [:div.attachments]
