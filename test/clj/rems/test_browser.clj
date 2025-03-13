@@ -2018,6 +2018,10 @@
   (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success")))
 
 (deftest test-create-catalogue-item
+  (test-helpers/create-user! {:userid "organization-owner1"
+                              :name "Organization Owner 1"
+                              :email "organization-owner1@example.com"
+                              :organizations [{:organization/id "Default"}]})
   (btu/with-postmortem
     (testing "create objects"
       (login-as "owner")
