@@ -26,9 +26,7 @@
                 :output-dir "target/shadow/public/js"
                 :asset-path "/js"
                 :modules {:app {:entries [rems.app]}}
-                :compiler-options {:optimizations :advanced
-                                   :infer-externs :auto
-                                   :source-map true}
+                :compiler-options {:optimizations :advanced}
                 :devtools {:watch-dir "target/resources/public"}}
           :cljs-test {:target :karma
                       :output-to "target/shadow/cljs-test.js"
