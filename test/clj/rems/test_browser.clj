@@ -743,6 +743,7 @@
         ;; let's also try autosave
         (btu/with-client-config {:enable-autosave true}
           (clear-form-field "Simple text field")
+          (btu/eventually-visible? {:id (get-form-field-id "Simple text field") :fn/has-text ""})
           (fill-form-field "Simple text field" "Private field answer")
           (btu/wait-visible {:css ".alert-success" :fn/text "Application is saved."})
           (is (btu/eventually-visible? :status-warning))
