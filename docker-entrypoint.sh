@@ -1,5 +1,8 @@
 #!/bin/bash
 
+echo "$PRIVATE_KEY" > /rems/keys/private-key.jwk
+echo "$PUBLIC_KEY" > /rems/keys/public-key.jwk
+
 certfile=$(ls /rems/certs 2>/dev/null)
 parameters=false
 cmd_prefix=""
