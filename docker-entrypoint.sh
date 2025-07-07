@@ -2,7 +2,9 @@
 
 echo "$PRIVATE_KEY" > /rems/keys/private-key.jwk
 echo "$PUBLIC_KEY" > /rems/keys/public-key.jwk
-
+if [ -n "$REMS_CONFIG_EDN" ]; then
+  echo "$REMS_CONFIG_EDN" > /rems/config/config.edn
+fi
 certfile=$(ls /rems/certs 2>/dev/null)
 parameters=false
 cmd_prefix=""
