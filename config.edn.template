@@ -1,8 +1,7 @@
 {:port 3000
  ;; Configure with deployed public URL so that OIDC callback can work
- ;; :public-url "http://localhost:3000/"
  :public-url "${PUBLIC_URL}"
- :database-url "postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}?user=${DB_USER}&password=${DB_PASSWORD}"
+ :database-url "postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}?user=${DB_USER}&password=${DB_PASSWORD_ENCODED}"
  :search-index-path "/tmp/rems-search-index"
  :authentication :oidc
  ;; Configure an OpenID Provider
@@ -25,5 +24,6 @@
  :catalogue-tree-show-matching-parents true
  :enable-autosave true
  :extra-stylesheets {:root "./" :files ["/theme/styles.css"]}
- :theme-path "/rems/theme/theme.edn"
- :extra-pages-path "/rems/extra-pages"}
+ ;; :theme-path "/rems/theme/theme.edn"
+ ;; :extra-pages-path "/rems/extra-pages"
+ }

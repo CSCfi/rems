@@ -1,11 +1,36 @@
 #!/bin/bash
-set -e
+set -x
+
+# Encode db passwords with special characters 
+urlencode() {
+  local raw="$1"
+  local encoded=""
+  local i c
+  for (( i = 0; i < ${#raw}; i++ )); do
+    c="${raw:$i:1}"
+    case "$c" in
+      [a-zA-Z0-9.~_-]) encoded+="$c" ;;
+      *) encoded+=$(printf '%%%02X' "'$c") ;;
+    esac
+  done
+  echo "$encoded"
+}
+
+export DB_PASSWORD_ENCODED=$(urlencode "$DB_PASSWORD")
 
 echo "$PRIVATE_KEY" > /rems/keys/private-key.jwk
 echo "$PUBLIC_KEY" > /rems/keys/public-key.jwk
 
 # Interpolate secrets and config into config.edn
 envsubst < /rems/config/config.edn.template > /rems/config/config.edn
+
+echo "========================"
+echo "Generated config.edn:"
+cat /rems/config/config.edn
+echo "========================"
+
+echo "########## RUNNING ONE-TIME MIGRATION ##########"
+java -Drems.config=config/config.edn -jar rems.jar migrate
 
 certfile=$(ls /rems/certs 2>/dev/null)
 parameters=false
