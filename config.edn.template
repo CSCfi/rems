@@ -1,0 +1,29 @@
+{:port 3000
+ ;; Configure with deployed public URL so that OIDC callback can work
+ ;; :public-url "http://localhost:3000/"
+ :public-url "${PUBLIC_URL}"
+ :database-url "postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}?user=${DB_USER}&password=${DB_PASSWORD}"
+ :search-index-path "/tmp/rems-search-index"
+ :authentication :oidc
+ ;; Configure an OpenID Provider
+ :oidc-metadata-url "${OIDC_METADATA_URL}"
+ :oidc-client-id "${OIDC_CLIENT_ID}"
+ :oidc-client-secret "${OIDC_CLIENT_SECRET}"
+ :oidc-scopes "openid profile email"
+ :oidc-userid-attributes [{:attribute "sub"}]
+ :oidc-name-attributes ["name" "unique_name" "family_name"]
+ :oidc-email-attributes ["email"]
+ :log-authentication-details true
+ :languages [:en]
+ :catalogue-is-public true
+ :ga4gh-visa-private-key "/rems/keys/private-key.jwk"
+ :ga4gh-visa-public-key "/rems/keys/public-key.jwk"
+ :enable-cart true ; show shopping cart and allow bundling multiple resources into one application
+ :enable-permissions-api true
+ :enable-pdf-api true
+ :enable-catalogue-tree false ; might be useful for a lot of items
+ :catalogue-tree-show-matching-parents true
+ :enable-autosave true
+ :extra-stylesheets {:root "./" :files ["/theme/styles.css"]}
+ :theme-path "/rems/theme/theme.edn"
+ :extra-pages-path "/rems/extra-pages"}
