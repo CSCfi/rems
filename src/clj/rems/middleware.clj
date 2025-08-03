@@ -310,8 +310,8 @@
       wrap-role-headers
       wrap-context
       wrap-user
-      auth/wrap-auth
       wrap-api-key-or-csrf-token
+      auth/wrap-auth
       wrap-entry-logging
       (wrap-defaults (wrap-defaults-settings))
       wrap-cache-control
