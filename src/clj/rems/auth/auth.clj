@@ -46,6 +46,7 @@
                                               (:request-method request)
                                               (:uri request))
                       false)))))
+                      
 
 (defn wrap-auth [handler]
   (wrap-uses-valid-api-key
