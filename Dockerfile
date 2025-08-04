@@ -2,7 +2,7 @@
 
 FROM eclipse-temurin:17-jre-alpine
 
-RUN apk add --no-cache bash gettext
+RUN apk add --no-cache bash gettext curl
 
 RUN mkdir -p /rems/keys
 
