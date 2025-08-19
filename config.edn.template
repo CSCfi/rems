@@ -12,6 +12,8 @@
  :oidc-userid-attributes [{:attribute "sub"}]
  :oidc-name-attributes ["name" "unique_name" "family_name"]
  :oidc-email-attributes ["email"]
+ :oidc-logout-redirect-url "${OIDC_LOGOUT_REDIRECT_URL}"
+ :oidc-perform-revoke-on-logout true
  :log-authentication-details true
  :languages [:en]
  :catalogue-is-public true

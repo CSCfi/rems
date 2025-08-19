@@ -7,6 +7,7 @@
     "shadow-watch": "shadow-cljs watch app"
   },
   "devDependencies": {
+    "@types/node": "^24.3.0",
     "diff-match-patch": "1.0.5",
     "follow-redirects": "1.15.6",
     "karma": "6.4.3",
@@ -17,5 +18,9 @@
     "react-dom": "17.0.2",
     "react-select": "5.8.0",
     "shadow-cljs": "2.28.3"
+  },
+  "dependencies": {
+    "aws-cdk-lib": "^2.211.0",
+    "constructs": "^10.4.2"
   }
 }
