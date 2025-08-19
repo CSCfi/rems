@@ -17,6 +17,18 @@ urlencode() {
   echo "$encoded"
 }
 
+# Ensure PUBLIC_URL ends with a trailing slash for post_logout_redirect_uri
+PUBLIC_URL="${PUBLIC_URL%/}/"
+
+# Derive Auth0 base from the configured OIDC metadata URL
+# e.g. https://tenant.au.auth0.com/.well-known/openid-configuration -> https://tenant.au.auth0.com
+AUTH0_BASE="${OIDC_METADATA_URL%/.well-known/openid-configuration}"
+AUTH0_BASE="${AUTH0_BASE%/}"
+
+# Build the logout URL dynamically (no hard-coding)
+ENC_RETURN="$(urlencode "${PUBLIC_URL}")"
+export OIDC_LOGOUT_REDIRECT_URL="${AUTH0_BASE}/oidc/logout?client_id=${OIDC_CLIENT_ID}&post_logout_redirect_uri=${ENC_RETURN}"
+
 export DB_PASSWORD_ENCODED=$(urlencode "$DB_PASSWORD")
 
 # Write Visa key files
