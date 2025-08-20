@@ -1,0 +1,48 @@
+name: Build and Push Admin Utils Image
+
+on:
+  push:
+    branches:
+      - develop
+      - master
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    environment: dev
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Configure AWS credentials (Dev Account)
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN_DEV }}
+          aws-region: ${{ secrets.CDK_REGION_DEV }}
+
+      - name: Log in to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ steps.login-ecr.outputs.registry }}/rems-admin-utils
+          tags: |
+            type=ref,event=branch
+            type=sha
+            ${{ github.ref == 'refs/heads/master' && 'latest' || '' }}
+
+      - name: Build and push Admin Utils image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: adminUtils.Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
