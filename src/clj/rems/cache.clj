@@ -1,7 +1,6 @@
 (ns rems.cache
   (:require [clojure.core.cache.wrapped :as w]
             [clojure.tools.logging.readable :as logr]
-            [medley.core :refer [update-existing]]
             [rems.common.util :refer [build-index]]
             [rems.common.dependency :as dep]
             [rems.config]))
@@ -10,8 +9,6 @@
 (def ^:private caches-dag (atom (dep/make-graph)))
 
 (def ^{:doc "Value that tells cache to skip entry."} absent ::absent)
-
-(def ^:private initial-statistics {:get 0 :reload 0 :upsert 0 :evict 0})
 
 (defprotocol RefreshableCacheProtocol
   "Protocol for cache wrapper that can refresh the underlying cache."
@@ -40,8 +37,6 @@
 
   (export-statistics! [this]
     "Retrieves runtime statistics from cache, and resets appropriate counters.")
-  (increment-get-statistic! [this]
-    "Increments cache access counter.")
   (increment-reload-statistic! [this]
     "Increments cache reload counter.")
   (increment-upsert-statistic! [this]
@@ -73,14 +68,13 @@
   CacheStatisticsProtocol
 
   (export-statistics! [this]
-    (let [stats @statistics]
-      (reset! statistics (select-keys initial-statistics (keys stats)))
-      stats))
+    (let [value @statistics]
+      (reset! statistics {:reload 0 :upsert 0 :evict 0})
+      value))
 
-  (increment-get-statistic! [this] (swap! statistics update-existing :get inc))
-  (increment-reload-statistic! [this] (swap! statistics update :reload inc))
-  (increment-upsert-statistic! [this] (swap! statistics update :upsert inc))
-  (increment-evict-statistic! [this] (swap! statistics update :evict inc))
+  (increment-reload-statistic! [this] (some-> statistics (swap! update :reload inc)))
+  (increment-upsert-statistic! [this] (some-> statistics (swap! update :upsert inc)))
+  (increment-evict-statistic! [this] (some-> statistics (swap! update :evict inc)))
 
   RefreshableCacheProtocol
 
@@ -106,8 +100,6 @@
 
   (ensure-initialized! [this]
     ;; NB: reading requires no locking
-    (increment-get-statistic! this)
-
     (if @initialized?
       @the-cache
       (reload! this)))
@@ -184,23 +176,27 @@
         (increment-evict-statistic! this)
         (logr/debug "<" id :evict k)))))
 
-(defn basic [{:keys [depends-on id miss-fn reload-fn]}]
+(defn- ensure-cache-id-unique! [id]
   (when (contains? @caches id)
+    ;; NB: even if config is not started, we default to assert
     (if (:dev rems.config/env)
       (logr/warnf "overriding cache id %s" id)
-      (assert false (format "error overriding cache id %s" id))))
-  (let [initialized? false
-        statistics (if (:dev rems.config/env)
-                     initial-statistics
-                     (select-keys initial-statistics [:reload :upsert :evict])) ; :get statistics can become big quickly
-        the-cache (w/basic-cache-factory {})
-        cache (->RefreshableCache id
-                                  (atom statistics)
-                                  (atom initialized?)
-                                  the-cache
-                                  miss-fn
-                                  (or reload-fn (constantly {})))]
-    (swap! caches assoc id cache)
-    (swap! caches-dag dep/depend id depends-on) ; noop when empty depends-on
-    (add-watch the-cache id reset-dependents-on-change!)
-    cache))
+      (assert false (format "error overriding cache id %s" id)))))
+
+(defn basic [{:keys [depends-on id miss-fn reload-fn]}]
+  (or (ensure-cache-id-unique! id)
+      (let [initialized? false
+            statistics {}
+            the-cache (w/basic-cache-factory {})
+            cache (->RefreshableCache id
+                                      (atom statistics)
+                                      (atom initialized?)
+                                      the-cache
+                                      miss-fn
+                                      (or reload-fn (constantly {})))
+            _ (export-statistics! cache) ; NB: initializes statistics
+            ]
+        (swap! caches assoc id cache)
+        (swap! caches-dag dep/depend id depends-on) ; noop when empty depends-on
+        (add-watch the-cache id reset-dependents-on-change!)
+        cache)))
