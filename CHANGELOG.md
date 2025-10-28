@@ -21,6 +21,7 @@ Changes since v2.38.1
 ### Fixes
 - Resolved issue where workflow voting could not be removed, which caused UI to display raw translation keys due to nil voting values. (#3357)
 - Fix audit log API. Technical error from incorrect response. (#3380)
+- Fixes to enable JVM 25 support (https://github.com/tolitius/cprop/issues/60, https://clojure.atlassian.net/browse/CLJ-2764)
 
 ## v2.38.1 "Välimerenkatu +1" 2025-01-27
 

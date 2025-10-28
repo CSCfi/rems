@@ -43,3 +43,7 @@ You can check out the API docs using
 [the swagger-ui of the public demo instance](https://rems-test.2.rahtiapp.fi/swagger-ui).
 
 Documentation can be found under the [docs](./docs) folder.
+
+## See Also
+
+[REMS-COmanage bridge service](https://github.com/GUARDIANS-infrastructure/rems-co) – Service that synchronizes entitlements between REMS and a COManage registry.
