@@ -137,7 +137,7 @@
                                                                  (fn []
                                                                    (cache-invalidater)
                                                                    ;; give some mercy
-                                                                   (Thread/sleep (rand-int 50)))))))
+                                                                   (Thread/sleep (long (rand-int 50))))))))
             writes-count (atom 0)
             progress-count (atom -1) ; start below writes-count for the first round
             writers (submit-all thread-pool (for [app-id app-ids
@@ -155,7 +155,7 @@
           ;; if there is no progress within 100ms
           ;; something is wrong, like deadlock
           (reset! progress-count @writes-count)
-          (Thread/sleep 100))
+          (Thread/sleep (long 100)))
 
         (log/info "Finished with " @writes-count "of" target-writes "writes")
 
