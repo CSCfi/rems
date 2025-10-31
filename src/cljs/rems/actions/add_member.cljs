@@ -34,7 +34,6 @@
          filtered (->> members
                        (filter #(not (contains? existing-ids (:userid %))))
                        (map atoms/enrich-user))]
-     (prn (:application/members application))
      (assoc db
             ::potential-members filtered
             ::selected-member nil))))
