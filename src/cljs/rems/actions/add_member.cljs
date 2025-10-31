@@ -26,9 +26,18 @@
 (rf/reg-event-db
  ::set-potential-members
  (fn [db [_ members]]
-   (assoc db
-          ::potential-members (set (map atoms/enrich-user members))
-          ::selected-member nil)))
+   (let [application (-> db :rems.application/application :data)
+         applicant (-> application :application/applicant)
+         existing-ids (set (concat
+                            [(:userid applicant)]
+                            (map :userid (:application/members application))))
+         filtered (->> members
+                       (filter #(not (contains? existing-ids (:userid %))))
+                       (map atoms/enrich-user))]
+     (prn (:application/members application))
+     (assoc db
+            ::potential-members filtered
+            ::selected-member nil))))
 
 (rf/reg-event-db ::set-selected-member (fn [db [_ member]] (assoc db ::selected-member member)))
 (rf/reg-sub ::selected-member (fn [db _] (::selected-member db)))
