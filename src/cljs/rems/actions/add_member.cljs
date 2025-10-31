@@ -28,14 +28,14 @@
  (fn [db [_ members]]
    (let [application (-> db :rems.application/application :data)
          applicant (-> application :application/applicant)
-         existing-ids (set (concat
-                            [(:userid applicant)]
+         existing-ids (set (concat 
+                            [(:userid applicant)] 
                             (map :userid (:application/members application))))
-         filtered (->> members
+         filtered (->> (set members)
                        (filter #(not (contains? existing-ids (:userid %))))
                        (map atoms/enrich-user))]
      (assoc db
-            ::potential-members filtered
+            ::potential-members (set filtered)
             ::selected-member nil))))
 
 (rf/reg-event-db ::set-selected-member (fn [db [_ member]] (assoc db ::selected-member member)))
