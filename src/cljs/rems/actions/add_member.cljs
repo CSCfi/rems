@@ -35,7 +35,7 @@
                        (filter #(not (contains? existing-ids (:userid %))))
                        (map atoms/enrich-user))]
      (assoc db
-            ::potential-members (set filtered)
+            ::potential-members filtered
             ::selected-member nil))))
 
 (rf/reg-event-db ::set-selected-member (fn [db [_ member]] (assoc db ::selected-member member)))
