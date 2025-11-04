@@ -15,7 +15,7 @@
            :error-handler (flash-message/default-error-handler :top "Fetch potential members")})))
 
 (rf/reg-event-fx
- ::reset-form
+ ::open-form
  (fn [{:keys [db]} _]
    {:db (assoc db
                ::potential-members #{}
@@ -65,7 +65,7 @@
 (defn add-member-action-button []
   [action-button {:id action-form-id
                   :text (text :t.actions/add-member)
-                  :on-click #(rf/dispatch [::reset-form])}])
+                  :on-click #(rf/dispatch [::open-form])}])
 
 (defn add-member-view
   [{:keys [selected-member potential-members on-set-member on-send]}]
