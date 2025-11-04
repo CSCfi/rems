@@ -15,28 +15,30 @@
            :error-handler (flash-message/default-error-handler :top "Fetch potential members")})))
 
 (rf/reg-event-fx
- ::open-form
+ ::reset-form
  (fn [{:keys [db]} _]
    {:db (assoc db
                ::potential-members #{}
                ::selected-member nil)
     ::fetch-potential-members #(rf/dispatch [::set-potential-members %])}))
 
-(rf/reg-sub ::potential-members (fn [db _] (::potential-members db)))
+(defn potential-members [db]
+    (let [application (get-in db [:rems.application/application :data])
+          applicant (application :application/applicant)
+          existing-ids (set (concat [(:userid applicant)]
+                                    (map :userid (:application/members application))))]
+      (->> ::potential-members db
+           (remove (comp existing-ids :userid))
+           (map atoms/enrich-user))))
+
+(rf/reg-sub ::potential-members (fn [db _] (potential-members db)))
+
 (rf/reg-event-db
  ::set-potential-members
  (fn [db [_ members]]
-   (let [application (-> db :rems.application/application :data)
-         applicant (-> application :application/applicant)
-         existing-ids (set (concat 
-                            [(:userid applicant)] 
-                            (map :userid (:application/members application))))
-         filtered (->> (set members)
-                       (filter #(not (contains? existing-ids (:userid %))))
-                       (map atoms/enrich-user))]
-     (assoc db
-            ::potential-members filtered
-            ::selected-member nil))))
+   (assoc db 
+          ::potential-members members
+          ::selected-member nil)))
 
 (rf/reg-event-db ::set-selected-member (fn [db [_ member]] (assoc db ::selected-member member)))
 (rf/reg-sub ::selected-member (fn [db _] (::selected-member db)))
@@ -63,7 +65,7 @@
 (defn add-member-action-button []
   [action-button {:id action-form-id
                   :text (text :t.actions/add-member)
-                  :on-click #(rf/dispatch [::open-form])}])
+                  :on-click #(rf/dispatch [::reset-form])}])
 
 (defn add-member-view
   [{:keys [selected-member potential-members on-set-member on-send]}]
