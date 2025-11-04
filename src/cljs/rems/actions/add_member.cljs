@@ -36,7 +36,7 @@
 (rf/reg-event-db
  ::set-potential-members
  (fn [db [_ members]]
-   (assoc db 
+   (assoc db
           ::potential-members members
           ::selected-member nil)))
 
