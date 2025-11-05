@@ -24,9 +24,10 @@
 
 (defn potential-members [db]
     (let [application (get-in db [:rems.application/application :data])
-          applicant (application :application/applicant)
+          applicant (get-in application [:application/applicant])
+          members (get-in application [:application/members])
           existing-ids (set (concat [(:userid applicant)]
-                                    (map :userid (:application/members application))))]
+                                    (map :userid members)))]
       (->> ::potential-members db
            (remove (comp existing-ids :userid))
            (map atoms/enrich-user))))
