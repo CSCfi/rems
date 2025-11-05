@@ -32,7 +32,7 @@
            (remove (comp existing-ids :userid))
            (map atoms/enrich-user))))
 
-(rf/reg-sub ::potential-members (fn [db _] (potential-members db)))
+(rf/reg-sub ::potential-members potential-members)
 
 (rf/reg-event-db
  ::set-potential-members
