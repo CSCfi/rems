@@ -19,7 +19,8 @@
             [rems.focus :as focus]
             [rems.spinner :as spinner]
             [rems.text :refer [get-localized-title localized localize-command localize-role localize-state text text-format text-format-map]]
-            [rems.util :refer [navigate! post! put! trim-when-string]]))
+            [rems.util :refer [navigate! post! put! trim-when-string]]
+            [rems.common.roles :as roles]))
 
 (rf/reg-event-fx ::enter-page
                  (fn [{:keys [db]} [_ workflow-id]]
