@@ -23,14 +23,13 @@
     ::fetch-potential-members #(rf/dispatch [::set-potential-members %])}))
 
 (defn potential-members [db]
-    (let [application (get-in db [:rems.application/application :data])
-          applicant (get-in application [:application/applicant])
-          members (get-in application [:application/members])
-          existing-ids (set (concat [(:userid applicant)]
-                                    (map :userid members)))]
-      (->> ::potential-members db
-           (remove (comp existing-ids :userid))
-           (map atoms/enrich-user))))
+  (let [application (get-in db [:rems.application/application :data])
+        applicant-id (get-in application [:application/applicant :userid])
+        members (get-in application [:application/members])
+        existing-ids (into #{applicant-id} (map :userid members))]
+    (->> ::potential-members db
+         (remove (comp existing-ids :userid))
+         (map atoms/enrich-user))))
 
 (rf/reg-sub ::potential-members potential-members)
 
