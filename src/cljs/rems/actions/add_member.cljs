@@ -26,7 +26,8 @@
   (let [application (get-in db [:rems.application/application :data])
         applicant-id (get-in application [:application/applicant :userid])
         members (get-in application [:application/members])
-        existing-ids (into #{applicant-id} (map :userid members))]
+        existing-ids (into #{applicant-id} 
+                           (map :userid members))]
     (->> ::potential-members db
          (remove (comp existing-ids :userid))
          (map atoms/enrich-user))))
