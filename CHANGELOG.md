@@ -20,6 +20,7 @@ Changes since v2.38.1
 
 ### Fixes
 - Resolved issue where workflow voting could not be removed, which caused UI to display raw translation keys due to nil voting values. (#3357)
+- Fixed an issue with the application page where the 'Add member' dropdown menu displayed members that already exist in the application.  (#1412)
 
 ## v2.38.1 "Välimerenkatu +1" 2025-01-27
 
