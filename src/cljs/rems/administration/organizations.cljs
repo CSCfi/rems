@@ -76,21 +76,18 @@
    (str "/administration/organizations/" organization-id)
    (text :t.administration/view)])
 
-(defn modify-organization-dropdown [organization]
-  (let [id (:organization/id organization)
-        org-owner? (->> @(rf/subscribe [:owned-organizations])
-                        (some (comp #{id} :organization/id)))]
-    [atoms/commands-group-button
-     {:label (text :t.actions/modify)}
+(defn modify-organization-dropdown [{id :organization/id :as organization}]
+  [atoms/commands-group-button
+   {:label (text :t.actions/modify)}
 
-     (when org-owner?
-       (edit-action id))
+   (when (roles/can-modify-organization-item? {:organization organization})
+     (edit-action id))
 
      ;; XXX: organization owner cannot use these actions currently
-     (when (roles/has-roles? :owner)
-       (list
-        (status-flags/enabled-toggle-action {:on-change #(rf/dispatch [::set-organization-enabled %1 %2 [::fetch-organizations]])} organization)
-        (status-flags/archived-toggle-action {:on-change #(rf/dispatch [::set-organization-archived %1 %2 [::fetch-organizations]])} organization)))]))
+   (when (roles/has-roles? :owner)
+     (list
+      (status-flags/enabled-toggle-action {:on-change #(rf/dispatch [::set-organization-enabled %1 %2 [::fetch-organizations]])} organization)
+      (status-flags/archived-toggle-action {:on-change #(rf/dispatch [::set-organization-archived %1 %2 [::fetch-organizations]])} organization)))])
 
 (rf/reg-sub
  ::organizations-table-rows

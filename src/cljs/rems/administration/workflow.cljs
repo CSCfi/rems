@@ -230,10 +230,9 @@
        [voting-fields]
        [disable-commands-fields]
        [processing-states-fields]
-
        [:div.col.commands
         [administration/back-button "/administration/workflows"]
-        [roles/show-when roles/+admin-write-roles+
+        [roles/show-when-can-modify-organization-item workflow
          [atoms/action-button (edit-workflow-action (:id workflow))]
          [perform-action-button (toggle-enabled workflow)]
          [perform-action-button (toggle-archived workflow)]]]])]])

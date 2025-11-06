@@ -87,7 +87,7 @@
 
    [:div.col.commands
     [administration/back-button "/administration/licenses"]
-    [roles/show-when roles/+admin-write-roles+
+    [roles/show-when-can-modify-organization-item license
      [perform-action-button (toggle-enabled license)]
      [perform-action-button (toggle-archived license)]]]])
 

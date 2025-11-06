@@ -50,3 +50,8 @@
                            (some (comp #{(-> item :organization :organization/id)} :organization/id)))]
        (or owner?
            org-owner?))))
+
+#?(:cljs
+   (defn show-when-can-modify-organization-item [item & body]
+     (when (can-modify-organization-item? item)
+       (into [:<> body]))))
