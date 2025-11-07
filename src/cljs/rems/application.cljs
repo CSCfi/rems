@@ -27,6 +27,7 @@
             [rems.actions.remove-member :refer [remove-member-action-button remove-member-form]]
             [rems.actions.request-decision :refer [request-decision-action-link request-decision-form]]
             [rems.actions.request-review :refer [request-review-action-link request-review-form]]
+            [rems.actions.request-dac-review :refer [request-dac-review-action-link request-dac-review-form]]
             [rems.actions.return-action :refer [return-action-button return-form]]
             [rems.actions.review :refer [review-action-button review-form]]
             [rems.actions.revoke :refer [revoke-action-button revoke-form]]
@@ -1015,6 +1016,7 @@
     (text :t.actions/request-review-dropdown)]
    [:div.dropdown-menu
     [request-review-action-link]
+    [request-dac-review-action-link]
     [invite-reviewer-action-link]]])
 
 (defn- request-decision-dropdown []
@@ -1083,6 +1085,7 @@
 
                  [:div#actions-forms.mt-3
                   [request-review-form app-id reload]
+                  [request-dac-review-form app-id reload]
                   [request-decision-form app-id reload]
                   [invite-decider-form app-id reload]
                   [invite-reviewer-form app-id reload]
