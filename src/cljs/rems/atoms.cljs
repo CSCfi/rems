@@ -221,12 +221,15 @@
                          (str (localized (:name email))
                               " <" (:email email) ">")]))
 
-(defn- set-document-title! [s]
-  (r/with-let [title (r/reaction ; changes when text and text-format change
-                      (if-not (str/blank? s)
-                        (text-format :t.label/dash s (text :t.header/title))
-                        (text :t.header/title)))]
-    (set! (.-title js/document) @title)))
+(defn- set-document-title! [title]
+  (r/with-let [app-title (text :t.header/title)
+               document-title (r/reaction ; changes when text and text-format change 
+                               (cond
+                                 (and (str/blank? app-title) (str/blank? title)) "REMS"
+                                 (and (not (str/blank? app-title)) (str/blank? title)) app-title
+                                 (and (str/blank? app-title) (not (str/blank? title))) title
+                                 :else (text-format :t.label/dash title app-title)))]
+    (set! (.-title js/document) @document-title)))
 
 (defn document-title [title & [{:keys [heading?] :or {heading? true}}]]
   (let [the-title @(r/track set-document-title! title)]
