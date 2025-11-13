@@ -3291,7 +3291,14 @@
                      (->> (slurp-table :organizations)
                           (some #(when (= "SNEN" (get % "short-name"))
                                    (get % "commands")))))
-                  "organization actions should not be visible for non organization owner"))))))))
+                  "organization actions should not be visible for non organization owner")
+              (testing "edit button is not visible when not organization owner"
+                (click-row-action [:organizations]
+                                  {:fn/text (str (btu/context-getx :organization-name) " EN")}
+                                  (select-button-by-label "View"))
+                (btu/wait-page-loaded)
+                (is (btu/eventually-visible? :back))
+                (is (not (btu/visible? :edit)))))))))))
 
 (deftest test-small-navbar
   (testing "create a test application with the API to have another page to navigate to"
