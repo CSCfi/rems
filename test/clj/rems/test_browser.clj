@@ -1671,7 +1671,7 @@
         (is (btu/eventually-visible? {:fn/has-text "Joining the application failed"}))
         (btu/screenshot "someone-else-cannot-use-the-link")))))
 
-#_(deftest test-approve-with-end-date
+(deftest test-approve-with-end-date
   (testing "submit test data with API"
     (btu/context-assoc! :form-id (test-helpers/create-form! {:form/fields [{:field/title {:en "description" :fi "kuvaus" :sv "rubrik"}
                                                                             :field/optional false
@@ -2162,7 +2162,7 @@
                 "Active" true}
                (dissoc (slurp-fields :catalogue-item) "Start")))))))
 
-#_(deftest test-update-catalogue-item
+(deftest test-update-catalogue-item
   (btu/with-postmortem
     (btu/context-assoc! :workflow1 (test-helpers/create-workflow! {:title "test-update-catalogue-item workflow 1"}))
     (btu/context-assoc! :workflow2 (test-helpers/create-workflow! {:title "test-update-catalogue-item workflow 2"}))
