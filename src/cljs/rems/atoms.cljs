@@ -229,7 +229,6 @@
                         s))]
     (set! (.-title js/document) @title)))
 
-
 (defn document-title [title & [{:keys [heading?] :or {heading? true}}]]
   (let [the-title @(r/track set-document-title! title)]
     (when heading?
