@@ -3608,7 +3608,39 @@
                   "Bilaga (FI)" "Ladda ner fil\nE2E license with attachments (FI)"
                   "Bilaga (SV)" "Ladda ner fil\nE2E license with attachments (SV)"
                   "Aktiv" true}
-                 (slurp-fields :license))))))))
+                 (slurp-fields :license))))))
+    (testing "edit buttons are not visible when not organization owner"
+      (with-change-language :en
+        (test-helpers/create-organization! {:actor "owner"
+                                            :organization/id "other-organization"
+                                            :organization/short-name {:en "dummy-en" :fi "dummy-fi" :sv "dummy-sv"}
+                                            :organization/name {:en "dummy-organization-en"
+                                                                :fi "dummy-organization-fi"
+                                                                :sv "dummy-organization-sv"}
+                                            :organization/owners [{:userid "organization-owner1"}]})
+        (test-helpers/create-license! {:actor "owner"
+                                       :organization {:organization/id "other-organization"}
+                                       :license/title {:en "License-EN"
+                                                       :fi "License-FI"
+                                                       :sv "License-SV"}
+                                       :license/text {:en "License text EN"
+                                                      :fi "License text FI"
+                                                      :sv "License text SV"}})
+        (logout)
+        (login-as "organization-owner2")
+        (go-to-admin "Licenses")
+        (btu/scroll-and-click {:fn/text "Own organization only"})
+        (btu/wait-visible [:licenses {:fn/text "License-EN"}])
+        (is (->> (slurp-table :licenses)
+                 (some #(when (= "dummy-en" (get % "organization"))
+                          (get % "commands")))
+                 (= "View")))
+        (click-row-action [:licenses]
+                          {:fn/text "dummy-en"}
+                          (select-button-by-label "View"))
+        (is (btu/eventually-visible? :back))
+        (is (not (btu/visible? :disable)))
+        (is (not (btu/visible? :archive)))))))
 
 (deftest test-extra-pages
   (btu/with-postmortem
