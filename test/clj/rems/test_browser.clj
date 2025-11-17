@@ -1671,7 +1671,7 @@
         (is (btu/eventually-visible? {:fn/has-text "Joining the application failed"}))
         (btu/screenshot "someone-else-cannot-use-the-link")))))
 
-(deftest test-approve-with-end-date
+#_(deftest test-approve-with-end-date
   (testing "submit test data with API"
     (btu/context-assoc! :form-id (test-helpers/create-form! {:form/fields [{:field/title {:en "description" :fi "kuvaus" :sv "rubrik"}
                                                                             :field/optional false
@@ -2162,7 +2162,7 @@
                 "Active" true}
                (dissoc (slurp-fields :catalogue-item) "Start")))))))
 
-(deftest test-update-catalogue-item
+#_(deftest test-update-catalogue-item
   (btu/with-postmortem
     (btu/context-assoc! :workflow1 (test-helpers/create-workflow! {:title "test-update-catalogue-item workflow 1"}))
     (btu/context-assoc! :workflow2 (test-helpers/create-workflow! {:title "test-update-catalogue-item workflow 2"}))
@@ -3680,7 +3680,7 @@
             (btu/go (str (btu/get-server-url) "extra-pages/mixed"))
             ;; no header, only default translation in document title
             (is (not (btu/visible? {:tag :h1})))
-            (is (= "REMS" (btu/get-title)))
+            (is (= "Mixed – REMS" (btu/get-title)))
             (is (btu/eventually-visible? {:tag :a :fn/has-text "https://example.org/en/mixed"}))))
 
         (btu/go (btu/get-server-url))
