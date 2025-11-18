@@ -30,6 +30,19 @@
             :organizations [{:organization/id "org"}]}
            (rems.db.users/get-user "user-with-org")))
 
+    (testing "cache reload works"
+      ;; force cache reload
+      (cache/set-uninitialized! rems.db.users/user-cache)
+      (is (= {"user-with-org" {:userid "user-with-org"
+                               :name "User Org"
+                               :email "user@org"
+                               :organizations [{:organization/id "org"}]}
+              "user1" {:userid "user1"
+                       :name "What Ever"
+                       :email nil
+                       :some-attr "some value"}}
+             (into {} (cache/entries! rems.db.users/user-cache)))))
+
     (testing "user has different userid in userattrs"
       ;; NB: raw db call due testing backwards compatible behavior
       (db/add-user! {:user "different-userid" :userattrs (json/generate-string {:userid "bad"})})
