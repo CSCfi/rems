@@ -91,8 +91,9 @@
      [:div.col.commands
       [administration/back-button "/administration/forms"]
       [roles/show-when roles/+admin-write-roles+
+       [copy-as-new-button id]]
+      [roles/show-when-can-modify-organization-item form
        [edit-button id]
-       [copy-as-new-button id]
        [perform-action-button (toggle-enabled form)]
        [perform-action-button (toggle-archived form)]]])
    (when-let [errors (:form/errors form)]

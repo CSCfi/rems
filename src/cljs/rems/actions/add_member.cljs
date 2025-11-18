@@ -22,12 +22,23 @@
                ::selected-member nil)
     ::fetch-potential-members #(rf/dispatch [::set-potential-members %])}))
 
-(rf/reg-sub ::potential-members (fn [db _] (::potential-members db)))
+(defn potential-members [db]
+  (let [application (get-in db [:rems.application/application :data])
+        applicant-id (get-in application [:application/applicant :userid])
+        members (get-in application [:application/members])
+        existing-ids (into #{applicant-id} 
+                           (map :userid members))]
+    (->> ::potential-members db
+         (remove (comp existing-ids :userid))
+         (map atoms/enrich-user))))
+
+(rf/reg-sub ::potential-members potential-members)
+
 (rf/reg-event-db
  ::set-potential-members
  (fn [db [_ members]]
    (assoc db
-          ::potential-members (set (map atoms/enrich-user members))
+          ::potential-members members
           ::selected-member nil)))
 
 (rf/reg-event-db ::set-selected-member (fn [db [_ member]] (assoc db ::selected-member member)))
