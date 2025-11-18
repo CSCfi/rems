@@ -3611,16 +3611,7 @@
                  (slurp-fields :license))))))
     (testing "edit buttons are not visible when not organization owner"
       (with-change-language :en
-        (test-helpers/create-organization! {:actor "owner"
-                                            :organization/id "other-organization"
-                                            :organization/short-name {:en "dummy-en" :fi "dummy-fi" :sv "dummy-sv"}
-                                            :organization/name {:en "dummy-organization-en"
-                                                                :fi "dummy-organization-fi"
-                                                                :sv "dummy-organization-sv"}
-                                            :organization/owners [{:userid "organization-owner1"}]})
-        (test-helpers/create-license! {:actor "owner"
-                                       :organization {:organization/id "other-organization"}
-                                       :license/title {:en "License-EN"
+        (test-helpers/create-license! {:license/title {:en "License-EN"
                                                        :fi "License-FI"
                                                        :sv "License-SV"}
                                        :license/text {:en "License text EN"
@@ -3629,14 +3620,16 @@
         (logout)
         (login-as "organization-owner2")
         (go-to-admin "Licenses")
+        (btu/wait-visible [:licenses {:fn/text "E2E license with external links (EN)"}])
+        (is (not (btu/visible? [:licenses {:fn/text "License-EN"}])))
         (btu/scroll-and-click {:fn/text "Own organization only"})
         (btu/wait-visible [:licenses {:fn/text "License-EN"}])
         (is (->> (slurp-table :licenses)
-                 (some #(when (= "dummy-en" (get % "organization"))
+                 (some #(when (= "Default" (get % "organization"))
                           (get % "commands")))
                  (= "View")))
         (click-row-action [:licenses]
-                          {:fn/text "dummy-en"}
+                          {:fn/text "Default"}
                           (select-button-by-label "View"))
         (is (btu/eventually-visible? :back))
         (is (not (btu/visible? :disable)))
