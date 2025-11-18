@@ -104,11 +104,11 @@
    (let [id (:id catalogue-item)]
      [:div.col.commands
       [administration/back-button "/administration/catalogue-items"]
-      [roles/show-when roles/+admin-write-roles+
+      [roles/show-when-can-modify-organization-item catalogue-item
        [edit-button id]
        [perform-action-button (toggle-enabled catalogue-item)]
-       [perform-action-button (toggle-archived catalogue-item)]]
-      [manage-categories-button]])])
+       [perform-action-button (toggle-archived catalogue-item)]
+       [manage-categories-button]]])])
 
 (defn catalogue-item-page []
   (let [catalogue-item (rf/subscribe [::catalogue-item])

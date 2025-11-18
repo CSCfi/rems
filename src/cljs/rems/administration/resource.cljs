@@ -89,7 +89,7 @@
      [resource-blacklist]
      [:div.col.commands
       [administration/back-button "/administration/resources"]
-      [roles/show-when roles/+admin-write-roles+
+      [roles/show-when-can-modify-organization-item resource
        [perform-action-button (toggle-enabled resource)]
        [perform-action-button (toggle-archived resource)]]]]))
 
