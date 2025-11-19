@@ -2270,7 +2270,33 @@
                "active" true
                "organization" "Default"}]
              (->> (slurp-tds [:catalogue {:css "tr:has(td.selection *[aria-checked=true])"}])
-                  (mapv #(dissoc % "resource" "created" "commands"))))))))
+                  (mapv #(dissoc % "resource" "created" "commands"))))))
+
+    (testing "modify actions are not enabled when not organization owner"
+      (logout)
+      (login-as "organization-owner2")
+      (go-to-admin "Catalogue items")
+      (btu/wait-page-loaded)
+      (is (not (btu/visible? {:fn/text "test-update-catalogue-item 1 EN"})))
+      (is (not (btu/visible? {:fn/text "test-update-catalogue-item 2 EN"})))
+      (is (not (btu/visible? {:fn/text "test-update-catalogue-item 3 EN"})))
+      (btu/scroll-and-click {:fn/text "Own organization only"})
+      (is (btu/eventually-visible? {:fn/text "test-update-catalogue-item 1 EN"}))
+      (is (btu/eventually-visible? {:fn/text "test-update-catalogue-item 2 EN"}))
+      (is (btu/eventually-visible? {:fn/text "test-update-catalogue-item 3 EN"}))
+      (is (->> (slurp-rows :catalogue)
+               (filter #(= "Default" (get % "organization")))
+               (every? #(= "View" (get % "commands"))))))
+
+    (testing "edit buttons are not visible"
+      (click-row-action [:catalogue]
+                        {:fn/text "test-update-catalogue-item 1 EN"}
+                        (select-button-by-label "View"))
+      (is (btu/eventually-visible? :back))
+      (is (not (btu/visible? :edit)))
+      (is (not (btu/visible? :disable)))
+      (is (not (btu/visible? :archive)))
+      (is (not (btu/visible? :manage-categories))))))
 
 ;;; form editor test utilities
 
