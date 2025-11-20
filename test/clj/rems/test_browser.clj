@@ -2939,6 +2939,7 @@
   (btu/with-postmortem
     (login-as "owner")
     (go-to-admin "Workflows")
+
     (testing "create workflow"
       (btu/context-assoc! :workflow-title (str "test-workflow-create-edit " (btu/get-seed)))
       (btu/scroll-and-click :create-workflow)
@@ -2956,6 +2957,7 @@
       (select-option "Licenses" "General Terms of Use")
       (btu/screenshot "test-workflow-create-edit-1")
       (btu/scroll-and-click :save))
+
     (testing "view workflow"
       (wait-page-title "Workflow – REMS")
       (btu/wait-page-loaded)
@@ -2983,6 +2985,7 @@
       (is (= "General Terms of Use" (btu/get-element-text {:tag :div :id :workflow-licenses}))) ; readonly field
       (btu/screenshot "test-workflow-create-edit-4")
       (btu/scroll-and-click :save))
+
     (testing "view workflow again"
       (wait-page-title "Workflow – REMS")
       (btu/wait-page-loaded)
@@ -2996,7 +2999,27 @@
               "Licenses" "General Terms of Use"
               "Active" true}
              (slurp-fields :workflow-common-fields)))
-      (is (btu/visible? {:tag :a :fn/text "Simple form"})))))
+      (is (btu/visible? {:tag :a :fn/text "Simple form"})))
+
+    (testing "edit buttons are not visible when not organization owner"
+      (logout)
+      (login-as "organization-owner2")
+      (go-to-admin "Workflows")
+      (btu/wait-page-loaded)
+      (is (not (btu/visible? {:fn/text (str (btu/context-getx :workflow-title) " v2")})))
+      (btu/scroll-and-click {:fn/text "Own organization only"})
+      (btu/eventually-visible? {:fn/text (str (btu/context-getx :workflow-title) " v2")})
+      (is (->> (slurp-table :workflows)
+               (some #(when (= "Default" (get % "organization"))
+                        (get % "commands")))
+               (= "View")))
+      (click-row-action [:workflows]
+                        {:fn/text (str (btu/context-getx :workflow-title) " v2")}
+                        (select-button-by-label "View"))
+      (is (btu/eventually-visible? :back))
+      (is (not (btu/visible? :edit)))
+      (is (not (btu/visible? :disable)))
+      (is (not (btu/visible? :archive))))))
 
 (deftest test-blacklist
   (btu/with-postmortem
