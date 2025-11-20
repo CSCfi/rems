@@ -3032,10 +3032,10 @@
       (is (not (btu/visible? {:fn/text (str (btu/context-getx :workflow-title) " v2")})))
       (btu/scroll-and-click {:fn/text "Own organization only"})
       (btu/eventually-visible? {:fn/text (str (btu/context-getx :workflow-title) " v2")})
-      (is (->> (slurp-table :workflows)
-               (some #(when (= "Default" (get % "organization"))
-                        (get % "commands")))
-               (= "View")))
+      (is (= "View"
+             (->> (slurp-table :workflows)
+                  (some #(when (= "Default" (get % "organization"))
+                           (get % "commands"))))))
       (click-row-action [:workflows]
                         {:fn/text (str (btu/context-getx :workflow-title) " v2")}
                         (select-button-by-label "View"))
@@ -3696,10 +3696,10 @@
         (is (not (btu/visible? [:licenses {:fn/text "License-EN"}])))
         (btu/scroll-and-click {:fn/text "Own organization only"})
         (btu/wait-visible [:licenses {:fn/text "License-EN"}])
-        (is (->> (slurp-table :licenses)
-                 (some #(when (= "Default" (get % "organization"))
-                          (get % "commands")))
-                 (= "View")))
+        (is (= "View"
+               (->> (slurp-table :licenses)
+                    (some #(when (= "Default" (get % "organization"))
+                             (get % "commands"))))))
         (click-row-action [:licenses]
                           {:fn/text "Default"}
                           (select-button-by-label "View"))
