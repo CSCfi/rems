@@ -2271,7 +2271,33 @@
                "active" true
                "organization" "Default"}]
              (->> (slurp-tds [:catalogue {:css "tr:has(td.selection *[aria-checked=true])"}])
-                  (mapv #(dissoc % "resource" "created" "commands"))))))))
+                  (mapv #(dissoc % "resource" "created" "commands"))))))
+
+    (testing "modify actions are not enabled when not organization owner"
+      (logout)
+      (login-as "organization-owner2")
+      (go-to-admin "Catalogue items")
+      (btu/wait-page-loaded)
+      (is (not (btu/visible? {:fn/text "test-update-catalogue-item 1 EN"})))
+      (is (not (btu/visible? {:fn/text "test-update-catalogue-item 2 EN"})))
+      (is (not (btu/visible? {:fn/text "test-update-catalogue-item 3 EN"})))
+      (btu/scroll-and-click {:fn/text "Own organization only"})
+      (is (btu/eventually-visible? {:fn/text "test-update-catalogue-item 1 EN"}))
+      (is (btu/eventually-visible? {:fn/text "test-update-catalogue-item 2 EN"}))
+      (is (btu/eventually-visible? {:fn/text "test-update-catalogue-item 3 EN"}))
+      (is (->> (slurp-rows :catalogue)
+               (filter #(= "Default" (get % "organization")))
+               (every? #(= "View" (get % "commands"))))))
+
+    (testing "edit buttons are not visible"
+      (click-row-action [:catalogue]
+                        {:fn/text "test-update-catalogue-item 1 EN"}
+                        (select-button-by-label "View"))
+      (is (btu/eventually-visible? :back))
+      (is (not (btu/visible? :edit)))
+      (is (not (btu/visible? :disable)))
+      (is (not (btu/visible? :archive)))
+      (is (not (btu/visible? :manage-categories))))))
 
 ;;; form editor test utilities
 
@@ -2335,7 +2361,7 @@
     (testing "create form"
       (btu/scroll-and-click {:fn/text "Create form"})
       (wait-page-title "Create form – REMS")
-      (select-option "Organization" "nbn")
+      (select-option "Organization" "Default")
       (fill-form-field "Name" "Form editor test")
       (fill-form-field "EN" "Form Editor Test (EN)")
       (fill-form-field "FI" "Form Editor Test (FI)")
@@ -2444,6 +2470,7 @@
                     :let [column-id (keyword (format "columns-%s-key" i))
                           label-id (comp keyword (partial format "columns-%s-label-%s" i) name)]]
               (btu/scroll-and-click (field-component :add-column))
+              (btu/wait-visible (field-component column-id))
               (btu/fill-human (field-component column-id) (format "table-column-%s" i))
               (btu/fill-human (field-component (label-id :en)) (format "Table column %s (EN)" i))
               (btu/fill-human (field-component (label-id :fi)) (format "Table column %s (FI)" i))
@@ -2526,7 +2553,7 @@
     (testing "view form"
       (wait-page-title "Form – REMS")
       (btu/wait-page-loaded)
-      (is (= {"Organization" "NBN"
+      (is (= {"Organization" "The Default Organization"
               "Name" "Form editor test"
               "Title (EN)" "Form Editor Test (EN)"
               "Title (FI)" "Form Editor Test (FI)"
@@ -2620,10 +2647,32 @@
           (btu/wait-page-loaded)
           (wait-page-title "Form – REMS")))
 
+      (testing "edit buttons are not visible when not organization owner"
+        (logout)
+        (login-as "organization-owner2")
+        (go-to-admin "Forms")
+        (btu/wait-page-loaded)
+        (btu/scroll-query :forms)
+        (is (not (btu/visible? {:fn/text "Form editor test"})))
+        (btu/scroll-and-click {:fn/text "Own organization only"})
+        (btu/eventually-visible? {:fn/text "Form editor test"})
+        (is (= "View\nCopy as new"
+               (->> (slurp-table :forms)
+                    (some #(when (= "Default" (get % "organization"))
+                             (get % "commands"))))))
+        (click-row-action [:forms]
+                          {:fn/text "Form editor test"}
+                          (select-button-by-label "View"))
+        (is (btu/eventually-visible? :back))
+        (is (btu/visible? {:fn/has-class :btn :fn/has-text "Copy as new"}))
+        (is (not (btu/visible? :edit)))
+        (is (not (btu/visible? :disable)))
+        (is (not (btu/visible? :archive))))
+
       (testing "fetch form via api"
         (let [form-id (Integer/parseInt (last (str/split (btu/get-url) #"/")))]
           (is (= {:form/id form-id
-                  :organization {:organization/id "nbn" :organization/name {:fi "NBN" :en "NBN" :sv "NBN"} :organization/short-name {:fi "NBN" :en "NBN" :sv "NBN"}}
+                  :organization {:organization/id "default" :organization/name {:fi "Oletusorganisaatio" :en "The Default Organization" :sv "Standardorganisationen"} :organization/short-name {:fi "Oletus" :en "Default" :sv "Standard"}}
                   :form/internal-name "Form editor test"
                   :form/external-title {:en "Form Editor Test (EN)"
                                         :fi "Form Editor Test (FI)"
@@ -2914,6 +2963,7 @@
   (btu/with-postmortem
     (login-as "owner")
     (go-to-admin "Workflows")
+
     (testing "create workflow"
       (btu/context-assoc! :workflow-title (str "test-workflow-create-edit " (btu/get-seed)))
       (btu/scroll-and-click :create-workflow)
@@ -2931,6 +2981,7 @@
       (select-option "Licenses" "General Terms of Use")
       (btu/screenshot "test-workflow-create-edit-1")
       (btu/scroll-and-click :save))
+
     (testing "view workflow"
       (wait-page-title "Workflow – REMS")
       (btu/wait-page-loaded)
@@ -2958,6 +3009,7 @@
       (is (= "General Terms of Use" (btu/get-element-text {:tag :div :id :workflow-licenses}))) ; readonly field
       (btu/screenshot "test-workflow-create-edit-4")
       (btu/scroll-and-click :save))
+
     (testing "view workflow again"
       (wait-page-title "Workflow – REMS")
       (btu/wait-page-loaded)
@@ -2971,7 +3023,27 @@
               "Licenses" "General Terms of Use"
               "Active" true}
              (slurp-fields :workflow-common-fields)))
-      (is (btu/visible? {:tag :a :fn/text "Simple form"})))))
+      (is (btu/visible? {:tag :a :fn/text "Simple form"})))
+
+    (testing "edit buttons are not visible when not organization owner"
+      (logout)
+      (login-as "organization-owner2")
+      (go-to-admin "Workflows")
+      (btu/wait-page-loaded)
+      (is (not (btu/visible? {:fn/text (str (btu/context-getx :workflow-title) " v2")})))
+      (btu/scroll-and-click {:fn/text "Own organization only"})
+      (btu/eventually-visible? {:fn/text (str (btu/context-getx :workflow-title) " v2")})
+      (is (= "View"
+             (->> (slurp-table :workflows)
+                  (some #(when (= "Default" (get % "organization"))
+                           (get % "commands"))))))
+      (click-row-action [:workflows]
+                        {:fn/text (str (btu/context-getx :workflow-title) " v2")}
+                        (select-button-by-label "View"))
+      (is (btu/eventually-visible? :back))
+      (is (not (btu/visible? :edit)))
+      (is (not (btu/visible? :disable)))
+      (is (not (btu/visible? :archive))))))
 
 (deftest test-blacklist
   (btu/with-postmortem
@@ -3292,7 +3364,14 @@
                      (->> (slurp-table :organizations)
                           (some #(when (= "SNEN" (get % "short-name"))
                                    (get % "commands")))))
-                  "organization actions should not be visible for non organization owner"))))))))
+                  "organization actions should not be visible for non organization owner")
+              (testing "edit button is not visible when not organization owner"
+                (click-row-action [:organizations]
+                                  {:fn/text (str (btu/context-getx :organization-name) " EN")}
+                                  (select-button-by-label "View"))
+                (btu/wait-page-loaded)
+                (is (btu/eventually-visible? :back))
+                (is (not (btu/visible? :edit)))))))))))
 
 (deftest test-small-navbar
   (testing "create a test application with the API to have another page to navigate to"
@@ -3602,7 +3681,32 @@
                   "Bilaga (FI)" "Ladda ner fil\nE2E license with attachments (FI)"
                   "Bilaga (SV)" "Ladda ner fil\nE2E license with attachments (SV)"
                   "Aktiv" true}
-                 (slurp-fields :license))))))))
+                 (slurp-fields :license))))))
+    (testing "edit buttons are not visible when not organization owner"
+      (with-change-language :en
+        (test-helpers/create-license! {:license/title {:en "License-EN"
+                                                       :fi "License-FI"
+                                                       :sv "License-SV"}
+                                       :license/text {:en "License text EN"
+                                                      :fi "License text FI"
+                                                      :sv "License text SV"}})
+        (logout)
+        (login-as "organization-owner2")
+        (go-to-admin "Licenses")
+        (btu/wait-visible [:licenses {:fn/text "E2E license with external links (EN)"}])
+        (is (not (btu/visible? [:licenses {:fn/text "License-EN"}])))
+        (btu/scroll-and-click {:fn/text "Own organization only"})
+        (btu/wait-visible [:licenses {:fn/text "License-EN"}])
+        (is (= "View"
+               (->> (slurp-table :licenses)
+                    (some #(when (= "Default" (get % "organization"))
+                             (get % "commands"))))))
+        (click-row-action [:licenses]
+                          {:fn/text "Default"}
+                          (select-button-by-label "View"))
+        (is (btu/eventually-visible? :back))
+        (is (not (btu/visible? :disable)))
+        (is (not (btu/visible? :archive)))))))
 
 (deftest test-extra-pages
   (btu/with-postmortem
