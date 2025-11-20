@@ -2360,7 +2360,7 @@
     (testing "create form"
       (btu/scroll-and-click {:fn/text "Create form"})
       (wait-page-title "Create form – REMS")
-      (select-option "Organization" "nbn")
+      (select-option "Organization" "Default")
       (fill-form-field "Name" "Form editor test")
       (fill-form-field "EN" "Form Editor Test (EN)")
       (fill-form-field "FI" "Form Editor Test (FI)")
@@ -2552,7 +2552,7 @@
     (testing "view form"
       (wait-page-title "Form – REMS")
       (btu/wait-page-loaded)
-      (is (= {"Organization" "NBN"
+      (is (= {"Organization" "The Default Organization"
               "Name" "Form editor test"
               "Title (EN)" "Form Editor Test (EN)"
               "Title (FI)" "Form Editor Test (FI)"
@@ -2646,10 +2646,32 @@
           (btu/wait-page-loaded)
           (wait-page-title "Form – REMS")))
 
+      (testing "edit buttons are not visible when not organization owner"
+        (logout)
+        (login-as "organization-owner2")
+        (go-to-admin "Forms")
+        (btu/wait-page-loaded)
+        (btu/scroll-query :forms)
+        (is (not (btu/visible? {:fn/text "Form editor test"})))
+        (btu/scroll-and-click {:fn/text "Own organization only"})
+        (btu/eventually-visible? {:fn/text "Form editor test"})
+        (is (= "View\nCopy as new"
+               (->> (slurp-table :forms)
+                    (some #(when (= "Default" (get % "organization"))
+                             (get % "commands"))))))
+        (click-row-action [:forms]
+                          {:fn/text "Form editor test"}
+                          (select-button-by-label "View"))
+        (is (btu/eventually-visible? :back))
+        (is (btu/visible? {:fn/has-class :btn :fn/has-text "Copy as new"}))
+        (is (not (btu/visible? :edit)))
+        (is (not (btu/visible? :disable)))
+        (is (not (btu/visible? :archive))))
+
       (testing "fetch form via api"
         (let [form-id (Integer/parseInt (last (str/split (btu/get-url) #"/")))]
           (is (= {:form/id form-id
-                  :organization {:organization/id "nbn" :organization/name {:fi "NBN" :en "NBN" :sv "NBN"} :organization/short-name {:fi "NBN" :en "NBN" :sv "NBN"}}
+                  :organization {:organization/id "default" :organization/name {:fi "Oletusorganisaatio" :en "The Default Organization" :sv "Standardorganisationen"} :organization/short-name {:fi "Oletus" :en "Default" :sv "Standard"}}
                   :form/internal-name "Form editor test"
                   :form/external-title {:en "Form Editor Test (EN)"
                                         :fi "Form Editor Test (FI)"
