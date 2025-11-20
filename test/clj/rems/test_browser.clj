@@ -2469,6 +2469,7 @@
                     :let [column-id (keyword (format "columns-%s-key" i))
                           label-id (comp keyword (partial format "columns-%s-label-%s" i) name)]]
               (btu/scroll-and-click (field-component :add-column))
+              (btu/wait-visible (field-component column-id))
               (btu/fill-human (field-component column-id) (format "table-column-%s" i))
               (btu/fill-human (field-component (label-id :en)) (format "Table column %s (EN)" i))
               (btu/fill-human (field-component (label-id :fi)) (format "Table column %s (FI)" i))
