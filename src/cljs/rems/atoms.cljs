@@ -222,10 +222,11 @@
                               " <" (:email email) ">")]))
 
 (defn- set-document-title! [s]
-  (r/with-let [title (r/reaction ; changes when text and text-format change
-                      (if-not (str/blank? s)
-                        (text-format :t.label/dash s (text :t.header/title))
-                        (text :t.header/title)))]
+  (r/with-let [app-title (text :t.header/title)
+               title (r/reaction ; changes when text and text-format change
+                      (if-not (str/blank? app-title)
+                        (text-format :t.label/dash s app-title)
+                        s))]
     (set! (.-title js/document) @title)))
 
 (defn document-title [title & [{:keys [heading?] :or {heading? true}}]]
