@@ -2167,11 +2167,15 @@
     (btu/context-assoc! :workflow1 (test-helpers/create-workflow! {:title "test-update-catalogue-item workflow 1"}))
     (btu/context-assoc! :workflow2 (test-helpers/create-workflow! {:title "test-update-catalogue-item workflow 2"}))
     (btu/context-assoc! :workflow3 (test-helpers/create-workflow! {:title "test-update-catalogue-item workflow 3"}))
+    (btu/context-assoc! :workflow4 (test-helpers/create-workflow! {:title "test-update-catalogue-item workflow 4"
+                                                                   :organization {:organization/id "nbn"}}))
     (btu/context-assoc! :form1 (test-helpers/create-form! {:form/internal-name "test-update-catalogue-item form 1"
                                                            :form/title {:en "test-update-catalogue-item form 1 EN"
                                                                         :fi "test-update-catalogue-item form 1 FI"
                                                                         :sv "test-update-catalogue-item form 1 SV"}}))
     (btu/context-assoc! :form2 (test-helpers/create-form! {:form/internal-name "test-update-catalogue-item form 2"}))
+    (btu/context-assoc! :form4 (test-helpers/create-form! {:form/internal-name "test-update-catalogue-item form 4"
+                                                           :organization {:organization/id "nbn"}}))
     (btu/context-assoc! :catalogue-item1 (test-helpers/create-catalogue-item! {:title {:en "test-update-catalogue-item 1 EN"
                                                                                        :fi "test-update-catalogue-item 1 FI"
                                                                                        :sv "test-update-catalogue-item 1 SV"}
@@ -2187,6 +2191,12 @@
                                                                                        :sv "test-update-catalogue-item 3 SV"}
                                                                                :form-id (btu/context-getx :form2)
                                                                                :workflow-id (btu/context-getx :workflow2)}))
+    (btu/context-assoc! :catalogue-item4 (test-helpers/create-catalogue-item! {:title {:en "test-update-catalogue-item 4 EN"
+                                                                                       :fi "test-update-catalogue-item 4 FI"
+                                                                                       :sv "test-update-catalogue-item 4 SV"}
+                                                                               :form-id (btu/context-getx :form4)
+                                                                               :workflow-id (btu/context-getx :workflow4)
+                                                                               :organization {:organization/id "nbn"}}))
     (login-as "owner")
     (go-to-admin "Catalogue items")
     (btu/wait-page-loaded)
@@ -2280,6 +2290,7 @@
       (is (not (btu/visible? {:fn/text "test-update-catalogue-item 1 EN"})))
       (is (not (btu/visible? {:fn/text "test-update-catalogue-item 2 EN"})))
       (is (not (btu/visible? {:fn/text "test-update-catalogue-item 3 EN"})))
+      (is (btu/eventually-visible? {:fn/text "test-update-catalogue-item 4 EN"}))
       (btu/scroll-and-click {:fn/text "Own organization only"})
       (is (btu/eventually-visible? {:fn/text "test-update-catalogue-item 1 EN"}))
       (is (btu/eventually-visible? {:fn/text "test-update-catalogue-item 2 EN"}))
@@ -2288,7 +2299,35 @@
                (filter #(= "Default" (get % "organization")))
                (every? #(= "View" (get % "commands"))))))
 
+    (testing "update is disabled when not owner of selected items"
+      (btu/wait-disabled {:tag :button :fn/text "Update catalogue item"})
+      (btu/scroll-and-click {:fn/text "test-update-catalogue-item 4 EN"})
+      (btu/scroll-and-click {:fn/text "test-update-catalogue-item 1 EN"})
+      (btu/wait-disabled {:tag :button :fn/text "Update catalogue item"})
+      (btu/scroll-and-click {:fn/text "test-update-catalogue-item 1 EN"})
+      (btu/wait-enabled {:tag :button :fn/text "Update catalogue item"})
+
+      (testing "update remains disabled when selecting all items with toggle-all"
+        (btu/scroll-and-click {:id ":rems.administration.catalogue-items/catalogue-selection-toggle-all"})
+        (btu/wait-page-loaded)
+        (is (empty? (slurp-tds [:catalogue {:css "tr:has(td.selection *[aria-checked=true])"}])))
+        (btu/scroll-and-click {:id ":rems.administration.catalogue-items/catalogue-selection-toggle-all"})
+        (btu/wait-page-loaded)
+        (is (not-empty (slurp-tds [:catalogue {:css "tr:has(td.selection *[aria-checked=true])"}])))
+        (btu/wait-disabled {:tag :button :fn/text "Update catalogue item"}))
+
+      (testing "update is enabled when selecting all items under the user's organization with toggle-all"
+        (btu/scroll-and-click {:id ":rems.administration.catalogue-items/catalogue-selection-toggle-all"})
+        (btu/scroll-and-click {:fn/text "Own organization only"})
+        (btu/scroll-and-click {:id ":rems.administration.catalogue-items/catalogue-selection-toggle-all"})
+        (btu/wait-page-loaded)
+        (is (= ["test-update-catalogue-item 4 EN"]
+               (mapv #(get % "name")
+                     (slurp-tds [:catalogue {:css "tr:has(td.selection *[aria-checked=true])"}]))))
+        (btu/wait-enabled {:tag :button :fn/text "Update catalogue item"})))
+
     (testing "edit buttons are not visible"
+      (btu/scroll-and-click {:fn/text "Own organization only"})
       (click-row-action [:catalogue]
                         {:fn/text "test-update-catalogue-item 1 EN"}
                         (select-button-by-label "View"))
