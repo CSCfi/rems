@@ -87,7 +87,8 @@
   [atoms/rate-limited-action-button
    {:id :update-catalogue-item
     :class "btn-primary"
-    :disabled (when (empty? items) :disabled)
+    :disabled (when (or (empty? items)
+                        (some (complement roles/can-modify-organization-item?) items)) :disabled)
     :on-click (fn []
                 (rf/dispatch [:rems.administration.update-catalogue-item/enter-page items])
                 (navigate! "/administration/catalogue-items/update-catalogue-item"))
