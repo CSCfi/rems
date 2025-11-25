@@ -3681,7 +3681,7 @@
             (btu/go (str (btu/get-server-url) "extra-pages/mixed"))
             ;; no header, only default translation in document title
             (is (not (btu/visible? {:tag :h1})))
-            (is (= "REMS" (btu/get-title)))
+            (is (= "Mixed – REMS" (btu/get-title)))
             (is (btu/eventually-visible? {:tag :a :fn/has-text "https://example.org/en/mixed"}))))
 
         (btu/go (btu/get-server-url))
