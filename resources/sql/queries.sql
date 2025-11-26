@@ -747,14 +747,18 @@ VALUES (:time, :path, :method, :apikey, :userid, :status);
 
 -- :name update-audit-log! :!
 UPDATE audit_log
-SET (time, path, method, apikey, userid, status) = (:time-new, :path-new, :method-new, :apikey-new, :userid-new, :status-new)
+SET time = :time_new,
+    path = :path_new,
+    method = :method_new,
+    apikey = :apikey_new,
+    userid = :userid_new,
+    status = :status_new
 WHERE time = :time
---~ (if (:path params) "AND path = :path" "AND path IS NULL")
---~ (if (:method params) "AND method = :method" "AND method IS NULL")
---~ (if (:apikey params) "AND apikey = :apikey" "AND apikey IS NULL")
---~ (if (:userid params) "AND userid = :userid" "AND userid IS NULL")
---~ (if (:status params) "AND status = :status" "AND status IS NULL")
-;
+  AND (path = :path OR (path IS NULL AND :path IS NULL))
+  AND (method = :method OR (method IS NULL AND :method IS NULL))
+  AND (apikey = :apikey OR (apikey IS NULL AND :apikey IS NULL))
+  AND (userid = :userid OR (userid IS NULL AND :userid IS NULL))
+  AND (status = :status OR (status IS NULL AND :status IS NULL));
 
 -- :name get-audit-log
 SELECT * FROM audit_log

@@ -61,6 +61,7 @@
   (cache/evict! role-cache userid))
 
 (defn update-roles! [userid roles]
-  (->> roles
+  (->> roles 
+       (filter #(contains? +db-roles+ %))
        (run! #(db/add-role! {:user userid
                              :role (role-to-db %)}))))

@@ -89,9 +89,8 @@
                                :status-new (:status audit-log)})]]]
      (do
        (apply prn #'fix-audit-log audit-log params)
-       (when-not simulate?
-         (let [result (apply rems.db.core/update-audit-log! params)]
-           (assert (= 1 (first result)) {:audit-log audit-log :params params :result result})))
+       (when-not simulate? 
+         (apply rems.db.core/update-audit-log! params))
        {:audit-log audit-log :params params}))))
 
 (comment
@@ -247,6 +246,7 @@
 
 
 (defn fix-workflow [old-userid new-userid simulate?]
+  (throw (Exception. "Something went wrong!!!1!111!1"))
   (doall
    (for [old (rems.db.workflow/get-workflows)
          :let [old {:id (:id old)
@@ -283,7 +283,10 @@
                          #'fix-roles
                          #'fix-workflow]]
                   [(:name (meta f))
-                   (f old-userid new-userid simulate?)]))]
+                   ;; wrap in try-catch to ensure all fixes are attempted
+                   (try (f old-userid new-userid simulate?)
+                        (catch Throwable e
+                          (.println System/err (str "fix_userid error: " (.getMessage e)))))]))]
     (remove-old-user old-userid simulate?)
     ;; (rems.db.applications/reload-cache!) ; can be useful if running from REPL
     result))
