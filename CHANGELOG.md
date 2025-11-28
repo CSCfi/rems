@@ -17,9 +17,12 @@ Changes since v2.38.1
   - When creating attachment license, the save button no longer activates until all attachments have been successfully uploaded. (#3292)
   - Attachment upload error is indicated by small icon next to the upload button (detailed error is still shown in top of the page).
   - Pending attachment upload is indicated by spinner next to the upload button.
+- Edit buttons on the administration detail pages are hidden when the user is not permitted to edit, like they are hidden on the list pages already (#2814)
 
 ### Fixes
 - Resolved issue where workflow voting could not be removed, which caused UI to display raw translation keys due to nil voting values. (#3357)
+- Fixed an issue with the application page where the 'Add member' dropdown menu displayed members that already exist in the application.  (#1412)
+- Document title no longer shows an extra em dash when the localized application title is empty. (#3398)
 - Fix audit log API. Technical error from incorrect response. (#3380)
 
 ## v2.38.1 "Välimerenkatu +1" 2025-01-27

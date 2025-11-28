@@ -1,8 +1,14 @@
-(ns rems.db.test-catalogue
+(ns ^:integration rems.db.test-catalogue
   (:require [clj-time.core :as time]
-            [clojure.test :refer :all]
+            [clojure.test :refer [deftest is testing use-fixtures]]
+            [rems.cache :as cache]
             [rems.common.util :refer [apply-filters]]
-            [rems.db.catalogue]))
+            [rems.db.catalogue]
+            [rems.db.test-data-helpers :as test-helpers]
+            [rems.db.testing :refer [test-db-fixture rollback-db-fixture]]))
+
+(use-fixtures :once test-db-fixture)
+(use-fixtures :each rollback-db-fixture)
 
 (deftest test-now-active?
   (let [t0 (time/epoch)
@@ -75,3 +81,48 @@
 
     (testing "calculates :active property"
       (is (every? #(contains? % :expired) (get-items {}))))))
+
+(deftest test-catalogue-cache
+  (testing "cache reload works"
+    (let [org-id (test-helpers/create-organization! {})
+          form-id (test-helpers/create-form! {:form/external-title {:en "form" :fi "form" :sv "form"}
+                                              :form/internal-name "test-form"})
+          workflow-id (test-helpers/create-workflow! {:title "workflow"})
+          resource-id (test-helpers/create-resource! {:resource-ext-id "test-resource"})
+          fixed-time (time/date-time 2020 1 1 12 0)
+          item-id (test-helpers/create-catalogue-item! {:resource-id resource-id
+                                                        :form-id form-id
+                                                        :workflow-id workflow-id
+                                                        :organization {:organization/id org-id}
+                                                        :title {:en "Test Item"
+                                                                :fi "Testiasia"}
+                                                        :infourl {:en "http://test.com"
+                                                                  :fi "http://test.fi"}
+                                                        :start fixed-time})]
+
+      ;; force cache reload
+      (cache/set-uninitialized! rems.db.catalogue/catalogue-item-cache)
+      (cache/set-uninitialized! rems.db.catalogue/catalogue-item-localizations-cache)
+
+      (is (= {item-id {:archived false
+                       :enabled true
+                       :end nil
+                       :formid form-id
+                       :id item-id
+                       :localizations {} ; joined from cache. see rems.db.catalogue/localize-catalogue-item
+                       :organization {:organization/id org-id}
+                       :resource-id resource-id
+                       :start fixed-time
+                       :wfid workflow-id}}
+             (into {} (cache/entries! rems.db.catalogue/catalogue-item-cache))))
+
+      (testing "localizations cache"
+        (is (= {item-id {:en {:id item-id
+                              :infourl "http://test.com"
+                              :langcode :en
+                              :title "Test Item"}
+                         :fi {:id item-id
+                              :infourl "http://test.fi"
+                              :langcode :fi
+                              :title "Testiasia"}}}
+               (into {} (cache/entries! rems.db.catalogue/catalogue-item-localizations-cache))))))))
