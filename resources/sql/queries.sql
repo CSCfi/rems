@@ -747,22 +747,20 @@ VALUES (:time, :path, :method, :apikey, :userid, :status);
 
 -- :name update-audit-log! :!
 UPDATE audit_log
-SET time = :time_new,
-    path = :path_new,
-    method = :method_new,
-    apikey = :apikey_new,
-    userid = :userid_new,
-    status = :status_new
-WHERE time = :time
-  AND (path = :path OR (path IS NULL AND :path IS NULL))
-  AND (method = :method OR (method IS NULL AND :method IS NULL))
-  AND (apikey = :apikey OR (apikey IS NULL AND :apikey IS NULL))
-  AND (userid = :userid OR (userid IS NULL AND :userid IS NULL))
-  AND (status = :status OR (status IS NULL AND :status IS NULL));
+SET time = :time,
+    path = :path,
+    method = :method,
+    apikey = :apikey,
+    userid = :userid,
+    status = :status
+WHERE id = :id;
 
 -- :name get-audit-log
 SELECT * FROM audit_log
 WHERE 1=1
+/*~ (when (:id params) */
+  AND id = :id
+/*~ ) ~*/
 /*~ (when (:userid params) */
   AND userid = :userid
 /*~ ) ~*/

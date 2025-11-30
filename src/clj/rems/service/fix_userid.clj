@@ -81,12 +81,7 @@
    (for [audit-log (rems.db.core/get-audit-log)
          :when (= old-userid (:userid audit-log))
          :let [params [(merge audit-log
-                              {:time-new (:time audit-log)
-                               :path-new (:path audit-log)
-                               :method-new (:method audit-log)
-                               :apikey-new (:apikey audit-log)
-                               :userid-new new-userid
-                               :status-new (:status audit-log)})]]]
+                              {:userid new-userid})]]]
      (do
        (apply prn #'fix-audit-log audit-log params)
        (when-not simulate? 
