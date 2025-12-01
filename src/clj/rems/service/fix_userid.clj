@@ -84,7 +84,7 @@
                               {:userid new-userid})]]]
      (do
        (apply prn #'fix-audit-log audit-log params)
-       (when-not simulate? 
+       (when-not simulate?
          (apply rems.db.core/update-audit-log! params))
        {:audit-log audit-log :params params}))))
 
@@ -278,10 +278,10 @@
                          #'fix-workflow]]
                   [(:name (meta f))
                    ;; wrap in try-catch to ensure all fixes are attempted
-                   (try (f old-userid new-userid simulate?) 
-                        (catch Throwable e 
-                          (.println System/err 
-                                    (str "fix userid error: " 
+                   (try (f old-userid new-userid simulate?)
+                        (catch Throwable e
+                          (.println System/err
+                                    (str "fix userid error: "
                                          (.getMessage e)))))]))]
     (remove-old-user old-userid simulate?)
     ;; (rems.db.applications/reload-cache!) ; can be useful if running from REPL
