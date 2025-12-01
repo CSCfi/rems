@@ -2,6 +2,7 @@
   (:require [compojure.api.sweet :refer :all]
             [ring.util.http-response :refer [ok]]
             [rems.db.core :as db]
+            [ring.util.http-response :refer [ok]]
             [schema.core :as s])
   (:import (org.joda.time DateTime)))
 
@@ -26,7 +27,7 @@
       :roles #{:reporter}
       :return [AuditLogEntry]
       (ok (db/get-audit-log {:userid userid
-                         :after after
-                         :path (when application-id
-                                 (str "/api/applications/" application-id "%"))
-                         :before before})))))
+                             :after after
+                             :path (when application-id
+                                     (str "/api/applications/" application-id "%"))
+                             :before before})))))

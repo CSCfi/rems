@@ -119,3 +119,25 @@
                           :keys
                           first
                           :kid))))
+
+(deftest test-api-audit-log
+  (create-test-data)
+  (test-helpers/create-user! {:userid "reporter"} :reporter)
+
+  (testing "populate audit log with a 404 not found"
+    (is (thrown-with-msg? clojure.lang.ExceptionInfo
+                          #"clj-http: status 404"
+                          (http/get "http://localhost:3001/api/unknown"))))
+
+  (testing "response status is 200 OK"
+    (let [{:keys [status body]} (http/get (str (:public-url rems.config/env) "/api/audit-log")
+                                          {:as :json
+                                           :headers {"x-rems-api-key" "42"
+                                                     "x-rems-user-id" "reporter"}})]
+      (is (= 200 status))
+      (is (= [{:apikey nil
+               :method "get"
+               :path "/api/unknown"
+               :status "404"
+               :userid nil}]
+             (mapv #(dissoc % :time) body))))))
