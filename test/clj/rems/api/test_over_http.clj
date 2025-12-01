@@ -140,4 +140,4 @@
                :path "/api/unknown"
                :status "404"
                :userid nil}]
-             (mapv #(dissoc % :time) body))))))
+             (mapv #(dissoc % :time :id) body))))))
