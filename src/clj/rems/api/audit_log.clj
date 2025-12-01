@@ -1,6 +1,5 @@
 (ns rems.api.audit-log
   (:require [compojure.api.sweet :refer :all]
-            [ring.util.http-response :refer [ok]]
             [rems.db.core :as db]
             [ring.util.http-response :refer [ok]]
             [schema.core :as s])
