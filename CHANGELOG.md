@@ -25,7 +25,7 @@ Changes since v2.38.1
 - Document title no longer shows an extra em dash when the localized application title is empty. 
 - Document title no longer shows an extra em dash when the localized application title is empty. (#3398)
 - Fixed an issue causing the `fix-userid` administration script to break in some edge cases (#3383)
-
+ 
 ## v2.38.1 "Välimerenkatu +1" 2025-01-27
 
 ### Fixes
