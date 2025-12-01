@@ -241,7 +241,6 @@
 
 
 (defn fix-workflow [old-userid new-userid simulate?]
-  (throw (Exception. "Something went wrong!!!1!111!1"))
   (doall
    (for [old (rems.db.workflow/get-workflows)
          :let [old {:id (:id old)
@@ -279,9 +278,11 @@
                          #'fix-workflow]]
                   [(:name (meta f))
                    ;; wrap in try-catch to ensure all fixes are attempted
-                   (try (f old-userid new-userid simulate?)
-                        (catch Throwable e
-                          (.println System/err (str "fix_userid error: " (.getMessage e)))))]))]
+                   (try (f old-userid new-userid simulate?) 
+                        (catch Throwable e 
+                          (.println System/err 
+                                    (str "fix userid error: " 
+                                         (.getMessage e)))))]))]
     (remove-old-user old-userid simulate?)
     ;; (rems.db.applications/reload-cache!) ; can be useful if running from REPL
     result))
