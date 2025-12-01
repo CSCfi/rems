@@ -26,6 +26,7 @@
  :catalogue-tree-show-matching-parents true
  :enable-autosave true
  :extra-stylesheets {:root "./" :files ["/theme/styles.css"]}
+ :smtp {:host "${SMTP_HOST}" :user "${SMTP_USER}" :pass "${SMTP_PASSWORD}" :port 587 :ssl true}
  ;; :theme-path "/rems/theme/theme.edn"
  ;; :extra-pages-path "/rems/extra-pages"
  }
