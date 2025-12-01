@@ -1,5 +1,5 @@
 (ns ^:integration rems.db.test-audit-log
-  (:require [clj-time.core :as time] 
+  (:require [clj-time.core :as time]
             [clojure.test :refer [deftest is testing use-fixtures]]
             [rems.db.core :as db]
             [rems.db.testing :refer [test-db-fixture rollback-db-fixture]]))
