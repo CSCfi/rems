@@ -6,7 +6,8 @@
   (:import (org.joda.time DateTime)))
 
 (s/defschema AuditLogEntry
-  {:time DateTime
+  {(s/optional-key :id) s/Int
+   :time DateTime
    :path s/Str
    :method s/Str
    :apikey (s/maybe s/Str)
@@ -24,8 +25,8 @@
                      {before :- (describe DateTime "Only show entries before this time") nil}]
       :roles #{:reporter}
       :return [AuditLogEntry]
-      (ok (db/get-audit-log {:userid userid
-                             :after after
-                             :path (when application-id
-                                     (str "/api/applications/" application-id "%"))
-                             :before before})))))
+      (ok (->> (db/get-audit-log {:userid userid
+                                  :after after
+                                  :path (when application-id (str "/api/applications/" application-id "%"))
+                                  :before before})
+               (map #(dissoc % :id)))))))
