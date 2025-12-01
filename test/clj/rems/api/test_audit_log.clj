@@ -103,7 +103,7 @@
               {:userid "malice" :apikey nil :method "get" :path "/api/catalogue" :status "200"}
               {:userid "malice" :apikey nil :method "put" :path "/api/catalogue-items/archived" :status "403"}
               {:userid "alice" :apikey "42" :method "get" :path "/api/audit-log" :status "403"}]
-             (mapv #(dissoc % :time)
+             (mapv #(dissoc % :time :id)
                    (-> (request :get "/api/audit-log")
                        (authenticate "42" "reporter")
                        handler
@@ -115,7 +115,7 @@
               {:userid "alice" :apikey "42" :method "post" :path "/api/applications/submit" :status "400"}
               {:userid "alice" :apikey "42" :method "post" :path "/api/applications/submit" :status "500"}
               {:userid "alice" :apikey "42" :method "get" :path "/api/audit-log" :status "403"}]
-             (mapv #(dissoc % :time)
+             (mapv #(dissoc % :time :id)
                    (-> (request :get "/api/audit-log?userid=alice")
                        (authenticate "42" "reporter")
                        handler
@@ -125,7 +125,7 @@
               {:userid "owner" :apikey "42" :method "get" :path "/api/unknown" :status "404"}
               {:userid "alice" :apikey "42" :method "get" :path "/api/users/active" :status "403"}
               {:userid "owner" :apikey "42" :method "get" :path "/api/users/active" :status "200"}]
-             (mapv #(dissoc % :time)
+             (mapv #(dissoc % :time :id)
                    (-> (request :get (str "/api/audit-log?after=2000-01&before=" @time-a))
                        (authenticate "42" "reporter")
                        handler
@@ -138,13 +138,13 @@
     (testing "filtering log by application"
       (is (= [{:userid "alice" :apikey "42" :method "get" :path (str "/api/applications/" app-id) :status "200"}
               {:userid "reporter" :apikey "42" :method "get" :path (str "/api/applications/" app-id "/pdf") :status "200"}]
-             (mapv #(dissoc % :time)
+             (mapv #(dissoc % :time :id)
                    (-> (request :get (str "/api/audit-log?application-id=" app-id))
                        (authenticate "42" "reporter")
                        handler
                        read-ok-body))))
       (is (= []
-             (mapv #(dissoc % :time)
+             (mapv #(dissoc % :time :id)
                    (-> (request :get "/api/audit-log?application-id=99999999")
                        (authenticate "42" "reporter")
                        handler
