@@ -27,6 +27,7 @@
  :enable-autosave true
  :extra-stylesheets {:root "./" :files ["/theme/styles.css"]}
  :smtp {:host "${SMTP_HOST}" :user "${SMTP_USER}" :pass "${SMTP_PASSWORD}" :port 587 :ssl true}
+ :mail-from "${SMTP_SENDER}"
  ;; :theme-path "/rems/theme/theme.edn"
  ;; :extra-pages-path "/rems/extra-pages"
  }
