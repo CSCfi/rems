@@ -2329,6 +2329,7 @@
 
     (testing "edit buttons are not visible"
       (btu/scroll-and-click {:fn/text "Own organization only"})
+      (btu/wait-page-loaded)
       (click-row-action [:catalogue]
                         {:fn/text "test-update-catalogue-item 1 EN"}
                         (select-button-by-label "View"))
