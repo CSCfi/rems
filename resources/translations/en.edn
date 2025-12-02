@@ -583,7 +583,7 @@
           ;; %4 - %:invitation-url% - invitation link
           :workflow-handler-invitation {:message "Dear %:recipient%,\n\n%:invited-by% has invited you to be a handler of applications of workflow %:workflow%.\n\nYou can view the workflow at %:invitation-url%"
                                         :subject "Invitation to handle applications"}}
-  :footer "CSC – IT Center for Science"
+  :footer "Australian BioCommons"
   :form {:accepted-licenses "Accepted terms of use"
          :actions "Actions"
          :add-comment "Add comment"
