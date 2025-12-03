@@ -12,7 +12,7 @@ WORKDIR /rems
 ENTRYPOINT ["bash","./docker-entrypoint.sh"]
 
 ADD https://github.com/CSCfi/rems/releases/download/v2.38.1/rems.jar /rems/rems.jar
-COPY config.edn.template /rems/config/config.edn.template
+COPY config.edn.template /rems/config/config.edn
 COPY theme/ /rems/theme
 
 COPY docker-entrypoint.sh /rems/docker-entrypoint.sh
