@@ -1,0 +1,16 @@
+.logo {
+  margin-top: 50px;
+}
+
+.login-btn {
+  max-height: initial !important;
+  padding: 0;
+  background-color: #fff;
+  border-color: #fff;
+  border-radius: 25px;
+}
+
+.login-btn:hover {
+  background-color: #fff;
+  border-color: #fff;
+}

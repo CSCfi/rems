@@ -1,0 +1,59 @@
+{;; This styling is from the original REMS project
+ ;; https://github.com/CSCfi/rems/blob/master/example-theme/theme.edn
+ :font-family "'Lato', sans-serif"
+ :color1 "#cbd0d5"
+ :color2 "#008278"
+ :color3 "#64727e"
+ :color4 "#830051"
+ :nav-color "#595959"
+ :nav-active-color "#830051"
+
+ :alert-success-color "#3c763d"
+ :alert-success-bgcolor "#dff0d8"
+ :alert-success-bordercolor "#3c763d"
+ :text-success "#28a745!important" ; .text and .bg colors need !important to take hold
+ :bg-success "#28a745!important"
+
+ :alert-danger-color "#a94442"
+ :alert-danger-bgcolor "#f2dede"
+ :alert-danger-bordercolor "#a94442"
+ :text-danger "#dc3545!important"
+ :bg-danger "#dc3545!important"
+
+ :alert-warning-color "#8a6d3b"
+ :alert-warning-bgcolor "#fcf8e3"
+ :alert-warning-bordercolor "#8a6d3b"
+ :bg-warning "#ffc107!important"
+
+ :alert-info-color "#31708f"
+ :alert-info-bgcolor "#d9edf7"
+ :alert-info-bordercolor "#31708f"
+ :text-info "#17a2b8!important"
+ :bg-info "#17a2b8!important"
+
+ :img-path "/img/"
+ :logo-bgcolor nil
+ :logo-name-en "logo_medium.png"
+ :logo-name-sm-en "logo_small.png"
+ :logo-content-origin "initial"
+ 
+ :navbar-logo-name "logo_small.png"
+ :navbar-logo-name-en "logo_small.png"
+ 
+ :phase-color "#111"
+ :phase-bgcolor "#f8f8f8"
+ :phase-bgcolor-active "#e8e8e8"
+ :phase-bgcolor-completed "#dff0d8"
+ :collapse-bgcolor "#fff"
+ :collapse-heading-color "#008278"
+ :table-bgcolor "#f8f8f8"
+ :table-heading-color "#fff"
+ :table-heading-bgcolor "#008278" ;"#006778" ;"#006fb1"; "#008278" "#eef2f8"
+ :table-hover-bgcolor "#b7dddb"; "#eef2f8"; "#c9e2ae" ; "#f2f2f2"
+ :table-text-color "#111"
+ :header-border "4px solid #ccc"
+ :table-shadow "10px -12px 21px -14px rgba(0,0,0,0.75)"
+ :link-color "#025b96"
+ :footer-color "#595959"
+ :footer-bgcolor "#dfe1e3"
+ :button-navbar-font-weight 400}

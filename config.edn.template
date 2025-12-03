@@ -28,6 +28,6 @@
  :extra-stylesheets {:root "./" :files ["/theme/styles.css"]}
  :smtp {:host "${SMTP_HOST}" :user "${SMTP_USER}" :pass "${SMTP_PASSWORD}" :port 587 :tls true}
  :mail-from "${SMTP_SENDER}"
- ;; :theme-path "/rems/theme/theme.edn"
- ;; :extra-pages-path "/rems/extra-pages"
+ :theme-path "/rems/theme/theme.edn"
+ :extra-pages-path "/rems/extra-pages"
  }
