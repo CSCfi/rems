@@ -1,5 +1,5 @@
 {:t {:footer "Australian BioCommons"
-     :header {:title "BioCommons REMS"}
+     :header {:title "ACDC REMS"}
      :login {:login [:img {:src "img/login.png" :height "50px"}]
              :intro [:div [:h5 "Dataset Permission Management"] [:p "REMS is a service for managing dataset permissions."]]
              :intro2 "" :text ""}}}
