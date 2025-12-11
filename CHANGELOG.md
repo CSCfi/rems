@@ -25,6 +25,7 @@ Changes since v2.38.1
 - Document title no longer shows an extra em dash when the localized application title is empty. (#3398)
 - Fix audit log API. Technical error from incorrect response. (#3380)
 - Fixes to enable JVM 25 support (https://github.com/tolitius/cprop/issues/60, https://clojure.atlassian.net/browse/CLJ-2764)
+- Catalogue table had the add/remove cart commands even when not logged in. (#3408)
 
 ## v2.38.1 "Välimerenkatu +1" 2025-01-27
 
