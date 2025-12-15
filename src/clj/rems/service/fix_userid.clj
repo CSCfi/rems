@@ -292,13 +292,3 @@
   (fix-all "owner" "elsa" false)
   (fix-all "alice" "frank" false)
   (fix-all "elixir-alice" "alice" false))
-
-(clojure.pprint/pprint (rems.db.users/get-user "malice"))
-(clojure.pprint/pprint (fix-all "malice" "jorgos" false))
-(rems.db.applications/reload-cache!)
-(rems.db.user-mappings/delete-user-mapping! {:userid "carl"})
-(rems.db.user-settings/delete-user-settings! "carl")
-(rems.db.users/remove-user! "carl")
-(rems.db.applications/reload-cache!)
-(rems.db.users/get-user "carl") ;; {:userid "carl", :name: nil, :email nil}
-(rems.db.users/user-exists? "carl")
