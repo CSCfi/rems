@@ -81,17 +81,11 @@
    (for [audit-log (rems.db.core/get-audit-log)
          :when (= old-userid (:userid audit-log))
          :let [params [(merge audit-log
-                              {:time-new (:time audit-log)
-                               :path-new (:path audit-log)
-                               :method-new (:method audit-log)
-                               :apikey-new (:apikey audit-log)
-                               :userid-new new-userid
-                               :status-new (:status audit-log)})]]]
+                              {:userid new-userid})]]]
      (do
        (apply prn #'fix-audit-log audit-log params)
        (when-not simulate?
-         (let [result (apply rems.db.core/update-audit-log! params)]
-           (assert (= 1 (first result)) {:audit-log audit-log :params params :result result})))
+         (apply rems.db.core/update-audit-log! params))
        {:audit-log audit-log :params params}))))
 
 (comment
@@ -283,7 +277,12 @@
                          #'fix-roles
                          #'fix-workflow]]
                   [(:name (meta f))
-                   (f old-userid new-userid simulate?)]))]
+                   ;; wrap in try-catch to ensure all fixes are attempted
+                   (try (f old-userid new-userid simulate?)
+                        (catch Throwable e
+                          (.println System/err
+                                    (str "fix userid error: "
+                                         (.getMessage e)))))]))]
     (remove-old-user old-userid simulate?)
     ;; (rems.db.applications/reload-cache!) ; can be useful if running from REPL
     result))
