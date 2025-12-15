@@ -6,8 +6,7 @@
   (:import (org.joda.time DateTime)))
 
 (s/defschema AuditLogEntry
-  {(s/optional-key :id) s/Int
-   :time DateTime
+  {:time DateTime
    :path s/Str
    :method s/Str
    :apikey (s/maybe s/Str)

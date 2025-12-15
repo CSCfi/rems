@@ -1,6 +1,7 @@
 
 (ns rems.service.fix-userid
-  (:require [rems.db.api-key]
+  (:require [clojure.tools.logging :as log]
+            [rems.db.api-key]
             [rems.db.applications]
             [rems.db.attachments]
             [rems.db.blacklist]
@@ -279,10 +280,10 @@
                   [(:name (meta f))
                    ;; wrap in try-catch to ensure all fixes are attempted
                    (try (f old-userid new-userid simulate?)
-                        (catch Throwable e
-                          (.println System/err
-                                    (str "fix userid error: "
-                                         (.getMessage e)))))]))]
+                        (catch Throwable exception 
+                          (log/error exception 
+                                     (.getMessage exception))))]))]
+    
     (remove-old-user old-userid simulate?)
     ;; (rems.db.applications/reload-cache!) ; can be useful if running from REPL
     result))
@@ -291,3 +292,13 @@
   (fix-all "owner" "elsa" false)
   (fix-all "alice" "frank" false)
   (fix-all "elixir-alice" "alice" false))
+
+(clojure.pprint/pprint (rems.db.users/get-user "malice"))
+(clojure.pprint/pprint (fix-all "malice" "jorgos" false))
+(rems.db.applications/reload-cache!)
+(rems.db.user-mappings/delete-user-mapping! {:userid "carl"})
+(rems.db.user-settings/delete-user-settings! "carl")
+(rems.db.users/remove-user! "carl")
+(rems.db.applications/reload-cache!)
+(rems.db.users/get-user "carl") ;; {:userid "carl", :name: nil, :email nil}
+(rems.db.users/user-exists? "carl")

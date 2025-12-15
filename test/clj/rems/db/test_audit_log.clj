@@ -21,6 +21,6 @@
         updated-row (first (db/get-audit-log {:id (:id added-row)}))]
 
     (testing "update audit log"
-      (is (= '(1) num-rows-added) "added once")
-      (is (= '(1) num-rows-updated) "updated once")
+      (is (= 1 (first num-rows-added)) "added once")
+      (is (= 1 (first num-rows-updated)) "updated once")
       (is (= new-userid (:userid updated-row)) "correct update"))))
