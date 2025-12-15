@@ -280,8 +280,8 @@
                   [(:name (meta f))
                    ;; wrap in try-catch to ensure all fixes are attempted
                    (try (f old-userid new-userid simulate?)
-                        (catch Throwable exception 
-                          (log/error exception 
+                        (catch Throwable exception
+                          (log/error exception
                                      (.getMessage exception))))]))]
     
     (remove-old-user old-userid simulate?)
