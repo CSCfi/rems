@@ -665,33 +665,33 @@
 
 (defmethod command-handler :application.command/accept-invitation
   [cmd application _injections]
-  (let [token (:token cmd)
+  (let [{:keys [token application-id actor]} cmd
         invitation (get-in application [:application/invitation-tokens token])]
     (cond
       (:application/member invitation)
-      (or (already-joined-error application (:actor cmd) :member)
+      (or (already-joined-error application actor :member)
           (token-used-error invitation token)
-          (ok-with-data {:application-id (:application-id cmd)}
+          (ok-with-data {:application-id application-id}
                         [{:event/type :application.event/member-joined
-                          :application/id (:application-id cmd)
-                          :invitation/token (:token cmd)}]))
+                          :application/id application-id
+                          :invitation/token token}]))
 
       (:application/reviewer invitation)
-      (or (already-joined-error application (:actor cmd) :reviewer)
+      (or (already-joined-error application actor :reviewer)
           (token-used-error invitation token)
-          (ok-with-data {:application-id (:application-id cmd)}
+          (ok-with-data {:application-id application-id}
                         [{:event/type :application.event/reviewer-joined
-                          :application/id (:application-id cmd)
-                          :invitation/token (:token cmd)
+                          :application/id application-id
+                          :invitation/token token
                           :application/request-id (UUID/randomUUID)}]))
 
       (:application/decider invitation)
-      (or (already-joined-error application (:actor cmd) :decider :past-decider)
+      (or (already-joined-error application actor :decider :past-decider)
           (token-used-error invitation token)
-          (ok-with-data {:application-id (:application-id cmd)}
+          (ok-with-data {:application-id application-id}
                         [{:event/type :application.event/decider-joined
-                          :application/id (:application-id cmd)
-                          :invitation/token (:token cmd)
+                          :application/id application-id
+                          :invitation/token token
                           :application/request-id (UUID/randomUUID)}]))
 
       :else
