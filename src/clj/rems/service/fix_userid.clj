@@ -283,7 +283,6 @@
                         (catch Throwable exception
                           (log/error exception
                                      (.getMessage exception))))]))]
-    
     (remove-old-user old-userid simulate?)
     ;; (rems.db.applications/reload-cache!) ; can be useful if running from REPL
     result))
