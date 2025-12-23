@@ -54,8 +54,7 @@ jobs:
   unit-test:
     executor: clojure
     steps:
-      - browser-tools/install-chrome
-      - browser-tools/install-chromedriver
+      - browser-tools/install_chrome_for_testing
       - checkout
       - attach_workspace:
           at: .
@@ -92,8 +91,7 @@ jobs:
     resource_class: large
     parallelism: 4
     steps:
-      - browser-tools/install-chrome
-      - browser-tools/install-chromedriver
+      - browser-tools/install_chrome_for_testing
       - checkout
       # include shadow-cljs build
       - attach_workspace:
