@@ -12,15 +12,15 @@ defaults: &defaults
     JVM_OPTS: -Xmx3200m
 
 orbs:
-  browser-tools: circleci/browser-tools@1.3.0
+  browser-tools: circleci/browser-tools@2.3.2
 
 executors:
   clojure:
     docker:
-      - image: cimg/clojure:1.11.1-browsers
+      - image: cimg/clojure:1.11-openjdk-21.0-browsers
   db:
     docker:
-      - image: cimg/clojure:1.11.1-browsers
+      - image: cimg/clojure:1.11-openjdk-21.0-browsers
       - image: postgres:13
         environment:
           POSTGRES_HOST_AUTH_METHOD: trust
@@ -54,8 +54,8 @@ jobs:
   unit-test:
     executor: clojure
     steps:
-      - browser-tools/install-chrome
-      - browser-tools/install-chromedriver
+      - browser-tools/install_chrome
+      - browser-tools/install_chromedriver
       - checkout
       - attach_workspace:
           at: .
@@ -92,8 +92,8 @@ jobs:
     resource_class: large
     parallelism: 4
     steps:
-      - browser-tools/install-chrome
-      - browser-tools/install-chromedriver
+      - browser-tools/install_chrome
+      - browser-tools/install_chromedriver
       - checkout
       # include shadow-cljs build
       - attach_workspace:
