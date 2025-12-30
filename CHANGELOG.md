@@ -18,6 +18,7 @@ Changes since v2.38.1
   - Attachment upload error is indicated by small icon next to the upload button (detailed error is still shown in top of the page).
   - Pending attachment upload is indicated by spinner next to the upload button.
 - Edit buttons on the administration detail pages are hidden when the user is not permitted to edit, like they are hidden on the list pages already (#2814)
+- Handler can now join an application as a member, and be added as a member. (#3100) 
 
 ### Fixes
 - Resolved issue where workflow voting could not be removed, which caused UI to display raw translation keys due to nil voting values. (#3357)

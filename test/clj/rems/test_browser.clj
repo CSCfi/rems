@@ -978,12 +978,17 @@
         (btu/scroll-and-click [{:css ".users"} {:tag :a :fn/text "developer"}])
         (btu/wait-page-loaded)
 
-        (testing "joining the application fails"
-          (is (btu/eventually-visible? {:tag :h1 :fn/has-text "Catalogue"})
-              "was redirected to catalogue")
-          (is (btu/eventually-visible? {:fn/has-string "Accept invitation: Failed"}))
-          (is (btu/eventually-visible? {:fn/has-string "A handling user cannot join application as member"}))
-          (btu/screenshot "handler-cannot-join-as-member"))))
+        (testing "can join application"
+          (is (btu/eventually-visible? {:tag :h1 :fn/has-text "test-applicant-member-invite-action"})
+              "gets to the application")
+          (is (btu/eventually-visible? {:fn/has-string "Developer joined to the application."}))
+          (is (= {:event/type :application.event/member-joined
+                  :event/actor "developer"}
+                 (-> (btu/context-getx :application-id)
+                     rems.db.applications/get-application-internal
+                     :application/events
+                     last
+                     (select-keys [:event/actor :event/type])))))))
 
     (logout)
 

@@ -27,8 +27,7 @@
             :delete "Radera utkast"
             :delete-intro [:div.intro [:p "Radera detta utkast permanent?"]]
             :download-pdf "Ladda ner PDF"
-            :errors {:handling-user-cannot-join "Den som redan deltar i ansökans behandling kan inte ansluta till ansökningen."
-                     :duplicate-id "Id:et är redan upptaget."
+            :errors {:duplicate-id "Id:et är redan upptaget."
                      :invalid-token [:div [:p "Det gick inte att ansluta till ansökningen."] [:p "Vänligen kontrollera koden för inbjudan." [:code "%1"]]]
                      :licenses-not-accepted "Du har inte godkänt användarvillkoren."
                      :organization-does-not-exist "Organisationen \"%1\" hittades inte."

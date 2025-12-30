@@ -27,8 +27,7 @@
             :delete "Poista luonnos"
             :delete-intro [:div.intro [:p "Haluatko pysyvästi poistaa tämän hakemusluonnoksen?"]]
             :download-pdf "Lataa PDF"
-            :errors {:handling-user-cannot-join "Hakemuksen käsittelyyn osallistuva ei voi liittyä hakemuksen jäseneksi."
-                     :duplicate-id "Tunnus on jo käytössä."
+            :errors {:duplicate-id "Tunnus on jo käytössä."
                      :invalid-token [:div [:p "Hakemukseen liittyminen epäonnistui."] [:p "Tarkista kutsukoodi " [:code "%1"]]]
                      :licenses-not-accepted "Käyttöehtoja ei ole hyväksytty."
                      :organization-does-not-exist "Organisaatiota \"%1\" ei ole olemassa"

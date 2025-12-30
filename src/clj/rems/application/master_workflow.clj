@@ -55,7 +55,8 @@
     :application.command/approve
     :application.command/reject
     :application.command/close
-    :application.command/vote})
+    :application.command/vote
+    :application.command/accept-invitation})
 
 (def ^:private handler-returned-commands
   (disj handler-all-commands
@@ -72,6 +73,7 @@
    :reporter #{:see-everything}
    :expirer #{:application.command/delete
               :application.command/send-expiration-notifications}
+   :handler #{:application.command/accept-invitation}
    ;; member before accepting an invitation
    :everyone-else #{:application.command/accept-invitation}})
 
@@ -118,7 +120,8 @@
               :application.command/invite-member
               :application.command/uninvite-member
               :application.command/close
-              :application.command/revoke}
+              :application.command/revoke
+              :application.command/accept-invitation}
    :reviewer #{:see-everything
                :application.command/redact-attachments
                :application.command/remark}

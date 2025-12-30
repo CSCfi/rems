@@ -27,8 +27,7 @@
             :delete "Slet kladde"
             :delete-intro [:div.intro [:p "Slet denne kladde permanent?"]]
             :download-pdf "Download PDF"
-            :errors {:handling-user-cannot-join nil
-                     :duplicate-id "Id er allerede i brug."
+            :errors {:duplicate-id "Id er allerede i brug."
                      ;; %1 - invitation token
                      :invalid-token [:div [:p "Tilslutning til ansøgning mislykkedes."] [:p "Tjek invitationstoken " [:code "%1"]]]
                      :licenses-not-accepted "Brugsvilkår ikke accepteret."
