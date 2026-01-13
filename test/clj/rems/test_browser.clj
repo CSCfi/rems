@@ -2864,18 +2864,21 @@
           (fill-localized-title! "Multiselect (%s)"))
         (testing "create three options"
           (btu/scroll-and-click (field-component :add-option))
+          (is (btu/eventually-visible? (field-component :options-0-key)))
           (btu/fill-human (field-component :options-0-key) "x")
           (btu/fill-human (field-component :options-0-label-en) "X")
           (btu/fill-human (field-component :options-0-label-fi) "X")
           (btu/fill-human (field-component :options-0-label-sv) "X")
 
           (btu/scroll-and-click (field-component :add-option))
+          (is (btu/eventually-visible? (field-component :options-1-key)))
           (btu/fill-human (field-component :options-1-key) "y")
           (btu/fill-human (field-component :options-1-label-en) "Y")
           (btu/fill-human (field-component :options-1-label-fi) "Y")
           (btu/fill-human (field-component :options-1-label-sv) "Y")
 
           (btu/scroll-and-click (field-component :add-option))
+          (is (btu/eventually-visible? (field-component :options-2-key)))
           (btu/fill-human (field-component :options-2-key) "z")
           (btu/fill-human (field-component :options-2-label-en) "Z")
           (btu/fill-human (field-component :options-2-label-fi) "Z")
