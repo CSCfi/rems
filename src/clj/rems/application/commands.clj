@@ -341,23 +341,23 @@
   (some #(= userid (:userid %))
         (application-util/applicant-and-members application)))
 
-(defn- role-in-application? [userid application roles]
+(defn- any-role-in-application? [userid application roles]
   (let [user-roles (-> application
                        :application/user-roles
                        (get userid))]
     (some (partial contains? user-roles) roles)))
 
-(deftest test-role-in-application?
+(deftest test-any-role-in-application?
   (let [app {:application/user-roles {"a" #{:role-1}
                                       "b" #{:role-1 :role-2}}}]
-    (is (true? (role-in-application? "a" app [:role-1])))
-    (is (true? (role-in-application? "b" app [:role-3 :role-1])))
-    (is (true? (role-in-application? "b" app [:role-1 :role-2])))
-    (is (nil? (role-in-application? "a" app [:role-2])))
-    (is (nil? (role-in-application? "b" app [:role-4 :role-5 :role-6])))))
+    (is (true? (any-role-in-application? "a" app [:role-1])))
+    (is (true? (any-role-in-application? "b" app [:role-3 :role-1])))
+    (is (true? (any-role-in-application? "b" app [:role-1 :role-2])))
+    (is (nil? (any-role-in-application? "a" app [:role-2])))
+    (is (nil? (any-role-in-application? "b" app [:role-4 :role-5 :role-6])))))
 
 (defn already-joined-error [application userid & roles]
-  (when (role-in-application? userid application roles)
+  (when (any-role-in-application? userid application roles)
     {:errors [{:type :already-joined
                :userid userid
                :application-id (:application/id application)}]}))
