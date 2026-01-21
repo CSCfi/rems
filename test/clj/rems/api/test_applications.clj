@@ -300,7 +300,8 @@
                  "application.command/close"
                  "application.command/assign-external-id"
                  "application.command/change-applicant"
-                 "see-everything"}
+                 "see-everything"
+                 "application.command/accept-invitation"}
                (set (get application :application/permissions))))))
 
     (testing "disabling a command"
@@ -325,7 +326,8 @@
                      "application.command/close"
                      "application.command/assign-external-id"
                      "application.command/change-applicant"
-                     "see-everything"}
+                     "see-everything"
+                     "application.command/accept-invitation"}
                    (set (get application :application/permissions))))))
         (testing "disabled command fails"
           (is (= {:success false
@@ -1331,7 +1333,8 @@
                "application.command/return"
                "application.command/uninvite-member"
                "application.command/change-applicant"
-               "see-everything"}
+               "see-everything"
+               "application.command/accept-invitation"}
              (set (:application/permissions (get-application-for-user app-id handler))))))
     (testing "request decision"
       (is (= {:success true}
@@ -2886,7 +2889,8 @@
                            "application.command/save-draft"
                            "application.command/change-resources"]
                :expirer ["application.command/send-expiration-notifications"
-                         "application.command/delete"]}
+                         "application.command/delete"]
+               :handler ["application.command/accept-invitation"]}
               :application/modified "2010-01-01T00:00:00.000Z"
               :application/user-roles {:alice ["applicant"] :handler ["handler"] :reporter ["reporter"]}
               :application/external-id "2010/1"
