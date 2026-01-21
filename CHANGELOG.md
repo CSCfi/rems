@@ -6,7 +6,9 @@ have notable changes.
 
 ## Unreleased
 
-Changes since v2.38.1
+Changes since v2.39
+
+## v2.39 "Jätkäsaarenlaituri" 2026-01-21
 
 ### Additions
 - Use `:oidc-use-state` and value `:csrf-token`to configure REMS to send a CSRF token in `state` parameter to the login server and then check its value in the callback. (#3367)
