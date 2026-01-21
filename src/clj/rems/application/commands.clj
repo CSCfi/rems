@@ -665,7 +665,9 @@
 
 (defmethod command-handler :application.command/accept-invitation
   [cmd application _injections]
-  (let [{:keys [token application-id actor]} cmd
+  (let [{token :token
+         application-id :application-id
+         actor :actor} cmd
         invitation (get-in application [:application/invitation-tokens token])]
     (cond
       (:application/member invitation)
