@@ -17,10 +17,10 @@ orbs:
 executors:
   clojure:
     docker:
-      - image: cimg/clojure:1.11-openjdk-21.0-browsers
+      - image: cimg/clojure:1.12-openjdk-21.0-browsers
   db:
     docker:
-      - image: cimg/clojure:1.11-openjdk-21.0-browsers
+      - image: cimg/clojure:1.12-openjdk-21.0-browsers
       - image: postgres:13
         environment:
           POSTGRES_HOST_AUTH_METHOD: trust
