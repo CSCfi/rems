@@ -40,6 +40,8 @@
     (let [created (reduce application-permissions-view nil [{:event/type :application.event/created
                                                              :event/actor "applicant"}])]
       (is (contains? (permissions/user-permissions created "joe")
+                     :application.command/accept-invitation))
+      (is (contains? (permissions/user-permissions created "handler")
                      :application.command/accept-invitation))))
 
   (testing "nobody can accept invitation for closed application"

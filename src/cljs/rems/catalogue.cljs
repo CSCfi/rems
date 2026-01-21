@@ -112,7 +112,8 @@
               :name {:value (get-localized-title item)}
               :commands {:display-value [:div.commands.flex-nowrap.justify-content-end
                                          [catalogue-item-more-info item]
-                                         [row-command item cart-item-ids]]}})
+                                         (when @roles/logged-in?
+                                           [row-command item cart-item-ids])]}})
            catalogue))))
 
 (defn draft-application-list []

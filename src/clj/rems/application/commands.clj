@@ -341,13 +341,26 @@
   (some #(= userid (:userid %))
         (application-util/applicant-and-members application)))
 
-(defn- role-in-application? [userid application]
-  (contains? (:application/user-roles application)
-             userid))
+(defn- any-role-in-application? [userid application roles]
+  (let [user-roles (-> application
+                       :application/user-roles
+                       (get userid))]
+    (some (partial contains? user-roles) roles)))
 
-(defn already-joined-error [application userid]
-  (when (role-in-application? userid application)
-    {:errors [{:type :already-joined :userid userid :application-id (:application/id application)}]}))
+(deftest test-any-role-in-application?
+  (let [app {:application/user-roles {"a" #{:role-1}
+                                      "b" #{:role-1 :role-2}}}]
+    (is (true? (any-role-in-application? "a" app [:role-1])))
+    (is (true? (any-role-in-application? "b" app [:role-3 :role-1])))
+    (is (true? (any-role-in-application? "b" app [:role-1 :role-2])))
+    (is (nil? (any-role-in-application? "a" app [:role-2])))
+    (is (nil? (any-role-in-application? "b" app [:role-4 :role-5 :role-6])))))
+
+(defn already-joined-error [application userid & roles]
+  (when (any-role-in-application? userid application roles)
+    {:errors [{:type :already-joined
+               :userid userid
+               :application-id (:application/id application)}]}))
 
 (defn token-used-error [invitation token]
   (when (:token/used? invitation)
@@ -623,17 +636,10 @@
                                       :application/resources (build-resources-list cat-ids injections)
                                       :application/licenses (build-licenses-list cat-ids injections)}))))
 
-(defn cannot-join-error [application userid]
-  (when (application-util/is-handling-user? application userid)
-    (if (application-util/draft? application)
-      {:errors [{:type :t.actions.errors/handling-user-cannot-join :userid userid}]}
-      {:errors [{:type :handling-user-cannot-join :userid userid :application-id (:application/id application)}]})))
-
 (defmethod command-handler :application.command/add-member
   [cmd application injections]
   (or (invalid-user-error (:userid (:member cmd)) injections)
-      (cannot-join-error application (:userid (:member cmd)))
-      (already-joined-error application (:userid (:member cmd)))
+      (already-joined-error application (:userid (:member cmd)) :member)
       (ok {:event/type :application.event/member-added
            :application/member (:member cmd)})))
 
@@ -659,34 +665,35 @@
 
 (defmethod command-handler :application.command/accept-invitation
   [cmd application _injections]
-  (let [token (:token cmd)
+  (let [{token :token
+         application-id :application-id
+         actor :actor} cmd
         invitation (get-in application [:application/invitation-tokens token])]
     (cond
       (:application/member invitation)
-      (or (cannot-join-error application (:actor cmd))
-          (already-joined-error application (:actor cmd))
+      (or (already-joined-error application actor :member)
           (token-used-error invitation token)
-          (ok-with-data {:application-id (:application-id cmd)}
+          (ok-with-data {:application-id application-id}
                         [{:event/type :application.event/member-joined
-                          :application/id (:application-id cmd)
-                          :invitation/token (:token cmd)}]))
+                          :application/id application-id
+                          :invitation/token token}]))
 
       (:application/reviewer invitation)
-      (or (already-joined-error application (:actor cmd))
+      (or (already-joined-error application actor :reviewer)
           (token-used-error invitation token)
-          (ok-with-data {:application-id (:application-id cmd)}
+          (ok-with-data {:application-id application-id}
                         [{:event/type :application.event/reviewer-joined
-                          :application/id (:application-id cmd)
-                          :invitation/token (:token cmd)
+                          :application/id application-id
+                          :invitation/token token
                           :application/request-id (UUID/randomUUID)}]))
 
       (:application/decider invitation)
-      (or (already-joined-error application (:actor cmd))
+      (or (already-joined-error application actor :decider :past-decider)
           (token-used-error invitation token)
-          (ok-with-data {:application-id (:application-id cmd)}
+          (ok-with-data {:application-id application-id}
                         [{:event/type :application.event/decider-joined
-                          :application/id (:application-id cmd)
-                          :invitation/token (:token cmd)
+                          :application/id application-id
+                          :invitation/token token
                           :application/request-id (UUID/randomUUID)}]))
 
       :else

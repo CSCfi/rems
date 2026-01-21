@@ -28,8 +28,7 @@
                               (flash-message/show-success! :top [text :t.actions/accept-invitation-success])
                               (navigate! (str "/application/" (:application-id response))))
 
-                            (contains? #{:already-joined
-                                         :handling-user-cannot-join} (:type error))
+                            (= :already-joined (:type error))
                             (navigate! (str "/application/" (:application-id error)))
 
                             (= :t.actions.errors/invalid-token (:type error))
