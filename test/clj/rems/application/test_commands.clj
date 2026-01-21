@@ -1295,7 +1295,7 @@
 
 (deftest test-accept-invitation
   (testing "invited member"
-    (doseq [user ["somebody" handler-user-id]]
+    (doseq [user ["somebody" handler-user-id decider-user-id reviewer-user-id]]
       (testing (str "can join draft as " user)
         (is (= {:event/type :application.event/member-joined
                 :event/time test-time
@@ -1306,7 +1306,20 @@
                             :actor user
                             :token "very-secure"}
                            (build-application-view [dummy-created-event
-                                                    dummy-member-invited-event]))))))
+                                                    dummy-member-invited-event])))))
+
+      (testing (str "can join submitted application as " user)
+        (is (= {:event/type :application.event/member-joined
+                :event/actor user
+                :event/time test-time
+                :application/id app-id
+                :invitation/token "very-secure"}
+               (ok-command {:type :application.command/accept-invitation
+                            :actor user
+                            :token "very-secure"}
+                           (build-application-view [dummy-created-event
+                                                    dummy-member-invited-event
+                                                    dummy-submitted-event]))))))
 
     (testing "can't join if they are already a member"
       (is (= {:errors [{:type :already-joined :userid "somebody" :application-id app-id}]}
@@ -1333,21 +1346,6 @@
                            (build-application-view [dummy-created-event
                                                     dummy-member-invited-event
                                                     dummy-member-joined-event])))))
-
-    (doseq [user ["somebody" handler-user-id]]
-      (testing (str "can join submitted application as " user)
-        (is (= {:event/type :application.event/member-joined
-                :event/actor user
-                :event/time test-time
-                :application/id app-id
-                :invitation/token "very-secure"}
-               (ok-command {:type :application.command/accept-invitation
-                            :actor user
-                            :token "very-secure"}
-                           (build-application-view [dummy-created-event
-                                                    dummy-member-invited-event
-                                                    dummy-submitted-event]))))))
-
 
     (testing "can't join a closed application"
       (is (= {:errors [{:type :forbidden}]}
