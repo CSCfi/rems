@@ -218,7 +218,7 @@
          (get-catalogue-tree)))
 
   (let [get-category (fn [category]
-                       (-> (rems.db.category/get-category (:category/id category))))
+                       (rems.db.category/get-category (:category/id category)))
         child {:category/id (test-helpers/create-category! {})}
         parent {:category/id (test-helpers/create-category! {:category/children [child]})}
         _empty {:category/id (test-helpers/create-category! {})} ; should not be seen
