@@ -134,6 +134,7 @@
            (catalogueitemdata->json {:categories [{:category/id 1}]})))
     (is (= "{\"categories\":[]}"
            (catalogueitemdata->json {:categories []})))
+    (is (true? *print-namespace-maps*))
     (is (thrown-with-msg? Exception #"Value does not match schema: \{:categories \[\{:category/id missing\-required\-key\}\]\}"
                           (catalogueitemdata->json {:categories [{:foo "bar"}]})))))
 
