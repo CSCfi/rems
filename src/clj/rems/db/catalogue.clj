@@ -134,11 +134,8 @@
            (catalogueitemdata->json {:categories [{:category/id 1}]})))
     (is (= "{\"categories\":[]}"
            (catalogueitemdata->json {:categories []})))
-    (is (true? *print-namespace-maps*))
-    (is (false? *print-namespace-maps*))
-    (binding [*print-namespace-maps* false]
-      (is (thrown-with-msg? Exception #"Value does not match schema: \{:categories \[\{:category/id missing\-required\-key\}\]\}"
-                            (catalogueitemdata->json {:categories [{:foo "bar"}]}))))))
+    (is (thrown-with-msg? Exception #"Value does not match schema: \{:categories \[\{:category/id missing\-required\-key\}\]\}"
+                          (catalogueitemdata->json {:categories [{:foo "bar"}]})))))
 
 (defn create-catalogue-item! [{:keys [archived categories enabled form-id localizations organization-id resource-id start workflow-id]
                                :or {archived false enabled true}}]
