@@ -128,6 +128,15 @@
       validate-catalogueitemdata
       json/generate-string))
 
+(deftest test-catalogueitemdata->json
+  (testing ""
+    (is (= "{\"categories\":[{\"category/id\":1}]}"
+           (catalogueitemdata->json {:categories [{:category/id 1}]})))
+    (is (= "{\"categories\":[]}"
+           (catalogueitemdata->json {:categories []})))
+    (is (thrown-with-msg? Exception #"Value does not match schema: \{:categories \[\{:category/id missing\-required\-key\}\]\}"
+                          (catalogueitemdata->json {:categories [{:foo "bar"}]})))))
+
 (defn create-catalogue-item! [{:keys [archived categories enabled form-id localizations organization-id resource-id start workflow-id]
                                :or {archived false enabled true}}]
   (let [catalogueitemdata (catalogueitemdata->json (assoc-some {} :categories categories))
