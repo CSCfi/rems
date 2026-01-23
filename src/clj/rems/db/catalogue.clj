@@ -1,5 +1,6 @@
 (ns rems.db.catalogue
   (:require [clj-time.core :as time]
+            [clojure.test :refer [deftest is testing]]
             [clojure.set]
             [medley.core :refer [assoc-some]]
             [rems.cache :as cache]
@@ -11,7 +12,8 @@
             [schema.coerce :as coerce]))
 
 (s/defschema CatalogueItemData
-  (s/maybe {(s/optional-key :categories) [schema-base/CategoryId]}))
+  (s/maybe {(s/optional-key :categories) [schema-base/CategoryId]
+            (s/optional-key :children) [{:catalogue-item/id s/Int}]}))
 
 (def ^:private validate-catalogueitemdata
   (s/validator CatalogueItemData))
@@ -49,6 +51,30 @@
                  :organization {:organization/id (:organization-id x)}}
                 (assoc-some :categories (not-empty (:categories data))))]
     cat))
+
+(deftest test-parse-catalogue-item-raw
+  ;; omit keys without parsing logic associated with them
+  (testing "with category"
+    (is (= {:categories [{:category/id 2}]}
+           (-> {:catalogueitemdata "{\"categories\":[{\"category/id\":2}]}"}
+               parse-catalogue-item-raw
+               (select-keys [:categories :children])))))
+
+  (testing "with declared key but empty value"
+    (is (= {:categories [{:category/id 2}]}
+           (-> {:catalogueitemdata "{\"categories\":[{\"category/id\":2}],\"children\":[]}"}
+               parse-catalogue-item-raw
+               (select-keys [:categories :children])))
+        "only those keys that have a value are included")
+
+    (is (-> {:catalogueitemdata "{\"categories\":[],\"children\":[]}"}
+            parse-catalogue-item-raw
+            (select-keys [:categories :children])
+            empty?)))
+
+  (testing "with disallowed key"
+    (is (thrown-with-msg? Exception #"Value cannot be coerced to match schema: \{:bad disallowed-key\}"
+                          (parse-catalogue-item-raw {:catalogueitemdata "{\"bad\":\"value\"}"})))))
 
 (def catalogue-item-cache
   (cache/basic {:id ::catalogue-item-cache
