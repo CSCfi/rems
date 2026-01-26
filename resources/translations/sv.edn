@@ -43,6 +43,7 @@
             :member-name "Namn"
             :modify "Ändra"
             :name-and-email-required "Namn och e-postadress är obligatoriska"
+            :pre-actions-info ""
             :redact-attachments "Ändra bilagor"
             :reject "Avslå"
             :remark "Gör anteckning"
