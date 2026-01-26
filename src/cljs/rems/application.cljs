@@ -1070,6 +1070,8 @@
   (let [app-id (:application/id application)
         show-comment-field? (is-handling-user? application)
         actions (action-buttons application)
+        state (:application/state application)
+        pre-actions-info (when (= state :application.state/approved) (text :t.actions/pre-actions-info))
         reload (r/partial reload! app-id)
         go-to-applications #(do (flash-message/show-default-success! :top [text :t.actions/delete])
                                 (navigate! "/applications"))]
@@ -1079,7 +1081,7 @@
         :title (text :t.form/actions)
         :always [:div
 
-                 (into [:div#action-commands] actions)
+                 (into [:div#action-commands] [pre-actions-info actions])
 
                  [:div#actions-forms.mt-3
                   [request-review-form app-id reload]
