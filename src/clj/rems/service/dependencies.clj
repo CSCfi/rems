@@ -40,7 +40,9 @@
            (when-let [id (:formid cat)]
              {:form/id id})
            (for [category (:categories cat)]
-             {:category/id (:category/id category)}))})
+             {:category/id (:category/id category)})
+           (for [children (:children cat)]
+             {:catalogue-item/id (:catalogue-item/id children)}))})
 
    (for [wf (rems.db.workflow/get-workflows)
          :let [forms (-> wf :workflow :forms)
