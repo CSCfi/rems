@@ -1,6 +1,7 @@
 (ns rems.service.catalogue
   (:require [clojure.set]
             [medley.core :refer [assoc-some remove-vals update-existing]]
+            [rems.auth.util :refer [throw-forbidden]]
             [rems.common.roles :as roles]
             [rems.common.util :refer [apply-filters build-dags]]
             [rems.db.applications]
@@ -13,12 +14,27 @@
             [rems.service.dependencies :as dependencies]
             [rems.service.util :as util]))
 
-(defn create-catalogue-item! [{:keys [archived categories enabled form localizations organization resid start wfid] :as command}]
+(defn assert-same-workflow-id! [children parent-wfid]
+  (when-let [mismatching-workflow-id (->> children
+                                          (eduction
+                                           (map :catalogue-item/id)
+                                           (map rems.db.catalogue/get-catalogue-item)
+                                           (filter #(not= (:wfid %) parent-wfid)))
+                                          not-empty)]
+    ;; todo: translation
+    (throw-forbidden (str "Cannot assign catalogue item children with different workflows. Parent wfid: "
+                          parent-wfid
+                          ", child: "
+                          (pr-str mismatching-workflow-id)))))
+
+(defn create-catalogue-item! [{:keys [archived categories children enabled form localizations organization resid start wfid] :as command}]
   (util/check-allowed-organization! organization)
+  (assert-same-workflow-id! children wfid)
   (let [id (rems.db.catalogue/create-catalogue-item!
             (-> {:organization-id (:organization/id organization "default")}
                 (assoc-some :archived archived
                             :categories categories
+                            :children children
                             :enabled enabled
                             :form-id form
                             :localizations localizations
@@ -101,6 +117,7 @@
                                          categories)]
     {:roots (into (vec top-level-categories)
                   items-without-category)}))
+
 
 (defn- check-allowed-to-edit! [id]
   (-> id
