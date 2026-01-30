@@ -41,7 +41,9 @@
                                             :organization {:organization/id "organization1"}})
         ;; can create catalogue items with mixed organizations:
         wf-id (test-helpers/create-workflow! {:title "workflow name" :organization {:organization/id "abc"}})
-        res-id (test-helpers/create-resource! {:resource-ext-id "resource ext id" :organization {:organization/id "organization1"}})]
+        wf-id-2 (test-helpers/create-workflow! {:title "workflow name 2" :organization {:organization/id "abc"}})
+        res-id (test-helpers/create-resource! {:resource-ext-id "resource ext id" :organization {:organization/id "organization1"}})
+        res-id-2 (test-helpers/create-resource! {:resource-ext-id "urn:1234" :organization {:organization/id "organization1"}})]
     (let [create-catalogue-item (fn [user-id organization]
                                   (-> (request :post "/api/catalogue-items/create")
                                       (authenticate +test-api-key+ user-id)
@@ -128,7 +130,29 @@
                    (select-keys
                     (api-call :get (str "/api/catalogue-items/" (:id data)) nil
                               +test-api-key+ "owner")
-                    [:formid :form-name])))))))))
+                    [:formid :form-name]))))))
+
+      (testing "with children"
+        (let [cat-1 (create-catalogue-item "owner" "organization1")
+              cat-2 (api-call :post "/api/catalogue-items/create"
+                              {:form form-id
+                               :resid res-id-2
+                               :wfid wf-id
+                               :organization {:organization/id "organization1"}
+                               :archived false
+                               :localizations {}
+                               :children [{:catalogue-item/id (:id cat-1)}]}
+                              +test-api-key+ "owner")]
+          (is (:success cat-1))
+          (is (:success cat-2))
+          (testing "fetch"
+            (is (= {:resid "urn:1234"
+                    :children [{:catalogue-item/id (:id cat-1)}]}
+                   (select-keys
+                    (api-call :get (str "/api/catalogue-items/" (:id cat-2)) nil
+                              +test-api-key+
+                              "owner")
+                    [:resid :children])))))))))
 
 (deftest catalogue-items-edit-test
   (let [owner "owner"
