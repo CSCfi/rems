@@ -37,7 +37,8 @@
    :localizations WriteCatalogueItemLocalizations
    (s/optional-key :enabled) s/Bool
    (s/optional-key :archived) s/Bool
-   (s/optional-key :categories) [schema-base/CategoryId]})
+   (s/optional-key :categories) [schema-base/CategoryId]
+   (s/optional-key :children) [{:catalogue-item/id s/Int}]})
 
 (s/defschema EditCatalogueItemCommand
   {:id s/Int
