@@ -32,6 +32,17 @@
        (is (not (clojure.tools.logging.test/logged? ~logger-ns ~level ~message)))
        result#)))
 
+(defn create-catalogue-item
+  [user-id body]
+  {:arglists '({:keys [form resid wfid {:keys [:organization/id] :as organization} archived localizations]})
+   :pre [(map? body)]}
+  (-> (request :post "/api/catalogue-items/create")
+      (authenticate +test-api-key+ user-id)
+      (json-body body)
+      handler
+      read-body))
+
+
 (deftest catalogue-items-api-test
   (let [user-id "alice"
         form-id (test-helpers/create-form! {:form/internal-name "form name"
@@ -41,22 +52,15 @@
                                             :organization {:organization/id "organization1"}})
         ;; can create catalogue items with mixed organizations:
         wf-id (test-helpers/create-workflow! {:title "workflow name" :organization {:organization/id "abc"}})
-        wf-id-2 (test-helpers/create-workflow! {:title "workflow name 2" :organization {:organization/id "abc"}})
-        res-id (test-helpers/create-resource! {:resource-ext-id "resource ext id" :organization {:organization/id "organization1"}})
-        res-id-2 (test-helpers/create-resource! {:resource-ext-id "urn:1234" :organization {:organization/id "organization1"}})]
-    (let [create-catalogue-item (fn [user-id organization]
-                                  (-> (request :post "/api/catalogue-items/create")
-                                      (authenticate +test-api-key+ user-id)
-                                      (json-body {:form form-id
-                                                  :resid res-id
-                                                  :wfid wf-id
-                                                  :organization {:organization/id organization}
-                                                  :archived false
-                                                  :localizations {}})
-                                      handler
-                                      read-body))]
+        res-id (test-helpers/create-resource! {:resource-ext-id "resource ext id" :organization {:organization/id "organization1"}})]
+    (let [default-body {:form form-id
+                        :resid res-id
+                        :wfid wf-id
+                        :organization {:organization/id "organization1"}
+                        :archived false
+                        :localizations {}}]
       (testing "create as owner"
-        (let [data (create-catalogue-item "owner" "organization1")
+        (let [data (create-catalogue-item "owner" default-body)
               id (:id data)]
           (is (:success data))
           (is (number? id))
@@ -81,13 +85,13 @@
 
       (testing "create as organization owner"
         (testing "with correct organization"
-          (let [data (create-catalogue-item "organization-owner1" "organization1")
+          (let [data (create-catalogue-item "organization-owner1" default-body)
                 id (:id data)]
             (is (:success data))
             (is (number? id))))
 
         (testing "with incorrect organization"
-          (let [data (create-catalogue-item "organization-owner2" "organization1")]
+          (let [data (create-catalogue-item "organization-owner2" default-body)]
             (is (not (:success data))))))
 
       (testing "fetch all"
@@ -98,53 +102,34 @@
           (is (= ["resource ext id" "resource ext id"] (map :resid items)))))
 
       (testing "create without form"
-        (let [data (api-call :post "/api/catalogue-items/create"
-                             {:form nil
-                              :resid res-id
-                              :wfid wf-id
-                              :organization {:organization/id "organization1"}
-                              :archived false
-                              :localizations {}}
-                             +test-api-key+ "owner")]
+        (let [data (create-catalogue-item "owner" (assoc default-body :form nil))]
           (is (:success data))
           (testing "and fetch"
             (is (= {:formid nil
                     :form-name nil}
                    (select-keys
-                    (api-call :get (str "/api/catalogue-items/" (:id data)) nil
-                              +test-api-key+ "owner")
+                    (api-call :get (str "/api/catalogue-items/" (:id data)) nil +test-api-key+ "owner")
                     [:formid :form-name])))))
 
-        (let [data (api-call :post "/api/catalogue-items/create"
-                             {;; no :form necessary
-                              :resid res-id
-                              :wfid wf-id
-                              :organization {:organization/id "organization1"}
-                              :archived false
-                              :localizations {}}
-                             +test-api-key+ "owner")]
+        (let [data (create-catalogue-item "owner" (dissoc default-body :form))] ;; no :form necessary
           (is (:success data))
           (testing "and fetch"
             (is (= {:formid nil
                     :form-name nil}
                    (select-keys
-                    (api-call :get (str "/api/catalogue-items/" (:id data)) nil
-                              +test-api-key+ "owner")
+                    (api-call :get (str "/api/catalogue-items/" (:id data)) nil +test-api-key+ "owner")
                     [:formid :form-name]))))))
 
-      (testing "with children"
-        (let [cat-1 (create-catalogue-item "owner" "organization1")
-              cat-2 (api-call :post "/api/catalogue-items/create"
-                              {:form form-id
-                               :resid res-id-2
-                               :wfid wf-id
-                               :organization {:organization/id "organization1"}
-                               :archived false
-                               :localizations {}
-                               :children [{:catalogue-item/id (:id cat-1)}]}
-                              +test-api-key+ "owner")]
+      (testing "create with children"
+        (let [cat-1 (create-catalogue-item "owner" default-body)
+              res-2 (test-helpers/create-resource! {:resource-ext-id "urn:1234"
+                                                    :organization {:organization/id "organization1"}})
+              cat-2 (create-catalogue-item "owner" (merge default-body
+                                                          {:resid res-2
+                                                           :children [{:catalogue-item/id (:id cat-1)}]}))]
           (is (:success cat-1))
           (is (:success cat-2))
+
           (testing "fetch"
             (is (= {:resid "urn:1234"
                     :children [{:catalogue-item/id (:id cat-1)}]}
