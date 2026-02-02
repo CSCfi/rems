@@ -121,20 +121,20 @@
                   [:formid :form-name]))))))
 
     (testing "create with children"
-      (let [cat-1 (create-catalogue-item "owner" default-body)
-            res-2 (test-helpers/create-resource! {:resource-ext-id "urn:1234"
-                                                  :organization {:organization/id "organization1"}})
-            cat-2 (create-catalogue-item "owner" (merge default-body
-                                                        {:resid res-2
-                                                         :children [{:catalogue-item/id (:id cat-1)}]}))]
-        (is (:success cat-1))
-        (is (:success cat-2))
+      (let [child (create-catalogue-item "owner" default-body)
+            parent (create-catalogue-item "owner" (merge default-body
+                                                         {:children [{:catalogue-item/id (:id child)}]
+                                                          :resid (test-helpers/create-resource!
+                                                                  {:resource-ext-id "urn:1234"
+                                                                   :organization {:organization/id "organization1"}})}))]
+        (is (:success child))
+        (is (:success parent))
 
         (testing "fetch"
           (is (= {:resid "urn:1234"
-                  :children [{:catalogue-item/id (:id cat-1)}]}
+                  :children [{:catalogue-item/id (:id child)}]}
                  (select-keys
-                  (api-call :get (str "/api/catalogue-items/" (:id cat-2)) nil
+                  (api-call :get (str "/api/catalogue-items/" (:id parent)) nil
                             +test-api-key+
                             "owner")
                   [:resid :children]))))))))
