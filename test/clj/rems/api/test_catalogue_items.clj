@@ -161,20 +161,35 @@
         (is (nil? (:success parent)))
         (is (str/includes? parent "Cannot assign catalogue item children with different workflows"))))
 
+    (testing "create with children that already have children"
+      (let [child (create-catalogue-item "owner" default-body)
+            parent (create-catalogue-item "owner" (merge default-body
+                                                         {:children [{:catalogue-item/id (:id child)}]
+                                                          :resid (test-helpers/create-resource!
+                                                                  {:resource-ext-id "urn:1234"
+                                                                   :organization (:organization default-body)})}))
+            grandparent (create-catalogue-item "owner" (merge default-body
+                                                              {:children [{:catalogue-item/id (:id parent)}]
+                                                               :resid (test-helpers/create-resource!
+                                                                       {:resource-ext-id "urn:2345"
+                                                                        :organization (:organization default-body)})}))]
+        (is (nil? (:success grandparent)) "not permitted")
+        (is (str/includes? grandparent "Cannot create multi-level parent-child hierarchy"))))
+
     (testing "create with children, many parents, one child"
       (let [child (create-catalogue-item "owner" default-body)
-            parent-1 (create-catalogue-item "owner"
-                                            (merge default-body
-                                                   {:children [{:catalogue-item/id (:id child)}]
-                                                    :resid (test-helpers/create-resource!
-                                                            {:resource-ext-id "urn:2345"
-                                                             :organization (:organization default-body)})}))
+            _parent-1 (create-catalogue-item "owner"
+                                             (merge default-body
+                                                    {:children [{:catalogue-item/id (:id child)}]
+                                                     :resid (test-helpers/create-resource!
+                                                             {:resource-ext-id "urn:2345"
+                                                              :organization (:organization default-body)})}))
             parent-2 (create-catalogue-item "owner"
                                             (merge default-body
                                                    {:children [{:catalogue-item/id (:id child)}]
                                                     :resid (test-helpers/create-resource!
                                                             {:resource-ext-id "urn:5432"
-                                                             :organization {:organization/id "organization1"}})}))]
+                                                             :organization (:organization default-body)})}))]
         (is (nil? (:success parent-2)) "should fail")))))
 
 (deftest catalogue-items-edit-test
