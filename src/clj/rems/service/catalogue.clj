@@ -14,22 +14,21 @@
             [rems.service.dependencies :as dependencies]
             [rems.service.util :as util]))
 
-(defn assert-same-workflow-id! [children parent-wfid]
-  (when-let [mismatching-workflow-id (->> children
-                                          (eduction
-                                           (map :catalogue-item/id)
-                                           (map rems.db.catalogue/get-catalogue-item)
-                                           (filter #(not= (:wfid %) parent-wfid)))
-                                          not-empty)]
-    ;; todo: translation
-    (throw-forbidden (str "Cannot assign catalogue item children with different workflows. Parent wfid: "
-                          parent-wfid
-                          ", child: "
-                          (pr-str mismatching-workflow-id)))))
+(defn validate-children! [children parent-organization parent-wfid]
+  (let [children-ids (map :catalogue-item/id children)]
+    (when (some (complement rems.db.catalogue/has-catalogue-item?) children-ids)
+      (throw-forbidden "Cannot create catalogue item with non-existent children"))
+
+    (let [child-catalogue-items (map rems.db.catalogue/get-catalogue-item children-ids)]
+      (when (some (comp not #{parent-wfid} :wfid) child-catalogue-items)
+        (throw-forbidden "Cannot assign catalogue item children with different workflows"))
+
+      (doseq [org (into #{parent-organization} (map :organization) child-catalogue-items)]
+        (util/check-allowed-organization! org)))))
 
 (defn create-catalogue-item! [{:keys [archived categories children enabled form localizations organization resid start wfid] :as command}]
-  (util/check-allowed-organization! organization)
-  (assert-same-workflow-id! children wfid)
+  (validate-children! children organization wfid)
+
   (let [id (rems.db.catalogue/create-catalogue-item!
             (-> {:organization-id (:organization/id organization "default")}
                 (assoc-some :archived archived

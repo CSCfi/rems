@@ -126,7 +126,7 @@
                                                          {:children [{:catalogue-item/id (:id child)}]
                                                           :resid (test-helpers/create-resource!
                                                                   {:resource-ext-id "urn:1234"
-                                                                   :organization {:organization/id "organization1"}})}))]
+                                                                   :organization (:organization default-body)})}))]
         (is (:success child))
         (is (:success parent))
 
@@ -137,7 +137,45 @@
                   (api-call :get (str "/api/catalogue-items/" (:id parent)) nil
                             +test-api-key+
                             "owner")
-                  [:resid :children]))))))))
+                  [:resid :children]))))))
+
+    (testing "create with non-existent children"
+      (let [parent (create-catalogue-item "owner"
+                                          (merge default-body
+                                                 {:children [{:catalogue-item/id Integer/MIN_VALUE}]
+                                                  :resid (test-helpers/create-resource!
+                                                          {:resource-ext-id "urn:4321"
+                                                           :organization (:organization default-body)})}))]
+        (is (str/includes? parent "Cannot create catalogue item with non-existent children"))))
+
+    (testing "create with children, different workflows"
+      (let [child (create-catalogue-item "owner" default-body)
+            parent (create-catalogue-item "owner"
+                                          (merge default-body
+                                                 {:children [{:catalogue-item/id (:id child)}]
+                                                  :wfid (test-helpers/create-workflow!
+                                                         {:title "workflow name 3" :organization {:organization/id "abc"}})
+                                                  :resid (test-helpers/create-resource!
+                                                          {:resource-ext-id "urn:4321"
+                                                           :organization (:organization default-body)})}))]
+        (is (nil? (:success parent)))
+        (is (str/includes? parent "Cannot assign catalogue item children with different workflows"))))
+
+    (testing "create with children, many parents, one child"
+      (let [child (create-catalogue-item "owner" default-body)
+            parent-1 (create-catalogue-item "owner"
+                                            (merge default-body
+                                                   {:children [{:catalogue-item/id (:id child)}]
+                                                    :resid (test-helpers/create-resource!
+                                                            {:resource-ext-id "urn:2345"
+                                                             :organization (:organization default-body)})}))
+            parent-2 (create-catalogue-item "owner"
+                                            (merge default-body
+                                                   {:children [{:catalogue-item/id (:id child)}]
+                                                    :resid (test-helpers/create-resource!
+                                                            {:resource-ext-id "urn:5432"
+                                                             :organization {:organization/id "organization1"}})}))]
+        (is (nil? (:success parent-2)) "should fail")))))
 
 (deftest catalogue-items-edit-test
   (let [owner "owner"
