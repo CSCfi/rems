@@ -132,6 +132,9 @@
           assoc-expired
           localize-catalogue-item))
 
+(defn has-catalogue-item? [id]
+  (cache/has? catalogue-item-cache id))
+
 (defn catalogueitemdata->json [data]
   (-> data
       (st/select-schema CatalogueItemData)

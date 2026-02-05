@@ -133,7 +133,8 @@
       :summary "Create a new catalogue item"
       :roles +admin-write-roles+
       :body [command CreateCatalogueItemCommand]
-      :return CreateCatalogueItemResponse
+      :responses {200 CreateCatalogueItemResponse
+                  403 {:schema s/Any :description "Forbidden"}}
       (extended-logging request)
       (ok (rems.service.catalogue/create-catalogue-item! command)))
 
