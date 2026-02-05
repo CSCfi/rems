@@ -20,6 +20,15 @@
       (throw-forbidden "Cannot create catalogue item with non-existent children"))
 
     (let [child-catalogue-items (map rems.db.catalogue/get-catalogue-item children-ids)]
+      (when (some :children child-catalogue-items)
+        (throw-forbidden "Cannot create multi-level parent-child hierarchy"))
+
+      (when (some (comp rems.service.dependencies/in-use-error
+                        (partial hash-map :catalogue-item/id)
+                        :id)
+                  child-catalogue-items)
+        (throw-forbidden "Cannot assign child item that already has a parent item"))
+
       (when (some (comp not #{parent-wfid} :wfid) child-catalogue-items)
         (throw-forbidden "Cannot assign catalogue item children with different workflows"))
 
