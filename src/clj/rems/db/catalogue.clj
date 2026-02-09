@@ -14,7 +14,7 @@
 
 (s/defschema CatalogueItemData
   (s/maybe {(s/optional-key :categories) [schema-base/CategoryId]
-            (s/optional-key :children) [{:catalogue-item/id s/Int}]}))
+            (s/optional-key :children) [schema-base/CatalogueItemId]}))
 
 (def ^:private validate-catalogueitemdata
   (s/validator CatalogueItemData))
@@ -176,17 +176,20 @@
     (cache/miss! catalogue-item-cache id)
     id))
 
-(defn edit-catalogue-item! [id {:keys [categories localizations organization-id]}]
+(defn edit-catalogue-item! [id {:keys [categories children localizations organization-id]}]
   (when organization-id
-    (db/set-catalogue-item-organization! {:id id :organization organization-id}))
+    (db/set-catalogue-item-organization! {:id id
+                                          :organization organization-id}))
+
+  (db/set-catalogue-item-data! {:id id
+                                :catalogueitemdata (catalogueitemdata->json {:categories categories
+                                                                             :children children})})
+
   (doseq [[langcode localization] localizations]
     (db/upsert-catalogue-item-localization! {:id id
                                              :langcode (name langcode)
                                              :title (:title localization)
                                              :infourl (:infourl localization)}))
-  (when categories
-    (let [catalogueitemdata (catalogueitemdata->json {:categories categories})]
-      (db/set-catalogue-item-data! {:id id :catalogueitemdata catalogueitemdata})))
 
   (cache/miss! catalogue-item-localizations-cache id)
   (cache/miss! catalogue-item-cache id)

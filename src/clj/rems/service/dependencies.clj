@@ -102,6 +102,11 @@
                        :value-fn format-dependency
                        :collect-fn conj}))))
 
+(defn get-all-dependents [item]
+  (into #{}
+        (remove :archived)
+        (dep/get-all-dependents (db-dependency-graph) item)))
+
 (defn- archive-errors
   "Return errors if given item is depended on by non-archived items"
   [item]
