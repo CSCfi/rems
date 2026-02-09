@@ -296,26 +296,26 @@
 
 (deftest catalogue-items-api-security-test
   (testing "listing without authentication"
-    (let [response (-> (request :get (str "/api/catalogue-items"))
+    (let [response (-> (request :get "/api/catalogue-items")
                        handler)
           body (read-body response)]
       (is (response-is-unauthorized? response))
       (is (= "unauthorized" body))))
   (testing "item without authentication"
-    (let [response (-> (request :get (str "/api/catalogue-items/2"))
+    (let [response (-> (request :get "/api/catalogue-items/2")
                        handler)
           body (read-body response)]
       (is (response-is-unauthorized? response))
       (is (= "unauthorized" body))))
   (testing "create without authentication"
-    (let [response (-> (request :post (str "/api/catalogue-items/create"))
+    (let [response (-> (request :post "/api/catalogue-items/create")
                        handler)
           body (read-body response)]
       (is (response-is-unauthorized? response))
       (is (str/includes? body "Invalid anti-forgery token"))))
   (testing "create with wrong API-Key"
     (is (= "Invalid anti-forgery token"
-           (-> (request :post (str "/api/catalogue-items/create"))
+           (-> (request :post "/api/catalogue-items/create")
                (assoc-in [:headers "x-rems-api-key"] "invalid-api-key")
                (json-body {:form 1
                            :resid 1
@@ -325,7 +325,7 @@
                (read-body)))))
   (testing "edit without authentication"
     (let [response (is-not-logged? "rems.db.applications" :info #"Reloading"
-                     (-> (request :post (str "/api/catalogue-items/edit"))
+                     (-> (request :post "/api/catalogue-items/edit")
                          (json-body {:id 1
                                      :localizations {:en {:title "malicious localization"}}})
                          handler))
@@ -334,7 +334,7 @@
       (is (str/includes? body "Invalid anti-forgery token"))))
   (testing "edit with wrong API-Key"
     (let [body (is-not-logged? "rems.db.applications" :info #"Reloading"
-                 (-> (request :put (str "/api/catalogue-items/edit"))
+                 (-> (request :put "/api/catalogue-items/edit")
                      (assoc-in [:headers "x-rems-api-key"] "invalid-api-key")
                      (json-body {:id 1
                                  :localizations {:en {:title "malicious localization"}}})
