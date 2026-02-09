@@ -1998,7 +1998,9 @@
                          "")
               "Categories" (btu/context-getx :category-name)
               "Active" false
-              "End" ""}
+              "End" ""
+              "Complementary items" ""
+              "Top-level catalogue item" ""}
              (dissoc (slurp-fields :catalogue-item)
                      "Start")))
       (go-to-admin "Catalogue items")
@@ -2106,7 +2108,8 @@
             "Form (optional)" "test-edit-catalogue-item form"
             "Categories" "No categories"
             "Workflow" "test-edit-catalogue-item workflow"
-            "Resource" "test-edit-catalogue-item resource"}
+            "Resource" "test-edit-catalogue-item resource"
+            "Complementary items" "No complementary items"}
            (slurp-fields :catalogue-item-editor)))
     (btu/fill-human :infourl-en "http://google.com")
     (btu/screenshot "test-edit-catalogue-item-2")
@@ -2125,7 +2128,9 @@
             "Workflow" "test-edit-catalogue-item workflow"
             "Resource" "test-edit-catalogue-item resource"
             "End" ""
-            "Active" true}
+            "Active" true
+            "Complementary items" ""
+            "Top-level catalogue item" ""}
            (dissoc (slurp-fields :catalogue-item) "Start")))
     (testing "after disabling the components"
       (with-user "owner"
@@ -2147,7 +2152,8 @@
                 "Form (optional)" "test-edit-catalogue-item form"
                 "Categories" "No categories"
                 "Workflow" "test-edit-catalogue-item workflow"
-                "Resource" "test-edit-catalogue-item resource"}
+                "Resource" "test-edit-catalogue-item resource"
+                "Complementary items" "No complementary items"}
                (dissoc (slurp-fields :create-catalogue-item) "Start"))))
       (testing "viewing"
         (btu/scroll-and-click :cancel)
@@ -2165,7 +2171,10 @@
                 "Workflow" "test-edit-catalogue-item workflow"
                 "Resource" "test-edit-catalogue-item resource"
                 "End" ""
-                "Active" true}
+                "Active" true
+                "Complementary items" "",
+                "Top-level catalogue item" ""}
+
                (dissoc (slurp-fields :catalogue-item) "Start")))))))
 
 (deftest test-update-catalogue-item

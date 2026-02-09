@@ -34,7 +34,8 @@
    :expired s/Bool
    :localizations CatalogueItemLocalizations
    (s/optional-key :categories) [schema-base/Category]
-   (s/optional-key :children) [{:catalogue-item/id s/Int}]})
+   (s/optional-key :children) [schema-base/CatalogueItemId]
+   (s/optional-key :part-of) schema-base/CatalogueItemId})
 
 (s/defschema License
   {:id s/Int
