@@ -34,7 +34,7 @@
 
 (defn create-catalogue-item
   [user-id body]
-  {:arglists '({:keys [form resid wfid {:keys [:organization/id] :as organization} archived localizations]})
+  {:arglists '({:keys [form resid wfid {:keys [:organization/id] :as organization} archived localizations children]})
    :pre [(map? body)]}
   (-> (request :post "/api/catalogue-items/create")
       (authenticate +test-api-key+ user-id)
@@ -42,6 +42,36 @@
       handler
       read-body))
 
+(defn- handle-edit-catalogue-item-request [user-id body]
+  {:pre [(map? body)
+         (contains? body :id)]}
+  (-> (request :put "/api/catalogue-items/edit")
+      (authenticate +test-api-key+ user-id)
+      (json-body body)
+      handler))
+
+(defn edit-catalogue-item
+  "Edit a catalogue item designated by the key `:id` in `body`"
+  [user-id body]
+  {:arglists '({:keys [id form resid wfid {:keys [:organization/id] :as organization} archived localizations children]})
+   :pre [(map? body)
+         (contains? body :id)]}
+  (read-body (handle-edit-catalogue-item-request user-id body)))
+
+(defn get-catalogue-item
+  "Get all catalogue items as `user-id`, or supply `catalogue-item-id` to fetch only that."
+  ([user-id]
+   (get-catalogue-item user-id nil))
+  ([user-id catalogue-item-id]
+   (-> (request :get (str "/api/catalogue-items/" catalogue-item-id))
+       (authenticate +test-api-key+ user-id)
+       handler
+       read-body)))
+
+(defn get-all-catalogue-items
+  "Get all catalogue items as `user-id`. An alias to `get-catalogue-item` without the item id."
+  [user-id]
+  (get-catalogue-item user-id))
 
 (deftest catalogue-items-api-test
   (let [user-id "alice"
@@ -65,10 +95,7 @@
         (is (:success data))
         (is (number? id))
         (testing "and fetch"
-          (let [data (-> (request :get (str "/api/catalogue-items/" id))
-                         (authenticate +test-api-key+ user-id)
-                         handler
-                         read-body)]
+          (let [data (get-catalogue-item user-id id)]
             (is (= {:id id
                     :workflow-name "workflow name"
                     :form-name "form name"
@@ -95,10 +122,7 @@
           (is (not (:success data))))))
 
     (testing "fetch all"
-      (let [items (-> (request :get "/api/catalogue-items/")
-                      (authenticate +test-api-key+ user-id)
-                      handler
-                      read-body)]
+      (let [items (get-all-catalogue-items user-id)]
         (is (= ["resource ext id" "resource ext id"] (map :resid items)))))
 
     (testing "create without form"
@@ -108,7 +132,7 @@
           (is (= {:formid nil
                   :form-name nil}
                  (select-keys
-                  (api-call :get (str "/api/catalogue-items/" (:id data)) nil +test-api-key+ "owner")
+                  (get-catalogue-item "owner" (:id data))
                   [:formid :form-name])))))
 
       (let [data (create-catalogue-item "owner" (dissoc default-body :form))] ;; no :form necessary
@@ -117,7 +141,7 @@
           (is (= {:formid nil
                   :form-name nil}
                  (select-keys
-                  (api-call :get (str "/api/catalogue-items/" (:id data)) nil +test-api-key+ "owner")
+                  (get-catalogue-item "owner" (:id data))
                   [:formid :form-name]))))))
 
     (testing "create with children"
@@ -134,9 +158,7 @@
           (is (= {:resid "urn:1234"
                   :children [{:catalogue-item/id (:id child)}]}
                  (select-keys
-                  (api-call :get (str "/api/catalogue-items/" (:id parent)) nil
-                            +test-api-key+
-                            "owner")
+                  (get-catalogue-item "owner" (:id parent))
                   [:resid :children]))))))
 
     (testing "create with non-existent children"
@@ -211,9 +233,7 @@
                   :children [{:catalogue-item/id (:id child-1)}
                              {:catalogue-item/id (:id child-2)}]}
                  (select-keys
-                  (api-call :get (str "/api/catalogue-items/" (:id parent)) nil
-                            +test-api-key+
-                            "owner")
+                  (get-catalogue-item "owner" (:id parent))
                   [:resid :children]))))))))
 
 (deftest catalogue-items-edit-test
@@ -227,17 +247,14 @@
         res-id (test-helpers/create-resource! {:organization {:organization/id "organization1"}})]
 
     (testing "create"
-      (let [create (-> (request :post "/api/catalogue-items/create")
-                       (authenticate +test-api-key+ owner)
-                       (json-body {:form form-id
-                                   :resid res-id
-                                   :wfid wf-id
-                                   :organization {:organization/id "organization1"}
-                                   :localizations {:en {:title "En title"}
-                                                   :sv {:title "Sv title"
-                                                        :infourl "http://info.se"}}})
-                       handler
-                       read-ok-body)
+      (let [create (create-catalogue-item owner
+                                          {:form form-id
+                                           :resid res-id
+                                           :wfid wf-id
+                                           :organization {:organization/id "organization1"}
+                                           :localizations {:en {:title "En title"}
+                                                           :sv {:title "Sv title"
+                                                                :infourl "http://info.se"}}})
             id (:id create)]
         (is (:success create))
         (let [app-id (test-helpers/create-application! {:catalogue-item-ids [id]
@@ -248,10 +265,7 @@
                   (first (:application/resources (get-app))))))
 
           (testing "... and fetch"
-            (let [data (-> (request :get (str "/api/catalogue-items/" id))
-                           (authenticate +test-api-key+ user)
-                           handler
-                           read-ok-body)]
+            (let [data (get-catalogue-item user id)]
               (is (= id (:id data)))
               (is (= {:title "En title"
                       :infourl nil}
@@ -262,16 +276,13 @@
 
           (testing "... and edit (as owner)"
             (let [response (is-logged? "rems.db.applications" :info "Reloading 1 applications because of catalogue item changes"
-                             (-> (request :put "/api/catalogue-items/edit")
-                                 (authenticate +test-api-key+ owner)
-                                 (json-body {:id id
-                                             :organization {:organization/id changed-organization1}
-                                             :localizations {:sv {:title "Sv title 2"
-                                                                  :infourl nil}
-                                                             :fi {:title "Fi title"
-                                                                  :infourl "http://info.fi"}}})
-                                 handler
-                                 read-ok-body))]
+                             (edit-catalogue-item owner
+                                                  {:id id
+                                                   :organization {:organization/id changed-organization1}
+                                                   :localizations {:sv {:title "Sv title 2"
+                                                                        :infourl nil}
+                                                                   :fi {:title "Fi title"
+                                                                        :infourl "http://info.fi"}}}))]
               (is (:success response) (pr-str response))
 
               (testing "application is updated when catalogue item is edited"
@@ -280,10 +291,7 @@
                         (first (:application/resources (get-app)))))))
 
               (testing "... and fetch"
-                (let [data (-> (request :get (str "/api/catalogue-items/" id))
-                               (authenticate +test-api-key+ user)
-                               handler
-                               read-ok-body)]
+                (let [data (get-catalogue-item user id)]
                   (is (= id (:id data)))
                   (is (= changed-organization1 (get-in data [:organization :organization/id])))
                   (is (= {:title "En title"
@@ -298,76 +306,61 @@
 
           (testing "... and edit (as organization owner)"
             (let [response (is-logged? "rems.db.applications" :info "Reloading 1 applications because of catalogue item changes"
-                             (-> (request :put "/api/catalogue-items/edit")
-                                 (authenticate +test-api-key+ "organization-owner1")
-                                 (json-body {:id id
-                                             :organization {:organization/id changed-organization2}
-                                             :localizations {:sv {:title "Sv title 2"
-                                                                  :infourl nil}
-                                                             :fi {:title "Fi title 2"
-                                                                  :infourl "http://info.fi"}}})
-                                 handler
-                                 read-ok-body))]
+                             (edit-catalogue-item "organization-owner1"
+                                                  {:id id
+                                                   :organization {:organization/id changed-organization2}
+                                                   :localizations {:sv {:title "Sv title 2"
+                                                                        :infourl nil}
+                                                                   :fi {:title "Fi title 2"
+                                                                        :infourl "http://info.fi"}}}))]
               (is (:success response) (pr-str response))))
 
           (testing "... and edit (as organization owner but no rights to target org)"
             (let [response (is-not-logged? "rems.db.applications" :info #"Reloading"
-                             (-> (request :put "/api/catalogue-items/edit")
-                                 (authenticate +test-api-key+ "organization-owner1")
-                                 (json-body {:id id
-                                             :organization {:organization/id "organization2"}
-                                             :localizations {:sv {:title "Sv title 2"
-                                                                  :infourl nil}
-                                                             :fi {:title "Fi title 2"
-                                                                  :infourl "http://info.fi"}}})
-                                 handler))]
+                             (handle-edit-catalogue-item-request "organization-owner1"
+                                                                 {:id id
+                                                                  :organization {:organization/id "organization2"}
+                                                                  :localizations {:sv {:title "Sv title 2"
+                                                                                       :infourl nil}
+                                                                                  :fi {:title "Fi title 2"
+                                                                                       :infourl "http://info.fi"}}}))]
               (is (response-is-forbidden? response))
               (is (= "no access to organization \"organization2\"" (read-body response)))))
 
           (testing "... and edit (as organization owner for another organization)"
             (let [response (is-not-logged? "rems.db.applications" :info #"Reloading"
-                             (-> (request :put "/api/catalogue-items/edit")
-                                 (authenticate +test-api-key+ "organization-owner2")
-                                 (json-body {:id id
-                                             :localizations {:sv {:title "Sv title 2"
-                                                                  :infourl nil}
-                                                             :fi {:title "Fi title 2"
-                                                                  :infourl "http://info.fi"}}})
-                                 handler))]
+                             (handle-edit-catalogue-item-request "organization-owner2"
+                                                                 {:id id
+                                                                  :localizations {:sv {:title "Sv title 2"
+                                                                                       :infourl nil}
+                                                                                  :fi {:title "Fi title 2"
+                                                                                       :infourl "http://info.fi"}}}))]
               (is (response-is-forbidden? response))
               (is (= "no access to organization \"changed-organization2\"" (read-body response))))))))
 
     (testing "edit nonexisting"
       (let [response (is-not-logged? "rems.db.applications" :info #"Reloading"
-                       (-> (request :put "/api/catalogue-items/edit")
-                           (authenticate +test-api-key+ owner)
-                           (json-body {:id 999999999
-                                       :localizations {:sv {:title "Sv title 2"
-                                                            :infourl nil}
-                                                       :fi {:title "Fi title"
-                                                            :infourl "http://info.fi"}}})
-                           handler))]
+                       (handle-edit-catalogue-item-request owner
+                                                           {:id 999999999
+                                                            :localizations {:sv {:title "Sv title 2"
+                                                                                 :infourl nil}
+                                                                            :fi {:title "Fi title"
+                                                                                 :infourl "http://info.fi"}}}))]
         (is (response-is-not-found? response))))
 
     (testing "edit one with no created applications"
-      (let [create (-> (request :post "/api/catalogue-items/create")
-                       (authenticate +test-api-key+ owner)
-                       (json-body {:form form-id
-                                   :resid res-id
-                                   :wfid wf-id
-                                   :organization {:organization/id "organization1"}
-                                   :localizations {:en {:title "No applications test"}}})
-                       handler
-                       read-ok-body)]
+      (let [create (create-catalogue-item owner
+                                          {:form form-id
+                                           :resid res-id
+                                           :wfid wf-id
+                                           :organization {:organization/id "organization1"}
+                                           :localizations {:en {:title "No applications test"}}})]
         (is (:success create))
         (let [response (is-logged? "rems.db.applications" :info "Reloading 0 applications because of catalogue item changes"
-                         (-> (request :put "/api/catalogue-items/edit")
-                             (authenticate +test-api-key+ owner)
-                             (json-body {:id (:id create)
-                                         :localizations {:en {:title "No applications test"
-                                                              :infourl "http://info.en"}}})
-                             handler
-                             read-ok-body))]
+                         (edit-catalogue-item owner
+                                              {:id (:id create)
+                                               :localizations {:en {:title "No applications test"
+                                                                    :infourl "http://info.en"}}}))]
           (is (:success response) (pr-str response)))))))
 
 
@@ -639,14 +632,8 @@
                                         handler
                                         read-ok-body
                                         :catalogue-item-id))
-            new-catalogue-item (-> (request :get (str "/api/catalogue-items/" new-catalogue-item-id))
-                                   (authenticate +test-api-key+ "owner")
-                                   handler
-                                   read-ok-body)
-            old-catalogue-item (-> (request :get (str "/api/catalogue-items/" old-catalogue-item-id))
-                                   (authenticate +test-api-key+ "owner")
-                                   handler
-                                   read-ok-body)]
+            new-catalogue-item (get-catalogue-item "owner" new-catalogue-item-id)
+            old-catalogue-item (get-catalogue-item "owner" old-catalogue-item-id)]
         (testing "the new item"
           (is (= new-workflow-id (:wfid new-catalogue-item)) "has the new changed workflow id")
           (is (= "new workflow" (:workflow-name new-catalogue-item)) "has the new changed workflow name"))
@@ -726,9 +713,7 @@
              :title {:en "en"
                      :fi "fi"}
              :resource-id res-id})
-        fetch #(api-call :get (str "/api/catalogue-items/" id)
-                         nil
-                         +test-api-key+ "owner")]
+        fetch #(get-catalogue-item "owner" id)]
 
     (test-helpers/create-user! {:userid "alice"})
     (test-helpers/create-application! {:catalogue-item-ids [id]
