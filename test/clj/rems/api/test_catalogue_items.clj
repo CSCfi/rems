@@ -259,20 +259,26 @@
         (is (:success create))
         (let [app-id (test-helpers/create-application! {:catalogue-item-ids [id]
                                                         :actor "alice"})
-              get-app #(rems.db.applications/get-application app-id)]
+              get-app-infourl #(-> (rems.db.applications/get-application app-id)
+                                   :application/resources
+                                   first
+                                   :catalogue-item/infourl)]
           (is (= {:sv "http://info.se"}
-                 (:catalogue-item/infourl
-                  (first (:application/resources (get-app))))))
+                 (get-app-infourl)))
 
           (testing "... and fetch"
             (let [data (get-catalogue-item user id)]
               (is (= id (:id data)))
               (is (= {:title "En title"
                       :infourl nil}
-                     (dissoc (get-in data [:localizations :en]) :id :langcode)))
+                     (-> data
+                         (get-in [:localizations :en])
+                         (select-keys [:title :infourl]))))
               (is (= {:title "Sv title"
                       :infourl "http://info.se"}
-                     (dissoc (get-in data [:localizations :sv]) :id :langcode)))))
+                     (-> data
+                         (get-in [:localizations :sv])
+                         (select-keys [:title :infourl]))))))
 
           (testing "... and edit (as owner)"
             (let [response (is-logged? "rems.db.applications" :info "Reloading 1 applications because of catalogue item changes"
@@ -287,8 +293,7 @@
 
               (testing "application is updated when catalogue item is edited"
                 (is (= {:fi "http://info.fi"}
-                       (:catalogue-item/infourl
-                        (first (:application/resources (get-app)))))))
+                       (get-app-infourl))))
 
               (testing "... and fetch"
                 (let [data (get-catalogue-item user id)]
@@ -302,41 +307,41 @@
                          (dissoc (get-in data [:localizations :sv]) :id :langcode)))
                   (is (= {:title "Fi title"
                           :infourl "http://info.fi"}
-                         (dissoc (get-in data [:localizations :fi]) :id :langcode)))))))
+                         (dissoc (get-in data [:localizations :fi]) :id :langcode))))))))
 
-          (testing "... and edit (as organization owner)"
-            (let [response (is-logged? "rems.db.applications" :info "Reloading 1 applications because of catalogue item changes"
-                             (edit-catalogue-item "organization-owner1"
-                                                  {:id id
-                                                   :organization {:organization/id changed-organization2}
-                                                   :localizations {:sv {:title "Sv title 2"
-                                                                        :infourl nil}
-                                                                   :fi {:title "Fi title 2"
-                                                                        :infourl "http://info.fi"}}}))]
-              (is (:success response) (pr-str response))))
+        (testing "... and edit (as organization owner)"
+          (let [response (is-logged? "rems.db.applications" :info "Reloading 1 applications because of catalogue item changes"
+                           (edit-catalogue-item "organization-owner1"
+                                                {:id id
+                                                 :organization {:organization/id changed-organization2}
+                                                 :localizations {:sv {:title "Sv title 2"
+                                                                      :infourl nil}
+                                                                 :fi {:title "Fi title 2"
+                                                                      :infourl "http://info.fi"}}}))]
+            (is (:success response) (pr-str response))))
 
-          (testing "... and edit (as organization owner but no rights to target org)"
-            (let [response (is-not-logged? "rems.db.applications" :info #"Reloading"
-                             (handle-edit-catalogue-item-request "organization-owner1"
-                                                                 {:id id
-                                                                  :organization {:organization/id "organization2"}
-                                                                  :localizations {:sv {:title "Sv title 2"
-                                                                                       :infourl nil}
-                                                                                  :fi {:title "Fi title 2"
-                                                                                       :infourl "http://info.fi"}}}))]
-              (is (response-is-forbidden? response))
-              (is (= "no access to organization \"organization2\"" (read-body response)))))
+        (testing "... and edit (as organization owner but no rights to target org)"
+          (let [response (is-not-logged? "rems.db.applications" :info #"Reloading"
+                           (handle-edit-catalogue-item-request "organization-owner1"
+                                                               {:id id
+                                                                :organization {:organization/id "organization2"}
+                                                                :localizations {:sv {:title "Sv title 2"
+                                                                                     :infourl nil}
+                                                                                :fi {:title "Fi title 2"
+                                                                                     :infourl "http://info.fi"}}}))]
+            (is (response-is-forbidden? response))
+            (is (= "no access to organization \"organization2\"" (read-body response)))))
 
-          (testing "... and edit (as organization owner for another organization)"
-            (let [response (is-not-logged? "rems.db.applications" :info #"Reloading"
-                             (handle-edit-catalogue-item-request "organization-owner2"
-                                                                 {:id id
-                                                                  :localizations {:sv {:title "Sv title 2"
-                                                                                       :infourl nil}
-                                                                                  :fi {:title "Fi title 2"
-                                                                                       :infourl "http://info.fi"}}}))]
-              (is (response-is-forbidden? response))
-              (is (= "no access to organization \"changed-organization2\"" (read-body response))))))))
+        (testing "... and edit (as organization owner for another organization)"
+          (let [response (is-not-logged? "rems.db.applications" :info #"Reloading"
+                           (handle-edit-catalogue-item-request "organization-owner2"
+                                                               {:id id
+                                                                :localizations {:sv {:title "Sv title 2"
+                                                                                     :infourl nil}
+                                                                                :fi {:title "Fi title 2"
+                                                                                     :infourl "http://info.fi"}}}))]
+            (is (response-is-forbidden? response))
+            (is (= "no access to organization \"changed-organization2\"" (read-body response)))))))
 
     (testing "edit nonexisting"
       (let [response (is-not-logged? "rems.db.applications" :info #"Reloading"
