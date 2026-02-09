@@ -214,7 +214,7 @@
                                                              :organization (:organization default-body)})}))]
         (is (nil? (:success parent-2)) "not permitted")))
 
-    (testing "create with children that are archived or disabled"
+    (testing "create with children that are archived or not enabled"
       (let [child-1 (create-catalogue-item "owner" (merge default-body {:archived true}))
             child-2 (create-catalogue-item "owner" (merge default-body {:enabled false}))
             parent (create-catalogue-item "owner" (merge default-body
@@ -366,7 +366,155 @@
                                               {:id (:id create)
                                                :localizations {:en {:title "No applications test"
                                                                     :infourl "http://info.en"}}}))]
-          (is (:success response) (pr-str response)))))))
+          (is (:success response) (pr-str response)))))
+
+    (testing "edit children"
+      (let [org {:organization/id "organization1"}
+            category (test-helpers/create-category! {})
+            wf-1 (test-helpers/create-workflow! org)
+            res-1 (test-helpers/create-resource! {:organization org})
+            res-2 (test-helpers/create-resource! {:organization org})
+            res-3 (test-helpers/create-resource! {:organization org})
+            child-1 (create-catalogue-item owner
+                                           {:form form-id
+                                            :resid res-1
+                                            :wfid wf-1
+                                            :organization org
+                                            :localizations {}})
+            child-2 (create-catalogue-item owner
+                                           {:form form-id
+                                            :resid res-2
+                                            :wfid wf-1
+                                            :organization org
+                                            :localizations {}})
+            parent (create-catalogue-item owner
+                                          {:form form-id
+                                           :resid res-3
+                                           :wfid wf-1
+                                           :organization org
+                                           :localizations {}})]
+        (are [response] (:success response)
+          child-1
+          child-2
+          parent)
+
+        (testing "add child"
+          (is (:success (edit-catalogue-item owner {:id (:id parent)
+                                                    :localizations {}
+                                                    :children [{:catalogue-item/id (:id child-1)}]})))
+          (is (= {:children [{:catalogue-item/id (:id child-1)}]}
+                 (select-keys (get-catalogue-item owner (:id parent))
+                              [:children]))))
+
+        (testing "remove child"
+          (is (:success (edit-catalogue-item owner {:id (:id parent)
+                                                    :localizations {}
+                                                    :children []})))
+          (is (empty? (select-keys (get-catalogue-item owner (:id parent))
+                                   [:children]))))
+
+        (testing "add another child"
+          (is (:success (edit-catalogue-item owner {:id (:id parent)
+                                                    :localizations {}
+                                                    :children [{:catalogue-item/id (:id child-2)}]})))
+          (is (= {:children [{:catalogue-item/id (:id child-2)}]}
+                 (select-keys (get-catalogue-item owner (:id parent))
+                              [:children]))))
+
+        (testing "append"
+          (is (:success (edit-catalogue-item owner {:id (:id parent)
+                                                    :localizations {}
+                                                    :children [{:catalogue-item/id (:id child-1)}
+                                                               {:catalogue-item/id (:id child-2)}]})))
+          (is (= {:children [{:catalogue-item/id (:id child-1)}
+                             {:catalogue-item/id (:id child-2)}]}
+                 (select-keys (get-catalogue-item owner (:id parent))
+                              [:children]))))
+
+        (testing "`catalogueitemdata` is replaced with a new object"
+          (is (:success (edit-catalogue-item owner {:id (:id parent)
+                                                    :localizations {}
+                                                    :categories [{:category/id category}]})))
+          (let [{:keys [id categories children]} (get-catalogue-item owner (:id parent))]
+            (is (= (:id parent) id))
+            (is (= category (-> categories first :category/id)))
+            (is (empty? (rest categories)))
+            (is (nil? children))))
+
+        (testing "edit only targets specific fields"
+          (let [edit-all-fields (edit-catalogue-item owner {:id (:id parent)
+                                                            :localizations {}
+                                                            :organization {:organization/id "organization2"}
+                                                            :categories [{:category/id category}]
+                                                            :children [{:catalogue-item/id (:id child-1)}]})
+                loc {:sv {:title "Sv title 2"
+                          :infourl nil}
+                     :fi {:title "Fi title"
+                          :infourl "http://info.fi"}}
+                edit-truncate (edit-catalogue-item owner {:id (:id parent)
+                                                          :localizations loc}) ; bare minimum required in schema
+                {:keys [categories children formid localizations organization resource-id wfid]} (get-catalogue-item owner (:id parent))]
+            (are [response] (:success response)
+              edit-all-fields
+              edit-truncate)
+
+            (testing "with localization specified"
+              (is (= (:fi loc) (-> localizations
+                                   :fi
+                                   (select-keys [:title :infourl]))) "replaced"))
+
+            (testing "with optional key that is not specified"
+              (is (nil? categories) "categories are truncated")
+              (is (nil? children) "children are truncated")
+              (is (= {:organization/id "organization2"}
+                     (select-keys organization [:organization/id]))
+                  "organization is not truncated"))
+
+            (testing "with keys that are not specified in request" ; nor in the schema
+              (is (= form-id formid) "form is unchanged")
+              (is (= res-3 resource-id) "resource is unchanged")
+              (is (= wf-1 wfid) "workflow is unchanged"))
+
+            (testing "with different workflows"
+              (let [child-different-wfid (create-catalogue-item owner
+                                                                {:form form-id
+                                                                 :resid res-1
+                                                                 :organization org
+                                                                 :localizations {}
+                                                                 :wfid (test-helpers/create-workflow! org)})]
+                (is (= "Cannot assign catalogue item children with different workflows"
+                       (edit-catalogue-item owner {:id (:id parent)
+                                                   :localizations {}
+                                                   :children [{:catalogue-item/id (:id child-different-wfid)}]})))))
+
+            (testing "with incorrect organization"
+              (let [cat-item-org-1 (create-catalogue-item owner
+                                                          {:form form-id
+                                                           :resid res-3
+                                                           :wfid wf-1
+                                                           :organization org
+                                                           :localizations {}})
+                    cat-item-org-2 (create-catalogue-item "organization-owner2"
+                                                          {:form (test-helpers/create-form! {:organization {:organization/id "organization2"}})
+                                                           :resid (test-helpers/create-resource! {:organization {:organization/id "organization2"}})
+                                                           :wfid (test-helpers/create-workflow! {:organization {:organization/id "organization2"}})
+                                                           :organization {:organization/id "organization2"}
+                                                           :localizations {}})]
+                (are [response] (:success response)
+                  cat-item-org-1
+                  cat-item-org-2)
+
+                (is (= "no access to organization \"organization1\""
+                       (edit-catalogue-item "organization-owner2" {:id (:id cat-item-org-1)
+                                                                   :localizations {}
+                                                                   :children [{:catalogue-item/id (:id cat-item-org-2)}]}))
+                    "not permitted")
+
+                (is (= "no access to organization \"organization2\""
+                       (edit-catalogue-item "organization-owner1" {:id (:id cat-item-org-2)
+                                                                   :localizations {}
+                                                                   :children [{:catalogue-item/id (:id cat-item-org-1)}]}))
+                    "not permitted")))))))))
 
 
 (deftest catalogue-items-api-security-test
