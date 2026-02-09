@@ -1,6 +1,6 @@
 (ns ^:integration rems.api.test-catalogue-items
   (:require [clojure.string :as str]
-            [clojure.test :refer [deftest is testing use-fixtures]]
+            [clojure.test :refer [deftest is are testing use-fixtures]]
             [clojure.tools.logging.test :as log-test]
             [rems.api.testing :refer [api-call api-fixture authenticate read-body read-ok-body response-is-forbidden? response-is-not-found? response-is-unauthorized?]]
             [rems.db.applications]
@@ -190,7 +190,31 @@
                                                     :resid (test-helpers/create-resource!
                                                             {:resource-ext-id "urn:5432"
                                                              :organization (:organization default-body)})}))]
-        (is (nil? (:success parent-2)) "should fail")))))
+        (is (nil? (:success parent-2)) "not permitted")))
+
+    (testing "create with children that are archived or disabled"
+      (let [child-1 (create-catalogue-item "owner" (merge default-body {:archived true}))
+            child-2 (create-catalogue-item "owner" (merge default-body {:enabled false}))
+            parent (create-catalogue-item "owner" (merge default-body
+                                                         {:children [{:catalogue-item/id (:id child-1)}
+                                                                     {:catalogue-item/id (:id child-2)}]
+                                                          :resid (test-helpers/create-resource!
+                                                                  {:resource-ext-id "urn:1234"
+                                                                   :organization (:organization default-body)})}))]
+        (are [c] (:success c)
+          child-1
+          child-2
+          parent)
+
+        (testing "fetch"
+          (is (= {:resid "urn:1234"
+                  :children [{:catalogue-item/id (:id child-1)}
+                             {:catalogue-item/id (:id child-2)}]}
+                 (select-keys
+                  (api-call :get (str "/api/catalogue-items/" (:id parent)) nil
+                            +test-api-key+
+                            "owner")
+                  [:resid :children]))))))))
 
 (deftest catalogue-items-edit-test
   (let [owner "owner"
