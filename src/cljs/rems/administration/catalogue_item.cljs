@@ -90,14 +90,12 @@
                          (:form-name catalogue-item)])]
                      [inline-info-field (text :t.administration/categories)
                       (when-let [categories (:categories catalogue-item)]
-                        (interpose
-                         ", "
-                         (doall
-                          (for [cat categories]
-                            ^{:key (:category/id cat)}
-                            [atoms/link nil
-                             (str "/administration/categories/" (:category/id cat))
-                             (localized (:category/title cat))]))))]
+                        (doall
+                         (for [cat categories]
+                           ^{:key (:category/id cat)}
+                           [atoms/link nil
+                            (str "/administration/categories/" (:category/id cat))
+                            (localized (:category/title cat))])))]
                      [inline-info-field (text :t.administration/start) (localize-time (:start catalogue-item))]
                      [inline-info-field (text :t.administration/end) (localize-time (:end catalogue-item))]
                      [inline-info-field (text :t.administration/active) [readonly-checkbox {:value (status-flags/active? catalogue-item)}]]]))}]
