@@ -21,9 +21,6 @@
   (str (url) "application/" application-id))
 
 (defn- invitation-link [token]
-  (prn "generating invitation link")
-  (prn (url))
-  (prn env)
   (str (url) "accept-invitation?token=" token))
 
 (defn- format-application-for-email [application]
