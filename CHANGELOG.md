@@ -8,6 +8,10 @@ have notable changes.
 
 Changes since v2.39
 
+### Additions
+
+- Added the `:external-frontend-url` configuration option. This is used to override the url in outbound emails for use cases where REMS is used in conjuction with an external frontend application.
+
 ## v2.39 "Jätkäsaarenlaituri" 2026-01-21
 
 ### Additions
