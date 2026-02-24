@@ -6,7 +6,9 @@ have notable changes.
 
 ## Unreleased
 
-Changes since v2.38.1
+Changes since v2.39
+
+## v2.39 "Jätkäsaarenlaituri" 2026-01-21
 
 ### Additions
 - Use `:oidc-use-state` and value `:csrf-token`to configure REMS to send a CSRF token in `state` parameter to the login server and then check its value in the callback. (#3367)
@@ -17,9 +19,18 @@ Changes since v2.38.1
   - When creating attachment license, the save button no longer activates until all attachments have been successfully uploaded. (#3292)
   - Attachment upload error is indicated by small icon next to the upload button (detailed error is still shown in top of the page).
   - Pending attachment upload is indicated by spinner next to the upload button.
+- Edit buttons on the administration detail pages are hidden when the user is not permitted to edit, like they are hidden on the list pages already (#2814)
+- Update the Docker image and CircleCI build image to latest available Java version (25 and 21, respectively). (#3395)
+- Handler can now join an application as a member, and be added as a member. This is to facilitate demos in certain situations rather than a suggested way of using REMS in production. The earlier behaviour where handlers are not permitted to accept invitations can be switched back on under Workflow settings. (#3100)
 
 ### Fixes
 - Resolved issue where workflow voting could not be removed, which caused UI to display raw translation keys due to nil voting values. (#3357)
+- Fixed an issue with the application page where the 'Add member' dropdown menu displayed members that already exist in the application.  (#1412)
+- Document title no longer shows an extra em dash when the localized application title is empty. (#3398)
+- Fix audit log API. Technical error from incorrect response. (#3380)
+- Fixes to enable JVM 25 support (https://github.com/tolitius/cprop/issues/60, https://clojure.atlassian.net/browse/CLJ-2764)
+- Catalogue table had the add/remove cart commands even when not logged in. (#3408)
+- Fixed an issue causing the `fix-userid` administration script to break in some edge cases. Additionally, all fixes are now attempted even if one or more fails. (#3383)
 
 ## v2.38.1 "Välimerenkatu +1" 2025-01-27
 

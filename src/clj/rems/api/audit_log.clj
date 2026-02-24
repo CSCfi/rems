@@ -1,6 +1,7 @@
 (ns rems.api.audit-log
   (:require [compojure.api.sweet :refer :all]
             [rems.db.core :as db]
+            [ring.util.http-response :refer [ok]]
             [schema.core :as s])
   (:import (org.joda.time DateTime)))
 
@@ -23,8 +24,8 @@
                      {before :- (describe DateTime "Only show entries before this time") nil}]
       :roles #{:reporter}
       :return [AuditLogEntry]
-      (db/get-audit-log {:userid userid
-                         :after after
-                         :path (when application-id
-                                 (str "/api/applications/" application-id "%"))
-                         :before before}))))
+      (ok (->> (db/get-audit-log {:userid userid
+                                  :after after
+                                  :path (when application-id (str "/api/applications/" application-id "%"))
+                                  :before before})
+               (map #(dissoc % :id)))))))

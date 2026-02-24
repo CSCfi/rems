@@ -1,4 +1,4 @@
-(defproject rems "2.38.1"
+(defproject rems "2.39"
   :description "Resource Entitlement Management System is a tool for managing access rights to resources, such as research datasets."
   :url "https://github.com/CSCfi/rems"
 
@@ -64,11 +64,21 @@
                  [ring/ring-devel "1.9.6"]
                  [nano-id "1.1.0"]
                  [org.babashka/sci "0.8.41"]
-                 [com.nextjournal/beholder "1.0.2"]]
+                 [com.nextjournal/beholder "1.0.2"]
+                 [binaryage/devtools "1.0.7"]
+                 [com.clojure-goes-fast/clj-async-profiler "1.2.0"] ; also check extra :jvm-opts https://github.com/clojure-goes-fast/clj-async-profiler?tab=readme-ov-file#tuning-for-better-accuracy
+                 [com.clojure-goes-fast/clj-memory-meter "0.3.0"]
+                 [criterium "0.4.6"]
+                 [lambdaisland/kaocha-junit-xml "1.17.101"]
+                 [ring/ring-mock "0.4.0" :exclusions [cheshire]]
+                 [se.haleby/stub-http "0.2.14"]
+                 [com.icegreen/greenmail "1.6.15"]
+                 [macroz/tangle "0.2.2"]
+                 [peridot "0.5.4"]]
 
   :min-lein-version "2.9.8"
 
-  :source-paths ["src/clj" "src/cljc"]
+  :source-paths ["src/clj" "src/cljc" "test/clj" "test/cljc"] ; also include tests in classpath
   :java-source-paths ["src/java"]
   :javac-options ["-source" "8" "-target" "8"]
   :test-paths ["src/clj" "src/cljc" "test/clj" "test/cljc"] ; also run tests from src files
@@ -114,18 +124,7 @@
    :dev [:project/dev :profiles/dev]
    :test [:project/dev :project/test :profiles/test]
 
-   :project/dev {:dependencies [[binaryage/devtools "1.0.7"]
-                                [com.clojure-goes-fast/clj-async-profiler "1.2.0"] ; also check extra :jvm-opts https://github.com/clojure-goes-fast/clj-async-profiler?tab=readme-ov-file#tuning-for-better-accuracy
-                                [com.clojure-goes-fast/clj-memory-meter "0.3.0"]
-                                [criterium "0.4.6"]
-                                [lambdaisland/kaocha-junit-xml "1.17.101"]
-                                [ring/ring-mock "0.4.0" :exclusions [cheshire]]
-                                [se.haleby/stub-http "0.2.14"]
-                                [com.icegreen/greenmail "1.6.15"]
-                                [macroz/tangle "0.2.2"]
-                                [peridot "0.5.4"]]
-
-                 :plugins [[lein-ancient "0.7.0"]]
+   :project/dev {:plugins [[lein-ancient "0.7.0"]]
 
                  :jvm-opts ["-Drems.config=dev-config.edn"
                             "-Djdk.attach.allowAttachSelf" ; needed by clj-memory-meter on Java 9+

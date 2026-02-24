@@ -1,6 +1,8 @@
 (ns rems.kaocha
   "Namespace for various Kaocha test runner helpers."
-  (:require [clojure.java.shell :as sh]
+  (:require [better-cond.core :as b]
+            [clojure.java.io :as io]
+            [clojure.java.shell :as sh]
             [clojure.string :as str]
             [kaocha.plugin :as p]
             [kaocha.result]
@@ -10,6 +12,10 @@
             [rems.markdown]
             [rems.service.caches]))
 
+;; directories for storing plugin output
+(def cache-statistics-plugin-dir "target/cache-statistics-plugin")
+(def circleci-parallel-plugin-dir "target/circleci-parallel-plugin")
+
 (def is-kaocha-var (comp #{:kaocha.type/var} :kaocha.testable/type))
 
 (defn parse-keyword [s]
@@ -18,13 +24,22 @@
     :always (keyword)))
 
 (defn split-test-ids [test-plan]
-  (->> (sh/sh "circleci" "tests" "split" "--split-by=timings"
-              :in (str/join "\n" (for [test (test-seq test-plan)
-                                       :when (is-kaocha-var test)]
-                                   (:kaocha.testable/id test))))
-       :out
-       (str/split-lines)
-       (into #{} (map parse-keyword))))
+  (let [test-ids (for [test (test-seq test-plan)
+                       :when (is-kaocha-var test)]
+                   (:kaocha.testable/id test))
+        test-ids-batch (->> (sh/sh "circleci" "tests" "split" "--split-by=timings" "--timings-type=testname"
+                                   :in (str/join "\n" test-ids))
+                            :out
+                            (str/split-lines)
+                            (into #{} (map parse-keyword)))
+        test-ids-report-file (io/file circleci-parallel-plugin-dir "test-ids.txt")
+        split-test-ids-report-file (io/file circleci-parallel-plugin-dir "split-test-ids.txt")]
+
+    (io/make-parents test-ids-report-file) ; shared parent, need only once
+    (spit test-ids-report-file (str/join "\n" (sort test-ids)))
+    (spit split-test-ids-report-file (str/join "\n" (sort test-ids-batch)))
+
+    test-ids-batch))
 
 (defn walk-kaocha-tests [m f]
   (letfn [(recurse [tests]
@@ -43,7 +58,7 @@
 ;; Plugin that performs runtime test filtering in CircleCI using test splitting.
 ;; Skips excluded test ids (not in split test batch) before test run.
 ;; Heavily inspired by https://andreacrotti.github.io/2020-07-28-parallel-ci-kaocha/
-(defmethod p/-register :rems.kaocha/circleci-plugin [_name plugins]
+(defmethod p/-register :rems.kaocha/circleci-parallel-plugin [_name plugins]
   (conj plugins
         {:kaocha.hooks/post-load
          (fn [test-plan] ; skip tests that are not included in set of test ids returned by circle ci
@@ -66,7 +81,7 @@
                                   :when (some? c)]
                               {id {test-id c}}))))
 
-(defn- sum-total [x] (+ (:get x 0) (:reload x 0) (:upsert x 0) (:evict x 0)))
+(defn- sum-total [x] (+ (:reload x 0) (:upsert x 0) (:evict x 0)))
 
 (defn- enrich-statistics [[cache-id by-test-id]]
   (let [total-stats (apply merge-with + (vals by-test-id))
@@ -106,15 +121,17 @@
         {:kaocha.hooks/post-summary
          (fn [result]
            (when-not (kaocha.result/failed? result) ; skip performance summary if tests fail
-             (when-let [stats (->> (rems.db.testing/get-cache-statistics)
-                                   group-cache-stats-by-test
-                                   (keep enrich-statistics)
-                                   seq)]
-               (println "")
-               (println (format "Top %d cache users grouped by cache:" top-n-results))
-               (println "")
-               (run! println (rems.markdown/markdown-table
-                              {:header [:id "%" :get :upsert :evict :reload]
-                               :rows (get-tabular-data stats)
-                               :row-fn (juxt :id :% :get :upsert :evict :reload)}))))
+             (b/when-let [stats (->> (rems.db.testing/get-cache-statistics)
+                                     group-cache-stats-by-test
+                                     (keep enrich-statistics)
+                                     seq)
+                          report-file (io/file cache-statistics-plugin-dir "cache-report.md")]
+               (io/make-parents report-file)
+               (spit report-file
+                     (str/join "\n"
+                               (cons (format "Top %d cache users grouped by cache:\n" top-n-results)
+                                     (rems.markdown/markdown-table
+                                      {:header [:id "%" :upsert :evict :reload]
+                                       :rows (get-tabular-data stats)
+                                       :row-fn (juxt :id :% :upsert :evict :reload)}))))))
            result)}))
