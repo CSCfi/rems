@@ -98,13 +98,16 @@
         (model/hide-non-public-information)
         (model/apply-privacy-by-roles #{:reporter})))) ;; to populate required :field/private attributes
 
+(defn personalize-application-for-user [user-id application]
+  (or (model/apply-user-permissions application user-id)
+      (throw-forbidden)))
+
 (defn get-application-for-user
   "Returns the part of application state which the specified user
    is allowed to see. Suitable for returning from public APIs as-is."
   [user-id application-id]
   (when-let [application (get-application-internal application-id)]
-    (or (model/apply-user-permissions application user-id)
-        (throw-forbidden))))
+    (personalize-application-for-user user-id application)))
 
 ;;; Listing all applications
 
@@ -367,7 +370,7 @@
       (vals)))
 
 (defn get-all-applications-full
-  "Returns all full, personalized applications for `userid`. Optional `xf` can be applied 
+  "Returns all full, personalized applications for `userid`. Optional `xf` can be applied
    to list of application ids before transformation, e.g. search filter."
   [userid & [xf]] ; full i.e. not overview
   (let [cache (refresh-all-applications-cache!)

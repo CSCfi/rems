@@ -246,6 +246,7 @@
                           :state "Tila"}
                  :handlers "Käsittelijät"
                  :id "Tunniste"
+                 :is-editing "%1 on muokkaamassa"
                  :intro [:div.intro [:p "Täytä hakemus ja lähetä se käsiteltäväksi. Hakemukseen voi kutsua jäseniksi useampia hakijoita, joista jokaisen on hyväksyttävä käyttöehdot viimeistään kun hakemus on hyväksytty."]]
                  :last-activity "Muokattu"
                  :latest-activity "Viimeisin toimenpide"
@@ -501,6 +502,8 @@
          :autosave-in-progress "Tallennetaan"
          :checkbox-checked "Kyllä"
          :checkbox-unchecked "Ei"
+         :clients "Käyttäjät"
+         :clients-intro "Käyttäjät jotka ovat katsomassa tai muokkaamassa hakemusta:"
          :comment "Kommentti"
          :copy-as-new "Kopioi uudeksi hakemukseksi"
          :current-value "Nykyinen"

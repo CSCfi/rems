@@ -246,6 +246,7 @@
                           :state "Tillstånd"}
                  :handlers "Handläggare"
                  :id "id"
+                 :is-editing "%1 redigerar"
                  :intro [:div.intro [:p "Fyll i ansökan och skicka den för behandling. Du kan bjuda in andra att delta i din ansökan. Alla deltagare måste godkänna användarvillkoren senast när ansökan godkänts."]]
                  :last-activity "Ändrat"
                  :latest-activity "Senaste aktivitet"
@@ -501,6 +502,8 @@
          :autosave-in-progress "Sparar"
          :checkbox-checked "Ja"
          :checkbox-unchecked "Nej"
+         :clients "Användare"
+         :clients-intro "Användare som visar eller redigerar ansökan:"
          :comment "Kommentar"
          :copy-as-new "Kopiera som nytt"
          :current-value "Nuvarande"

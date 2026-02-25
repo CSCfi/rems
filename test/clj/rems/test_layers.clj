@@ -90,7 +90,7 @@
                               ;;(remove #(ok-transition? (namespace-by-id (first %)) (namespace-by-id (second %))))
                               (mapv (fn [[from to]] [from to (if (ok-transition? (namespace-by-id from)
                                                                                  (namespace-by-id to))
-                                                               {:color :black
+                                                               {:color :transparent ;;:black
                                                                 :constraint true
                                                                 :weight 1}
                                                                {:color :red

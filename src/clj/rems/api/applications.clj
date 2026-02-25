@@ -15,11 +15,13 @@
             [rems.db.applications]
             [rems.pdf :as pdf]
             [rems.schema-base :as schema-base]
+            [rems.subscriptions]
             [rems.text :as text]
             [rems.util :refer [getx-user-id]]
             [ring.util.http-response :refer :all]
             [schema.core :as s])
-  (:import java.io.ByteArrayInputStream))
+  (:import rems.InvalidRequestException
+           java.io.ByteArrayInputStream))
 
 ;; Response models
 
@@ -68,7 +70,14 @@
 (s/defschema Count
   s/Int)
 
-;; Api implementation
+(s/defschema ApplicationFocusRequest
+  {:client-id s/Uuid
+   :application-id s/Int
+   :form-id (s/maybe schema-base/FormId)
+   :field-id (s/maybe schema-base/FieldId)})
+
+(s/defschema ApplicationFocusResponse
+  {:success s/Bool})
 
 (defn- coerce-command-from-api [cmd]
   ;; TODO: schema could do these coercions for us
@@ -295,6 +304,19 @@
       (if-let [app (rems.db.applications/get-application application-id)]
         (ok app)
         (api-util/not-found-json-response)))
+
+    (POST "/:application-id/focus" []
+      :summary "Notify which field is focused by a user."
+      :roles #{:logged-in}
+      :path-params [application-id :- (describe s/Int "application id")]
+      :body [request ApplicationFocusRequest]
+      :responses {200 {:schema ApplicationFocusResponse}
+                  404 {:schema s/Str :description "Not found"}}
+      (if (some? (:client-id request))
+        (do
+          (rems.service.application/application-focus (assoc request :userid (getx-user-id)))
+          (ok {:success true}))
+        (throw (InvalidRequestException. "invalid client-id"))))
 
     (GET "/:application-id/attachments" []
       :summary "Get attachments for an application as a zip file"

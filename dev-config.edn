@@ -120,4 +120,7 @@
 
  :enable-voting true
  :enable-processing-states true
- :tables {:rems.catalogue/catalogue {:paging? false}}}
+ :tables {:rems.catalogue/catalogue {:paging? false}}
+ :member-created-permissions [:application.command/accept-licenses
+                              :application.command/copy-as-new
+                              :application.command/save-draft]}
