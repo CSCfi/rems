@@ -45,6 +45,7 @@
             :member-name "Name"
             :modify "Modify"
             :name-and-email-required "Name and email are required."
+            :pre-actions-info ""
             :redact-attachments "Redact attachments"
             :reject "Reject"
             :remark "Remark"

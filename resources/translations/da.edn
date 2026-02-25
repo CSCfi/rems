@@ -45,6 +45,7 @@
             :member-name "Navn"
             :modify "Ændr"
             :name-and-email-required "Navn og e-mail er påkrævede."
+            :pre-actions-info ""
             :redact-attachments "Fjern bilag"
             :reject "Afvis"
             :remark "Bemærkning"
