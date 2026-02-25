@@ -26,6 +26,7 @@
 - catalogue item: something an applicant can pick from the catalogue and apply for
   - catalogue item = resource + workflow + form
   - internal to rems
+  - may include other catalogue items as sub-items ("top-level catalogue item" - "complementary items", "parent" - "children", "part of")
 - catalogue: the list of all (enabled) catalogue items
 - application: an instance of an applicant applying for entitlement to some resources
   - application = answers + catalogue item(s) + events
