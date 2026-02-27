@@ -184,7 +184,7 @@
 (def ^:private resource-dropdown-id "resource-dropdown")
 (def ^:private form-dropdown-id "form-dropdown")
 (def ^:private categories-dropdown-id "categories-dropdown")
-(def ^:private catalogue-item-parent-label-id "catalogue-item-parent-label")
+(def ^:private catalogue-item-parent-id "catalogue-item-parent-id")
 (def ^:private catalogue-item-children-dropdown-id "catalogue-item-children-dropdown")
 
 (defn- catalogue-item-organization-field []
@@ -310,12 +310,13 @@
   (let [selected-parent-id (:catalogue-item/id  @(rf/subscribe [::catalogue-item-parent]))]
     (when selected-parent-id
       [:div.form-group
-       [:label.administration-field-label {:for catalogue-item-parent-label-id} (text :t.administration/catalogue-item-hierarchy-parent)]
+       [:label.administration-field-label {:for catalogue-item-parent-id} (text :t.administration/catalogue-item-hierarchy-parent)]
        [:div
         [atoms/link
          {:href (str "/administration/catalogue-items/" selected-parent-id)
           :target :_blank
-          :label selected-parent-id}]]])))
+          :label selected-parent-id
+          :id catalogue-item-parent-id}]]])))
 
 (defn- catalogue-item-children-field []
   (let [items @(rf/subscribe [::possible-child-items])
@@ -326,10 +327,7 @@
         format-label (fn [item]
                        (assoc item
                               ::label
-                              (str (or (get-localized-title item) (:catalogue-item/id item))
-                                   " ("
-                                   (:resid item)
-                                   ")")))]
+                              (str (or (get-localized-title item) (:catalogue-item/id item)))))]
     (when-not parent-item
       [:div.form-group
        [:label.administration-field-label {:for catalogue-item-children-dropdown-id} (text :t.administration/catalogue-item-hierarchy-children)]
