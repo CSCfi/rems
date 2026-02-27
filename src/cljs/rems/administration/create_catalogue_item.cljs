@@ -165,11 +165,14 @@
    [(rf/subscribe [::catalogue-item])
     (rf/subscribe [:rems.administration.catalogue-items/catalogue])])
  (fn [[selected-catalogue-item catalogue :as db] _]
-   (->> catalogue
-        (filter roles/can-modify-organization-item?)
-        (filter #(= (:wfid %) (:wfid selected-catalogue-item)))
-        (remove :archived)
-        (map #(set/rename-keys % {:id :catalogue-item/id})))))
+   (let [xform (comp (filter roles/can-modify-organization-item?)
+                     (remove :archived)
+                     (map #(set/rename-keys % {:id :catalogue-item/id})))]
+     (into []
+           (cond->> xform
+             (some? selected-catalogue-item)
+             (comp (filter #(= (:wfid %) (:wfid selected-catalogue-item)))))
+           catalogue))))
 
 ;;;; UI
 
