@@ -130,3 +130,5 @@
 (s/defschema ProcessingState
   {:processing-state/value s/Str
    (s/optional-key :processing-state/title) LocalizedString})
+
+(s/defschema CatalogueItemId {:catalogue-item/id s/Int})

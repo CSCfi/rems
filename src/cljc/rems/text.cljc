@@ -177,7 +177,7 @@
   [time]
   (time-format/unparse (time-format/formatters :date-time) time))
 
-(deftest test-localize-utc-date []
+(deftest test-localize-utc-date
   (is (= "2020-09-29" (localize-utc-date (time/date-time 2020 9 29 1 1))))
   (is (= "2020-09-29" (localize-utc-date (time/date-time 2020 9 29 23 59))))
   ;; [cl]js dates are always in UTC, so we can only test these for clj

@@ -1,17 +1,20 @@
 (ns rems.db.catalogue
   (:require [clj-time.core :as time]
+            [clojure.test :refer [deftest is testing]]
             [clojure.set]
-            [medley.core :refer [assoc-some]]
+            [medley.core :refer [assoc-some filter-vals]]
             [rems.cache :as cache]
             [rems.common.util :refer [index-by]]
             [rems.db.core :as db]
             [rems.json :as json]
             [rems.schema-base :as schema-base]
             [schema.core :as s]
-            [schema.coerce :as coerce]))
+            [schema.coerce :as coerce]
+            [schema-tools.core :as st]))
 
 (s/defschema CatalogueItemData
-  (s/maybe {(s/optional-key :categories) [schema-base/CategoryId]}))
+  (s/maybe {(s/optional-key :categories) [schema-base/CategoryId]
+            (s/optional-key :children) [schema-base/CatalogueItemId]}))
 
 (def ^:private validate-catalogueitemdata
   (s/validator CatalogueItemData))
@@ -36,19 +39,52 @@
                                   (index-by [:id :langcode])))}))
 
 (defn- parse-catalogue-item-raw [x]
-  (let [data (-> (:catalogueitemdata x) json/parse-string coerce-CatalogueItemData)
-        cat (-> {:id (:id x)
-                 :start (:start x)
-                 :end (:end x)
-                 :archived (:archived x)
-                 :enabled (:enabled x)
-                 :localizations {}
-                 :resource-id (:resource-id x)
-                 :wfid (:workflow-id x)
-                 :formid (:form-id x)
-                 :organization {:organization/id (:organization-id x)}}
-                (assoc-some :categories (not-empty (:categories data))))]
-    cat))
+  (let [catalogue-item-data (->> x
+                                 :catalogueitemdata
+                                 json/parse-string
+                                 coerce-CatalogueItemData
+                                 (filter-vals not-empty))]
+    (merge {:id (:id x)
+            :start (:start x)
+            :end (:end x)
+            :archived (:archived x)
+            :enabled (:enabled x)
+            :localizations {}
+            :resource-id (:resource-id x)
+            :wfid (:workflow-id x)
+            :formid (:form-id x)
+            :organization {:organization/id (:organization-id x)}}
+           catalogue-item-data)))
+
+(deftest test-parse-catalogue-item-raw
+  ;; omit keys without parsing logic associated with them
+  (testing "with a category"
+    (is (= {:categories [{:category/id 2}]}
+           (-> {:catalogueitemdata "{\"categories\":[{\"category/id\":2}]}"}
+               parse-catalogue-item-raw
+               (select-keys [:categories :children])))))
+
+  (testing "with a category and a sub-item"
+    (is (= {:categories [{:category/id 2}], :children [{:catalogue-item/id 2}]}
+           (-> {:catalogueitemdata "{\"categories\":[{\"category/id\":2}],\"children\":[{\"catalogue-item/id\":2}]}"}
+               parse-catalogue-item-raw
+               (select-keys [:categories :children])))))
+
+  (testing "with declared key but empty value"
+    (is (= {:categories [{:category/id 2}]}
+           (-> {:catalogueitemdata "{\"categories\":[{\"category/id\":2}],\"children\":[]}"}
+               parse-catalogue-item-raw
+               (select-keys [:categories :children])))
+        "only those keys that have a value are included")
+
+    (is (-> {:catalogueitemdata "{\"categories\":[],\"children\":[]}"}
+            parse-catalogue-item-raw
+            (select-keys [:categories :children])
+            empty?)))
+
+  (testing "with disallowed key"
+    (is (thrown-with-msg? Exception #"Value cannot be coerced to match schema: \{:bad disallowed-key\}"
+                          (parse-catalogue-item-raw {:catalogueitemdata "{\"bad\":\"value\"}"})))))
 
 (def catalogue-item-cache
   (cache/basic {:id ::catalogue-item-cache
@@ -96,15 +132,33 @@
           assoc-expired
           localize-catalogue-item))
 
+(defn has-catalogue-item? [id]
+  (cache/has? catalogue-item-cache id))
+
 (defn catalogueitemdata->json [data]
-  (-> (select-keys data [:categories])
-      (update :categories (fn [categories] (->> categories (mapv #(select-keys % [:category/id])))))
+  (-> data
+      (st/select-schema CatalogueItemData)
       validate-catalogueitemdata
       json/generate-string))
 
-(defn create-catalogue-item! [{:keys [archived categories enabled form-id localizations organization-id resource-id start workflow-id]
+(deftest test-catalogueitemdata->json
+  (testing "with "
+    (is (= "{\"categories\":[{\"category/id\":1}]}"
+           (catalogueitemdata->json {:categories [{:category/id 1}]})))
+    (is (= "{\"categories\":[{\"category/id\":1}],\"children\":[{\"catalogue-item/id\":1}]}"
+           (catalogueitemdata->json {:categories [{:category/id 1}] :children [{:catalogue-item/id 1}]})))
+    (is (= "{\"categories\":[]}"
+           (catalogueitemdata->json {:categories []})))
+    (is (= "{\"categories\":[{\"category/id\":1}],\"children\":[]}"
+           (catalogueitemdata->json {:categories [{:category/id 1}] :children []})))
+    (is (thrown-with-msg? Exception #"\{:categories \[\{:category/id missing\-required\-key\}\]\}"
+                          (catalogueitemdata->json {:categories [{:foo "bar"}]})))
+    (is (thrown-with-msg? Exception #"\{:children \[\{:catalogue\-item/id missing\-required\-key\}\]\}"
+                          (catalogueitemdata->json {:categories [] :children [{}]})))))
+
+(defn create-catalogue-item! [{:keys [archived categories children enabled form-id localizations organization-id resource-id start workflow-id]
                                :or {archived false enabled true}}]
-  (let [catalogueitemdata (catalogueitemdata->json (assoc-some {} :categories categories))
+  (let [catalogueitemdata (catalogueitemdata->json (assoc-some {} :categories categories :children children))
         id (:id (db/create-catalogue-item! (-> {:archived archived
                                                 :enabled enabled
                                                 :form form-id
@@ -122,17 +176,20 @@
     (cache/miss! catalogue-item-cache id)
     id))
 
-(defn edit-catalogue-item! [id {:keys [categories localizations organization-id]}]
+(defn edit-catalogue-item! [id {:keys [categories children localizations organization-id]}]
   (when organization-id
-    (db/set-catalogue-item-organization! {:id id :organization organization-id}))
+    (db/set-catalogue-item-organization! {:id id
+                                          :organization organization-id}))
+
+  (db/set-catalogue-item-data! {:id id
+                                :catalogueitemdata (catalogueitemdata->json {:categories categories
+                                                                             :children children})})
+
   (doseq [[langcode localization] localizations]
     (db/upsert-catalogue-item-localization! {:id id
                                              :langcode (name langcode)
                                              :title (:title localization)
                                              :infourl (:infourl localization)}))
-  (when categories
-    (let [catalogueitemdata (catalogueitemdata->json {:categories categories})]
-      (db/set-catalogue-item-data! {:id id :catalogueitemdata catalogueitemdata})))
 
   (cache/miss! catalogue-item-localizations-cache id)
   (cache/miss! catalogue-item-cache id)
