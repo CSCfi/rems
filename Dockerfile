@@ -2,7 +2,8 @@
 
 FROM eclipse-temurin:25-jre-alpine
 
-RUN apk add --no-cache bash
+RUN apk add --no-cache bash~=5 && \
+    apk upgrade
 
 RUN mkdir /rems
 WORKDIR /rems
