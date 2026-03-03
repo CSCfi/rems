@@ -165,6 +165,8 @@ fix` or `lein cljfmt fix <file>` to automatically fix your formatting.
 
 This setup should correspond to pretty much the default indentation of CIDER in Emacs. Other editors may need to adjust settings here and there, but our CI will help you to spot any mistakes.
 
+We use [hadolint](https://github.com/hadolint/hadolint) for linting the Dockerfile in CI
+
 ## Dependency updating
 
 Dependencies are declared three places: `project.clj` includes dependencies built with Leiningen (mostly back-end, some front-end development tooling), `shadow-cljs.edn` includes dependencies built with Shadow-CLJS (front-end), and `package.json` includes Node.js dependencies (front-end).
