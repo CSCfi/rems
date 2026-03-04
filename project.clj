@@ -86,7 +86,7 @@
   :main rems.main
   :migratus {:store :database :db ~(get (System/getenv) "DATABASE_URL" "postgresql://localhost/rems?user=rems")}
 
-  :plugins [[dev.weavejester/lein-cljfmt "0.12.0"]
+  :plugins [[dev.weavejester/lein-cljfmt "0.16.1"]
             [lein-shell "0.5.0"]
             [migratus-lein "0.5.7"]
             [com.github.liquidz/antq "RELEASE"]]
