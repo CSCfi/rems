@@ -18,7 +18,7 @@
                  [com.taoensso/tempura "1.5.3"]
                  [compojure "1.7.2"]
                  [conman "0.8.4"] ; 0.8.5 switches to next.jdbc, which breaks stuff and requires proper testing in production
-                 [cprop "0.1.20"]
+                 [cprop "0.1.21"]
                  [dev.weavejester/medley "1.7.0"]
                  [etaoin "1.1.41"]
                  [garden "1.3.10"]
