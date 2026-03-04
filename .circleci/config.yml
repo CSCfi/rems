@@ -204,9 +204,6 @@ workflows:
           filters:
             tags:
               only: /.*/
-            branches:
-              only:
-                - master
       - docker-snapshot:
           requires:
             - deps
