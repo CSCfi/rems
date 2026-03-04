@@ -2,7 +2,7 @@
                 [cljs-ajax "0.8.4"]
                 [clj-commons/secretary "1.2.4"]
                 [com.andrewmcveigh/cljs-time "0.5.2"]
-                [com.rpl/specter "1.1.4"]
+                [com.rpl/specter "1.1.6"]
                 [com.taoensso/tempura "1.5.3"]
                 [dev.weavejester/medley "1.7.0"]
                 [markdown-clj "1.11.9"]
