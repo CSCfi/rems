@@ -4,8 +4,8 @@
 
   :dependencies [[better-cond "2.1.5"]
                  [buddy/buddy-auth "3.0.323"]
-                 [ch.qos.logback/logback-classic "1.5.3"]
                  [buddy/buddy-sign "3.6.1-359"]
+                 [ch.qos.logback/logback-classic "1.5.32"]
                  [clj-http "3.13.1"]
                  [cheshire "5.12.0" :exclusions [com.fasterxml.jackson.core/jackson-core]] ; clj-http uses cheshire's json parsing
                  [clj-pdf "2.6.8"]
