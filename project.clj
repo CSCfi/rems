@@ -7,7 +7,7 @@
                  [buddy/buddy-sign "3.6.1-359"]
                  [ch.qos.logback/logback-classic "1.5.32"]
                  [clj-http "3.13.1"]
-                 [clj-pdf "2.6.8"]
+                 [clj-pdf "2.7.4"]
                  [clj-time "0.15.2"]
                  [com.attendify/schema-refined "0.3.0-alpha5"]
                  [com.draines/postal "2.0.5"]
