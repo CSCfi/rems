@@ -220,3 +220,6 @@ lein run user-simulator http://localhost:3000/ alice,elsa,frank
 
 This will set local REMS instance as the target and start 3 concurrent browser instances, each logging in as alice, elsa or frank.
 
+## CircleCI
+
+CircleCI offers a [command-line tool](https://circleci.com/docs/guides/toolkit/local-cli/) for debugging and validating the [config file](/.circleci/config.yml) (and much more)
