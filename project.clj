@@ -20,7 +20,7 @@
                  [conman "0.8.4"] ; 0.8.5 switches to next.jdbc, which breaks stuff and requires proper testing in production
                  [cprop "0.1.21"]
                  [dev.weavejester/medley "1.9.0"]
-                 [etaoin "1.1.41"]
+                 [etaoin "1.1.43"]
                  [garden "1.3.10"]
                  [hiccup "1.0.5"]
                  [com.cognitect/transit-clj "1.0.333"]
