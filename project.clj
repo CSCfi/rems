@@ -47,7 +47,7 @@
                  [org.clojure/data.xml "0.0.8"]
                  [org.clojure/tools.cli "1.3.250"]
                  [org.clojure/tools.logging "1.3.1"]
-                 [org.postgresql/postgresql "42.7.2"]
+                 [org.postgresql/postgresql "42.7.10"]
                  [org.webjars.bower/tether "1.4.7"] ; doesn't work with "2.0.0-beta.5", error serving the file
                  [org.webjars.npm/axe-core "4.6.3"]
                  [org.webjars.npm/better-dateinput-polyfill "4.0.0-beta.2"]
