@@ -22,7 +22,7 @@
                  [etaoin "1.1.43"]
                  [garden "1.3.10"]
                  [hiccup "1.0.5"]
-                 [com.cognitect/transit-clj "1.0.333"]
+                 [com.cognitect/transit-clj "1.1.347"]
                  [javax.xml.bind/jaxb-api "2.4.0-b180830.0359"]
                  [lambdaisland/deep-diff "0.0-47"]
                  [lambdaisland/kaocha "1.91.1392"]
