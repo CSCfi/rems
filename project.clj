@@ -63,7 +63,7 @@
                  [ring/ring-defaults "0.7.0"]
                  [ring/ring-devel "1.15.3"]
                  [nano-id "1.1.0"]
-                 [org.babashka/sci "0.8.41"]
+                 [org.babashka/sci "0.12.51"]
                  [com.nextjournal/beholder "1.0.2"]
                  [binaryage/devtools "1.0.7"]
                  [com.clojure-goes-fast/clj-async-profiler "1.2.0"] ; also check extra :jvm-opts https://github.com/clojure-goes-fast/clj-async-profiler?tab=readme-ov-file#tuning-for-better-accuracy
