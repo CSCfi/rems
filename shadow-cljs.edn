@@ -3,7 +3,7 @@
                 [clj-commons/secretary "1.2.4"]
                 [com.andrewmcveigh/cljs-time "0.5.2"]
                 [com.rpl/specter "1.1.6"]
-                [com.taoensso/tempura "1.5.3"]
+                [com.taoensso/tempura "1.5.4"]
                 [dev.weavejester/medley "1.7.0"]
                 [markdown-clj "1.11.9"]
                 [metosin/komponentit "0.3.14"]
