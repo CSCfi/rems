@@ -38,7 +38,7 @@
                  [metosin/ring-swagger "1.0.0"]
                  [metosin/ring-swagger-ui "5.31.0"]
                  [mount "0.1.17"]
-                 [ns-tracker "0.4.0"]
+                 [ns-tracker "1.0.0"]
                  [org.apache.lucene/lucene-core "9.10.0"]
                  [org.apache.lucene/lucene-queryparser "9.10.0"]
                  [org.clojure/clojure "1.12.4"]
