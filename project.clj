@@ -66,8 +66,8 @@
                  [org.babashka/sci "0.12.51"]
                  [com.nextjournal/beholder "1.0.3"]
                  [binaryage/devtools "1.0.7"]
-                 [com.clojure-goes-fast/clj-async-profiler "1.2.0"] ; also check extra :jvm-opts https://github.com/clojure-goes-fast/clj-async-profiler?tab=readme-ov-file#tuning-for-better-accuracy
-                 [com.clojure-goes-fast/clj-memory-meter "0.3.0"]
+                 [com.clojure-goes-fast/clj-async-profiler "1.7.0"] ; also check extra :jvm-opts https://github.com/clojure-goes-fast/clj-async-profiler?tab=readme-ov-file#tuning-for-better-accuracy
+                 [com.clojure-goes-fast/clj-memory-meter "0.4.0"]
                  [criterium "0.4.6"]
                  [lambdaisland/kaocha-junit-xml "1.17.101"]
                  [ring/ring-mock "0.6.2" :exclusions [cheshire]]
