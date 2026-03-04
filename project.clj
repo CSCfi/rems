@@ -15,7 +15,7 @@
                  [com.fasterxml.jackson.datatype/jackson-datatype-joda "2.16.1"]
                  [com.stuartsierra/dependency "1.0.0"]
                  [com.rpl/specter "1.1.4"]
-                 [com.taoensso/tempura "1.5.3"]
+                 [com.taoensso/tempura "1.5.4"]
                  [compojure "1.7.2"]
                  [conman "0.8.4"] ; 0.8.5 switches to next.jdbc, which breaks stuff and requires proper testing in production
                  [cprop "0.1.21"]
