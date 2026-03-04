@@ -36,7 +36,7 @@
                  [metosin/jsonista "0.3.13"]
                  [metosin/ring-swagger "1.0.0"]
                  [metosin/ring-swagger-ui "5.31.0"]
-                 [mount "0.1.17"]
+                 [mount "0.1.23"]
                  [ns-tracker "1.0.0"]
                  [org.apache.lucene/lucene-core "9.10.0"]
                  [org.apache.lucene/lucene-queryparser "9.10.0"]
