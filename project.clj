@@ -88,7 +88,7 @@
 
   :plugins [[dev.weavejester/lein-cljfmt "0.16.1"]
             [lein-shell "0.5.0"]
-            [migratus-lein "0.5.7"]
+            [migratus-lein "0.7.3"]
             [com.github.liquidz/antq "RELEASE"]]
 
   :antq {}
