@@ -31,7 +31,7 @@
                  [luminus-nrepl "0.1.7"]
                  [luminus/ring-ttl-session "0.3.3"]
                  [macroz/hiccup-find "0.6.1"]
-                 [markdown-clj "1.11.9"]
+                 [markdown-clj "1.12.7"]
                  [metosin/compojure-api "2.0.0-alpha33"]
                  [metosin/jsonista "0.3.13"]
                  [metosin/ring-swagger "1.0.0"]
