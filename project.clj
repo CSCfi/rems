@@ -71,7 +71,7 @@
                  [lambdaisland/kaocha-junit-xml "1.17.101"]
                  [ring/ring-mock "0.6.2"]
                  [se.haleby/stub-http "0.2.14"]
-                 [com.icegreen/greenmail "1.6.15"]
+                 ^{:antq/exclude "2"} [com.icegreen/greenmail "1.6.15"]
                  [macroz/tangle "0.2.2"]
                  [peridot "0.5.4"]]
 
