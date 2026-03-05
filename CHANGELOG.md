@@ -11,6 +11,7 @@ Changes since v2.39
 ### Additions
 
 - Added a custom action button for approved applications. The button is defined in extra translations. (#3413)
+- Upgraded several libraries (#3421)
 
 ## v2.39 "Jätkäsaarenlaituri" 2026-01-21
 
