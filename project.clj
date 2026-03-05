@@ -16,7 +16,7 @@
                  [com.rpl/specter "1.1.6"]
                  [com.taoensso/tempura "1.5.4"]
                  [compojure "1.7.2"]
-                 ^:antq/exclude [conman "0.8.4"] ; 0.8.5 switches to next.jdbc, which breaks stuff and requires proper testing in production
+                 ^{:antq/exclude ["0.8.5" "0.8.x" "0.9"]} [conman "0.8.4"] ; 0.8.5 switches to next.jdbc, which breaks stuff and requires proper testing in production
                  [cprop "0.1.21"]
                  [dev.weavejester/medley "1.9.0"]
                  [etaoin "1.1.43"]
@@ -27,7 +27,7 @@
                  [lambdaisland/deep-diff "0.0-47"]
                  [lambdaisland/kaocha "1.91.1392"]
                  [luminus-jetty "0.2.3"]
-                 ^:antq/exclude [luminus-migrations "0.7.2"] ; 0.7.3 switches to next.jdbc, 0.7.5 fails: No such var: prepare/statement
+                 ^{:antq/exclude ["0.7.3" "0.7.x"]} [luminus-migrations "0.7.2"] ; 0.7.3 switches to next.jdbc, 0.7.5 fails: No such var: prepare/statement
                  [luminus-nrepl "0.1.7"]
                  [luminus/ring-ttl-session "0.3.3"]
                  [macroz/hiccup-find "0.6.1"]
@@ -38,8 +38,8 @@
                  [metosin/ring-swagger-ui "5.31.0"]
                  [mount "0.1.23"]
                  [ns-tracker "1.0.0"]
-                 ^:antq/exclude [org.apache.lucene/lucene-core "9.12.3"] ; Next major release 10.4.x available but multiple tests throw a java.lang.IllegalArgumentException: No matching method doc found taking 1 args for class org.apache.lucene.search.IndexSearcher
-                 ^:antq/exclude [org.apache.lucene/lucene-queryparser "9.12.3"] ;... java.lang.IllegalArgumentException: No matching method doc ...
+                 ^{:antq/exclude "10"} [org.apache.lucene/lucene-core "9.12.3"] ; Next major release 10.4.x available but multiple tests throw a java.lang.IllegalArgumentException: No matching method doc found taking 1 args for class org.apache.lucene.search.IndexSearcher
+                 ^{:antq/exclude "10"} [org.apache.lucene/lucene-queryparser "9.12.3"] ;... java.lang.IllegalArgumentException: No matching method doc ...
                  [org.clojure/clojure "1.12.4"]
                  [org.clojure/core.cache "1.2.263"]
                  [org.clojure/core.memoize "1.2.281"]
@@ -48,14 +48,14 @@
                  [org.clojure/tools.cli "1.3.250"]
                  [org.clojure/tools.logging "1.3.1"]
                  [org.postgresql/postgresql "42.7.10"]
-                 ^:antq/exclude [org.webjars.bower/tether "1.4.7"] ; doesn't work with "2.0.0-beta.5", error serving the file
+                 ^{:antq/exclude "2"} [org.webjars.bower/tether "1.4.7"] ; doesn't work with "2.0.0-beta.5", error serving the file
                  [org.webjars.npm/axe-core "4.6.3"]
                  [org.webjars.npm/better-dateinput-polyfill "4.0.0-beta.2"]
                  [org.webjars.npm/popper.js "1.16.1"]
-                 ^:antq/exclude [org.webjars/bootstrap "4.6.2"] ; latest before 5.x series
-                 ^:antq/exclude [org.webjars/font-awesome "6.1.0"] ; icons don't work with "6.2.0"
-                 ^{:antq/exclude "4.x"} [org.webjars/jquery "3.7.1"] ; bootstrap 4 only supports jquery 3 https://github.com/twbs/bootstrap/blob/v4.6.2/package.json#L122
-                 ^:antq/exclude [prismatic/schema-generators "0.1.4"] ; event consistency tests fail with "0.1.5"
+                 ^{:antq/exclude "5"} [org.webjars/bootstrap "4.6.2"] ; latest before 5.x series
+                 ^{:antq/exclude ["6.2.x" "6.x" "7"]} [org.webjars/font-awesome "6.1.0"] ; icons don't work with "6.2.0"
+                 ^{:antq/exclude "4"} [org.webjars/jquery "3.7.1"] ; bootstrap 4 only supports jquery 3 https://github.com/twbs/bootstrap/blob/v4.6.2/package.json#L122
+                 ^{:antq/exclude "0.1.5"} [prismatic/schema-generators "0.1.4"] ; event consistency tests fail with "0.1.5"
                  [ring-cors "0.1.13"]
                  [ring-webjars "0.3.1"]
                  [ring/ring-core "1.15.3"]
