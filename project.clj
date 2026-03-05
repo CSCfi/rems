@@ -54,7 +54,7 @@
                  [org.webjars.npm/popper.js "1.16.1"]
                  ^:antq/exclude [org.webjars/bootstrap "4.6.2"] ; latest before 5.x series
                  ^:antq/exclude [org.webjars/font-awesome "6.1.0"] ; icons don't work with "6.2.0"
-                 [org.webjars/jquery "3.7.1"]
+                 ^{:antq/exclude "4.x"} [org.webjars/jquery "3.7.1"] ; bootstrap 4 only supports jquery 3 https://github.com/twbs/bootstrap/blob/v4.6.2/package.json#L122
                  ^:antq/exclude [prismatic/schema-generators "0.1.4"] ; event consistency tests fail with "0.1.5"
                  [ring-cors "0.1.13"]
                  [ring-webjars "0.3.1"]
