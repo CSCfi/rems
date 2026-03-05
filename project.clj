@@ -38,8 +38,8 @@
                  [metosin/ring-swagger-ui "5.31.0"]
                  [mount "0.1.23"]
                  [ns-tracker "1.0.0"]
-                 [org.apache.lucene/lucene-core "9.10.0"]
-                 [org.apache.lucene/lucene-queryparser "9.10.0"]
+                 [org.apache.lucene/lucene-core "9.12.3"] ; Next major release 10.4.x available but multiple tests throw a java.lang.IllegalArgumentException: No matching method doc found taking 1 args for class org.apache.lucene.search.IndexSearcher
+                 [org.apache.lucene/lucene-queryparser "9.12.3"] ;... java.lang.IllegalArgumentException: No matching method doc ...
                  [org.clojure/clojure "1.12.4"]
                  [org.clojure/core.cache "1.2.263"]
                  [org.clojure/core.memoize "1.2.281"]
