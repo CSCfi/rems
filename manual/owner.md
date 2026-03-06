@@ -162,7 +162,7 @@ Give your catalogue item a descriptive name. Thus, it will be easier for the app
 
 **After you have created a catalogue item, you have to enable it**. The catalogue item is disabled at first so that you can edit it before anyone will be able to apply access to it. After enabling, the applicant will see it as a resource in Catalogue tab and can apply for access to it.
 
-:point_up: Pro tip: If you want to see how an applicant sees the catalogue items, you can navigate to the Catalog tab.
+:point_up: Pro tip: If you want to see how an applicant sees the catalogue items, you can navigate to the Catalogue tab.
 
 #### Editing catalogue items
 
@@ -175,6 +175,12 @@ If you want to only change the catalogue item’s application form, select the c
 ![Change form](img/changeform.png)
 
 This will **disable and archive the old catalogue item** and create a new catalogue item that has a different form but is otherwise the same as the old catalogue item. This means that the applicants cannot see or apply for access to the old catalogue item anymore.
+
+#### Catalogue item hierarchy
+
+Catalogue items can be grouped under **Categories** that display as folding sub-headers on the catalogue page, also referred to as the **catalogue tree**. Categories can have subcategories and they can be nested in a tree-like structure.
+
+Additionally, catalogue items may specify **complementary items** that must be applied for together with the **top-level catalogue item**. A top-level catalogue item may have many complementary items, and there can only be one top-level item for a given complementary item. A catalogue item that is already referenced by a top-level item may not have complementary items of it's oown.
 
 ## Disabling, and archiving items
 
