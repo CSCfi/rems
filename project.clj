@@ -55,7 +55,7 @@
                  ^{:antq/exclude "5"} [org.webjars/bootstrap "4.6.2"] ; latest before 5.x series
                  ^{:antq/exclude ["6.2.x" "6.x" "7"]} [org.webjars/font-awesome "6.1.0"] ; icons don't work with "6.2.0"
                  ^{:antq/exclude "4"} [org.webjars/jquery "3.7.1"] ; bootstrap 4 only supports jquery 3 https://github.com/twbs/bootstrap/blob/v4.6.2/package.json#L122
-                 ^{:antq/exclude "0.1.5"} [prismatic/schema-generators "0.1.4"] ; event consistency tests fail with "0.1.5"
+                 [prismatic/schema-generators "0.1.5"]
                  [ring-cors "0.1.13"]
                  [ring-webjars "0.3.1"]
                  [ring/ring-core "1.15.3"]
@@ -74,6 +74,7 @@
                  ^{:antq/exclude "2"} [com.icegreen/greenmail "1.6.15"]
                  [macroz/tangle "0.2.2"]
                  [peridot "0.5.4"]]
+  :managed-dependencies [[prismatic/schema "1.2.1"]]
 
   :min-lein-version "2.9.8"
 
