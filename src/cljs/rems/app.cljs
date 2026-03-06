@@ -7,7 +7,7 @@
             [medley.core :refer [dissoc-in]]
             [re-frame.core :as rf]
             [reagent.core :as r]
-            [reagent.dom :as rd]
+            [reagent.dom.client :as rdomc]
             [rems.actions :refer [actions-page]]
             [rems.actions.accept-invitation :refer [accept-invitation-page]]
             [rems.accept-invitation :as accept-invitation]
@@ -630,9 +630,11 @@
       (doseq [f tracked]
         (r/dispose! f)))))
 
+(defonce root (rdomc/create-root (.getElementById js/document "app")))
+
 (defn ^:dev/after-load mount-components []
   (rf/clear-subscription-cache!)
-  (rd/render [app] (.getElementById js/document "app")))
+  (rdomc/render root [app]))
 
 (defn ^:export init []
   (version-info)
