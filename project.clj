@@ -24,7 +24,6 @@
                  [hiccup "2.0.0"]
                  [com.cognitect/transit-clj "1.1.347"]
                  [javax.xml.bind/jaxb-api "2.4.0-b180830.0359"]
-                 [lambdaisland/deep-diff "0.0-47"]
                  [lambdaisland/kaocha "1.91.1392"]
                  [luminus-jetty "0.2.3"]
                  ^{:antq/exclude ["0.7.3" "0.7.x"]} [luminus-migrations "0.7.2"] ; 0.7.3 switches to next.jdbc, 0.7.5 fails: No such var: prepare/statement
