@@ -73,7 +73,17 @@
                  [ring/ring-devel "1.15.3"]
                  [ring/ring-mock "0.6.2"]
                  [se.haleby/stub-http "0.2.14"]]
-  :managed-dependencies [[prismatic/schema "1.4.1"]]
+  :managed-dependencies [[commons-codec "1.21.0"]
+                         [commons-io "2.21.0"]
+                         [com.google.code.findbugs/jsr305 "3.0.2"]
+                         [com.sun.mail/jakarta.mail "1.6.7"]
+                         [joda-time "2.14.1"]
+                         [org.apache.xmlgraphics/xmlgraphics-commons "2.9"]
+                         [org.clojure/tools.reader "1.6.0"]
+                         [org.flatland/ordered "1.15.12"]
+                         [org.mozilla/rhino "1.9.1"]
+                         [prismatic/schema "1.4.1"]
+                         [riddley "0.2.2"]]
 
   :min-lein-version "2.9.8"
 
