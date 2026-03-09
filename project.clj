@@ -79,6 +79,8 @@
                          [com.sun.mail/jakarta.mail "1.6.7"]
                          [joda-time "2.14.1"]
                          [org.apache.xmlgraphics/xmlgraphics-commons "2.9"]
+                         [org.bouncycastle/bcpkix-jdk18on "1.83"]
+                         [org.bouncycastle/bcprov-jdk18on "1.83"]
                          [org.clojure/tools.reader "1.6.0"]
                          [org.flatland/ordered "1.15.12"]
                          [org.mozilla/rhino "1.9.1"]
