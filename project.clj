@@ -33,7 +33,7 @@
                  [macroz/hiccup-find "0.6.1"]
                  [markdown-clj "1.12.7"]
                  [metosin/compojure-api "2.0.0-alpha33"]
-                 [metosin/jsonista "0.3.13"]
+                 [metosin/jsonista "0.3.14"]
                  [metosin/ring-swagger "1.0.0"]
                  [metosin/ring-swagger-ui "5.31.0"]
                  [mount "0.1.23"]
