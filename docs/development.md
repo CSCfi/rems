@@ -169,9 +169,17 @@ We use [hadolint](https://github.com/hadolint/hadolint) for linting the Dockerfi
 
 ## Dependency updating
 
-Dependencies are declared three places: `project.clj` includes dependencies built with Leiningen (mostly back-end, some front-end development tooling), `shadow-cljs.edn` includes dependencies built with Shadow-CLJS (front-end), and `package.json` includes Node.js dependencies (front-end).
+Dependencies are declared three places: `project.clj` includes dependencies built with Leiningen (mostly back-end, some front-end development tooling), `shadow-cljs.edn` includes dependencies built with Shadow-CLJS (front-end), and `package.json` includes Node.js dependencies (front-end). Additionally, `Dockerfile` specifies a base image, and `.circleci/config.yml` includes certain dependencies as well.
 
-Running `lein antq` produces a list of outdated dependencies by looking at latest version. It can inspect both Leiningen and Shadow-CLJS dependencies. Node.js dependencies can be inspected with `npm outdated` which looks for latest version, and `npm audit` which checks for outstanding vulnerabilities.
+Running `lein antq` produces a list of outdated dependencies by looking at their latest available versions. It can inspect Leiningen, Shadow-CLJS and CircleCI dependencies. 
+
+Consider also installing `antq` as a (Clojure CLI tool)[https://github.com/liquidz/antq?tab=readme-ov-file#clojure-cli-tools-11111139-or-later] locally to be able to use the interactive upgrade dialogue and suppression metadata in `project.clj`. Upgrading deps interactively one by one is useful when running tests in between bumping versions.
+```
+clojure -Ttools install-latest :lib com.github.liquidz/antq :as antq
+clojure -Tantq outdated :upgrade true
+```
+
+Node.js dependencies can be inspected with `npm outdated` which looks for latest version, and `npm audit` which checks for outstanding vulnerabilities.
 
 ## Component Guide
 
