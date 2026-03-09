@@ -20,7 +20,7 @@
                  [cprop "0.1.21"]
                  [dev.weavejester/medley "1.9.0"]
                  [etaoin "1.1.43"]
-                 [garden "1.3.10"]
+                 [com.lambdaisland/garden "1.9.606"]
                  [hiccup "2.0.0"]
                  [com.cognitect/transit-clj "1.1.347"]
                  [javax.xml.bind/jaxb-api "2.4.0-b180830.0359"]
