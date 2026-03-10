@@ -36,7 +36,6 @@
                  [luminus-nrepl "0.1.7"]
                  ^{:antq/exclude ["0.7.3" "0.7.x"]} [luminus-migrations "0.7.2"] ; 0.7.3 switches to next.jdbc, 0.7.5 fails: No such var: prepare/statement
                  [luminus/ring-ttl-session "0.3.3"]
-                 [macroz/hiccup-find "0.6.1"]
                  [macroz/tangle "0.2.2"]
                  [markdown-clj "1.12.7"]
                  [metosin/compojure-api "2.0.0-alpha33"]
