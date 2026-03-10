@@ -84,6 +84,7 @@
                          [org.bouncycastle/bcprov-jdk18on "1.83"]
                          [org.clojure/tools.reader "1.6.0"]
                          [org.flatland/ordered "1.15.12"]
+                         [org.jfree/jfreechart "1.5.6"]
                          [org.mozilla/rhino "1.9.1"]
                          [prismatic/schema "1.4.1"]
                          [riddley "0.2.2"]]
