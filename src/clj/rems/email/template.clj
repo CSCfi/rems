@@ -14,14 +14,14 @@
 ;; TODO list of resources?
 ;; TODO use real name when addressing user?
 
-(defn url [] (or (not-empty (:external-frontend-url env)) (:public-url env)))
+(defn base-url [] (or (not-empty (:external-frontend-url env)) (:public-url env)))
 
 ;; move this to a util namespace if its needed somewhere else
 (defn- link-to-application [application-id]
-  (str (url) "application/" application-id))
+  (str (base-url) "application/" application-id))
 
 (defn- invitation-link [token]
-  (str (url) "accept-invitation?token=" token))
+  (str (base-url) "accept-invitation?token=" token))
 
 (defn- format-application-for-email [application]
   (str
@@ -303,7 +303,7 @@
                                      (text-format-map :t.email.handler-reminder/application
                                                       params
                                                       [:application-id :applicant]))
-            params {:actions-url (str (url) "actions")
+            params {:actions-url (str (base-url) "actions")
                     :applications (str/join "\n" formatted-applications)
                     :recipient (application-util/get-member-name handler)}]
         {:to-user (:userid handler)
@@ -321,7 +321,7 @@
                                      (text-format-map :t.email.reviewer-reminder/application
                                                       params
                                                       [:application-id :applicant]))
-            params {:actions-url (str (url) "actions")
+            params {:actions-url (str (base-url) "actions")
                     :applications (str/join "\n" formatted-applications)
                     :recipient (application-util/get-member-name reviewer)}]
         {:to-user (:userid reviewer)
