@@ -78,6 +78,7 @@
                          ^{:required-by "clj-pdf"} [com.sun.mail/jakarta.mail "1.6.8"]
                          ^{:required-by "luminus-jetty"} [info.sunng/ring-jetty9-adapter "0.39.2"]
                          [joda-time "2.14.1"]
+                         ^{:required-by "ring-webjars"} [org.apache.commons/commons-lang3 "3.20.0"]
                          [org.apache.xmlgraphics/xmlgraphics-commons "2.9"]
                          [org.bouncycastle/bcpkix-jdk18on "1.83"]
                          [org.bouncycastle/bcprov-jdk18on "1.83"]
