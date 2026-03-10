@@ -165,13 +165,18 @@ fix` or `lein cljfmt fix <file>` to automatically fix your formatting.
 
 This setup should correspond to pretty much the default indentation of CIDER in Emacs. Other editors may need to adjust settings here and there, but our CI will help you to spot any mistakes.
 
-We use [hadolint](https://github.com/hadolint/hadolint) for linting the Dockerfile in CI
-
 ## Dependency updating
 
-Dependencies are declared three places: `project.clj` includes dependencies built with Leiningen (mostly back-end, some front-end development tooling), `shadow-cljs.edn` includes dependencies built with Shadow-CLJS (front-end), and `package.json` includes Node.js dependencies (front-end). Additionally, `Dockerfile` specifies a base image, and `.circleci/config.yml` includes certain dependencies as well.
+Dependencies are declared in 
+- `project.clj` includes dependencies built with Leiningen (mostly back-end, some front-end development tooling)
+- `shadow-cljs.edn` includes dependencies built with Shadow-CLJS (front-end)
+- `package.json` includes Node.js dependencies (front-end)
+- `Dockerfile` specifies the base image
+- `.circleci/config.yml` includes certain build-time dependencies used by CircleCI
 
 Running `lein antq` produces a list of outdated dependencies by looking at their latest available versions. It can inspect Leiningen, Shadow-CLJS and CircleCI dependencies. 
+
+[`lein ancient`] is also available, but the exclude metadata in `project.clj` is set up for `antq` so `ancient` will report these as outdated.
 
 Consider also installing `antq` as a (Clojure CLI tool)[https://github.com/liquidz/antq?tab=readme-ov-file#clojure-cli-tools-11111139-or-later] locally to be able to use the interactive upgrade dialogue and suppression metadata in `project.clj`. Upgrading deps interactively one by one is useful when running tests in between bumping versions.
 ```
@@ -180,6 +185,43 @@ clojure -Tantq outdated :upgrade true
 ```
 
 Node.js dependencies can be inspected with `npm outdated` which looks for latest version, and `npm audit` which checks for outstanding vulnerabilities.
+
+[`lein unused-deps`](https://codeberg.org/technomancy/lein-unused-deps) can be used to find dependencies that aren't referred to in the code and could potentially be removed from `project.clj`.
+
+Finally, to inspect dependencies manually, there are
+- `lein deps :tree`
+- `lein deps :why <library name>` for why a given library is included
+- `lein pom` to write a POM file containing every dependency including transitive Java libraries
+-  and `mvn dependency:tree -Dverbose:true` to view the POM file in a tree representation (requires Maven installed)
+
+### Vulnerability scanning
+
+Use [`nvd-clojure`](https://github.com/rm-hull/nvd-clojure) to scan vulnerabilities in the libraries we use. `nvd-clojure` is a Clojure wrapper for [OWASP Dependency-Check](https://owasp.org/www-project-dependency-check/).
+
+The APIs Dependency-Check uses are rate-limited and require authentication. Request credentials for
+- The National Vulnerability Database https://nvd.nist.gov/developers/request-an-api-key
+- Sonatype OSS Index https://ossindex.sonatype.org/doc/auth-required/
+
+In a non-version-controlled directory, write the config file `nvd-config.edn` and fill in the blanks
+```clojure
+{:nvd-api {:key ""}
+ :analyzer {:ossindex-user ""
+            :ossindex-password ""}}
+```
+
+Issue the following command substituting `REMS DIR` with the path where you have cloned the REMS repository
+```
+clojure -J-Dclojure.main.report=stderr -Tnvd nvd.task/check :classpath \""$(cd <REMS DIR>; lein with-profile -user,-dev classpath)\"" :config-filename \""nvd-config.edn\""
+```
+
+Whenever vulnerabilities are found in libraries you don't recognise, refer to the previous section for tools to inspect them.
+
+#### Docker
+
+We use [hadolint](https://github.com/hadolint/hadolint) to lint our Dockerfile. Hadolint looks for errors, misconfiguration and enforces certain best practices. Hadolint runs in our CircleCI pipeline, and it is also available as a CLI tool.
+
+Docker image vulnerabilities can be scanned using [Trivy](https://trivy.dev/).
+
 
 ## Component Guide
 
