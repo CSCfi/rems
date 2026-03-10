@@ -101,7 +101,8 @@
   :plugins [[dev.weavejester/lein-cljfmt "0.16.1"]
             [lein-shell "0.5.0"]
             [migratus-lein "0.7.3"]
-            [com.github.liquidz/antq "RELEASE"]]
+            [com.github.liquidz/antq "RELEASE"]
+            [us.technomancy/lein-unused-deps "0.2.0"]]
 
   :antq {}
 
