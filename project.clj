@@ -76,6 +76,7 @@
                          [commons-io "2.21.0"]
                          [com.google.code.findbugs/jsr305 "3.0.2"]
                          ^{:required-by "clj-pdf"} [com.sun.mail/jakarta.mail "1.6.8"]
+                         ^{:required-by "luminus-jetty"} [info.sunng/ring-jetty9-adapter "0.39.2"]
                          [joda-time "2.14.1"]
                          [org.apache.xmlgraphics/xmlgraphics-commons "2.9"]
                          [org.bouncycastle/bcpkix-jdk18on "1.83"]
