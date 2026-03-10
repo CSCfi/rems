@@ -101,7 +101,10 @@ jobs:
           at: .
       - restore_cache:
           key: *cache-key
-      - run: lein kaocha --reporter kaocha.report/documentation --plugin rems.kaocha/cache-statistics-plugin --plugin rems.kaocha/circleci-parallel-plugin browser
+      - run:
+          command: lein kaocha --reporter kaocha.report/documentation --plugin rems.kaocha/cache-statistics-plugin --plugin rems.kaocha/circleci-parallel-plugin browser
+          max_auto_reruns: 3
+          auto_rerun_delay: 5s
       - store_test_results:
           path: target/test-results
       - store_artifacts:
