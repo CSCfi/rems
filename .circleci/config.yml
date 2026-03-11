@@ -13,6 +13,7 @@ defaults: &defaults
 
 orbs:
   browser-tools: circleci/browser-tools@2.3.2
+  docker: circleci/docker@3.0.1
 
 executors:
   clojure:
@@ -193,6 +194,10 @@ workflows:
           filters:
             tags:
               only: /.*/
+      - docker/hadolint:
+          filters:
+            tags:
+              only: /.*/
       - build:
           requires:
             - deps
@@ -246,6 +251,7 @@ workflows:
             - browser-test
             - build
             - cljfmt
+            - docker/hadolint
           filters:
             tags:
               only: /.*/
