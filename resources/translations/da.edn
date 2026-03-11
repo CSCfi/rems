@@ -262,6 +262,7 @@
                           :state "Tilstand"}
                  :handlers "Sagsbehandler"
                  :id "id"
+                 :is-editing nil
                  :intro [:div.intro [:p "Udfyld og indsend ansøgningen. Du kan invitere andre til at deltage i ansøgningen. Alle deltagere skal acceptere brugsvilkår senest når ansøgningen godkendes."]]
                  :last-activity "Ændret"
                  :latest-activity "Seneste aktivitet"
@@ -547,6 +548,8 @@
          :autosave-in-progress "Gemmer"
          :checkbox-checked "Ja"
          :checkbox-unchecked "Nej"
+         :clients nil
+         :clients-intro nil
          :comment "Kommentar"
          :copy-as-new "Kopier som en ny ansøgning"
          :current-value "Nuværende"

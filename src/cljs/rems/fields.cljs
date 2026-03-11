@@ -2,8 +2,12 @@
   "UI components for form fields"
   (:require [clojure.string :as str]
             ["diff-match-patch" :refer [diff_match_patch]]
+            [goog.functions :refer [debounce rateLimit]]
+            [re-frame.core :as rf]
+            [rems.flash-message :as flash-message]
             [rems.administration.items :as items]
             [rems.atoms :as atoms :refer [add-symbol attachment-link download-button close-symbol failure-symbol textarea]]
+            [rems.attachment :as attachment]
             [rems.collapsible :as collapsible]
             [rems.common.attachment-util :as attachment-util]
             [rems.common.form :as common-form]
@@ -13,6 +17,28 @@
             [rems.spinner :as spinner]
             [rems.text :refer [localized text text-format]]
             [rems.util :refer [linkify format-file-size event-value]]))
+
+(defn- clear-message []
+  (flash-message/clear-message! :actions-form-flash))
+
+(def ^:private rate-limited-clear-message
+  (rateLimit clear-message 1000))
+
+(defn- notify-activity []
+  (rf/dispatch [:rems.application/autosave-application]))
+
+(def ^:private debounced-notify-activity
+  (debounce notify-activity 1000))
+
+(defn always-on-change
+  "Triggers autosave related functions.
+
+  Should be called always when something is changed in the application, that doesn't explicitly also save.
+  For example, add member internally also \"saves\" the state, but changing a text field value doesn't."
+  [event-value]
+  (rate-limited-clear-message) ; clear status as soon as possible
+  (debounced-notify-activity) ; try autosave only every second or so
+  event-value)
 
 (defn field-name [field]
   (str "form-" (getx field :form/id) "-field-" (getx field :field/id)))
@@ -111,6 +137,7 @@
   :field/info-text      - text for collapsable info field
   :readonly             - boolean, true if the field should not be editable
   :readonly-component   - HTML, custom component for a readonly field
+  :locked               - boolean, true if the editor should be disabled (like readonly but using the editor component)
   :diff                 - boolean, true if should show the diff between :value and :previous-value
   :diff-component       - HTML, custom component for rendering a diff
   :validation           - validation errors
@@ -153,7 +180,7 @@
    children])
 
 (defn text-field
-  [{:keys [validation on-change _info-text _type] :as opts}]
+  [{:keys [validation locked on-change on-focus on-blur _info-text _type] :as opts}]
   (let [placeholder (localized (:field/placeholder opts))
         value (:field/value opts)
         optional (:field/optional opts)
@@ -169,17 +196,21 @@
                            :name (field-name opts)
                            :placeholder placeholder
                            :required (not optional)
+                           :read-only locked
+                           :disabled locked
                            :aria-required (not optional)
                            :aria-invalid (when validation true)
                            :aria-describedby (when validation
                                                (str (field-name opts) "-error"))
                            :max-length max-length
-                           :class (when validation "is-invalid")
+                           :class (str (when validation "is-invalid") " " (when locked "locked"))
                            :value value
-                           :on-change (comp on-change event-value)}]]))
+                           :on-focus on-focus
+                           :on-blur on-blur
+                           :on-change (comp on-change always-on-change event-value)}]]))
 
 (defn texta-field
-  [{:keys [validation on-change] :as opts}]
+  [{:keys [validation on-change on-focus on-blur locked] :as opts}]
   (let [placeholder (localized (:field/placeholder opts))
         value (:field/value opts)
         optional (:field/optional opts)
@@ -189,17 +220,21 @@
                 :name (field-name opts)
                 :placeholder placeholder
                 :required (not optional)
+                :read-only locked
+                :disabled locked
                 :aria-required (not optional)
                 :aria-invalid (when validation true)
                 :aria-describedby (when validation
                                     (str (field-name opts) "-error"))
                 :max-length max-length
-                :class (when validation "is-invalid")
+                :class (str (when validation "is-invalid") " " (when locked "locked"))
                 :value value
-                :on-change (comp on-change event-value)}]]))
+                :on-focus on-focus
+                :on-blur on-blur
+                :on-change (comp on-change always-on-change event-value)}]]))
 
 (defn date-field
-  [{:keys [min max validation on-change] :as opts}]
+  [{:keys [min max validation on-change on-focus on-blur locked] :as opts}]
   (let [value (:field/value opts)
         optional (:field/optional opts)]
     ;; TODO: format readonly value in user locale (give field-wrapper a formatted :value and :previous-value in opts)
@@ -207,16 +242,20 @@
      [:input.form-control {:type "date"
                            :id (field-name opts)
                            :name (field-name opts)
-                           :class (when validation "is-invalid")
+                           :class (str (when validation "is-invalid") " " (when locked "locked"))
                            :value value
                            :required (not optional)
+                           :read-only locked
+                           :disabled locked
                            :aria-required (not optional)
                            :aria-invalid (when validation true)
                            :aria-describedby (when validation
                                                (str (field-name opts) "-error"))
                            :min min
                            :max max
-                           :on-change (comp on-change event-value)}]]))
+                           :on-focus on-focus
+                           :on-blur on-blur
+                           :on-change (comp on-change always-on-change event-value)}]]))
 
 (defn- option-label [value options]
   (let [label (->> options
@@ -225,7 +264,7 @@
                    :label)]
     (localized label)))
 
-(defn option-field [{:keys [validation on-change] :as opts}]
+(defn option-field [{:keys [validation on-change on-focus on-blur locked] :as opts}]
   (let [value (:field/value opts)
         options (:field/options opts)
         optional (:field/optional opts)]
@@ -234,14 +273,18 @@
                                                       :value (option-label value options)}])
      (into [:select.form-control {:id (field-name opts)
                                   :name (field-name opts)
-                                  :class (when validation "is-invalid")
+                                  :class (str (when validation "is-invalid") " " (when locked "locked"))
                                   :value value
                                   :required (not optional)
+                                  :read-only locked
+                                  :disabled locked
                                   :aria-required (not optional)
                                   :aria-invalid (when validation true)
                                   :aria-describedby (when validation
                                                       (str (field-name opts) "-error"))
-                                  :on-change (comp on-change event-value)}
+                                  :on-focus on-focus
+                                  :on-blur on-blur
+                                  :on-change (comp on-change always-on-change event-value)}
             [:option {:value ""}]]
            (for [{:keys [key label]} options]
              [:option {:value key}
@@ -251,7 +294,7 @@
   (let [title (-> opts :field/title localized linkify)]
     [non-field-wrapper opts [:label title]]))
 
-(defn multiselect-field [{:keys [validation on-change] :as opts}]
+(defn multiselect-field [{:keys [validation on-change on-focus on-blur locked] :as opts}]
   (let [value (:field/value opts)
         options (:field/options opts)
         optional (:field/optional opts)
@@ -278,16 +321,20 @@
                 [:input.form-check-input {:type "checkbox"
                                           :id option-id
                                           :name option-id
-                                          :class (when validation "is-invalid")
+                                          :class (str (when validation "is-invalid") " " (when locked "locked"))
                                           :value key
                                           :required (not optional)
+                                          :read-only locked
+                                          :disabled locked
                                           :aria-required (not optional)
                                           :checked (contains? selected-keys key)
+                                          :on-focus on-focus
+                                          :on-blur on-blur
                                           :on-change on-change}]
                 [:label.form-check-label {:for option-id}
                  (localized label)]])))]))
 
-(defn- upload-button [id status on-upload]
+(defn- upload-button [{:keys [id status on-upload on-focus on-blur]}]
   (let [upload-id (str id "-input")]
     [:div.upload-file
      [:div.mb-3
@@ -296,12 +343,15 @@
                :id upload-id
                :name upload-id
                :accept attachment-util/allowed-extensions-string
+               :on-focus on-focus
+               :on-blur on-blur
                :on-change (fn [event]
                             (let [filecontent (aget (.. event -target -files) 0)
                                   form-data (doto (js/FormData.)
                                               (.append "file" filecontent))]
                               (set! (.. event -target -value) nil) ; empty selection to fix uploading the same file twice
-                              (on-upload form-data)))}]
+                              (when on-upload
+                                (on-upload form-data))))}]
       [:button.btn.btn-outline-secondary
        {:id id
         :type :button
@@ -326,7 +376,7 @@
                   [:p (text-format :t.form/attachment-max-size
                                    (format-file-size (:attachment-max-size @rems.globals/config)))]]}]]))
 
-(defn multi-attachment-view [{:keys [id attachments status on-attach on-remove-attachment label]}]
+(defn multi-attachment-view [{:keys [id attachments status on-attach on-remove-attachment label on-focus on-blur]}]
   [:div.form-group
    (when label
      [:label label])
@@ -341,7 +391,12 @@
               [close-symbol]
               " "
               (text :t.form/attachment-remove)]]]))
-   [upload-button (str "upload-" id) status on-attach]])
+   [:div.mt-2
+    [upload-button {:id (str "upload-" id)
+                    :status status
+                    :on-focus on-focus
+                    :on-blur on-blur
+                    :on-upload on-attach}]]])
 
 (defn render-attachments [attachments]
   (into [:div.attachments]
@@ -369,7 +424,7 @@
   (let [title (-> opts :field/title localized linkify)]
     [non-field-wrapper opts [:h3 title]]))
 
-(defn- table-view [{:keys [id readonly columns rows on-change]}]
+(defn- table-view [{:keys [id readonly columns rows on-change on-focus on-blur]}]
   [:table.table.table-sm.table-borderless
    [:thead
     (into [:tr]
@@ -392,7 +447,9 @@
                                               :aria-label (localized label)
                                               :id (str id "-row" row-i "-" key)
                                               :value (get-in rows [row-i key])
-                                              :on-change #(on-change (assoc-in rows [row-i key] (event-value %)))}])])
+                                              :on-focus on-focus
+                                              :on-blur on-blur
+                                              :on-change #(on-change (always-on-change (assoc-in rows [row-i key] (event-value %))))}])])
                    (when-not readonly
                      [[:td.align-middle [items/remove-button {:on-click #(on-change (items/remove rows row-i))
                                                               :data-index row-i}]]]))))
@@ -436,7 +493,7 @@
          (mapv (fn [[column value]] {:column column :value value})
                row))))
 
-(defn table-field [{:keys [on-change] :as field}]
+(defn table-field [{:keys [on-change on-focus on-blur] :as field}]
   [field-wrapper (assoc field
                         :readonly-component [table-view {:id (field-name field)
                                                          :readonly true
@@ -453,7 +510,9 @@
                                  (empty? rows))
                           [(zipmap (mapv :key (:field/columns field)) (repeat ""))]
                           rows))
-                :on-change #(on-change (table-to-backend %))}]])
+                :on-focus on-focus
+                :on-blur on-blur
+                :on-change #(on-change (always-on-change (table-to-backend %)))}]])
 
 (defn unsupported-field
   [f]

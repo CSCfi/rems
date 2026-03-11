@@ -493,6 +493,9 @@
    [:.bg-dark {:background-color (theme-getx :bg-dark)}]
    [:.bg-white {:background-color (theme-getx :bg-white)}]
 
+   [:.editor-present {:color (theme-getx :alert-primary-color)
+                      :background-color (theme-getx :alert-primary-bgcolor)
+                      :border-color (theme-getx :alert-primary-bordercolor :alert-primary-color)}]
    ;; TODO get rid of alert classes we don't use
    [:.alert-primary {:color (theme-getx :alert-primary-color)
                      :background-color (theme-getx :alert-primary-bgcolor)
@@ -500,6 +503,12 @@
    [:.alert-secondary {:color (theme-getx :alert-secondary-color)
                        :background-color (theme-getx :alert-secondary-bgcolor)
                        :border-color (theme-getx :alert-secondary-bordercolor :alert-secondary-color)}]
+
+   [:.locked {:color (theme-getx :alert-info-color)
+              :background-color (theme-getx :alert-info-bgcolor)
+              :border-color "#ced4da"}]
+   [:.locked.form-control:disabled {:background-color (theme-getx :alert-info-bgcolor)
+                                    :border-color "#ced4da"}] ; NB keep disabled border color
    [:.alert-success
     (s/descendant :.state-approved.phases :.phase.completed)
     (s/descendant :.state-submitted.phases :.phase.completed)
@@ -693,7 +702,8 @@
 
    ;; form inputs
    ["input[type=date].form-control" {:width (u/em 12)}]
-   [:.form-group {:text-align "initial"}
+   [:.form-group {:text-align "initial"
+                  :margin-bottom 0}
     ;; make fieldset legends look the same as normal labels
     [:legend {:font-size "inherit"}]]
    [:.application-field-label {:font-weight "bold"}]

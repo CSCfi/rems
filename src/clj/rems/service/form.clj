@@ -75,3 +75,7 @@
       (do
         (rems.db.form/set-archived! id archived)
         {:success true})))
+
+(comment
+  (let [template (get-form-template 6)]
+    (form/edit-form-template! (assoc-in template [:form/fields 0 :field/title :sv] ""))))

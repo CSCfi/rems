@@ -744,6 +744,7 @@
         ;; let's also try autosave
         (btu/with-client-config {:enable-autosave true}
           (clear-form-field "Simple text field")
+          (btu/eventually-visible? {:id (get-form-field-id "Simple text field") :fn/has-text ""})
           (fill-form-field "Simple text field" "Private field answer")
           (btu/wait-visible {:css ".alert-success" :fn/text "Application is saved."})
           (is (btu/eventually-visible? :status-warning))
@@ -2024,6 +2025,10 @@
   (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success")))
 
 (deftest test-create-catalogue-item
+  (test-helpers/create-user! {:userid "organization-owner1"
+                              :name "Organization Owner 1"
+                              :email "organization-owner1@example.com"
+                              :organizations [{:organization/id "Default"}]})
   (btu/with-postmortem
     (testing "create objects"
       (login-as "owner")
