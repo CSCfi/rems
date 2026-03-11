@@ -20,6 +20,9 @@
  ;; and in the `iss` and `source` of generated GA4GH visas (see /api/permissions).
  :public-url nil
 
+ ;; Overrides :public-url in outbound emails for use cases where REMS is used in conjuction with an external frontend application.
+ :external-frontend-url nil
+
  ;; When :nrepl-port is set, the application starts an nREPL server on load.
  :nrepl-port nil
 

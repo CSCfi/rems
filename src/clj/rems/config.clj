@@ -94,6 +94,9 @@
   (when-let [url (:public-url config)]
     (assert (.endsWith url "/")
             (str ":public-url should end with /:" (pr-str url))))
+  (when-let [url (:external-frontend-url config)]
+    (assert (.endsWith url "/")
+            (str ":external-frontend-url should end with /:" (pr-str url))))
   (assert (contains? (set (:languages config)) (:default-language config))
           (str ":default-language should be one of :languages: "
                (pr-str (select-keys config [:default-language :languages]))))
