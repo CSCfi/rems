@@ -72,22 +72,26 @@
                  [ring/ring-devel "1.15.3"]
                  [ring/ring-mock "0.6.2"]
                  [se.haleby/stub-http "0.2.14"]]
-  :managed-dependencies [[commons-codec "1.21.0"]
-                         [commons-io "2.21.0"]
-                         [com.google.code.findbugs/jsr305 "3.0.2"]
-                         ^{:required-by "clj-pdf"} [com.sun.mail/jakarta.mail "1.6.8"]
+  :managed-dependencies [^{:required-by "clj-http"} [commons-codec "1.21.0"]
+                         ^{:required-by "clj-http"} [commons-io "2.21.0"]
+                         ^{:required-by "ring-swagger"} [com.google.code.findbugs/jsr305 "3.0.2"]
+                         ^{:required-by "postal"
+                           :antq/exclude "2"} [com.sun.mail/jakarta.mail "1.6.8"]
                          ^{:required-by "luminus-jetty"} [info.sunng/ring-jetty9-adapter "0.39.2"]
-                         [joda-time "2.14.1"]
+                         ^{:required-by "clj-time"} [joda-time "2.14.1"]
                          ^{:required-by "ring-webjars"} [org.apache.commons/commons-lang3 "3.20.0"]
-                         [org.apache.xmlgraphics/xmlgraphics-commons "2.9"]
-                         [org.bouncycastle/bcpkix-jdk18on "1.83"]
-                         [org.bouncycastle/bcprov-jdk18on "1.83"]
-                         [org.clojure/tools.reader "1.6.0"]
-                         [org.flatland/ordered "1.15.12"]
-                         [org.jfree/jfreechart "1.5.6"]
-                         [org.mozilla/rhino "1.9.1"]
-                         [prismatic/schema "1.4.1"]
-                         [riddley "0.2.2"]]
+                         ^{:required-by "clj-pdf"} [org.apache.xmlgraphics/xmlgraphics-commons "2.9"]
+                         ^{:required-by "buddy-core"} [org.bouncycastle/bcpkix-jdk18on "1.83"]
+                         ^{:required-by "buddy-core"} [org.bouncycastle/bcprov-jdk18on "1.83"]
+                         ^{:required-by "tempura"} [org.clojure/tools.reader "1.6.0"]
+                         ^{:required-by "tangle"} [org.flatland/ordered "1.15.12"]
+                         ^{:required-by "clj-pdf"} [org.jfree/jfreechart "1.5.6"]
+                         ^{:required-by "ring-swagger"} [org.mozilla/rhino "1.9.1"]
+                         ^{:required-by ["rems"
+                                         "peridot"
+                                         "ring-swagger"
+                                         "schema-refined"]} [prismatic/schema "1.4.1"]
+                         ^{:required-by "specter"} [riddley "0.2.2"]]
 
   :min-lein-version "2.9.8"
 
