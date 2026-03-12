@@ -37,13 +37,15 @@
    :localizations WriteCatalogueItemLocalizations
    (s/optional-key :enabled) s/Bool
    (s/optional-key :archived) s/Bool
-   (s/optional-key :categories) [schema-base/CategoryId]})
+   (s/optional-key :categories) [schema-base/CategoryId]
+   (s/optional-key :children) [schema-base/CatalogueItemId]})
 
 (s/defschema EditCatalogueItemCommand
   {:id s/Int
    :localizations WriteCatalogueItemLocalizations
    (s/optional-key :organization) schema-base/OrganizationId
-   (s/optional-key :categories) [schema-base/CategoryId]})
+   (s/optional-key :categories) [schema-base/CategoryId]
+   (s/optional-key :children) [schema-base/CatalogueItemId]})
 
 (s/defschema CreateCatalogueItemResponse
   {:success s/Bool
@@ -132,7 +134,8 @@
       :summary "Create a new catalogue item"
       :roles +admin-write-roles+
       :body [command CreateCatalogueItemCommand]
-      :return CreateCatalogueItemResponse
+      :responses {200 CreateCatalogueItemResponse
+                  403 {:schema s/Any :description "Forbidden"}}
       (extended-logging request)
       (ok (rems.service.catalogue/create-catalogue-item! command)))
 

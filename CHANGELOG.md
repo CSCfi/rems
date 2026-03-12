@@ -12,6 +12,7 @@ Changes since v2.39
 
 - Added the `:external-frontend-url` configuration option. This is used to override the url in outbound emails for use cases where REMS is used in conjuction with an external frontend application.
 - Added a custom action button for approved applications. The button is defined in extra translations. (#3413)
+- Catalogue items can now be defined in a hierarchical relationship where a **top-level catalogue item** may reference a number of **complementary catalogue items** in a parent-child-type relationship, where the complementary catalogue item must be applied for together with the top-level item (applicant UI forthcoming). The relationship is administered under the catalogue item page. (#3412)
 
 ## v2.39 "Jätkäsaarenlaituri" 2026-01-21
 

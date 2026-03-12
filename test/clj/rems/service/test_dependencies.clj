@@ -17,6 +17,8 @@
                                               :license-ids [shared-license shared-resource-license]})
         res-2 (test-helpers/create-resource! {:resource-ext-id "res2"
                                               :license-ids [shared-license shared-resource-license resource-license]})
+        res-3 (test-helpers/create-resource! {:resource-ext-id "res3"
+                                              :license-ids [shared-license shared-resource-license]})
         shared-form (test-helpers/create-form! {})
         wf-form (test-helpers/create-form! {})
         cat-form (test-helpers/create-form! {})
@@ -45,6 +47,10 @@
         cat-without-form (test-helpers/create-catalogue-item! {:resource-id res-1
                                                                :form-id nil
                                                                :workflow-id wf-2})
+        cat-with-children (test-helpers/create-catalogue-item! {:resource-id res-3
+                                                                :form-id nil
+                                                                :workflow-id wf-2
+                                                                :children [{:catalogue-item/id cat-2}]})
         dep-graph (dependencies/db-dependency-graph)]
 
     (testing "get resource dependencies and dependents"
@@ -54,7 +60,8 @@
              (dep/get-all-dependencies dep-graph {:resource/id res-1})))
       (is (= #{{:catalogue-item/id cat-1}
                {:catalogue-item/id cat-2}
-               {:catalogue-item/id cat-without-form}}
+               {:catalogue-item/id cat-without-form}
+               {:catalogue-item/id cat-with-children}}
              (dep/get-all-dependents dep-graph {:resource/id res-1}))))
 
     (testing "get catalogue item dependencies and dependents"
@@ -90,6 +97,9 @@
                                      {:license/id shared-resource-license}
                                      {:license/id resource-license}
                                      {:organization/id "default"}}
+              {:resource/id res-3} #{{:license/id shared-license}
+                                     {:license/id shared-resource-license}
+                                     {:organization/id "default"}}
               {:workflow/id wf-1} #{{:form/id shared-form}
                                     {:organization/id "default"}}
               {:workflow/id wf-2} #{{:form/id shared-form}
@@ -105,6 +115,10 @@
                                            {:form/id shared-form}
                                            {:workflow/id wf-2}
                                            {:organization/id "default"}}
+              {:catalogue-item/id cat-with-children} #{{:catalogue-item/id cat-2}
+                                                       {:resource/id res-3}
+                                                       {:workflow/id wf-2}
+                                                       {:organization/id "default"}}
               {:catalogue-item/id cat-without-form} #{{:resource/id res-1}
                                                       {:workflow/id wf-2}
                                                       {:organization/id "default"}}
@@ -114,13 +128,16 @@
     (testing "all dependents"
       (is (= {{:license/id shared-license} #{{:resource/id res-1}
                                              {:resource/id res-2}
+                                             {:resource/id res-3}
                                              {:workflow/id wf-2}}
               {:license/id shared-resource-license} #{{:resource/id res-1}
-                                                      {:resource/id res-2}}
+                                                      {:resource/id res-2}
+                                                      {:resource/id res-3}}
               {:license/id resource-license} #{{:resource/id res-2}}
               {:resource/id res-1} #{{:catalogue-item/id cat-1}
                                      {:catalogue-item/id cat-2}
                                      {:catalogue-item/id cat-without-form}}
+              {:resource/id res-3} #{{:catalogue-item/id cat-with-children}}
               {:form/id shared-form} #{{:workflow/id wf-1}
                                        {:workflow/id wf-2}
                                        {:catalogue-item/id cat-2}}
@@ -128,16 +145,19 @@
               {:form/id wf-form} #{{:workflow/id wf-2}}
               {:workflow/id wf-1} #{{:catalogue-item/id cat-1}}
               {:workflow/id wf-2} #{{:catalogue-item/id cat-2}
-                                    {:catalogue-item/id cat-without-form}}
+                                    {:catalogue-item/id cat-without-form}
+                                    {:catalogue-item/id cat-with-children}}
               {:organization/id "default"} #{{:catalogue-item/id cat-1}
                                              {:catalogue-item/id cat-2}
                                              {:catalogue-item/id cat-without-form}
+                                             {:catalogue-item/id cat-with-children}
                                              {:form/id shared-form}
                                              {:form/id wf-form}
                                              {:form/id cat-form}
                                              {:form/id unused-form}
                                              {:resource/id res-1}
                                              {:resource/id res-2}
+                                             {:resource/id res-3}
                                              {:license/id shared-license}
                                              {:license/id shared-resource-license}
                                              {:license/id resource-license}
@@ -145,5 +165,6 @@
                                              {:workflow/id wf-1}
                                              {:workflow/id wf-2}}
               {:category/id category-1} #{{:catalogue-item/id cat-1}
-                                          {:category/id category-2}}}
+                                          {:category/id category-2}}
+              {:catalogue-item/id cat-2} #{{:catalogue-item/id cat-with-children}}}
              (:dependents dep-graph))))))
