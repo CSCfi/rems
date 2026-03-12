@@ -53,7 +53,7 @@
                  [org.clojure/core.memoize "1.2.281"]
                  [org.clojure/data.csv "1.1.1"]
                  [org.clojure/data.xml "0.0.8"]
-                 [org.clojure/tools.cli "1.3.250"]
+                 [org.clojure/tools.cli "1.4.256"]
                  [org.clojure/tools.logging "1.3.1"]
                  [org.postgresql/postgresql "42.7.10"]
                  ^{:antq/exclude "2"} [org.webjars.bower/tether "1.4.7"] ; doesn't work with "2.0.0-beta.5", error serving the file
