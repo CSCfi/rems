@@ -80,7 +80,7 @@
                          ^{:required-by "luminus-jetty"} [info.sunng/ring-jetty9-adapter "0.39.2"]
                          ^{:required-by "clj-time"} [joda-time "2.14.1"]
                          ^{:required-by "ring-webjars"} [org.apache.commons/commons-lang3 "3.20.0"]
-                         ^{:required-by "clj-pdf"} [org.apache.xmlgraphics/xmlgraphics-commons "2.9"]
+                         ^{:required-by "clj-pdf"} [org.apache.xmlgraphics/xmlgraphics-commons "2.11"]
                          ^{:required-by "buddy-core"} [org.bouncycastle/bcpkix-jdk18on "1.83"]
                          ^{:required-by "buddy-core"} [org.bouncycastle/bcprov-jdk18on "1.83"]
                          ^{:required-by "tempura"} [org.clojure/tools.reader "1.6.0"]
