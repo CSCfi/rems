@@ -43,7 +43,7 @@
           (is (= {:type :sci/error
                   :line 9
                   :column 4
-                  :message "Could not resolve symbol: invalid"
+                  :message "Unable to resolve symbol: invalid"
                   :file nil
                   :phase "analysis"}
                  (dissoc (ex-data e) :sci.impl/callstack))

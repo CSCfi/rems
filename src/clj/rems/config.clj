@@ -15,12 +15,7 @@
            [org.joda.time Period]))
 
 (defn load-config [& args]
-  ;; XXX: workaround for JVM 25 for cprop until fix is released https://github.com/tolitius/cprop/issues/60
-  (let [expand-home cprop.tools/expand-home]
-    (with-redefs [cprop.tools/expand-home #(if (empty? %)
-                                             nil
-                                             (expand-home %))]
-      (apply cprop.core/load-config args))))
+  (apply cprop.core/load-config args))
 
 (defn- file-sibling [file sibling-name]
   (.getPath (io/file (.getParentFile (io/file file))
