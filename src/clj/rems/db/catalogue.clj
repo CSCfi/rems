@@ -119,8 +119,7 @@
 
 (defn- localize-catalogue-item [item]
   (let [localizations (cache/lookup-or-miss! catalogue-item-localizations-cache (:id item))]
-    (-> item
-        (assoc-some :localizations localizations))))
+    (assoc-some item :localizations localizations)))
 
 (defn get-catalogue-items []
   (->> (vals (cache/entries! catalogue-item-cache))
