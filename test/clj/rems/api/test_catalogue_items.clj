@@ -168,7 +168,10 @@
                                                   :resid (test-helpers/create-resource!
                                                           {:resource-ext-id "urn:4321"
                                                            :organization (:organization default-body)})}))]
-        (is (str/includes? parent "Cannot create catalogue item with non-existent children"))))
+        (is (not (:success parent)))
+        (is (= [{:catalogue-items [{:catalogue-item/id Integer/MIN_VALUE}]
+                 :type "t.administration.errors/dependencies-not-found"}]
+               (:errors parent)))))
 
     (testing "create with children, different workflows"
       (let [child (create-catalogue-item "owner" default-body)
@@ -180,8 +183,10 @@
                                                   :resid (test-helpers/create-resource!
                                                           {:resource-ext-id "urn:4321"
                                                            :organization (:organization default-body)})}))]
-        (is (nil? (:success parent)))
-        (is (str/includes? parent "Cannot assign catalogue item children with different workflows"))))
+        (is (not (:success parent)))
+        (is (= [{:catalogue-items [{:catalogue-item/id (:id child)}]
+                 :type "t.administration.errors/unbundlable-workflow-id"}]
+               (:errors parent)))))
 
     (testing "create with children that already have children"
       (let [child (create-catalogue-item "owner" default-body)
@@ -195,12 +200,14 @@
                                                                :resid (test-helpers/create-resource!
                                                                        {:resource-ext-id "urn:2345"
                                                                         :organization (:organization default-body)})}))]
-        (is (nil? (:success grandparent)) "not permitted")
-        (is (str/includes? grandparent "Cannot create multi-level parent-child hierarchy"))))
+        (is (not (:success grandparent)) "not permitted")
+        (is (= [{:catalogue-items [{:catalogue-item/id (:id parent)}]
+                 :type "t.administration.errors/multi-level-hierarchy-disallowed"}]
+               (:errors grandparent)))))
 
     (testing "create with children, many parents, one child"
       (let [child (create-catalogue-item "owner" default-body)
-            _parent-1 (create-catalogue-item "owner"
+            parent-1 (create-catalogue-item "owner"
                                              (merge default-body
                                                     {:children [{:catalogue-item/id (:id child)}]
                                                      :resid (test-helpers/create-resource!
@@ -212,7 +219,9 @@
                                                     :resid (test-helpers/create-resource!
                                                             {:resource-ext-id "urn:5432"
                                                              :organization (:organization default-body)})}))]
-        (is (nil? (:success parent-2)) "not permitted")))
+        (is (not (:success parent-2)) "not permitted")
+        (is (= [{:catalogue-items [{:catalogue-item/id (:id parent-1)}], :type "t.administration.errors/in-use-by"}]
+               (:errors parent-2)))))
 
     (testing "create with children that are archived or not enabled"
       (let [child-1 (create-catalogue-item "owner" (merge default-body {:archived true}))
@@ -481,11 +490,14 @@
                                                                  :resid res-1
                                                                  :organization org
                                                                  :localizations {}
-                                                                 :wfid (test-helpers/create-workflow! org)})]
-                (is (= "Cannot assign catalogue item children with different workflows"
-                       (edit-catalogue-item owner {:id (:id parent)
-                                                   :localizations {}
-                                                   :children [{:catalogue-item/id (:id child-different-wfid)}]})))))
+                                                                 :wfid (test-helpers/create-workflow! org)})
+                    edit-response (edit-catalogue-item owner {:id (:id parent)
+                                                              :localizations {}
+                                                              :children [{:catalogue-item/id (:id child-different-wfid)}]})]
+                (is (not (:success edit-response)))
+                (is (= [{:catalogue-items [{:catalogue-item/id (:id child-different-wfid)}]
+                         :type "t.administration.errors/unbundlable-workflow-id"}]
+                       (:errors edit-response)))))
 
             (testing "with incorrect organization"
               (let [cat-item-org-1 (create-catalogue-item owner
