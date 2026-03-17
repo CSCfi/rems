@@ -1,8 +1,7 @@
 (ns rems.service.catalogue
-  (:require [clojure.set]
+  (:require [clojure.set :as set]
             [clojure.test :refer [deftest testing is]]
             [medley.core :refer [assoc-some remove-vals update-existing]]
-            [rems.auth.util :refer [throw-forbidden]]
             [rems.common.roles :as roles]
             [rems.common.util :refer [apply-filters build-dags]]
             [rems.db.applications]
@@ -16,54 +15,71 @@
             [rems.service.util :as util]))
 
 
-(defn validate-children! [{children :children wfid :wfid parent-id :id}]
+(defn- invalid-items->error
+  "Create error response from `invalid-catalogue-items`, of type `error-type`"
+  [invalid-catalogue-items error-type]
+  (when-let [items (seq invalid-catalogue-items)]
+    {:success false
+     :errors [{:catalogue-items items
+               :type error-type}]}))
+
+(defn validate-children! [{children :children, parent-wfid :wfid, parent-id :id, :as _command}]
   (when (seq children)
-    (let [child-catalogue-items (sequence (comp (map :catalogue-item/id)
+    (let [->catalogue-item-id (comp (partial hash-map :catalogue-item/id) :id)
+          child-catalogue-items (sequence (comp (map :catalogue-item/id)
                                                 (map rems.db.catalogue/get-catalogue-item))
                                           children)]
-      (when (some nil? child-catalogue-items)
-        (throw-forbidden "Cannot create catalogue item with non-existent children"))
+      (or (invalid-items->error (->> child-catalogue-items
+                                     (into #{} (map ->catalogue-item-id))
+                                     (set/difference (set children)))
+                                :t.administration.errors/dependencies-not-found)
 
-      (when (some :children child-catalogue-items)
-        (throw-forbidden "Cannot create multi-level parent-child hierarchy"))
+          (dorun (map (fn [{:keys [organization]}]
+                        (util/check-allowed-organization! organization))
+                      child-catalogue-items))
 
-      (when (some (comp #{parent-id} :id) child-catalogue-items)
-        (throw-forbidden "Cannot create circular hierarchy"))
+          (invalid-items->error (eduction (filter :children)
+                                          (map ->catalogue-item-id)
+                                          child-catalogue-items)
+                                :t.administration.errors/multi-level-hierarchy-disallowed)
 
-      (when (some (comp not #{wfid} :wfid) child-catalogue-items)
-        (throw-forbidden "Cannot assign catalogue item children with different workflows"))
 
-      (doall (map (fn [{:keys [organization]}]
-                    (util/check-allowed-organization! organization))
-                  child-catalogue-items))
+          (invalid-items->error (eduction (filter (comp #{parent-id} :id))
+                                          (map ->catalogue-item-id)
+                                          child-catalogue-items)
+                                :t.administration.errors/self-as-child-catalogue-item-disallowed)
 
-      (when (seq (eduction (mapcat dependencies/get-all-dependents)
-                           (filter :catalogue-item/id)
-                           (remove (comp #{parent-id} :catalogue-item/id))
-                           children))
-        (throw-forbidden "Cannot assign child item that already has a parent item")))))
+          (invalid-items->error (eduction (filter (comp not #{parent-wfid} :wfid))
+                                          (map ->catalogue-item-id)
+                                          child-catalogue-items)
+                                :t.administration.errors/unbundlable-workflow-id)
 
-(deftest test-validate-children
-  (testing "todo"
-    (is true)))
+          (invalid-items->error (eduction (mapcat dependencies/get-all-dependents)
+                                          (filter :catalogue-item/id)
+                                          (remove (comp #{parent-id} :catalogue-item/id))
+                                          children)
+                                :t.administration.errors/in-use-by)))))
+
 
 (defn create-catalogue-item! [{:keys [archived categories children enabled form localizations organization resid start wfid] :as command}]
   (util/check-allowed-organization! organization)
-  (validate-children! command)
 
-  (let [id (rems.db.catalogue/create-catalogue-item!
-            (-> {:organization-id (:organization/id organization "default")}
-                (assoc-some :archived archived
-                            :categories categories
-                            :children children
-                            :enabled enabled
-                            :form-id form
-                            :localizations localizations
-                            :resource-id resid
-                            :start start
-                            :workflow-id wfid)))]
-    {:success true
-     :id id}))
+  (or
+   (validate-children! command)
+
+   (let [id (rems.db.catalogue/create-catalogue-item!
+             (-> {:organization-id (:organization/id organization "default")}
+                 (assoc-some :archived archived
+                             :categories categories
+                             :children children
+                             :enabled enabled
+                             :form-id form
+                             :localizations localizations
+                             :resource-id resid
+                             :start start
+                             :workflow-id wfid)))]
+     {:success true
+      :id id})))
 
 (defn- join-dependencies [item & [opts]]
   (let [join-organization? (:join-organization? opts true)
@@ -156,17 +172,19 @@
 (defn edit-catalogue-item! [{:keys [id localizations organization categories children] :as command}]
   (let [target-item (get-catalogue-item id)]
     (util/check-allowed-organization! (:organization target-item))
-    (validate-children! (merge command {:wfid (:wfid target-item)})))
 
-  (when (:organization/id organization)
-    (util/check-allowed-organization! organization))
+    (when (:organization/id organization)
+      (util/check-allowed-organization! organization))
 
-  (rems.db.catalogue/edit-catalogue-item! id {:categories categories
-                                              :children children
-                                              :localizations localizations
-                                              :organization-id (:organization/id organization)})
-  (rems.db.applications/reload-applications! {:by-catalogue-item-ids [id]})
-  {:success true})
+    (or
+     (validate-children! (merge command {:wfid (:wfid target-item)}))
+     (do
+       (rems.db.catalogue/edit-catalogue-item! id {:categories categories
+                                                   :children children
+                                                   :localizations localizations
+                                                   :organization-id (:organization/id organization)})
+       (rems.db.applications/reload-applications! {:by-catalogue-item-ids [id]})
+       {:success true}))))
 
 (defn set-catalogue-item-enabled! [{:keys [id enabled]}]
   (check-allowed-to-edit! id)
