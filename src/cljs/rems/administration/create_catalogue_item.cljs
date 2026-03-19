@@ -27,6 +27,7 @@
  (fn [{:keys [db]} [_ catalogue-item-id]]
    {:db (assoc db
                ::form nil
+               ::catalogue-item nil
                ::catalogue-item-id catalogue-item-id
                ::editing? (some? catalogue-item-id))
     :dispatch-n [[::workflows {:disabled true :archived true}]
@@ -159,20 +160,26 @@
                                                                   :on-success #(rf/dispatch [::update-loading!])})
 (fetcher/reg-fetcher ::categories "/api/categories")
 
+(defn filter-possible-child-items [{:keys [id wfid] :as selected-catalogue-item} catalogue]
+  (let [xform (comp (filter roles/can-modify-organization-item?)
+                    (remove :archived)
+                    (remove :children)
+                    (filter (some-fn (comp #{id} :catalogue-item/id :part-of)
+                                     (complement :part-of))))]
+    (into []
+          (cond-> xform
+            selected-catalogue-item
+            (comp (remove (comp #{id} :id))
+                  (filter (comp #{wfid} :wfid))))
+          catalogue)))
+
 (rf/reg-sub
  ::possible-child-items
  (fn [_ _]
    [(rf/subscribe [::catalogue-item])
     (rf/subscribe [:rems.administration.catalogue-items/catalogue])])
  (fn [[selected-catalogue-item catalogue :as _db] _]
-   (let [xform (comp (filter roles/can-modify-organization-item?)
-                     (remove :archived)
-                     (map #(set/rename-keys % {:id :catalogue-item/id})))]
-     (into []
-           (cond->> xform
-             (some? selected-catalogue-item)
-             (comp (filter #(= (:wfid %) (:wfid selected-catalogue-item)))))
-           catalogue))))
+   (filter-possible-child-items selected-catalogue-item catalogue)))
 
 ;;;; UI
 
@@ -320,7 +327,6 @@
 
 (defn- catalogue-item-children-field []
   (let [items @(rf/subscribe [::possible-child-items])
-        catalogue-item-id @(rf/subscribe [::catalogue-item-id])
         parent-item @(rf/subscribe [::catalogue-item-parent])
         selected-hierarchy (set (mapv :catalogue-item/id @(rf/subscribe [::selected-catalogue-item-children])))
         item-selected? #(contains? selected-hierarchy (:catalogue-item/id %))
@@ -334,7 +340,7 @@
        [dropdown/dropdown
         {:id catalogue-item-children-dropdown-id
          :items (->> items
-                     (remove (comp #{catalogue-item-id} :catalogue-item/id))
+                     (map #(set/rename-keys % {:id :catalogue-item/id}))
                      (mapv format-label))
          :multi? true
          :item-key :catalogue-item/id
