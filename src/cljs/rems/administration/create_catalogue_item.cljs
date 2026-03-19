@@ -313,43 +313,41 @@
        :placeholder (text :t.administration/no-categories)
        :on-change (fn [items] (rf/dispatch [::set-selected-categories (mapv #(dissoc % ::label) items)]))}]]))
 
-(defn- catalogue-item-parent-field []
-  (let [selected-parent-id (:catalogue-item/id  @(rf/subscribe [::catalogue-item-parent]))]
-    (when selected-parent-id
-      [:div.form-group
-       [:label.administration-field-label {:for catalogue-item-parent-id} (text :t.administration/catalogue-item-hierarchy-parent)]
-       [:div
-        [atoms/link
-         {:href (str "/administration/catalogue-items/" selected-parent-id)
-          :target :_blank
-          :label selected-parent-id
-          :id catalogue-item-parent-id}]]])))
+(defn- catalogue-item-parent-field [{parent-id :catalogue-item/id}]
+  [:div.form-group
+   [:label.administration-field-label {:for catalogue-item-parent-id} (text :t.administration/catalogue-item-hierarchy-parent)]
+   [:div
+    [atoms/link
+     {:href (str "/administration/catalogue-items/" parent-id)
+      :target :_blank
+      :label parent-id
+      :id catalogue-item-parent-id}]]])
 
 (defn- catalogue-item-children-field []
-  (let [items @(rf/subscribe [::possible-child-items])
-        parent-item @(rf/subscribe [::catalogue-item-parent])
-        selected-hierarchy (set (mapv :catalogue-item/id @(rf/subscribe [::selected-catalogue-item-children])))
-        item-selected? #(contains? selected-hierarchy (:catalogue-item/id %))
-        format-label (fn [item]
-                       (assoc item
-                              ::label
-                              (str (or (get-localized-title item) (:catalogue-item/id item)))))]
-    (when-not parent-item
-      [:div.form-group
-       [:label.administration-field-label {:for catalogue-item-children-dropdown-id} (text :t.administration/catalogue-item-hierarchy-children)]
-       [dropdown/dropdown
-        {:id catalogue-item-children-dropdown-id
-         :items (->> items
-                     (map #(set/rename-keys % {:id :catalogue-item/id}))
-                     (mapv format-label))
-         :multi? true
-         :item-key :catalogue-item/id
-         :item-label ::label
-         :item-selected? item-selected?
-         :clearable? false
-         :placeholder (text :t.administration/catalogue-item-hierarchy-no-child-items)
-         :on-change (fn [items]
-                      (rf/dispatch [::set-catalogue-hierarchy (mapv #(dissoc % ::label) items)]))}]])))
+  (let [dropdown-items (into [] (comp (map #(set/rename-keys % {:id :catalogue-item/id}))
+                                   (map #(assoc % ::label (str (or (get-localized-title %)
+                                                                   (:catalogue-item/id %))))))
+                             @(rf/subscribe [::possible-child-items]))
+        item-selected? (comp (into #{} (map :catalogue-item/id) @(rf/subscribe [::selected-catalogue-item-children]))
+                             :catalogue-item/id)]
+    [:div.form-group
+     [:label.administration-field-label {:for catalogue-item-children-dropdown-id} (text :t.administration/catalogue-item-hierarchy-children)]
+
+     [collapsible/info-toggle-control {:aria-label (str (text :t.create-form/collapse-aria-label)
+                                                        (text :t.administration/catalogue-item-hierarchy-children))
+                                       :collapsible-id (str catalogue-item-children-dropdown-id "-collapsible")}]
+     [collapsible/minimal {:id (str catalogue-item-children-dropdown-id "-collapsible")
+                           :collapse (text :t.administration/catalogue-item-hierarchy-children)}]
+     [dropdown/dropdown
+      {:id catalogue-item-children-dropdown-id
+       :items dropdown-items
+       :multi? true
+       :item-key :catalogue-item/id
+       :item-label ::label
+       :item-selected? item-selected?
+       :clearable? false
+       :placeholder (text :t.administration/catalogue-item-hierarchy-no-child-items)
+       :on-change (fn [items] (rf/dispatch [::set-catalogue-hierarchy (mapv #(dissoc % ::label) items)]))}]]))
 
 (defn- cancel-button [catalogue-item-id]
   [atoms/link {:id :cancel
@@ -373,6 +371,7 @@
 (defn create-catalogue-item-page []
   (let [editing? @(rf/subscribe [::editing?])
         catalogue-item-id (when editing? @(rf/subscribe [::catalogue-item-id]))
+        parent-item @(rf/subscribe [::catalogue-item-parent])
         loading? (or @(rf/subscribe [::workflows :fetching?])
                      @(rf/subscribe [::resources :fetching?])
                      @(rf/subscribe [::forms :fetching?])
@@ -397,8 +396,9 @@
                    [catalogue-item-resource-field]
                    [catalogue-item-form-field]
                    [catalogue-item-categories-field]
-                   [catalogue-item-parent-field]
-                   [catalogue-item-children-field]
+                   (if parent-item
+                     [catalogue-item-parent-field parent-item]
+                     [catalogue-item-children-field])
 
                    [:div.col.commands
                     [cancel-button catalogue-item-id]
