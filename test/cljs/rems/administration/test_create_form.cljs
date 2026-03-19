@@ -1,16 +1,13 @@
 (ns rems.administration.test-create-form
   (:require [clojure.test :refer [deftest is testing use-fixtures]]
             [re-frame.core :as rf]
-            [reagent.core :as r]
             [rems.administration.create-form :refer [build-request build-request-field]]
             [rems.common.util :refer [getx-in]]
             [rems.globals]
-            [rems.testing :refer [init-spa-fixture]]))
+            [rems.testing :refer [init-spa-fixture set-roles! set-languages!]]))
 
 (use-fixtures :each init-spa-fixture)
 
-(defn- set-roles! [roles] (reset! rems.globals/roles roles))
-(defn- set-languages! [languages] (r/rswap! rems.globals/config assoc :languages languages))
 
 (defn- reset-form! [] (rf/dispatch-sync [:rems.administration.create-form/enter-page]))
 
@@ -123,7 +120,7 @@
             "after move 3")))))
 
 (deftest move-form-field-down-test
-  (reset! rems.globals/roles [:owner])
+  (set-roles! [:owner])
   (let [form (rf/subscribe [:rems.administration.create-form/form-data])]
     (testing "moves fields down"
       (reset-form!)
