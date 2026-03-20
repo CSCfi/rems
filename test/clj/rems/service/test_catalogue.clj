@@ -3,7 +3,7 @@
             [rems.db.catalogue]
             [rems.db.category]
             [rems.db.test-data-helpers :as test-helpers]
-            [rems.db.testing :refer [rollback-db-fixture test-db-fixture]]
+            [rems.db.testing :refer [rollback-db-fixture test-db-fixture owners-fixture]]
             [rems.service.catalogue]
             [rems.service.form]
             [rems.service.licenses]
@@ -12,8 +12,11 @@
             [rems.testing-util :refer [with-user]])
   (:import org.joda.time.DateTime))
 
-(use-fixtures :once test-db-fixture)
-(use-fixtures :each rollback-db-fixture)
+(use-fixtures
+  :each
+  test-db-fixture
+  rollback-db-fixture
+  owners-fixture)
 
 (def ^:private owner "owner")
 
@@ -33,8 +36,7 @@
   (select-keys (get-catalogue-item item-id) [:enabled :archived]))
 
 (deftest catalogue-item-enabled-archived-test
-  (let [_org (test-helpers/create-organization! {})
-        form-id (test-helpers/create-form! {:form/external-title {:en "form" :fi "form" :sv "form"}
+  (let [form-id (test-helpers/create-form! {:form/external-title {:en "form" :fi "form" :sv "form"}
                                             :form/internal-name "catalogue-item-enabled-archived-test-form"})
         lic-id (test-helpers/create-license! {})
         res-id (test-helpers/create-resource! {:resource-ext-id "ext" :license-ids [lic-id]})
@@ -179,8 +181,7 @@
       (is (:success (archive-catalogue-item! true))))))
 
 (deftest test-edit-catalogue-item
-  (let [_org (test-helpers/create-organization! {})
-        item-id (test-helpers/create-catalogue-item!
+  (let [item-id (test-helpers/create-catalogue-item!
                  {:title {:en "Old title"
                           :fi "Vanha nimi"}})
         old-item (first (get-catalogue-items))
@@ -198,7 +199,6 @@
 
 (deftest test-get-catalogue-items
   (let [owner "owner"
-        _org (test-helpers/create-organization! {})
         item-id (test-helpers/create-catalogue-item! {})]
 
     (testing "find all"
