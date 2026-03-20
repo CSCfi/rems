@@ -208,11 +208,11 @@
     (testing "create with children, many parents, one child"
       (let [child (create-catalogue-item "owner" default-body)
             parent-1 (create-catalogue-item "owner"
-                                             (merge default-body
-                                                    {:children [{:catalogue-item/id (:id child)}]
-                                                     :resid (test-helpers/create-resource!
-                                                             {:resource-ext-id "urn:2345"
-                                                              :organization (:organization default-body)})}))
+                                            (merge default-body
+                                                   {:children [{:catalogue-item/id (:id child)}]
+                                                    :resid (test-helpers/create-resource!
+                                                            {:resource-ext-id "urn:2345"
+                                                             :organization (:organization default-body)})}))
             parent-2 (create-catalogue-item "owner"
                                             (merge default-body
                                                    {:children [{:catalogue-item/id (:id child)}]
