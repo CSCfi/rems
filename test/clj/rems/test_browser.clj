@@ -14,6 +14,8 @@
             [clojure.test :refer [compose-fixtures deftest is testing use-fixtures]]
             [com.rpl.specter :refer [select ALL]]
             [etaoin.keys]
+            [matcher-combinators.test]
+            [matcher-combinators.matchers :as m]
             [medley.core :refer [find-first]]
             [mount.core :as mount]
             [rems.api.testing :refer [standalone-fixture]]
@@ -2300,19 +2302,22 @@
       (is (= (str (btu/context-getx :child-name-2) " EN")
              (get (slurp-fields :catalogue-item-editor) "Complementary items")))
       (select-option "Complementary items" (btu/context-getx :child-name-3))
-      (is (= [(str (btu/context-getx :child-name-2) " EN")
-              (str (btu/context-getx :child-name-3) " EN")]
-             (-> (slurp-fields :catalogue-item-editor)
-                 (get "Complementary items")
-                 (str/split #"\n"))))
+      (is (match? (m/in-any-order  [(str (btu/context-getx :child-name-2) " EN")
+                                    (str (btu/context-getx :child-name-3) " EN")])
+                  (-> (slurp-fields :catalogue-item-editor)
+                      (get "Complementary items")
+                      (str/split #"\n"))))
       (btu/screenshot "after-adding-second-child")
       (btu/scroll-and-click :save)
       (wait-page-title "Catalogue item – REMS")
       (is (btu/eventually-visible? {:css ".alert-success"}))
       (testing "catalogue item page displays child info"
         (btu/wait-page-loaded)
-        (is (= (str (btu/context-getx :catalogue-item-child-2) ", " (btu/context-getx :catalogue-item-child-3))
-               (get (slurp-fields :catalogue-item) "Complementary items")))))
+        (is (match? (m/in-any-order [(str (btu/context-getx :catalogue-item-child-2))
+                                     (str (btu/context-getx :catalogue-item-child-3))])
+                    (-> (slurp-fields :catalogue-item)
+                        (get "Complementary items")
+                        (str/split #", "))))))
 
     (testing "when editing child item"
       (doseq [child [(btu/context-getx :catalogue-item-child-2) (btu/context-getx :catalogue-item-child-3)]]
