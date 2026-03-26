@@ -1,6 +1,5 @@
 (ns rems.service.catalogue
   (:require [clojure.set :as set]
-            [clojure.test :refer [deftest testing is]]
             [medley.core :refer [assoc-some remove-vals update-existing]]
             [rems.common.roles :as roles]
             [rems.common.util :refer [apply-filters build-dags]]
