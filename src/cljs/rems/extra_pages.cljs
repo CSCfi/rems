@@ -2,6 +2,7 @@
   (:require [better-cond.core :as b]
             [markdown.core :as md]
             [medley.core :refer [find-first]]
+            [reagent.core :refer [unsafe-html]]
             [re-frame.core :as rf]
             [rems.atoms :refer [document-title] :as atoms]
             [rems.config]
@@ -60,7 +61,7 @@
        (rf/dispatch [:set-active-page :not-found])
 
        (some? page-content)
-       [:div.document {:dangerouslySetInnerHTML {:__html (md/md->html page-content)}}]
+       [:div.document {:dangerouslySetInnerHTML (unsafe-html (md/md->html page-content))}]
 
        (some? url) ; if no file content for this page exists, we can try URL
        [:div.m-3 [atoms/link nil url url]]

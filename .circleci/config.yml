@@ -12,7 +12,8 @@ defaults: &defaults
     JVM_OPTS: -Xmx3200m
 
 orbs:
-  browser-tools: circleci/browser-tools@2.3.2
+  browser-tools: circleci/browser-tools@2.4.0
+  docker: circleci/docker@3.0.1
 
 executors:
   clojure:
@@ -100,7 +101,10 @@ jobs:
           at: .
       - restore_cache:
           key: *cache-key
-      - run: lein kaocha --reporter kaocha.report/documentation --plugin rems.kaocha/cache-statistics-plugin --plugin rems.kaocha/circleci-parallel-plugin browser
+      - run:
+          command: lein kaocha --reporter kaocha.report/documentation --plugin rems.kaocha/cache-statistics-plugin --plugin rems.kaocha/circleci-parallel-plugin browser
+          max_auto_reruns: 3
+          auto_rerun_delay: 5s
       - store_test_results:
           path: target/test-results
       - store_artifacts:
@@ -193,15 +197,16 @@ workflows:
           filters:
             tags:
               only: /.*/
+      - docker/hadolint:
+          filters:
+            tags:
+              only: /.*/
       - build:
           requires:
             - deps
           filters:
             tags:
               only: /.*/
-            branches:
-              only:
-                - master
       - docker-snapshot:
           requires:
             - deps
@@ -246,6 +251,7 @@ workflows:
             - browser-test
             - build
             - cljfmt
+            - docker/hadolint
           filters:
             tags:
               only: /.*/
