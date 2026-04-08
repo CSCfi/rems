@@ -1,22 +1,22 @@
 (ns rems.catalogue
-  (:require [re-frame.core :as rf]
-            [reagent.core :as r]
+  (:require [medley.core :as m]
+            [re-frame.core :as rf]
             [reagent.format :as rfmt]
             [rems.application-list :as application-list]
-            [rems.common.application-util :refer [form-fields-editable?]]
-            [rems.atoms :as atoms :refer [external-link document-title document-title]]
+            [rems.atoms :as atoms :refer [document-title document-title external-link]]
             [rems.cart :as cart]
+            [rems.common.application-util :refer [form-fields-editable?]]
             [rems.common.catalogue-util :refer [catalogue-item-more-info-url]]
-            [rems.fetcher :as fetcher]
-            [rems.flash-message :as flash-message]
             [rems.common.roles :as roles]
             [rems.common.util :refer [andstr]]
             [rems.config]
+            [rems.fetcher :as fetcher]
+            [rems.flash-message :as flash-message]
             [rems.globals]
             [rems.spinner :as spinner]
             [rems.table :as table]
+            [rems.text :refer [get-localized-title localized text text-format]]
             [rems.tree :as tree]
-            [rems.text :refer [text text-format get-localized-title localized]]
             [rems.util :refer [get-dom-element]]))
 
 (rf/reg-event-fx
@@ -24,6 +24,8 @@
  (fn [{:keys [db]} _]
    {:db (dissoc db ::catalogue ::draft-applications)
     :dispatch-n [[:rems.table/reset]
+                 [::applications]
+                 [::entitlements]
                  (when @roles/logged-in?
                    [::draft-applications])
                  (when (:enable-catalogue-tree @rems.globals/config)
@@ -33,11 +35,11 @@
 
 (fetcher/reg-fetcher ::full-catalogue "/api/catalogue?join-organization=false")
 (fetcher/reg-fetcher ::full-catalogue-tree "/api/catalogue/tree?join-organization=false" {:result :roots})
+(fetcher/reg-fetcher ::entitlements "/api/entitlements")
 
 (rf/reg-sub
  ::catalogue
- (fn [_ _]
-   (rf/subscribe [::full-catalogue]))
+ :<- [::full-catalogue]
  (fn [catalogue _]
    (->> catalogue
         (filter :enabled)
@@ -47,6 +49,19 @@
   (filter form-fields-editable? applications))
 
 (fetcher/reg-fetcher ::draft-applications "/api/my-applications" {:result filter-drafts-only})
+
+(fetcher/reg-fetcher ::applications "/api/my-applications")
+
+(rf/reg-sub
+ ::entitlements->catalogue-item-ids
+ :<- [::entitlements] ;; testaa
+ :<- [::catalogue]
+ (fn [[entitlements catalogue] _]
+   (let [entitled-to-resources (into #{} (map :resource) entitlements)]
+     (into #{}
+           (comp (filter (comp entitled-to-resources :resid))
+                 (map :id))
+           catalogue))))
 
 ;;;; UI
 
@@ -77,16 +92,28 @@
     (some-> (get-dom-element selector)
             .click)))
 
-(defn- row-command [item cart-item-ids]
+
+;; testit:
+;;  ei mitään kärryssä
+;;   - add kielletty sub-itemille
+;;  ei mitään kärryssä, entitlement parentille
+;;   - add sallittu sub-itemille jonka parentille entitlement
+;;   - add kielletty muille sub-itemeille
+;;  kärryssä parent
+;;   - add sallittu sub-itemille
+;;  kärryssä parent ja sub-item
+;;   - remove kielletty parentille
+
+(defn- row-command [item cart-item-ids entitlements-catids]
   (cond
     (not (:enable-cart @rems.globals/config))
     [apply-button item]
 
     (contains? cart-item-ids (:id item))
-    [cart/remove-from-cart-button item]
+    [cart/remove-from-cart-button item (cart/disable-remove-from-cart-button? item cart-item-ids entitlements-catids)]
 
     :else
-    [cart/add-to-cart-button item]))
+    [cart/add-to-cart-button item (cart/disable-add-to-cart-button? item cart-item-ids entitlements-catids)]))
 
 (defn- perform-row-command [item cart-item-ids root-id]
   (when-not (:category/id item)
@@ -102,18 +129,18 @@
 
 (rf/reg-sub
  ::catalogue-table-rows
- (fn [_ _]
-   [(rf/subscribe [::catalogue])
-    (rf/subscribe [:rems.cart/cart])])
- (fn [[catalogue cart] _]
-   (let [cart-item-ids (set (mapv :id cart))]
+ :<- [::catalogue]
+ :<- [:rems.cart/cart]
+ :<- [::entitlements->catalogue-item-ids]
+ (fn [[catalogue cart item-ids-with-entitlement] _]
+   (let [cart-item-ids (set (mapv :id cart))] ; util
      (mapv (fn [item]
              {:key (:id item)
               :name {:value (get-localized-title item)}
               :commands {:display-value [:div.commands.flex-nowrap.justify-content-end
                                          [catalogue-item-more-info item]
                                          (when @roles/logged-in?
-                                           [row-command item cart-item-ids])]}})
+                                           [row-command item cart-item-ids item-ids-with-entitlement])]}})
            catalogue))))
 
 (defn draft-application-list []
@@ -142,8 +169,8 @@
 
 (defn- catalogue-tree []
   (let [cart @(rf/subscribe [:rems.cart/cart])
-        cart-item-ids (set (map :id cart))
-        get-row-details-id (fn [id] 
+        cart-item-ids (set (map :id cart)) ; util
+        get-row-details-id (fn [id]
                              (str (name ::catalogue-tree) "-" id "-details"))
         catalogue {:id ::catalogue-tree
                    :row-key #(or (some->> (:category/id %) (str "category_"))

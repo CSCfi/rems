@@ -77,3 +77,6 @@
                                          :fi
                                          {:enable-doi true}))
         "resource or item specific infourl overrides default")))
+
+(defn catalogue-items->ids [items]
+  (into #{} (map :id) items))

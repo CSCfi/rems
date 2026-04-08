@@ -181,6 +181,8 @@
                        :margin 0}
     [".cart-bundle:not(:last-child)" {:border-bottom [[(u/px 1) :solid (theme-getx :color1)]]}]
     [:td:before {:content "initial"}]
+    [:td.title.child {:text-indent (u/rem 1)
+                      :border-left "2px solid"}]
     [:th
      :td:before
      {:color "#000"}]

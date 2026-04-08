@@ -12,6 +12,16 @@
 (def ^:private action-form-id "change-resources")
 
 (rf/reg-event-fx
+ ::initialize
+ (fn [{:keys [db]} [_ initial-resources]]
+   (let [resources (into #{} (map :catalogue-item/id initial-resources))]
+     (cond-> {:db (assoc db
+                         ::initial-resources resources
+                         ::selected-resources resources)}
+       (not (:rems.catalogue/catalogue db))
+       (assoc :fx {:dispatch [:rems.catalogue/full-catalogue]})))))
+
+(rf/reg-event-fx
  ::open-form
  (fn
    [{:keys [db]} [_ initial-resources]]
@@ -22,6 +32,12 @@
      :dispatch-n (concat [[:rems.actions.components/set-comment action-form-id ""]]
                          (when-not (:rems.catalogue/catalogue db)
                            [[:rems.catalogue/full-catalogue]]))})))
+(rf/reg-event-fx
+ ::open-form2
+ (fn
+   [_ [_ initial-resources]]
+   {:dispatch-n [[::initialize initial-resources]
+                 [:rems.actions.components/set-comment action-form-id ""]]}))
 
 (rf/reg-sub
  ::catalogue
@@ -65,6 +81,10 @@
                          (on-finished)))
              :error-handler (flash-message/default-error-handler :change-resources description)}))
    {}))
+
+(defn parent-info []
+  (let [selected-resources @(rf/subscribe [::selected-resources])]
+    (mapv :part-of selected-resources)))
 
 (defn change-resources-action-button [initial-resources]
   [action-button {:id action-form-id

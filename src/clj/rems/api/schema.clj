@@ -106,6 +106,7 @@
    :catalogue-item/enabled s/Bool
    :catalogue-item/expired s/Bool
    :catalogue-item/archived s/Bool
+   (s/optional-key :catalogue-item/part-of) schema-base/CatalogueItemId
    (s/optional-key :resource/duo) {:duo/codes [schema-base/DuoCodeFull]}})
 
 (s/defschema V2License

@@ -15,7 +15,7 @@
             [rems.actions.assign-external-id :refer [assign-external-id-button assign-external-id-form]]
             [rems.actions.change-applicant :refer [change-applicant-action-button change-applicant-form]]
             [rems.actions.change-processing-state :refer [change-processing-state-action-button change-processing-state-form]]
-            [rems.actions.change-resources :refer [change-resources-action-button change-resources-form]]
+            [rems.actions.change-resources :refer [change-resources-action-button change-resources-form parent-info]]
             [rems.actions.close :refer [close-action-button close-form]]
             [rems.actions.components :refer [perform-action-button]]
             [rems.actions.decide :refer [decide-action-button decide-form]]
@@ -120,9 +120,9 @@
                     ::edit-application
                     ::duo-codes
                     ::autosaving))
-    :dispatch-n (if (:enable-duo @rems.globals/config)
-                  [[::fetch-application id true] [::duo-codes]]
-                  [[::fetch-application id true]])}))
+    :dispatch-n (cond-> [[::fetch-application id true]]
+                  (:enable-duo @rems.globals/config)
+                  (conj [::duo-codes]))}))
 
 (rf/reg-event-fx
  ::fetch-application
