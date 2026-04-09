@@ -14,9 +14,9 @@
                  [com.attendify/schema-refined "0.3.0-alpha5"]
                  [com.clojure-goes-fast/clj-async-profiler "1.7.0"] ; also check extra :jvm-opts https://github.com/clojure-goes-fast/clj-async-profiler?tab=readme-ov-file#tuning-for-better-accuracy
                  [com.clojure-goes-fast/clj-memory-meter "0.4.0"]
-                 [com.cognitect/transit-clj "1.1.347"]
+                 [com.cognitect/transit-clj "1.1.357"]
                  [com.draines/postal "2.0.5"]
-                 [com.fasterxml.jackson.datatype/jackson-datatype-joda "2.21.1"]
+                 [com.fasterxml.jackson.datatype/jackson-datatype-joda "2.21.2"]
                  ^{:antq/exclude "2"} [com.icegreen/greenmail "1.6.15"]
                  [com.nextjournal/beholder "1.0.3"]
                  [com.rpl/specter "1.1.6"]
@@ -25,7 +25,7 @@
                  [compojure "1.7.2"]
                  [cprop "0.1.21"]
                  [criterium "0.4.6"]
-                 [dev.weavejester/medley "1.9.0"]
+                 [dev.weavejester/medley "1.10.0"]
                  [etaoin "1.1.43"]
                  [garden "1.3.10"]
                  [hiccup "2.0.0"]
@@ -39,9 +39,9 @@
                  [macroz/tangle "0.2.2"]
                  [markdown-clj "1.12.7"]
                  [metosin/compojure-api "2.0.0-alpha33"]
-                 [metosin/jsonista "0.3.14"]
-                 [metosin/ring-swagger "1.0.0"]
-                 [metosin/ring-swagger-ui "5.31.0"]
+                 [metosin/jsonista "1.0.0"]
+                 [metosin/ring-swagger "1.1.0"]
+                 [metosin/ring-swagger-ui "5.32.1"]
                  [mount "0.1.23"]
                  [nano-id "1.1.0"]
                  [ns-tracker "1.0.0"]
@@ -104,7 +104,7 @@
   :main rems.main
   :migratus {:store :database :db ~(get (System/getenv) "DATABASE_URL" "postgresql://localhost/rems?user=rems")}
 
-  :plugins [[dev.weavejester/lein-cljfmt "0.16.1"]
+  :plugins [[dev.weavejester/lein-cljfmt "0.16.3"]
             [lein-shell "0.5.0"]
             [migratus-lein "0.7.3"]
             [com.github.liquidz/antq "RELEASE"]

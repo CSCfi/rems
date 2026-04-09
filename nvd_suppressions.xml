@@ -17,23 +17,19 @@
   <!-- Transitive dependency of metosin/ring-swagger. Other deps omitted for clarity.
        Ring-swagger uses metosin/scjsv for Swagger schema validation but we don't use
        the feature. The affected code path is behind `ring.swagger.validator/validate`.
- [metosin/ring-swagger "1.0.0"]
-   [metosin/scjsv "0.5.0"]
-     [com.github.java-json-tools/json-schema-validator "2.2.10"]
-       [com.github.java-json-tools/json-schema-core "1.2.10"]
-         [com.github.java-json-tools/jackson-coreutils "1.9"]
-           [com.google.guava/guava "16.0.1"]
-  -->
+ [metosin/ring-swagger "1.1.0"]
+   [metosin/scjsv "0.6.2"]
+     [com.github.java-json-tools/json-schema-validator "2.2.14"]
+       [com.google.guava/guava "28.2-android"] -->
+
   <suppress>
     <notes><![CDATA[
-    file name: guava-16.0.1.jar
+    file name: guava-28.2-android.jar
     ]]></notes>
     <packageUrl regex="true">^pkg:maven/com\.google\.guava/guava@.*$</packageUrl>
     <cpe>cpe:/a:google:guava</cpe>
    <vulnerabilityName>CVE-2023-2976</vulnerabilityName>
-   <vulnerabilityName>CVE-2018-10237</vulnerabilityName>
    <vulnerabilityName>CVE-2020-8908</vulnerabilityName>
   </suppress>
-  
-  
+
 </suppressions>
