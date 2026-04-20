@@ -40,7 +40,9 @@
            (when-let [id (:formid cat)]
              {:form/id id})
            (for [category (:categories cat)]
-             {:category/id (:category/id category)}))})
+             {:category/id (:category/id category)})
+           (for [children (:children cat)]
+             {:catalogue-item/id (:catalogue-item/id children)}))})
 
    (for [wf (rems.db.workflow/get-workflows)
          :let [forms (-> wf :workflow :forms)
@@ -99,6 +101,11 @@
          (build-index {:keys [(comp find-group keys)]
                        :value-fn format-dependency
                        :collect-fn conj}))))
+
+(defn get-all-dependents [item]
+  (into #{}
+        (remove :archived)
+        (dep/get-all-dependents (db-dependency-graph) item)))
 
 (defn- archive-errors
   "Return errors if given item is depended on by non-archived items"

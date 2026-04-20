@@ -118,7 +118,7 @@
           (recur (into (rest open) (parents node-id))
                  (conj closed node-id)))))))
 
-(deftest test-get-ancestors-of []
+(deftest test-get-ancestors-of
   (with-redefs [get-categories (constantly [{:category/id :a :category/children [{:category/id :b} {:category/id :d}]}
                                             {:category/id :b :category/children [{:category/id :c}]}
                                             {:category/id :c}

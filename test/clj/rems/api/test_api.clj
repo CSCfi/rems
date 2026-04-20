@@ -126,9 +126,9 @@
   (testing "a broken license without an organization"
     (let [license-id (rems.db.licenses/create-license! {:organization-id "does-not-exist"
                                                         :license-type "text"})
-          response (-> (api-response :get (str "/api/licenses/" license-id)
-                                     nil
-                                     "42" "owner"))]
+          response (api-response :get (str "/api/licenses/" license-id)
+                                 nil
+                                 "42" "owner")]
       (testing "returns a useful description of the problem"
         (is (= 503 (:status response)))
         (is (= {:errors [{:args ["does-not-exist"]
