@@ -6,11 +6,12 @@ have notable changes.
 
 ## Unreleased
 
-Changes since v2.39
+Changes since v2.39.1
+
+## v2.39.1 "Jätkäsaarenlaituri +1" 2026-04-23
 
 ### Additions
 
-- Added the `:external-frontend-url` configuration option. This is used to override the url in outbound emails for use cases where REMS is used in conjuction with an external frontend application.
 - Added a custom action button for approved applications. The button is defined in extra translations. (#3413)
 - Upgraded several libraries (#3421)
 
