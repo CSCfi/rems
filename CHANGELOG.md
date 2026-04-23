@@ -6,7 +6,9 @@ have notable changes.
 
 ## Unreleased
 
-Changes since v2.39
+Changes since v2.39.1
+
+## v2.39.1 "Jätkäsaarenlaituri +1" 2026-04-23
 
 ### Additions
 
