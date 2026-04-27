@@ -178,13 +178,15 @@ Running `lein antq` produces a list of outdated dependencies by looking at their
 
 [`lein ancient`] is also available, but the exclude metadata in `project.clj` is set up for `antq` so `ancient` will report these as outdated.
 
-Consider also installing `antq` as a (Clojure CLI tool)[https://github.com/liquidz/antq?tab=readme-ov-file#clojure-cli-tools-11111139-or-later] locally to be able to use the interactive upgrade dialogue and suppression metadata in `project.clj`. Upgrading deps interactively one by one is useful when running tests in between bumping versions.
+Consider also installing `antq` as a [Clojure CLI tool](https://github.com/liquidz/antq?tab=readme-ov-file#clojure-cli-tools-11111139-or-later) locally to be able to use the interactive upgrade dialogue and suppression metadata in `project.clj`. Upgrading deps interactively one by one is useful when running tests in between bumping versions.
 ```
 clojure -Ttools install-latest :lib com.github.liquidz/antq :as antq
 clojure -Tantq outdated :upgrade true
 ```
 
 Node.js dependencies can be inspected with `npm outdated` which looks for latest version, and `npm audit` which checks for outstanding vulnerabilities.
+
+When updating a library breaks something or needs to be handled later for another reason, create an issue with the tag [Technical Debt](https://github.com/orgs/CSCfi/projects/13/views/1?filterQuery=label%3A%22Technical+Debt%22). 
 
 [`lein unused-deps`](https://codeberg.org/technomancy/lein-unused-deps) can be used to find dependencies that aren't referred to in the code and could potentially be removed from `project.clj`.
 
