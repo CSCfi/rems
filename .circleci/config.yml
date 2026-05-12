@@ -39,7 +39,7 @@ jobs:
             # fallback to using the latest cache if no exact match is found
             - v4-dependencies-
       # shadow-build installs npm packages, builds shadow-cljs app and caches maven deps as well
-      - run: lein do deps, shadow-build
+      - run: lein do deps, shadow-release
       - save_cache:
           paths:
             - ~/.m2
