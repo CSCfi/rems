@@ -62,6 +62,8 @@ This supports live reload. Shadow-CLJS also exposes port 3100 for development.
 The API and the static files are all served from the port 3000.
 Shadow-CLJS has its own console in <http://localhost:9630>.
 
+The [re-frame-10x](https://github.com/day8/re-frame-10x) debugging panel is available when the application is not compiled in release mode.
+
 ### Editor setup
 
 You can also use e.g. Emacs with CIDER integration and `cider-jack-in-clj&cljs`. Calva and Cursive have also been used successfully. And we regularly use Linux and Mac for development. YMMV.
