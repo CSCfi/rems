@@ -89,8 +89,8 @@
 (def catalogue-item-cache
   (cache/basic {:id ::catalogue-item-cache
                 :miss-fn (fn [id]
-                           (if-let [cat (db/get-catalogue-item {:id id})]
-                             (parse-catalogue-item-raw cat)
+                           (if-let [item (db/get-catalogue-item {:id id})]
+                             (parse-catalogue-item-raw item)
                              cache/absent))
                 :reload-fn (fn []
                              (->> (db/get-all-catalogue-items)
