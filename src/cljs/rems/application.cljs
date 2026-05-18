@@ -1081,7 +1081,7 @@
         :title (text :t.form/actions)
         :always [:div
 
-                 (into [:div#action-commands] [pre-actions-info actions])
+                 (into [:div#action-commands] cat [pre-actions-info actions])
 
                  [:div#actions-forms.mt-3
                   [request-review-form app-id reload]
