@@ -1,17 +1,17 @@
 (ns rems.application.commands
-  (:require [clojure.test :refer [deftest is testing]]
+  (:require [clj-time.core :as time]
             [clojure.set]
+            [clojure.test :refer [deftest is testing]]
             [medley.core :refer [assoc-some distinct-by update-existing]]
             [rems.common.application-util :as application-util]
             [rems.common.form :as form]
-            [rems.common.util :refer [getx getx-in build-index]]
+            [rems.common.util :refer [build-index getx getx-in]]
             [rems.form-validation :as form-validation]
             [rems.permissions :as permissions]
             [rems.schema-base :as schema-base]
             [rems.util :refer [assert-ex try-catch-ex]]
             [schema-refined.core :as r]
-            [schema.core :as s]
-            [clj-time.core :as time])
+            [schema.core :as s])
   (:import [java.util UUID]
            [org.joda.time DateTime]))
 
@@ -248,7 +248,7 @@
     ;; we will make a conscious decision whether a submitted application
     ;; with that permission should be shown on the Actions page as
     ;; an "open application" or a "processed application".
-    (is (= (clojure.set/difference all-commands non-todo-commands)
+    (is (= (set/difference all-commands non-todo-commands)
            todo-commands)
         "seems like a new command has been added; is it a todo or handled todo?")))
 

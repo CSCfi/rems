@@ -58,7 +58,7 @@
         workflow-licenses (-> (rems.db.workflow/get-workflow (:wfid item))
                               (get-in [:workflow :licenses]))]
     (->> (concat resource-licenses workflow-licenses)
-         (map #(clojure.set/rename-keys % {:id :license/id}))
+         (map #(set/rename-keys % {:id :license/id}))
          (distinct-by :license/id)
          (into []))))
 

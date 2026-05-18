@@ -9,13 +9,13 @@
 
   NB: Don't use etaoin directly but use it from the `browser-test-util` library that removes the need to pass the driver."
   (:require [clj-http.client :as http]
+            [clojure.set :as set]
             [clojure.string :as str]
-            [clojure.set :refer [intersection]]
             [clojure.test :refer [compose-fixtures deftest is testing use-fixtures]]
-            [com.rpl.specter :refer [select ALL]]
+            [com.rpl.specter :refer [ALL select]]
             [etaoin.keys]
-            [matcher-combinators.test]
             [matcher-combinators.matchers :as m]
+            [matcher-combinators.test]
             [medley.core :refer [find-first]]
             [mount.core :as mount]
             [rems.api.testing :refer [standalone-fixture]]
@@ -24,9 +24,9 @@
             [rems.config]
             [rems.db.api-key]
             [rems.db.applications]
-            [rems.db.testing :refer [save-cache-statistics!]]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.db.test-data-users :as test-users]
+            [rems.db.testing :refer [save-cache-statistics!]]
             [rems.db.user-settings]
             [rems.handler]
             [rems.main]
@@ -38,7 +38,7 @@
             [rems.service.resource]
             [rems.service.test-data :as test-data]
             [rems.service.workflow]
-            [rems.testing-util :refer [with-user with-fake-login-users]]
+            [rems.testing-util :refer [with-fake-login-users with-user]]
             [rems.text :refer [localize-time text with-language]]))
 
 (comment ; convenience for development testing
@@ -3728,7 +3728,7 @@
         (is (btu/eventually-visible? :categories))
         (is (= #{(str (btu/context-getx :category-name) " Edited") (str (btu/context-getx :category-name) " Ancestor")}
                (->> (set (slurp-categories-by-title))
-                    (intersection #{(str (btu/context-getx :category-name) " Edited") (str (btu/context-getx :category-name) " Ancestor")})))))
+                    (set/intersection #{(str (btu/context-getx :category-name) " Edited") (str (btu/context-getx :category-name) " Ancestor")})))))
 
       (click-row-action [:categories]
                         {:fn/text (str (btu/context-getx :category-name) " Ancestor")}
@@ -3740,7 +3740,7 @@
       (is (btu/eventually-visible? :categories))
       (is (= #{(str (btu/context-getx :category-name) " Edited")}
              (->> (set (slurp-categories-by-title))
-                  (intersection #{(str (btu/context-getx :category-name) " Edited") (str (btu/context-getx :category-name) " Ancestor")})))))))
+                  (set/intersection #{(str (btu/context-getx :category-name) " Edited") (str (btu/context-getx :category-name) " Ancestor")})))))))
 
 (deftest test-catalogue-tree
   (btu/context-assoc! :category-name (str "Catalogue tree test parent category " (btu/get-seed) " (EN)"))

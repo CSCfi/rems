@@ -3,7 +3,7 @@
             [medley.core :refer [assoc-some update-existing]]
             [clojure.test :refer [deftest is]]
             [com.rpl.specter :refer [ALL must transform]]
-            [clojure.string]
+            [clojure.string :as str]
             [rems.service.attachment]
             [rems.service.catalogue]
             [rems.service.category]
@@ -300,7 +300,7 @@
                                                :multiselect (or multiselect
                                                                 (->> (:field/options field)
                                                                      (map :key)
-                                                                     (clojure.string/join " ")))
+                                                                     (str/join " ")))
                                                (or field-value "x"))})))))
 
 (defn fill-duo-codes! [{:keys [application-id actor duos] :as command}]
