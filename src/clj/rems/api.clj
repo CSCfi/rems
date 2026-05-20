@@ -23,6 +23,7 @@
             [rems.api.permissions :refer [permissions-api]]
             [rems.api.public :as public]
             [rems.api.resources :refer [resources-api]]
+            [rems.api.subscriptions :refer [subscriptions-api]]
             [rems.api.user-settings :refer [user-settings-api]]
             [rems.api.users :refer [users-api]]
             [rems.api.workflows :refer [workflows-api]]
@@ -135,6 +136,7 @@
   (not (or (contains? #{"/api/keepalive"
                         "/robots.txt"}
                       path)
+           (str/includes? path "/long-poll")
            (str/starts-with? path "/assets/")
            (str/starts-with? path "/font/")
            (str/starts-with? path "/js/")
@@ -146,7 +148,7 @@
            (str/ends-with? path ".woff2"))))
 
 (defn- read-only? [request]
-  (not (contains? #{:put :post} (:request-method request))))
+  (not (contains? #{:put :post :delete} (:request-method request))))
 
 ;; This should be run outside transaction-middleware since we want to
 ;; write even on GET queries. We're only running one insert statement
@@ -233,6 +235,7 @@
       organizations-api
       permissions-api
       resources-api
+      subscriptions-api
       user-settings-api
       users-api
       workflows-api

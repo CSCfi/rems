@@ -53,17 +53,17 @@
             [rems.common.git :as git]
             [rems.guide-page :refer [guide-page]]
             [rems.app-hooks]
-            [rems.keepalive :as keepalive]
+            [rems.keepalive]
             [rems.navbar :as nav]
             [rems.new-application :refer [new-application-page]]
             [rems.common.roles :as roles]
             [rems.profile :refer [profile-page missing-email-warning]]
+            [rems.subscription]
             [rems.text :refer [text text-format]]
             [rems.theme]
             [rems.user-settings]
             [rems.util :refer [fetch navigate! read-transit replace-url! set-location!]]
-            [secretary.core :as secretary])
-  (:import goog.history.Html5History))
+            [secretary.core :as secretary]))
 
 (defn- fetch-translations! []
   (fetch "/api/translations"
@@ -108,8 +108,10 @@
 
 (rf/reg-event-db
  :set-active-page
- (fn [db [_ page]]
-   (assoc db :page page)))
+ (fn [db [_ page params]]
+   (assoc db
+          :page page
+          :page-params params)))
 
 (rf/reg-event-db
  :set-error
@@ -386,7 +388,7 @@
 
 (secretary/defroute "/application/:id" {id :id}
   (rf/dispatch [:rems.application/enter-application-page id])
-  (rf/dispatch [:set-active-page :application]))
+  (rf/dispatch [:set-active-page :application {:application-id id}]))
 
 (secretary/defroute "/application" {{items :items} :query-params}
   (rf/dispatch [:rems.new-application/enter-new-application-page (cart/parse-items items)])
@@ -637,7 +639,8 @@
 (defn ^:export init []
   (version-info)
   (load-interceptors!)
-  (keepalive/register-keepalive-listeners!)
+  (rems.keepalive/register-keepalive-listeners!)
+  (rems.subscription/open-server-connection!)
   ;; see also: lazy-load-data! and dev-reload-button
   (hook-browser-navigation!))
 

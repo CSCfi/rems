@@ -288,6 +288,7 @@
                  :handlers "Handlers"
                  :id "Id"
                  :intro [:div.intro [:p "Fill out and submit the application. Several applicants can be invited as members of the application, and each applicant has to accept the terms of use to gain access."]]
+                 :is-editing "%1 is editing"
                  :last-activity "Last activity"
                  :latest-activity "Latest activity"
                  :my-applications "My Applications"
@@ -602,6 +603,8 @@
          :autosave-in-progress "Saving"
          :checkbox-checked "Yes"
          :checkbox-unchecked "No"
+         :clients "Users"
+         :clients-intro "Users currently viewing or editing the application:"
          :comment "Comment"
          :copy-as-new "Copy as a new application"
          :current-value "Current"

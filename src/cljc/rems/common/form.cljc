@@ -6,7 +6,7 @@
              [clojure.test :refer [deftest is testing]]
              [com.rpl.specter :refer [ALL transform]]
              [medley.core :refer [assoc-some find-first]]
-             [rems.common.util :refer [build-index parse-int remove-empty-keys]]))
+             [rems.common.util :refer [build-index nil-if-empty parse-int remove-empty-keys]]))
 
 ;;; Field values
 
@@ -370,10 +370,6 @@
                           (validate-visibility field fields)
                           (validate-not-present field :field/visibility))))})]
     (apply merge (map-indexed validate-field fields))))
-
-(defn- nil-if-empty [m]
-  (when-not (empty? m)
-    m))
 
 (defn- validate-form-name-fields [form languages]
   (-> (if (:form/title form)
