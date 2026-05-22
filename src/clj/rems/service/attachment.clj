@@ -3,7 +3,7 @@
             [clojure.set :as set]
             [clojure.tools.logging :as log]
             [medley.core :refer [find-first]]
-            [rems.application.commands :as commands]
+            [rems.application.schema :as application-schema]
             [rems.application.model :as model]
             [rems.auth.util :refer [throw-forbidden]]
             [rems.common.attachment-util :refer [allowed-extension? getx-filename]]
@@ -92,7 +92,7 @@
 (defn add-application-attachment [user-id application-id file]
   (b/cond
     :let [application (rems.db.applications/get-application-for-user user-id application-id)
-          can-save-attachment (some (set/union commands/commands-with-comments
+          can-save-attachment (some (set/union application-schema/commands-with-comments
                                                #{:application.command/save-draft})
                                     (:application/permissions application))]
     (not can-save-attachment)
