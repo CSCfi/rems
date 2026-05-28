@@ -70,6 +70,13 @@ You can also use e.g. Emacs with CIDER integration and `cider-jack-in-clj&cljs`.
 
 In whatever editor you decide, you should start in the development profile, i.e., in Emacs set `Cider Lein Parameters` to `with-profile +dev repl :headless`.
 
+Shadow-CLJS starts an nREPL server at port 7002 (see [../shadow-cljs.edn](shadow-cljs.edn) for details). With Cider, use `localhost` and the port `7002`, and a connection type `shadow`. You can configure a `.dir-locals.el` at the project root with the following content to set defaults for these connection parameters.
+```elisp
+((nil . ((cider-default-cljs-repl . shadow)
+         (cider-shadow-default-options . "app")
+         (cider-shadow-watched-builds . ("app")))))
+```
+
 ## Building an uberjar
 
 To build a deployable uberjar, run
@@ -189,6 +196,8 @@ clojure -Tantq outdated :upgrade true
 Node.js dependencies can be inspected with `npm outdated` which looks for latest version, and `npm audit` which checks for outstanding vulnerabilities.
 
 When updating a library breaks something or needs to be handled later for another reason, create an issue with the tag [Technical Debt](https://github.com/orgs/CSCfi/projects/13/views/1?filterQuery=label%3A%22Technical+Debt%22). 
+
+`npm ls <package-name>` and `npm explain <package-name>` can be used to check why a particular dependency is required.
 
 [`lein unused-deps`](https://codeberg.org/technomancy/lein-unused-deps) can be used to find dependencies that aren't referred to in the code and could potentially be removed from `project.clj`.
 
