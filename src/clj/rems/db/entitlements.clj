@@ -120,7 +120,8 @@
   "If the given application is approved, licenses accepted etc. add an entitlement to the db
   and call the entitlement REST callback (if defined). Likewise if a resource is removed, member left etc.
   then we end the entitlement and call the REST callback."
-  [application actor]
+  [application {actor :event/actor
+                event-time :event/time}]
   (let [application-id (:application/id application)
         current-members (set (map :userid (application-util/applicant-and-members application)))
         past-members (set (map :userid (:application/past-members application)))
@@ -155,5 +156,4 @@
       (doseq [[userid resource-ids] entitlements-to-add]
         (grant-entitlements! application-id userid resource-ids actor (:entitlement/end application)))
       (doseq [[userid resource-ids] entitlements-to-remove]
-        ;; TODO should get the time from the event
-        (revoke-entitlements! application-id userid resource-ids actor (time/now))))))
+        (revoke-entitlements! application-id userid resource-ids actor event-time)))))

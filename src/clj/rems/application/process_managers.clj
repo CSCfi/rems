@@ -69,7 +69,7 @@
                          :application.state/closed
                          :application.state/revoked}
                        (:application/state application))
-        (rems.db.entitlements/update-entitlements-for-application application (:event/actor event))))))
+        (rems.db.entitlements/update-entitlements-for-application application event)))))
 
 (defn update-entitlements-for-events [events]
   (doseq [event events]
