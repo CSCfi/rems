@@ -7,7 +7,6 @@
             [mount.core :as mount]
             [rems.common.application-util :as application-util]
             [rems.config :refer [env]]
-            [rems.db.applications]
             [rems.db.core :as db]
             [rems.db.outbox]
             [rems.ga4gh :as ga4gh]
@@ -117,7 +116,7 @@
               [userid (set (map :resourceid rows))]))
        (into {})))
 
-(defn- update-entitlements-for-application
+(defn update-entitlements-for-application
   "If the given application is approved, licenses accepted etc. add an entitlement to the db
   and call the entitlement REST callback (if defined). Likewise if a resource is removed, member left etc.
   then we end the entitlement and call the REST callback."
@@ -158,26 +157,3 @@
       (doseq [[userid resource-ids] entitlements-to-remove]
         ;; TODO should get the time from the event
         (revoke-entitlements! application-id userid resource-ids actor (time/now))))))
-
-(defn update-entitlements-for-event [event]
-  ;; performance improvement: filter events which may affect entitlements
-  (when (contains? #{:application.event/approved
-                     :application.event/closed
-                     :application.event/licenses-accepted
-                     :application.event/member-removed
-                     :application.event/resources-changed
-                     :application.event/revoked}
-                   (:event/type event))
-    (let [application (rems.db.applications/get-application-internal (:application/id event))]
-      ;; performance improvement 2: only need to check entitlements in the "end states"
-      (when (contains? #{:application.state/approved
-                         :application.state/closed
-                         :application.state/revoked}
-                       (:application/state application))
-        (update-entitlements-for-application application (:event/actor event))))))
-
-(defn update-entitlements-for-events [events]
-  (doseq [event events]
-    (update-entitlements-for-event event))
-  ;; this is used as a process manager, so return an explicit empty vector of commands
-  [])

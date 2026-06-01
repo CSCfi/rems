@@ -24,7 +24,7 @@
   (concat
    (process-managers/revokes-to-blacklist new-events)
    (email/generate-event-emails! new-events)
-   (rems.db.entitlements/update-entitlements-for-events new-events)
+   (process-managers/update-entitlements-for-events new-events)
    (rejecter-bot/run-rejecter-bot new-events)
    (approver-bot/run-approver-bot new-events)
    (bona-fide-bot/run-bona-fide-bot new-events)
