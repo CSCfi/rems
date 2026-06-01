@@ -1,5 +1,6 @@
 (ns rems.common.catalogue-util
-  (:require [clojure.string :as str]
+  (:require [clojure.set :as set]
+            [clojure.string :as str]
             [clojure.test :refer [deftest is testing]]))
 
 (defn- urn? [resid]
@@ -77,3 +78,25 @@
                                          :fi
                                          {:enable-doi true}))
         "resource or item specific infourl overrides default")))
+
+(defn catalogue-items->ids [items]
+  (into #{} (map :id) items))
+
+(def top-level-item-ids
+  (comp (keep :part-of)
+        (map :catalogue-item/id)))
+
+(defn missing-top-level-items [catalogue-items]
+  (let [top-level-items (into #{} top-level-item-ids catalogue-items)]
+    (set/difference top-level-items (catalogue-items->ids catalogue-items))))
+
+(deftest test-missing-top-level-items
+  (testing "with nothing missing"
+    (is (empty? (missing-top-level-items [{:id 1 :part-of {:catalogue-item/id 2}}
+                                          {:id 2}]))))
+  (testing "with a missing item"
+    (is (= #{10}
+           (missing-top-level-items [{:id 1 :part-of {:catalogue-item/id 2}}
+                                     {:id 2}
+                                     {:id 3 :part-of {:catalogue-item/id 10}}
+                                     {:id 4 :part-of {:catalogue-item/id 10}}])))))

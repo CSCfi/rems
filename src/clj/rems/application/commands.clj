@@ -7,6 +7,7 @@
             [rems.common.application-util :as application-util]
             [rems.common.form :as form]
             [rems.common.util :refer [build-index getx getx-in]]
+            [rems.db.entitlements]
             [rems.form-validation :as form-validation]
             [rems.permissions :as permissions]
             [rems.util :refer [assert-ex try-catch-ex]]
@@ -102,6 +103,22 @@
                  {:type :disabled-catalogue-item :catalogue-item-id (getx item :id)})]
     (when (seq errors)
       {:errors (vec errors)})))
+
+(defn- invalid-catalogue-item-hierarchy-error
+  "For such an item in `catalogue-item-ids` that has a parent (dependent), check that the parent item is also included in `catalogue-item-ids`, or `actor` has an entitlement to the parent item's resource."
+  [catalogue-item-ids actor {:keys [get-catalogue-item get-dependents get-entitlements]}]
+  (let [entitled-to-resids (into #{} (map :resourceid) (get-entitlements actor))
+        missing (into []
+                      (comp (mapcat (fn [id] (get-dependents {:catalogue-item/id id})))
+                            (map :catalogue-item/id)
+                            (remove (set catalogue-item-ids))
+                            (map get-catalogue-item)
+                            (filter (complement (comp entitled-to-resids :resource-id)))
+                            (map (fn [{:keys [id]}] {:catalogue-item/id id})))
+                      catalogue-item-ids)]
+    (when (seq missing)
+      {:errors [{:type :missing-top-level-item
+                 :top-level-item-ids missing}]})))
 
 (defn- licenses-not-accepted-error [application userid]
   (when-not (application-util/accepted-licenses? application userid)
@@ -240,6 +257,7 @@
   (or (must-not-be-empty cmd :catalogue-item-ids)
       (invalid-catalogue-items catalogue-item-ids injections)
       (unbundlable-catalogue-items catalogue-item-ids injections)
+      (invalid-catalogue-item-hierarchy-error catalogue-item-ids actor injections)
       (disabled-catalogue-items-error catalogue-item-ids injections)
       (let [workflow-id (-> (first catalogue-item-ids)
                             get-catalogue-item

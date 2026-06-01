@@ -157,3 +157,6 @@
         (grant-entitlements! application-id userid resource-ids actor (:entitlement/end application)))
       (doseq [[userid resource-ids] entitlements-to-remove]
         (revoke-entitlements! application-id userid resource-ids actor event-time)))))
+
+(defn get-entitlements [user-id]
+  (db/get-entitlements {:user user-id :active-at (time/now)}))

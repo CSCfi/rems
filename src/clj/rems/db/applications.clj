@@ -18,6 +18,7 @@
             [rems.db.blacklist]
             [rems.db.catalogue]
             [rems.db.core :as db]
+            [rems.db.entitlements]
             [rems.db.events]
             [rems.db.form]
             [rems.db.licenses]
@@ -25,7 +26,8 @@
             [rems.db.roles]
             [rems.db.users]
             [rems.db.workflow]
-            [rems.permissions :as permissions]))
+            [rems.permissions :as permissions]
+            [rems.service.dependencies]))
 
 ;;; Creating applications
 
@@ -73,6 +75,8 @@
    :get-form-template rems.db.form/get-form-template
    :get-catalogue-item rems.db.catalogue/get-catalogue-item
    :get-catalogue-item-licenses get-catalogue-item-licenses
+   :get-entitlements rems.db.entitlements/get-entitlements
+   :get-dependents rems.service.dependencies/get-all-dependents
    :get-config (fn [] env)
    :get-license rems.db.licenses/get-license
    :get-resource rems.db.resource/get-resource
