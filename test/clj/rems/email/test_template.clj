@@ -167,6 +167,20 @@
             :body "Dear Amber Assistant,\n\nAlice Applicant has submitted a new application 2001/3, \"Application title\" to access resource(s) en title 11, en title 21.\n\nYou can review the application at http://example.com/application/7"}
            (email-to "assistant" mails)))))
 
+(deftest test-external-frontend-url
+  (with-redefs [rems.config/env (assoc rems.config/env :external-frontend-url "http://external-frontend-url.com/")]
+    (let [mails (emails created-events submit-event)]
+      (is (= {:to-user "applicant"
+              :subject "Your application 2001/3, \"Application title\" has been submitted"
+              :body "Dear Alice Applicant,\n\nYour application 2001/3, \"Application title\" has been submitted. You will be notified by email when the application has been handled.\n\nYou can view the application at http://external-frontend-url.com/application/7"}
+             (email-to "applicant" mails))
+          "Emails sent to applicants should forward the applicant to the external frontend when this feature is enabled in config.edn.")
+      (is (= {:to-user "assistant"
+              :subject "(2001/3, \"Application title\") A new application has been submitted"
+              :body "Dear Amber Assistant,\n\nAlice Applicant has submitted a new application 2001/3, \"Application title\" to access resource(s) en title 11, en title 21.\n\nYou can review the application at http://example.com/application/7"}
+             (email-to "assistant" mails))
+          "Emails sent to reviewers should not be forwarded to the external frontend when this feature is enabled in config.edn."))))
+
 (deftest test-member-invited
   (is (= [{:to "somebody@example.com"
            :subject "Invitation to participate in application 2001/3, \"Application title\""

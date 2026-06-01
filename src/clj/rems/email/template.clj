@@ -14,14 +14,17 @@
 ;; TODO list of resources?
 ;; TODO use real name when addressing user?
 
-(defn base-url [] (or (not-empty (:external-frontend-url env)) (:public-url env)))
+(defn base-url [use-external-frontend-url]
+  (if use-external-frontend-url
+    (or (not-empty (:external-frontend-url env)) (:public-url env))
+    (:public-url env)))
 
 ;; move this to a util namespace if its needed somewhere else
-(defn- link-to-application [application-id]
-  (str (base-url) "application/" application-id))
+(defn- link-to-application [application-id use-external-frontend-url]
+  (str (base-url use-external-frontend-url) "application/" application-id))
 
-(defn- invitation-link [token]
-  (str (base-url) "accept-invitation?token=" token))
+(defn- invitation-link [token use-external-frontend-url] 
+  (str (base-url use-external-frontend-url) "accept-invitation?token=" token))
 
 (defn- format-application-for-email [application]
   (str
@@ -63,16 +66,19 @@
 (defmethod event-to-emails :default [_event _application]
   [])
 
-(defn- emails-to-recipients [recipients event application subject-text body-text]
+(defn- recipients-to-emails [recipients event application subject-text body-text]
   (vec
    (for [recipient recipients
          :let [email (with-language (:language (rems.db.user-settings/get-user-settings (:userid recipient)))
                        (when (and body-text
                                   (not (str/blank? (text-no-fallback body-text))))
                          (let [event (apply-event-privacy event application (:userid recipient))
+                               application-id (:application/id application) 
                                params {:applicant (application-util/get-applicant-name application)
                                        :application-id (format-application-for-email application)
-                                       :application-url (link-to-application (:application/id event))
+                                       :application-url (link-to-application 
+                                                         application-id
+                                                         (application-util/is-applying-user? application (:userid recipient)))
                                        :catalogue-items (resources-for-email application)
                                        :event-actor (localize-user (:event/actor-attributes event))
                                        :recipient (application-util/get-member-name recipient)}]
@@ -96,91 +102,91 @@
   (assert false "performance optimization, not called, no emails for saved"))
 
 (defmethod event-to-emails :application.event/approved [event application]
-  (concat (emails-to-recipients (application-util/applicant-and-members application)
+  (concat (recipients-to-emails (application-util/applicant-and-members application)
                                 event application
                                 :t.email.application-approved/subject-to-applicant
                                 :t.email.application-approved/message-to-applicant)
-          (emails-to-recipients (other-handlers event application)
+          (recipients-to-emails (other-handlers event application)
                                 event application
                                 :t.email.application-approved/subject-to-handler
                                 :t.email.application-approved/message-to-handler)))
 
 (defmethod event-to-emails :application.event/rejected [event application]
-  (concat (emails-to-recipients (application-util/applicant-and-members application)
+  (concat (recipients-to-emails (application-util/applicant-and-members application)
                                 event application
                                 :t.email.application-rejected/subject-to-applicant
                                 :t.email.application-rejected/message-to-applicant)
-          (emails-to-recipients (other-handlers event application)
+          (recipients-to-emails (other-handlers event application)
                                 event application
                                 :t.email.application-rejected/subject-to-handler
                                 :t.email.application-rejected/message-to-handler)))
 
 (defmethod event-to-emails :application.event/revoked [event application]
-  (concat (emails-to-recipients (application-util/applicant-and-members application)
+  (concat (recipients-to-emails (application-util/applicant-and-members application)
                                 event application
                                 :t.email.application-revoked/subject-to-applicant
                                 :t.email.application-revoked/message-to-applicant)
-          (emails-to-recipients (other-handlers event application)
+          (recipients-to-emails (other-handlers event application)
                                 event application
                                 :t.email.application-revoked/subject-to-handler
                                 :t.email.application-revoked/message-to-handler)))
 
 (defmethod event-to-emails :application.event/closed [event application]
-  (concat (emails-to-recipients (application-util/applicant-and-members application)
+  (concat (recipients-to-emails (application-util/applicant-and-members application)
                                 event application
                                 :t.email.application-closed/subject-to-applicant
                                 :t.email.application-closed/message-to-applicant)
-          (emails-to-recipients (other-handlers event application)
+          (recipients-to-emails (other-handlers event application)
                                 event application
                                 :t.email.application-closed/subject-to-handler
                                 :t.email.application-closed/message-to-handler)))
 
 (defmethod event-to-emails :application.event/returned [event application]
-  (concat (emails-to-recipients [(:application/applicant application)]
+  (concat (recipients-to-emails [(:application/applicant application)]
                                 event application
                                 :t.email.application-returned/subject-to-applicant
                                 :t.email.application-returned/message-to-applicant)
-          (emails-to-recipients (other-handlers event application)
+          (recipients-to-emails (other-handlers event application)
                                 event application
                                 :t.email.application-returned/subject-to-handler
                                 :t.email.application-returned/message-to-handler)))
 
 (defmethod event-to-emails :application.event/licenses-added [event application]
-  (emails-to-recipients (application-util/applicant-and-members application)
+  (recipients-to-emails (application-util/applicant-and-members application)
                         event application
                         :t.email.application-licenses-added/subject
                         :t.email.application-licenses-added/message))
 
 (defmethod event-to-emails :application.event/submitted [event application]
-  (concat (emails-to-recipients [(:application/applicant application)]
+  (concat (recipients-to-emails [(:application/applicant application)]
                                 event application
                                 :t.email.application-submitted/subject-to-applicant
                                 :t.email.application-submitted/message-to-applicant)
           (if (= (:event/time event)
                  (:application/first-submitted application))
-            (emails-to-recipients (handlers application)
+            (recipients-to-emails (handlers application)
                                   event application
                                   :t.email.application-submitted/subject-to-handler
                                   :t.email.application-submitted/message-to-handler)
-            (emails-to-recipients (handlers application)
+            (recipients-to-emails (handlers application)
                                   event application
                                   :t.email.application-resubmitted/subject-to-handler
                                   :t.email.application-resubmitted/message-to-handler))))
 
 (defmethod event-to-emails :application.event/review-requested [event application]
-  (emails-to-recipients (:application/reviewers event)
+  (recipients-to-emails (:application/reviewers event)
                         event application
                         :t.email.review-requested/subject
                         :t.email.review-requested/message))
 
 (defmethod event-to-emails :application.event/reviewed [event application]
-  (emails-to-recipients (handlers application)
+  (recipients-to-emails (handlers application)
                         event application
                         :t.email.reviewed/subject
                         :t.email.reviewed/message))
 
 (defmethod event-to-emails :application.event/remarked [event application]
-  (emails-to-recipients (concat (other-handlers event application)
+  (recipients-to-emails (concat (other-handlers event application)
                                 (when (:event/public event)
                                   ;; no need to email members on non-actionable things
                                   [(:application/applicant application)]))
@@ -189,20 +195,20 @@
                         :t.email.remarked/message))
 
 (defmethod event-to-emails :application.event/decided [event application]
-  (emails-to-recipients (handlers application)
+  (recipients-to-emails (handlers application)
                         event application
                         :t.email.decided/subject
                         :t.email.decided/message))
 
 (defmethod event-to-emails :application.event/decision-requested [event application]
-  (emails-to-recipients (:application/deciders event)
+  (recipients-to-emails (:application/deciders event)
                         event application
                         :t.email.decision-requested/subject
                         :t.email.decision-requested/message))
 
 (defmethod event-to-emails :application.event/member-added [event application]
   ;; TODO email to applicant? email to handler?
-  (emails-to-recipients [(:application/member event)]
+  (recipients-to-emails [(:application/member event)]
                         event application
                         :t.email.member-added/subject
                         :t.email.member-added/message))
@@ -212,7 +218,8 @@
     (let [invited-user (:application/member event)
           params {:applicant (application-util/get-applicant-name application)
                   :application-id (format-application-for-email application)
-                  :invitation-url (invitation-link (:invitation/token event))
+                  :invitation-url (invitation-link (:invitation/token event) 
+                                                   (application-util/is-applying-user? application (:userid invited-user)))
                   :recipient (application-util/get-member-name invited-user)}]
       [{:to (:email invited-user)
         :subject (text-format-map :t.email.member-invited/subject
@@ -229,7 +236,8 @@
   (let [invited-user (:application/reviewer event)
         params {:applicant (application-util/get-applicant-name application)
                 :application-id (format-application-for-email application)
-                :invitation-url (invitation-link (:invitation/token event))
+                :invitation-url (invitation-link (:invitation/token event) 
+                                                 (application-util/is-applying-user? application (:userid invited-user)))
                 :recipient (application-util/get-member-name invited-user)}]
     (with-language (:default-language env)
       [{:to (:email invited-user)
@@ -248,7 +256,8 @@
     (let [invited-user (:application/decider event)
           params {:applicant (application-util/get-applicant-name application)
                   :application-id (format-application-for-email application)
-                  :invitation-url (invitation-link (:invitation/token event))
+                  :invitation-url (invitation-link (:invitation/token event) 
+                                                   (application-util/is-applying-user? application (:userid invited-user)))
                   :recipient (application-util/get-member-name invited-user)}]
       [{:to (:email invited-user)
         :subject (text-format-map :t.email.decider-invited/subject
@@ -262,11 +271,11 @@
                (text :t.email/footer))}])))
 
 (defmethod event-to-emails :application.event/applicant-changed [event application]
-  (concat (emails-to-recipients (application-util/applicant-and-members application)
+  (concat (recipients-to-emails (application-util/applicant-and-members application)
                                 event application
                                 :t.email.applicant-changed/subject-to-member
                                 :t.email.applicant-changed/message-to-member)
-          (emails-to-recipients (other-handlers event application)
+          (recipients-to-emails (other-handlers event application)
                                 event application
                                 :t.email.applicant-changed/subject-to-handler
                                 :t.email.applicant-changed/message-to-handler)))
@@ -276,7 +285,9 @@
    (let [last-activity (:event/time (application-util/get-last-applying-user-event application))]
      (for [recipient (application-util/applicant-and-members application)
            :let [params {:application-id (format-application-for-email application)
-                         :application-url (link-to-application (:application/id event))
+                         :application-url (link-to-application 
+                                           (:application/id event)
+                                           (application-util/is-applying-user? application (:userid recipient)))
                          :expires-on (localize-utc-date (:application/expires-on event))
                          :last-activity (localize-utc-date last-activity)
                          :recipient (application-util/get-member-name recipient)}]]
@@ -303,7 +314,7 @@
                                      (text-format-map :t.email.handler-reminder/application
                                                       params
                                                       [:application-id :applicant]))
-            params {:actions-url (str (base-url) "actions")
+            params {:actions-url (str (base-url false) "actions")
                     :applications (str/join "\n" formatted-applications)
                     :recipient (application-util/get-member-name handler)}]
         {:to-user (:userid handler)
@@ -321,7 +332,7 @@
                                      (text-format-map :t.email.reviewer-reminder/application
                                                       params
                                                       [:application-id :applicant]))
-            params {:actions-url (str (base-url) "actions")
+            params {:actions-url (str (base-url false) "actions")
                     :applications (str/join "\n" formatted-applications)
                     :recipient (application-util/get-member-name reviewer)}]
         {:to-user (:userid reviewer)
@@ -334,7 +345,7 @@
   (with-language lang
     (when workflow
       (let [params {:invited-by (get-in invitation [:invitation/invited-by :name])
-                    :invitation-url (invitation-link (:invitation/token invitation))
+                    :invitation-url (invitation-link (:invitation/token invitation) false)
                     :recipient (:invitation/name invitation)
                     :workflow (:title workflow)}]
         {:to (:invitation/email invitation)
