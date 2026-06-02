@@ -822,6 +822,15 @@
                                                                                      :organization {:organization/id "hus"}
                                                                                      :actor owner
                                                                                      :license-ids [license2 extra-license attachment-license]})
+        res-hierarchy-top-level (test-helpers/create-resource! {:resource-ext-id "urn:nbn:fi:h-top-level"
+                                                                :organization {:organization/id "nbn"}
+                                                                :actor owner})
+        res-hierarchy-complementary-1 (test-helpers/create-resource! {:resource-ext-id "urn:nbn:fi:h-comp1"
+                                                                      :organization {:organization/id "nbn"}
+                                                                      :actor owner})
+        res-hierarchy-complementary-2 (test-helpers/create-resource! {:resource-ext-id "urn:nbn:fi:h-comp2"
+                                                                      :organization {:organization/id "nbn"}
+                                                                      :actor owner})
 
         workflows (create-workflows! (merge users +bot-users+))
         _ (rems.db.workflow/edit-workflow! {:id (:organization-owner workflows)
@@ -1049,6 +1058,38 @@
                                           :organization {:organization/id "organization1"}
                                           :workflow-id (:organization-owner workflows)
                                           :categories [special-category]})
+    (let [catid-1 (test-helpers/create-catalogue-item! {:actor owner
+                                                        :title {:en "Hierarchical item 2 (complementary)"
+                                                                :fi "Hierarkkinen aineisto 2 (liitännäinen)"
+                                                                :sv "Hierarkisk katalogpost 2 (undre)"}
+                                                        :infourl {:en "http://www.google.com"
+                                                                  :fi "http://www.google.fi"
+                                                                  :sv "http://www.google.se"}
+                                                        :resource-id res-hierarchy-complementary-1
+                                                        :organization {:organization/id "nbn"}
+                                                        :workflow-id (:master workflows)})
+          catid-2 (test-helpers/create-catalogue-item! {:actor owner
+                                                        :title {:en "Hierarchical item 3 (complementary)"
+                                                                :fi "Hierarkkinen aineisto 3 (liitännäinen)"
+                                                                :sv "Hierarkisk katalogpost 2 (undre)"}
+                                                        :infourl {:en "http://www.google.com"
+                                                                  :fi "http://www.google.fi"
+                                                                  :sv "http://www.google.se"}
+                                                        :resource-id res-hierarchy-complementary-2
+                                                        :organization {:organization/id "nbn"}
+                                                        :workflow-id (:master workflows)})]
+      (test-helpers/create-catalogue-item! {:actor owner
+                                            :title {:en "Hierarchical item 1 (top-level)"
+                                                    :fi "Hierarkkinen aineisto 1 (ylätaso)"
+                                                    :sv "Hierarkisk katalogpost 1 (övre)"}
+                                            :infourl {:en "http://www.google.com"
+                                                      :fi "http://www.google.fi"
+                                                      :sv "http://www.google.se"}
+                                            :resource-id res-hierarchy-top-level
+                                            :organization {:organization/id "nbn"}
+                                            :workflow-id (:master workflows)
+                                            :children [{:catalogue-item/id catid-1}
+                                                       {:catalogue-item/id catid-2}]}))
     ;; forms with public and private fields, and catalogue items and applications using them
     (let [applicant (users :applicant1)
           member (users :applicant2)
