@@ -23,7 +23,7 @@
 (defn- link-to-application [application-id use-external-frontend-url]
   (str (base-url use-external-frontend-url) "application/" application-id))
 
-(defn- invitation-link [token use-external-frontend-url] 
+(defn- invitation-link [token use-external-frontend-url]
   (str (base-url use-external-frontend-url) "accept-invitation?token=" token))
 
 (defn- format-application-for-email [application]
@@ -73,10 +73,10 @@
                        (when (and body-text
                                   (not (str/blank? (text-no-fallback body-text))))
                          (let [event (apply-event-privacy event application (:userid recipient))
-                               application-id (:application/id application) 
+                               application-id (:application/id application)
                                params {:applicant (application-util/get-applicant-name application)
                                        :application-id (format-application-for-email application)
-                                       :application-url (link-to-application 
+                                       :application-url (link-to-application
                                                          application-id
                                                          (application-util/is-applying-user? application (:userid recipient)))
                                        :catalogue-items (resources-for-email application)
@@ -218,7 +218,7 @@
     (let [invited-user (:application/member event)
           params {:applicant (application-util/get-applicant-name application)
                   :application-id (format-application-for-email application)
-                  :invitation-url (invitation-link (:invitation/token event) 
+                  :invitation-url (invitation-link (:invitation/token event)
                                                    (application-util/is-applying-user? application (:userid invited-user)))
                   :recipient (application-util/get-member-name invited-user)}]
       [{:to (:email invited-user)
@@ -236,7 +236,7 @@
   (let [invited-user (:application/reviewer event)
         params {:applicant (application-util/get-applicant-name application)
                 :application-id (format-application-for-email application)
-                :invitation-url (invitation-link (:invitation/token event) 
+                :invitation-url (invitation-link (:invitation/token event)
                                                  (application-util/is-applying-user? application (:userid invited-user)))
                 :recipient (application-util/get-member-name invited-user)}]
     (with-language (:default-language env)
@@ -256,7 +256,7 @@
     (let [invited-user (:application/decider event)
           params {:applicant (application-util/get-applicant-name application)
                   :application-id (format-application-for-email application)
-                  :invitation-url (invitation-link (:invitation/token event) 
+                  :invitation-url (invitation-link (:invitation/token event)
                                                    (application-util/is-applying-user? application (:userid invited-user)))
                   :recipient (application-util/get-member-name invited-user)}]
       [{:to (:email invited-user)
@@ -285,7 +285,7 @@
    (let [last-activity (:event/time (application-util/get-last-applying-user-event application))]
      (for [recipient (application-util/applicant-and-members application)
            :let [params {:application-id (format-application-for-email application)
-                         :application-url (link-to-application 
+                         :application-url (link-to-application
                                            (:application/id event)
                                            (application-util/is-applying-user? application (:userid recipient)))
                          :expires-on (localize-utc-date (:application/expires-on event))
