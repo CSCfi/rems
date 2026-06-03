@@ -753,6 +753,14 @@
              (api-call :post "/api/applications/create" {:catalogue-item-ids [cat-id]}
                        "42" user-id))))
 
+    (testing "can't create an application from catalogue items with different workflows"
+      (let [cat-id-a (test-helpers/create-catalogue-item! {}) ; test helper creates a workflow each time unless an id is specified
+            cat-id-b (test-helpers/create-catalogue-item! {})]
+        (is (= {:errors [{:type "unbundlable-catalogue-items"
+                          :catalogue-item-ids [cat-id-a cat-id-b]}]
+                :success false}
+               (api-call :post "/api/applications/create" {:catalogue-item-ids [cat-id-a cat-id-b]} api-key user-id)))))
+
     (testing "can't create an application of hierarchical catalogue items without top-level item"
       (let [wfid (test-helpers/create-workflow! {:title "hierarchy"})
             cat-id-child (test-helpers/create-catalogue-item! {:workflow-id wfid})
