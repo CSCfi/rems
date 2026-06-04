@@ -28,6 +28,18 @@
 (defn select-config-langs [m]
   (select-keys m (:languages rems.config/env)))
 
+(defn make-localized
+  "Wrap `title` into a map with the keys being the configured languages and values being `title` suffixed with the language name
+   ```clojure
+  (make-localized \"example\")
+  ;=> {:en \"example EN\", :fi \"example FI\", :sv \"example SV\"}
+   ```"
+  [title]
+  (reduce (fn [acc lang]
+            (assoc acc lang (str title " " (str/upper-case (name lang)))))
+          {}
+          (:languages rems.config/env)))
+
 ;;; helpers for generating test data
 
 (defn command! [command]
@@ -256,6 +268,14 @@
                       (assoc-some :children children))))]
     (assert (:success result) {:command command :result result})
     (:id result)))
+
+(defn edit-catalogue-item! [command]
+  (let [actor (or (:actor command) (create-owner!))
+        result (with-user actor
+                 (rems.service.catalogue/edit-catalogue-item! (dissoc command :actor)))]
+    (assert (:success result) {:command command :result result})
+    (:id result)))
+
 
 (defn create-application! [{:keys [catalogue-item-ids actor time]}]
   (:application-id (command! {:time (or time (time/now))

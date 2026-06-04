@@ -1,22 +1,21 @@
 (ns rems.catalogue
   (:require [re-frame.core :as rf]
-            [reagent.core :as r]
             [reagent.format :as rfmt]
             [rems.application-list :as application-list]
-            [rems.common.application-util :refer [form-fields-editable?]]
-            [rems.atoms :as atoms :refer [external-link document-title document-title]]
+            [rems.atoms :as atoms :refer [document-title document-title external-link]]
             [rems.cart :as cart]
-            [rems.common.catalogue-util :refer [catalogue-item-more-info-url]]
-            [rems.fetcher :as fetcher]
-            [rems.flash-message :as flash-message]
+            [rems.common.application-util :refer [form-fields-editable?]]
+            [rems.common.catalogue-util :refer [catalogue-item-more-info-url catalogue-items->ids]]
             [rems.common.roles :as roles]
             [rems.common.util :refer [andstr]]
             [rems.config]
+            [rems.fetcher :as fetcher]
+            [rems.flash-message :as flash-message]
             [rems.globals]
             [rems.spinner :as spinner]
             [rems.table :as table]
+            [rems.text :refer [get-localized-title localized text text-format]]
             [rems.tree :as tree]
-            [rems.text :refer [text text-format get-localized-title localized]]
             [rems.util :refer [get-dom-element]]))
 
 (rf/reg-event-fx
@@ -24,6 +23,7 @@
  (fn [{:keys [db]} _]
    {:db (dissoc db ::catalogue ::draft-applications)
     :dispatch-n [[:rems.table/reset]
+                 [::entitlements]
                  (when @roles/logged-in?
                    [::draft-applications])
                  (when (:enable-catalogue-tree @rems.globals/config)
@@ -33,11 +33,11 @@
 
 (fetcher/reg-fetcher ::full-catalogue "/api/catalogue?join-organization=false")
 (fetcher/reg-fetcher ::full-catalogue-tree "/api/catalogue/tree?join-organization=false" {:result :roots})
+(fetcher/reg-fetcher ::entitlements "/api/entitlements")
 
 (rf/reg-sub
  ::catalogue
- (fn [_ _]
-   (rf/subscribe [::full-catalogue]))
+ :<- [::full-catalogue]
  (fn [catalogue _]
    (->> catalogue
         (filter :enabled)
@@ -47,6 +47,17 @@
   (filter form-fields-editable? applications))
 
 (fetcher/reg-fetcher ::draft-applications "/api/my-applications" {:result filter-drafts-only})
+
+(rf/reg-sub
+ ::entitlements->catalogue-item-ids
+ :<- [::entitlements]
+ :<- [::catalogue]
+ (fn [[entitlements catalogue] _]
+   (let [entitled-to-resources (into #{} (map :resource) entitlements)]
+     (into #{}
+           (comp (filter (comp entitled-to-resources :resid))
+                 (map :id))
+           catalogue))))
 
 ;;;; UI
 
@@ -77,16 +88,16 @@
     (some-> (get-dom-element selector)
             .click)))
 
-(defn- row-command [item cart-item-ids]
+(defn- row-command [item cart-item-ids entitlements-catids]
   (cond
     (not (:enable-cart @rems.globals/config))
     [apply-button item]
 
     (contains? cart-item-ids (:id item))
-    [cart/remove-from-cart-button item]
+    [cart/remove-from-cart-button item (cart/disable-remove-from-cart-button? item cart-item-ids entitlements-catids)]
 
     :else
-    [cart/add-to-cart-button item]))
+    [cart/add-to-cart-button item (cart/disable-add-to-cart-button? item cart-item-ids entitlements-catids)]))
 
 (defn- perform-row-command [item cart-item-ids root-id]
   (when-not (:category/id item)
@@ -102,18 +113,18 @@
 
 (rf/reg-sub
  ::catalogue-table-rows
- (fn [_ _]
-   [(rf/subscribe [::catalogue])
-    (rf/subscribe [:rems.cart/cart])])
- (fn [[catalogue cart] _]
-   (let [cart-item-ids (set (mapv :id cart))]
+ :<- [::catalogue]
+ :<- [:rems.cart/cart]
+ :<- [::entitlements->catalogue-item-ids]
+ (fn [[catalogue cart item-ids-with-entitlement] _]
+   (let [cart-item-ids (catalogue-items->ids cart)]
      (mapv (fn [item]
              {:key (:id item)
               :name {:value (get-localized-title item)}
               :commands {:display-value [:div.commands.flex-nowrap.justify-content-end
                                          [catalogue-item-more-info item]
                                          (when @roles/logged-in?
-                                           [row-command item cart-item-ids])]}})
+                                           [row-command item cart-item-ids item-ids-with-entitlement])]}})
            catalogue))))
 
 (defn draft-application-list []
@@ -141,9 +152,9 @@
                    :default-sort-column :name}])
 
 (defn- catalogue-tree []
-  (let [cart @(rf/subscribe [:rems.cart/cart])
-        cart-item-ids (set (map :id cart))
-        get-row-details-id (fn [id] 
+  (let [cart-item-ids (catalogue-items->ids @(rf/subscribe [:rems.cart/cart]))
+        item-ids-with-entitlement @(rf/subscribe [::entitlements->catalogue-item-ids])
+        get-row-details-id (fn [id]
                              (str (name ::catalogue-tree) "-" id "-details"))
         catalogue {:id ::catalogue-tree
                    :row-key #(or (some->> (:category/id %) (str "category_"))
@@ -169,7 +180,7 @@
                                           [:div.commands.flex-nowrap.justify-content-end
                                            [catalogue-item-more-info %]
                                            (when @roles/logged-in?
-                                             [row-command % cart-item-ids])])
+                                             [row-command % cart-item-ids item-ids-with-entitlement])])
                               :aria-label (text :t.actions/commands)
                               :sortable? false
                               :filterable? false}]
@@ -183,13 +194,13 @@
                    :row-action (fn [row]
                                  (when @roles/logged-in?
                                    (perform-row-command (:value row) cart-item-ids ::catalogue-tree)))
-                   :row-aria-label (fn [{:keys [value] :as row}]
+                   :row-aria-label (fn [{:keys [value] :as _row}]
                                      (cond
                                        (:category/id value) (str (text :t.administration/category)
                                                                  (andstr ": " (localized (:category/title value))))
                                        :else (str (text :t.administration/resource)
                                                   (andstr ": " (get-localized-title value)))))
-                   :row-aria-describedby (fn [{:keys [value] :as row}]
+                   :row-aria-describedby (fn [{:keys [value] :as _row}]
                                            (when-let [id (:category/id value)]
                                              (get-row-details-id id)))
                    :default-sort-column :name
@@ -211,7 +222,7 @@
        (when (:enable-cart @rems.globals/config)
          (when-not (or @(rf/subscribe [::full-catalogue :fetching?])
                        @(rf/subscribe [::full-catalogue-tree :fetching?]))
-           [cart/cart-list-container]))
+           [cart/cart-list-container @(rf/subscribe [::entitlements->catalogue-item-ids])]))
 
        [:h2#catalogue-apply-resources (text :t.catalogue/apply-resources)]])
 

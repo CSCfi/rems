@@ -289,21 +289,48 @@
 
 ;;; catalogue page
 
-(defn add-to-cart [resource-name]
-  (btu/scroll-and-click [{:css "table.catalogue"}
-                         {:fn/text resource-name}
-                         {:xpath "./ancestor::tr"}
-                         {:css ".add-to-cart"}]))
+(defn ->add-to-cart-button-q
+  ([resource-name] (->add-to-cart-button-q resource-name :catalogue))
+  ([resource-name selector]
+   [selector
+    {:fn/text resource-name}
+    {:xpath "./ancestor::tr"}
+    {:css ".add-to-cart"}])
+  ([resource-name selector & selectors]
+   (mapv (partial ->add-to-cart-button-q resource-name) (cons selector selectors))))
 
-(defn click-cart-apply []
-  (btu/scroll-and-click [{:css "table.cart"}
-                         {:fn/has-text "Apply for"}
-                         {:xpath "./ancestor::tr"}
-                         {:css ".apply-for-catalogue-items"}])
+(defn ->remove-from-cart-button-q
+  ([resource-name] (->remove-from-cart-button-q resource-name :catalogue))
+  ([resource-name selector]
+   [selector
+    {:fn/text resource-name}
+    {:xpath "./ancestor::tr"}
+    {:css ".remove-from-cart"}])
+  ([resource-name selector & selectors]
+   (mapv (partial ->remove-from-cart-button-q resource-name) (cons selector selectors))))
+
+(defn add-to-cart [resource-name]
+  (btu/scroll-and-click (->add-to-cart-button-q resource-name)))
+
+(defn remove-from-cart [resource-name]
+  (btu/scroll-and-click (->remove-from-cart-button-q resource-name)))
+
+(defn click-cart-apply [q]
+  (btu/scroll-and-click q)
   (is (btu/eventually-visible? {:tag :h1 :fn/has-text "Application"}))
   (btu/wait-page-loaded)
   (btu/screenshot "application-page")
   (btu/gather-axe-results "application-page"))
+
+(defn click-cart-apply-bundle []
+  (click-cart-apply [{:css "table.cart"}
+                     {:fn/has-text "Apply for"}
+                     {:xpath "./ancestor::tr"}
+                     {:css ".apply-for-catalogue-items"}]))
+
+(defn click-cart-apply-single []
+  (click-cart-apply [{:css ".rems-table.cart"}
+                     {:css ".apply-for-catalogue-items"}]))
 
 ;;; application page
 
@@ -354,6 +381,9 @@
   "Like `slurp-table` but assumes a header row needs to be skipped."
   [& selectors]
   (rest (apply slurp-table selectors)))
+
+(defn slurp-cart []
+  (slurp-table {:css ".rems-table.cart"}))
 
 (defn find-rows [table-selectors child-selector]
   (for [row (btu/query-all (vec (concat table-selectors [{:css "tr"}])))
@@ -607,7 +637,7 @@
       (add-to-cart "Default workflow with private form")
       ;; (add-to-cart "Default workflow with DUO codes")
       (btu/gather-axe-results "application-page-added-to-cart")
-      (click-cart-apply)
+      (click-cart-apply-bundle)
 
       (btu/context-assoc! :application-id (get-application-id))
 
@@ -2179,16 +2209,17 @@
 
                (dissoc (slurp-fields :catalogue-item) "Start")))))))
 
+
 (deftest test-catalogue-item-hierarchy
   (btu/with-postmortem
-    (btu/context-assoc! :organization-id (str "organization " (btu/get-seed)))
-    (btu/context-assoc! :organization-name (str "Organization " (btu/get-seed)))
+    (btu/context-assoc! :organization-id (str "organization " (btu/get-seed))
+                        :organization-name (str "Organization " (btu/get-seed)))
     (btu/context-assoc! :organization (test-helpers/create-organization!
                                        {:organization/id (btu/context-getx :organization-id)
-                                        :organization/short-name {:en "ORGen" :fi "ORGfi" :sv "ORGsv"}
-                                        :organization/name {:en (str (btu/context-getx :organization-name) " en")
-                                                            :fi (str (btu/context-getx :organization-name) " fi")
-                                                            :sv (str (btu/context-getx :organization-name) " sv")}}))
+                                        :organization/short-name (->> (str/split (btu/get-seed) #" ")
+                                                                      (transduce (comp (map first) (map str) (interpose "-")) str "ORG ")
+                                                                      test-helpers/make-localized)
+                                        :organization/name (test-helpers/make-localized (btu/context-getx :organization-name))}))
     (btu/context-assoc! :workflow-name (str "test-catalogue-item-hierarchy workflow " (btu/context-getx :organization-name)))
     (btu/context-assoc! :workflow (test-helpers/create-workflow!
                                    {:title (btu/context-getx :workflow-name)
@@ -2196,61 +2227,58 @@
                                     :organization {:organization/id (btu/context-getx :organization-id)}
                                     :handlers ["handler"]}))
     (btu/context-assoc! :resource-1 (test-helpers/create-resource!
-                                     {:resource-ext-id "test-catalogue-item-hierarchy resource-1"
-                                      :organization {:organization/id (btu/context-getx :organization-id)}}))
-    (btu/context-assoc! :resource-2 (test-helpers/create-resource!
-                                     {:resource-ext-id "test-catalogue-item-hierarchy resource-2"
-                                      :organization {:organization/id (btu/context-getx :organization-id)}}))
-    (btu/context-assoc! :resource-3 (test-helpers/create-resource!
-                                     {:resource-ext-id "test-catalogue-item-hierarchy resource-3"
-                                      :organization {:organization/id (btu/context-getx :organization-id)}}))
-    (btu/context-assoc! :resource-4 (test-helpers/create-resource!
-                                     {:resource-ext-id "test-catalogue-item-hierarchy resource-4"
-                                      :organization {:organization/id (btu/context-getx :organization-id)}}))
-    (btu/context-assoc! :form (test-helpers/create-form!
+                                     {:resource-ext-id (str "test-catalogue-item-hierarchy" (btu/get-seed) " resource-1")
+                                      :organization {:organization/id (btu/context-getx :organization-id)}})
+                        :resource-2 (test-helpers/create-resource!
+                                     {:resource-ext-id (str "test-catalogue-item-hierarchy" (btu/get-seed) " resource-2")
+                                      :organization {:organization/id (btu/context-getx :organization-id)}})
+                        :resource-3 (test-helpers/create-resource!
+                                     {:resource-ext-id (str "test-catalogue-item-hierarchy" (btu/get-seed) " resource-3")
+                                      :organization {:organization/id (btu/context-getx :organization-id)}})
+                        :resource-4 (test-helpers/create-resource!
+                                     {:resource-ext-id (str "test-catalogue-item-hierarchy" (btu/get-seed) " resource-4")
+                                      :organization {:organization/id (btu/context-getx :organization-id)}})
+                        :form (test-helpers/create-form!
                                {:form/internal-name "test-catalogue-item-hierarchy form"
-                                :form/external-title {:en "Test Edit Catalogue Item Children Form EN"
-                                                      :fi "Test Edit Catalogue Item Children Form FI"
-                                                      :sv "Test Edit Catalogue Item Children Form SV"}
+                                :form/external-title (test-helpers/make-localized "Test Edit Catalogue Item Children Form EN")
                                 :form/fields []
                                 :form/organization {:organization/id (btu/context-getx :organization-id)}}))
-
-    (btu/context-assoc! :child-name-1 (str "test-catalogue-item-hierarchy-child-1 " (btu/get-seed)))
-    (btu/context-assoc! :catalogue-item-child-1 (test-helpers/create-catalogue-item!
-                                                 {:title {:en (str (btu/context-getx :child-name-1) " EN")
-                                                          :fi (str (btu/context-getx :child-name-1) " FI")
-                                                          :sv (str (btu/context-getx :child-name-1) " SV")}
-                                                  :resource-id (btu/context-getx :resource-2)
-                                                  :form-id (btu/context-getx :form)
-                                                  :workflow-id (btu/context-getx :workflow)
-                                                  :organization {:organization/id (btu/context-getx :organization-id)}}))
-    (btu/context-assoc! :parent-of-2-3-name (str "test-catalogue-item-hierarchy-parent " (btu/get-seed)))
-    (btu/context-assoc! :catalogue-item-parent-of-2-3 (test-helpers/create-catalogue-item!
-                                                       {:title {:en (str (btu/context-getx :parent-of-2-3-name) " EN")
-                                                                :fi (str (btu/context-getx :parent-of-2-3-name) " FI")
-                                                                :sv (str (btu/context-getx :parent-of-2-3-name) " SV")}
-                                                        :resource-id (btu/context-getx :resource-1)
-                                                        :form-id (btu/context-getx :form)
-                                                        :workflow-id (btu/context-getx :workflow)
-                                                        :organization {:organization/id (btu/context-getx :organization-id)}}))
-    (btu/context-assoc! :child-name-2 (str "test-catalogue-item-hierarchy-child-2 " (btu/get-seed)))
-    (btu/context-assoc! :catalogue-item-child-2 (test-helpers/create-catalogue-item!
-                                                 {:title {:en (str (btu/context-getx :child-name-2) " EN")
-                                                          :fi (str (btu/context-getx :child-name-2) " FI")
-                                                          :sv (str (btu/context-getx :child-name-2) " SV")}
-                                                  :resource-id (btu/context-getx :resource-3)
-                                                  :form-id (btu/context-getx :form)
-                                                  :workflow-id (btu/context-getx :workflow)
-                                                  :organization {:organization/id (btu/context-getx :organization-id)}}))
-    (btu/context-assoc! :child-name-3 (str "test-catalogue-item-hierarchy-child-3 " (btu/get-seed)))
-    (btu/context-assoc! :catalogue-item-child-3 (test-helpers/create-catalogue-item!
-                                                 {:title {:en (str (btu/context-getx :child-name-3) " EN")
-                                                          :fi (str (btu/context-getx :child-name-3) " FI")
-                                                          :sv (str (btu/context-getx :child-name-3) " SV")}
-                                                  :resource-id (btu/context-getx :resource-3)
-                                                  :form-id (btu/context-getx :form)
-                                                  :workflow-id (btu/context-getx :workflow)
-                                                  :organization {:organization/id (btu/context-getx :organization-id)}}))
+    (btu/context-assoc! :parent-1-name (str "test-catalogue-item-hierarchy parent created with form " (btu/get-seed))
+                        :parent-2-name (str "test-catalogue-item-hierarchy-parent " (btu/get-seed))
+                        :child-1-name (str "test-catalogue-item-hierarchy-child-1 " (btu/get-seed))
+                        :child-2-name (str "test-catalogue-item-hierarchy-child-2 " (btu/get-seed))
+                        :child-3-name (str "test-catalogue-item-hierarchy-child-3 " (btu/get-seed))
+                        :child-4-name (str "test-catalogue-item-hierarchy-child-4 " (btu/get-seed)))
+    (btu/context-assoc! :parent-1-title-en (:en (test-helpers/make-localized (btu/context-getx :parent-1-name)))
+                        :parent-2-title-en (:en (test-helpers/make-localized (btu/context-getx :parent-2-name)))
+                        :child-1-title-en (:en (test-helpers/make-localized (btu/context-getx :child-1-name)))
+                        :child-2-title-en (:en (test-helpers/make-localized (btu/context-getx :child-2-name)))
+                        :child-3-title-en (:en (test-helpers/make-localized (btu/context-getx :child-3-name)))
+                        :child-4-title-en (:en (test-helpers/make-localized (btu/context-getx :child-4-name))))
+    (btu/context-assoc! :child-1-id (test-helpers/create-catalogue-item!
+                                     {:title (test-helpers/make-localized (btu/context-getx :child-1-name))
+                                      :resource-id (btu/context-getx :resource-2)
+                                      :form-id (btu/context-getx :form)
+                                      :workflow-id (btu/context-getx :workflow)
+                                      :organization {:organization/id (btu/context-getx :organization-id)}})
+                        :parent-2-id (test-helpers/create-catalogue-item!
+                                      {:title (test-helpers/make-localized (btu/context-getx :parent-2-name))
+                                       :resource-id (btu/context-getx :resource-1)
+                                       :form-id (btu/context-getx :form)
+                                       :workflow-id (btu/context-getx :workflow)
+                                       :organization {:organization/id (btu/context-getx :organization-id)}})
+                        :child-2-id (test-helpers/create-catalogue-item!
+                                     {:title (test-helpers/make-localized (btu/context-getx :child-2-name))
+                                      :resource-id (btu/context-getx :resource-3)
+                                      :form-id (btu/context-getx :form)
+                                      :workflow-id (btu/context-getx :workflow)
+                                      :organization {:organization/id (btu/context-getx :organization-id)}})
+                        :child-3-id (test-helpers/create-catalogue-item!
+                                     {:title (test-helpers/make-localized (btu/context-getx :child-3-name))
+                                      :resource-id (btu/context-getx :resource-3)
+                                      :form-id (btu/context-getx :form)
+                                      :workflow-id (btu/context-getx :workflow)
+                                      :organization {:organization/id (btu/context-getx :organization-id)}}))
     (login-as "owner")
 
     (testing "create catalogue item with child"
@@ -2259,51 +2287,53 @@
       (wait-page-title "Create catalogue item – REMS")
       (btu/wait-page-loaded)
       (select-option "Organization" (btu/context-getx :organization-name))
-      (fill-localized-form-field "Title" "EN" (str "test-catalogue-item-hierarchy parent created with form " (btu/get-seed) " EN"))
-      (fill-localized-form-field "Title" "FI" (str "test-catalogue-item-hierarchy parent created with form " (btu/get-seed) " FI"))
-      (fill-localized-form-field "Title" "SV" (str "test-catalogue-item-hierarchy parent created with form " (btu/get-seed) " SV"))
+      (fill-localized-form-field "Title" "EN" (str (btu/context-getx :parent-1-name) " EN"))
+      (fill-localized-form-field "Title" "FI" (str (btu/context-getx :parent-1-name) " FI"))
+      (fill-localized-form-field "Title" "SV" (str (btu/context-getx :parent-1-name) " SV"))
       (select-option "Workflow" (btu/context-getx :workflow-name))
       (select-option "Resource" (btu/context-getx :resource-1))
       (select-option "Form" (btu/context-getx :form))
-      (select-option "Complementary items" (btu/context-getx :child-name-1))
+      (select-option "Complementary items" (btu/context-getx :child-1-name))
       (btu/screenshot "about-to-create-catalogue-item")
       (btu/scroll-and-click :save)
       (wait-page-title "Catalogue item – REMS")
       (btu/wait-page-loaded)
       (btu/screenshot "after-create-catalogue-item")
       (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
-      (is (= (str (btu/context-getx :catalogue-item-child-1))
-             (get (slurp-fields :catalogue-item) "Complementary items"))))
+      (is (= (str (btu/context-getx :child-1-id))
+             (get (slurp-fields :catalogue-item) "Complementary items")))
+      (enable-catalogue-item (btu/context-getx :parent-1-name)))
 
     (testing "add child item"
-      (btu/go (str (btu/get-server-url) "administration/catalogue-items/edit/" (btu/context-getx :catalogue-item-parent-of-2-3)))
+      (btu/go (str (btu/get-server-url) "administration/catalogue-items/edit/" (btu/context-getx :parent-2-id)))
       (btu/wait-page-loaded)
       (is (btu/eventually-visible? {:id :catalogue-item-children-dropdown}))
       (btu/scroll-query {:id :catalogue-item-children-dropdown})
       (btu/screenshot "before-adding-child")
       (is (= "No complementary items"
              (get (slurp-fields :catalogue-item-editor) "Complementary items")))
-      (select-option "Complementary items" (btu/context-getx :child-name-2))
+      (select-option "Complementary items" (btu/context-getx :child-2-name))
       (btu/screenshot "after-adding-child")
       (btu/scroll-and-click :save)
       (wait-page-title "Catalogue item – REMS")
       (is (btu/eventually-visible? {:css ".alert-success"}))
+
       (testing "catalogue item page displays child info"
         (btu/wait-page-loaded)
-        (is (= (str (btu/context-getx :catalogue-item-child-2))
+        (is (= (str (btu/context-getx :child-2-id))
                (get (slurp-fields :catalogue-item) "Complementary items")))))
 
     (testing "add second child item"
-      (btu/go (str (btu/get-server-url) "administration/catalogue-items/edit/" (btu/context-getx :catalogue-item-parent-of-2-3)))
+      (btu/go (str (btu/get-server-url) "administration/catalogue-items/edit/" (btu/context-getx :parent-2-id)))
       (btu/wait-page-loaded)
       (is (btu/eventually-visible? {:id :catalogue-item-children-dropdown}))
       (btu/scroll-query {:id :catalogue-item-children-dropdown})
       (btu/screenshot "before-adding-second-child")
-      (is (= (str (btu/context-getx :child-name-2) " EN")
+      (is (= (str (btu/context-getx :child-2-name) " EN")
              (get (slurp-fields :catalogue-item-editor) "Complementary items")))
-      (select-option "Complementary items" (btu/context-getx :child-name-3))
-      (is (match? (m/in-any-order  [(str (btu/context-getx :child-name-2) " EN")
-                                    (str (btu/context-getx :child-name-3) " EN")])
+      (select-option "Complementary items" (btu/context-getx :child-3-name))
+      (is (match? (m/in-any-order  [(btu/context-getx :child-2-title-en)
+                                    (btu/context-getx :child-3-title-en)])
                   (-> (slurp-fields :catalogue-item-editor)
                       (get "Complementary items")
                       (str/split #"\n"))))
@@ -2311,16 +2341,17 @@
       (btu/scroll-and-click :save)
       (wait-page-title "Catalogue item – REMS")
       (is (btu/eventually-visible? {:css ".alert-success"}))
+
       (testing "catalogue item page displays child info"
         (btu/wait-page-loaded)
-        (is (match? (m/in-any-order [(str (btu/context-getx :catalogue-item-child-2))
-                                     (str (btu/context-getx :catalogue-item-child-3))])
+        (is (match? (m/in-any-order [(str (btu/context-getx :child-2-id))
+                                     (str (btu/context-getx :child-3-id))])
                     (-> (slurp-fields :catalogue-item)
                         (get "Complementary items")
                         (str/split #", "))))))
 
     (testing "when editing child item"
-      (doseq [child [(btu/context-getx :catalogue-item-child-2) (btu/context-getx :catalogue-item-child-3)]]
+      (doseq [child [(btu/context-getx :child-2-id) (btu/context-getx :child-3-id)]]
         (btu/go (str (btu/get-server-url) "administration/catalogue-items/edit/" child))
         (is (btu/eventually-invisible? {:id :catalogue-item-children-dropdown})
             "cannot add children, already has a parent")
@@ -2328,25 +2359,162 @@
             "can view parent")
         (btu/scroll-query {:id :catalogue-item-parent-id})
         (btu/screenshot "child-item-sees-parent")
-        (is (= (str (btu/context-getx :catalogue-item-parent-of-2-3))
+        (is (= (str (btu/context-getx :parent-2-id))
                (get (slurp-fields :catalogue-item-editor) "Top-level catalogue item"))
             (str "with child id " child))))
 
     (testing "remove child item 2"
-      (btu/go (str (btu/get-server-url) "administration/catalogue-items/edit/" (btu/context-getx :catalogue-item-parent-of-2-3)))
+      (btu/go (str (btu/get-server-url) "administration/catalogue-items/edit/" (btu/context-getx :parent-2-id)))
       (btu/wait-page-loaded)
       (is (btu/eventually-visible? {:id :catalogue-item-children-dropdown}))
       (btu/scroll-query {:id :catalogue-item-children-dropdown})
       (btu/screenshot "before-removing-child-item")
-      (remove-option "Complementary items" (btu/context-getx :child-name-2))
-      (is (= (str (btu/context-getx :child-name-3) " EN")
+      (remove-option "Complementary items" (btu/context-getx :child-2-name))
+      (is (= (btu/context-getx :child-3-title-en)
              (get (slurp-fields :catalogue-item-editor) "Complementary items")))
       (btu/screenshot "after-removing-child-item")
       (btu/scroll-and-click :save)
       (is (btu/eventually-visible? {:css ".alert-success"}))
       (testing "child 2 is removed and child 3 visible"
-        (is (= (str (btu/context-getx :catalogue-item-child-3))
-               (get (slurp-fields :catalogue-item) "Complementary items")))))))
+        (is (= (str (btu/context-getx :child-3-id))
+               (get (slurp-fields :catalogue-item) "Complementary items")))))
+
+    (testing "as an applicant"
+      (logout)
+      (login-as "alice")
+      (go-to-catalogue)
+      (testing "can see the items"
+        (let [item-titles [(btu/context-getx :parent-1-title-en)
+                           (btu/context-getx :child-1-title-en)
+                           (btu/context-getx :parent-2-title-en)
+                           (btu/context-getx :child-2-title-en)
+                           (btu/context-getx :child-3-title-en)]]
+          (is (match? (m/in-any-order item-titles)
+                      (into []
+                            (keep (comp (set item-titles) #(get % "name")))
+                            (slurp-rows :catalogue))))))
+
+      (testing "with empty cart"
+        (is (btu/disabled? (->add-to-cart-button-q (btu/context-getx :child-1-title-en))))
+        (is (btu/disabled? (->add-to-cart-button-q (btu/context-getx :child-1-title-en) :catalogue-tree)))
+        (is (not (btu/disabled? (->add-to-cart-button-q (btu/context-getx :child-2-title-en))))
+            "should not be disabled with an item not belonging to hierarchy")
+        (is (btu/disabled? (->add-to-cart-button-q (btu/context-getx :child-3-title-en))))
+        (is (btu/disabled? (->add-to-cart-button-q (btu/context-getx :child-3-title-en) :catalogue-tree))))
+
+      (testing "with parent in cart"
+        (add-to-cart (btu/context-getx :parent-1-title-en))
+        (is (not (btu/disabled? (->remove-from-cart-button-q (btu/context-getx :parent-1-title-en))))
+            "can remove parent")
+        (is (not (btu/disabled? (->remove-from-cart-button-q (btu/context-getx :parent-1-title-en) :catalogue-tree)))
+            "can remove parent")
+        (is (not (btu/disabled? (->add-to-cart-button-q (btu/context-getx :child-1-title-en))))
+            "can add child")
+        (is (not (btu/disabled? (->add-to-cart-button-q (btu/context-getx :child-1-title-en) :catalogue-tree)))
+            "can add child"))
+
+      (testing "with child in cart"
+        (add-to-cart (btu/context-getx :child-1-title-en))
+        (is (btu/disabled? (->remove-from-cart-button-q (btu/context-getx :parent-1-title-en)))
+            "cannot remove parent")
+        (is (btu/disabled? (->remove-from-cart-button-q (btu/context-getx :parent-1-title-en) :cart))
+            "cannot remove parent")
+        (is (btu/disabled? (->remove-from-cart-button-q (btu/context-getx :parent-1-title-en) :catalogue-tree))
+            "cannot remove parent")
+        (is (not (btu/disabled? (->remove-from-cart-button-q (btu/context-getx :child-1-title-en))))
+            "can remove child")
+        (is (not (btu/disabled? (->remove-from-cart-button-q (btu/context-getx :child-1-title-en) :cart)))
+            "can remove child")
+        (is (not (btu/disabled? (->remove-from-cart-button-q (btu/context-getx :child-1-title-en) :catalogue-tree)))
+            "can remove child"))
+
+      (testing "with child removed from cart"
+        (remove-from-cart (btu/context-getx :child-1-title-en))
+        (is (not (btu/disabled? (->remove-from-cart-button-q (btu/context-getx :parent-1-title-en))))
+            "can remove parent again")
+        (is (not (btu/disabled? (->remove-from-cart-button-q (btu/context-getx :parent-1-title-en) :catalogue-tree)))
+            "can remove parent again")
+        (remove-from-cart (btu/context-getx :parent-1-title-en)))
+
+      (testing "new application"
+        (add-to-cart (btu/context-getx :parent-2-title-en))
+        (add-to-cart (btu/context-getx :child-3-title-en))
+        (click-cart-apply-bundle)
+        (btu/context-assoc! :application-id (Integer/parseInt (get-application-id)))
+        (wait-page-title (->> (get-application-from-api (btu/context-getx :application-id) "alice")
+                              :application/external-id
+                              (format "Application %s – REMS")))
+        (is (match? (m/in-any-order [(btu/context-getx :parent-2-title-en)
+                                     (btu/context-getx :child-3-title-en)])
+                    (into []
+                          (map btu/value-of-el)
+                          (-> (btu/query [{:class :application-resources}])
+                              (btu/children {:fn/has-class :application-resource}))))))
+
+      (test-helpers/submit-application {:application-id (btu/context-getx :application-id)
+                                        :actor "alice"})
+      (test-helpers/command! {:type :application.command/approve
+                              :application-id (btu/context-getx :application-id)
+                              :actor "handler"})
+      (let [child-4-id (test-helpers/create-catalogue-item!
+                        {:title (test-helpers/make-localized (btu/context-getx :child-4-name))
+                         :resource-id (btu/context-getx :resource-4)
+                         :form-id (btu/context-getx :form)
+                         :workflow-id (btu/context-getx :workflow)
+                         :organization {:organization/id (btu/context-getx :organization-id)}})]
+        (test-helpers/edit-catalogue-item! {:id (btu/context-getx :parent-2-id)
+                                            :children [{:catalogue-item/id child-4-id}]}))
+
+      (testing "with entitlement"
+        (go-to-catalogue)
+
+        (testing "can add child item to cart on it's own"
+          (is (not (btu/disabled? (->add-to-cart-button-q (btu/context-getx :child-4-title-en)))))
+          (is (not (btu/disabled? (->add-to-cart-button-q (btu/context-getx :child-4-title-en) :catalogue-tree))))
+          (add-to-cart (btu/context-getx :child-4-title-en))
+          (btu/wait-page-loaded)
+
+          (is (= [(btu/context-getx :child-4-title-en)]
+                 (into []
+                       (mapcat (comp vals #(dissoc % "commands")))
+                       (slurp-cart))))
+          (remove-from-cart (btu/context-getx :child-4-title-en)))
+
+        (testing "can add and remove parent"
+          (add-to-cart (btu/context-getx :child-4-title-en))
+          (add-to-cart (btu/context-getx :parent-2-title-en))
+          (btu/wait-page-loaded)
+          (btu/screenshot "child-and-parent-added")
+          (is (match? (m/in-any-order [(btu/context-getx :parent-2-title-en)
+                                       (btu/context-getx :child-4-title-en)])
+                      (into []
+                            (mapcat (comp vals #(dissoc % "commands")))
+                            (butlast (slurp-cart)))))
+          (is (not (btu/disabled? (->remove-from-cart-button-q (btu/context-getx :parent-2-title-en)))))
+          (is (not (btu/disabled? (->remove-from-cart-button-q (btu/context-getx :parent-2-title-en) :cart))))
+          (is (not (btu/disabled? (->remove-from-cart-button-q (btu/context-getx :parent-2-title-en) :catalogue-tree))))
+          (btu/screenshot "add-and-remove-parent-2")
+          (remove-from-cart (btu/context-getx :parent-2-title-en))
+          (remove-from-cart (btu/context-getx :child-4-title-en)))
+
+        (testing "can apply for child item on it's own"
+          (add-to-cart (btu/context-getx :child-4-title-en))
+          (btu/wait-page-loaded)
+          (is (= [(btu/context-getx :child-4-title-en)]
+                 (into []
+                       (mapcat (comp vals #(dissoc % "commands")))
+                       (slurp-cart))))
+          (btu/screenshot "about-to-apply-for-child-item")
+          (click-cart-apply-single)
+          (wait-page-title (->> (get-application-from-api (get-application-id) "alice")
+                                :application/external-id
+                                (format "Application %s – REMS")))
+          (btu/screenshot "draft-application-for-child-item")
+          (is (= [(btu/context-getx :child-4-title-en)]
+                 (into []
+                       (map btu/value-of-el)
+                       (-> (btu/query [{:class :application-resources}])
+                           (btu/children {:fn/has-class :application-resource}))))))))))
 
 (deftest test-update-catalogue-item
   (btu/with-postmortem
@@ -3805,7 +3973,7 @@
       (btu/screenshot "after-adding-to-cart")
 
       (is (= [{"title" (btu/context-getx :catalogue-item-name) "commands" "Remove from cart\nApply"}]
-             (slurp-table {:css ".rems-table.cart"})))
+             (slurp-cart)))
 
       (btu/scroll-and-click [:catalogue-tree {:fn/text (btu/context-getx :category-name)}])
 
