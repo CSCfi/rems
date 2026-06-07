@@ -66,7 +66,7 @@
 (defmethod event-to-emails :default [_event _application]
   [])
 
-(defn- recipients-to-emails [recipients event application subject-text body-text]
+(defn- create-event-notification-emails [recipients event application subject-text body-text]
   (vec
    (for [recipient recipients
          :let [email (with-language (:language (rems.db.user-settings/get-user-settings (:userid recipient)))
@@ -102,116 +102,136 @@
   (assert false "performance optimization, not called, no emails for saved"))
 
 (defmethod event-to-emails :application.event/approved [event application]
-  (concat (recipients-to-emails (application-util/applicant-and-members application)
-                                event application
-                                :t.email.application-approved/subject-to-applicant
-                                :t.email.application-approved/message-to-applicant)
-          (recipients-to-emails (other-handlers event application)
-                                event application
-                                :t.email.application-approved/subject-to-handler
-                                :t.email.application-approved/message-to-handler)))
+  (concat (create-event-notification-emails
+           (application-util/applicant-and-members application)
+           event application
+           :t.email.application-approved/subject-to-applicant
+           :t.email.application-approved/message-to-applicant)
+          (create-event-notification-emails
+           (other-handlers event application)
+           event application
+           :t.email.application-approved/subject-to-handler
+           :t.email.application-approved/message-to-handler)))
 
 (defmethod event-to-emails :application.event/rejected [event application]
-  (concat (recipients-to-emails (application-util/applicant-and-members application)
-                                event application
-                                :t.email.application-rejected/subject-to-applicant
-                                :t.email.application-rejected/message-to-applicant)
-          (recipients-to-emails (other-handlers event application)
-                                event application
-                                :t.email.application-rejected/subject-to-handler
-                                :t.email.application-rejected/message-to-handler)))
+  (concat (create-event-notification-emails
+           (application-util/applicant-and-members application)
+           event application
+           :t.email.application-rejected/subject-to-applicant
+           :t.email.application-rejected/message-to-applicant)
+          (create-event-notification-emails
+           (other-handlers event application)
+           event application
+           :t.email.application-rejected/subject-to-handler
+           :t.email.application-rejected/message-to-handler)))
 
 (defmethod event-to-emails :application.event/revoked [event application]
-  (concat (recipients-to-emails (application-util/applicant-and-members application)
-                                event application
-                                :t.email.application-revoked/subject-to-applicant
-                                :t.email.application-revoked/message-to-applicant)
-          (recipients-to-emails (other-handlers event application)
-                                event application
-                                :t.email.application-revoked/subject-to-handler
-                                :t.email.application-revoked/message-to-handler)))
+  (concat (create-event-notification-emails
+           (application-util/applicant-and-members application)
+           event application
+           :t.email.application-revoked/subject-to-applicant
+           :t.email.application-revoked/message-to-applicant)
+          (create-event-notification-emails
+           (other-handlers event application)
+           event application
+           :t.email.application-revoked/subject-to-handler
+           :t.email.application-revoked/message-to-handler)))
 
 (defmethod event-to-emails :application.event/closed [event application]
-  (concat (recipients-to-emails (application-util/applicant-and-members application)
-                                event application
-                                :t.email.application-closed/subject-to-applicant
-                                :t.email.application-closed/message-to-applicant)
-          (recipients-to-emails (other-handlers event application)
-                                event application
-                                :t.email.application-closed/subject-to-handler
-                                :t.email.application-closed/message-to-handler)))
+  (concat (create-event-notification-emails
+           (application-util/applicant-and-members application)
+           event application
+           :t.email.application-closed/subject-to-applicant
+           :t.email.application-closed/message-to-applicant)
+          (create-event-notification-emails
+           (other-handlers event application)
+           event application
+           :t.email.application-closed/subject-to-handler
+           :t.email.application-closed/message-to-handler)))
 
 (defmethod event-to-emails :application.event/returned [event application]
-  (concat (recipients-to-emails [(:application/applicant application)]
-                                event application
-                                :t.email.application-returned/subject-to-applicant
-                                :t.email.application-returned/message-to-applicant)
-          (recipients-to-emails (other-handlers event application)
-                                event application
-                                :t.email.application-returned/subject-to-handler
-                                :t.email.application-returned/message-to-handler)))
+  (concat (create-event-notification-emails
+           [(:application/applicant application)]
+           event application
+           :t.email.application-returned/subject-to-applicant
+           :t.email.application-returned/message-to-applicant)
+          (create-event-notification-emails
+           (other-handlers event application)
+           event application
+           :t.email.application-returned/subject-to-handler
+           :t.email.application-returned/message-to-handler)))
 
 (defmethod event-to-emails :application.event/licenses-added [event application]
-  (recipients-to-emails (application-util/applicant-and-members application)
-                        event application
-                        :t.email.application-licenses-added/subject
-                        :t.email.application-licenses-added/message))
+  (create-event-notification-emails
+   (application-util/applicant-and-members application)
+   event application
+   :t.email.application-licenses-added/subject
+   :t.email.application-licenses-added/message))
 
 (defmethod event-to-emails :application.event/submitted [event application]
-  (concat (recipients-to-emails [(:application/applicant application)]
-                                event application
-                                :t.email.application-submitted/subject-to-applicant
-                                :t.email.application-submitted/message-to-applicant)
+  (concat (create-event-notification-emails
+           [(:application/applicant application)]
+           event application
+           :t.email.application-submitted/subject-to-applicant
+           :t.email.application-submitted/message-to-applicant)
           (if (= (:event/time event)
                  (:application/first-submitted application))
-            (recipients-to-emails (handlers application)
-                                  event application
-                                  :t.email.application-submitted/subject-to-handler
-                                  :t.email.application-submitted/message-to-handler)
-            (recipients-to-emails (handlers application)
-                                  event application
-                                  :t.email.application-resubmitted/subject-to-handler
-                                  :t.email.application-resubmitted/message-to-handler))))
+            (create-event-notification-emails
+             (handlers application)
+             event application
+             :t.email.application-submitted/subject-to-handler
+             :t.email.application-submitted/message-to-handler)
+            (create-event-notification-emails
+             (handlers application)
+             event application
+             :t.email.application-resubmitted/subject-to-handler
+             :t.email.application-resubmitted/message-to-handler))))
 
 (defmethod event-to-emails :application.event/review-requested [event application]
-  (recipients-to-emails (:application/reviewers event)
-                        event application
-                        :t.email.review-requested/subject
-                        :t.email.review-requested/message))
+  (create-event-notification-emails
+   (:application/reviewers event)
+   event application
+   :t.email.review-requested/subject
+   :t.email.review-requested/message))
 
 (defmethod event-to-emails :application.event/reviewed [event application]
-  (recipients-to-emails (handlers application)
-                        event application
-                        :t.email.reviewed/subject
-                        :t.email.reviewed/message))
+  (create-event-notification-emails
+   (handlers application)
+   event application
+   :t.email.reviewed/subject
+   :t.email.reviewed/message))
 
 (defmethod event-to-emails :application.event/remarked [event application]
-  (recipients-to-emails (concat (other-handlers event application)
-                                (when (:event/public event)
+  (create-event-notification-emails
+   (concat (other-handlers event application)
+           (when (:event/public event)
                                   ;; no need to email members on non-actionable things
-                                  [(:application/applicant application)]))
-                        event application
-                        :t.email.remarked/subject
-                        :t.email.remarked/message))
+             [(:application/applicant application)]))
+   event application
+   :t.email.remarked/subject
+   :t.email.remarked/message))
 
 (defmethod event-to-emails :application.event/decided [event application]
-  (recipients-to-emails (handlers application)
-                        event application
-                        :t.email.decided/subject
-                        :t.email.decided/message))
+  (create-event-notification-emails
+   (handlers application)
+   event application
+   :t.email.decided/subject
+   :t.email.decided/message))
 
 (defmethod event-to-emails :application.event/decision-requested [event application]
-  (recipients-to-emails (:application/deciders event)
-                        event application
-                        :t.email.decision-requested/subject
-                        :t.email.decision-requested/message))
+  (create-event-notification-emails
+   (:application/deciders event)
+   event application
+   :t.email.decision-requested/subject
+   :t.email.decision-requested/message))
 
 (defmethod event-to-emails :application.event/member-added [event application]
   ;; TODO email to applicant? email to handler?
-  (recipients-to-emails [(:application/member event)]
-                        event application
-                        :t.email.member-added/subject
-                        :t.email.member-added/message))
+  (create-event-notification-emails
+   [(:application/member event)]
+   event application
+   :t.email.member-added/subject
+   :t.email.member-added/message))
 
 (defmethod event-to-emails :application.event/member-invited [event application]
   (with-language (:default-language env)
@@ -271,14 +291,16 @@
                (text :t.email/footer))}])))
 
 (defmethod event-to-emails :application.event/applicant-changed [event application]
-  (concat (recipients-to-emails (application-util/applicant-and-members application)
-                                event application
-                                :t.email.applicant-changed/subject-to-member
-                                :t.email.applicant-changed/message-to-member)
-          (recipients-to-emails (other-handlers event application)
-                                event application
-                                :t.email.applicant-changed/subject-to-handler
-                                :t.email.applicant-changed/message-to-handler)))
+  (concat (create-event-notification-emails
+           (application-util/applicant-and-members application)
+           event application
+           :t.email.applicant-changed/subject-to-member
+           :t.email.applicant-changed/message-to-member)
+          (create-event-notification-emails
+           (other-handlers event application)
+           event application
+           :t.email.applicant-changed/subject-to-handler
+           :t.email.applicant-changed/message-to-handler)))
 
 (defmethod event-to-emails :application.event/expiration-notifications-sent [event application]
   (vec
