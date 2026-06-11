@@ -143,12 +143,23 @@
 (def save-draft-event {:application/id 7
                        :event/type :application.event/draft-saved
                        :application/field-values [{:form 40 :field "1" :value "Application title"}]})
+
 (def created-events [create-event save-draft-event])
 
 (def submit-event {:application/id 7
                    :event/type :application.event/submitted
                    :event/actor "applicant"
                    :event/time 13})
+
+(def applicant-invited-event {:application/id 7
+                              :event/type :application.event/member-invited
+                              :event/actor "applicant"
+                              :application/member {:name "Some Body" :email "somebody@example.com"}})
+
+(def reviewer-invited-event {:application/id 7
+                             :event/type :application.event/reviewer-invited
+                             :application/reviewer {:email "actor@example.com" :name "Adam Actor"}
+                             :invitation/token "abc123"})
 
 (def base-events (conj created-events submit-event))
 (def anonymous-wf-events [(assoc create-event :workflow/id 6)
@@ -157,7 +168,7 @@
 
 (deftest test-submitted
   (let [mails (emails created-events submit-event)]
-    (is (= #{"applicant" "assistant" "handler"} (email-recipients mails)))
+    (is (= #{"applicant" "assistant" email-to"handler"} (email-recipients mails)))
     (is (= {:to-user "applicant"
             :subject "Your application 2001/3, \"Application title\" has been submitted"
             :body "Dear Alice Applicant,\n\nYour application 2001/3, \"Application title\" has been submitted. You will be notified by email when the application has been handled.\n\nYou can view the application at http://example.com/application/7"}
@@ -166,31 +177,43 @@
             :subject "(2001/3, \"Application title\") A new application has been submitted"
             :body "Dear Amber Assistant,\n\nAlice Applicant has submitted a new application 2001/3, \"Application title\" to access resource(s) en title 11, en title 21.\n\nYou can review the application at http://example.com/application/7"}
            (email-to "assistant" mails)))))
+  (is (= [{:to "actor@example.com"
+         :subject "Invitation to participate in handling application 2001/3, \"Application title\""
+         :body "Dear Adam Actor,\n\nYou have been invited to participate in handling application 2001/3, \"Application title\", by Alice Applicant.\n\nYou can view the application at http://example.com/accept-invitation?token=abc123"}]
+       (emails base-events reviewer-invited-event)))
 
 (deftest test-external-frontend-url
   (with-redefs [rems.config/env (assoc rems.config/env :external-frontend-url "http://external-frontend-url.com/")]
-    (let [mails (emails created-events submit-event)]
+    (let [emails-for-submission (emails created-events submit-event)
+          emails-for-applicant-invitation (emails base-events applicant-invited-event)
+          emails-for-reviewer-invitation (emails base-events reviewer-invited-event)]
       (is (= {:to-user "applicant"
               :subject "Your application 2001/3, \"Application title\" has been submitted"
               :body "Dear Alice Applicant,\n\nYour application 2001/3, \"Application title\" has been submitted. You will be notified by email when the application has been handled.\n\nYou can view the application at http://external-frontend-url.com/application/7"}
-             (email-to "applicant" mails))
-          "Emails sent to applicants should forward the applicant to the external frontend when this feature is enabled in config.edn.")
+             (email-to "applicant" emails-for-submission))
+          "Notification email should forward the applicant to the external frontend when this feature is enabled in config.edn.")
       (is (= {:to-user "assistant"
               :subject "(2001/3, \"Application title\") A new application has been submitted"
               :body "Dear Amber Assistant,\n\nAlice Applicant has submitted a new application 2001/3, \"Application title\" to access resource(s) en title 11, en title 21.\n\nYou can review the application at http://example.com/application/7"}
-             (email-to "assistant" mails))
-          "Emails sent to reviewers should not be forwarded to the external frontend when this feature is enabled in config.edn."))))
+             (email-to "assistant" emails-for-submission))
+          "Notification email should not forward the handler to the external frontend when this feature is enabled in config.edn.")
+      (is (= [{:to "somebody@example.com"
+               :subject "Invitation to participate in application 2001/3, \"Application title\""
+               :body "Dear Some Body,\n\nYou have been invited to participate in application 2001/3, \"Application title\", by Alice Applicant.\n\nYou can view the application and accept the terms of use at http://external-frontend-url.com/accept-invitation?token=abc"}]
+             emails-for-applicant-invitation)
+          "Invitation email should forward the applicant to the external frontend when this feature is enabled in config.edn.")
+      (is (= [{:to "actor@example.com"
+               :subject "Invitation to participate in handling application 2001/3, \"Application title\""
+               :body "Dear Adam Actor,\n\nYou have been invited to participate in handling application 2001/3, \"Application title\", by Alice Applicant.\n\nYou can view the application at http://example.com/accept-invitation?token=abc123"}]
+             emails-for-reviewer-invitation)
+          "Invitation email should not forward the handler to the external frontend when this feature is enabled in config.edn."))))
 
 (deftest test-member-invited
   (is (= [{:to "somebody@example.com"
            :subject "Invitation to participate in application 2001/3, \"Application title\""
            :body "Dear Some Body,\n\nYou have been invited to participate in application 2001/3, \"Application title\", by Alice Applicant.\n\nYou can view the application and accept the terms of use at http://example.com/accept-invitation?token=abc"}]
          (emails base-events
-                 {:application/id 7
-                  :event/type :application.event/member-invited
-                  :event/actor "applicant"
-                  :application/member {:name "Some Body" :email "somebody@example.com"}
-                  :invitation/token "abc"}))))
+                 applicant-invited-event))))
 
 (deftest test-reviewing
   (let [request {:application/id 7
@@ -439,10 +462,7 @@
   (is (= [{:to "actor@example.com"
            :subject "Invitation to participate in handling application 2001/3, \"Application title\""
            :body "Dear Adam Actor,\n\nYou have been invited to participate in handling application 2001/3, \"Application title\", by Alice Applicant.\n\nYou can view the application at http://example.com/accept-invitation?token=abc123"}]
-         (emails base-events {:application/id 7
-                              :event/type :application.event/reviewer-invited
-                              :application/reviewer {:email "actor@example.com" :name "Adam Actor"}
-                              :invitation/token "abc123"})))
+         (emails base-events reviewer-invited-event)))
   (is (= [{:to "actor@example.com"
            :subject "Invitation to participate in handling application 2001/3, \"Application title\""
            :body "Dear Adam Actor,\n\nYou have been invited to participate in handling application 2001/3, \"Application title\", by Alice Applicant.\n\nYou can view the application at http://example.com/accept-invitation?token=abc123"}]

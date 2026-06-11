@@ -18,15 +18,19 @@
   ([] (base-url false))
   ([use-external-frontend-url]
   (if use-external-frontend-url
-    (or (not-empty (:external-frontend-url env)) (:public-url env))
+    (or (:external-frontend-url env) (:public-url env))
     (:public-url env))))
 
 ;; move this to a util namespace if its needed somewhere else
-(defn- link-to-application [application-id use-external-frontend-url]
-  (str (base-url use-external-frontend-url) "application/" application-id))
+(defn- link-to-application
+  ([application-id] (link-to-application application-id false))
+  ([application-id use-external-frontend-url]
+   (str (base-url use-external-frontend-url) "application/" application-id)))
 
-(defn- invitation-link [token use-external-frontend-url]
-  (str (base-url use-external-frontend-url) "accept-invitation?token=" token))
+(defn- invitation-link
+  ([token] (invitation-link token false))
+  ([token use-external-frontend-url]
+   (str (base-url use-external-frontend-url) "accept-invitation?token=" token)))
 
 (defn- format-application-for-email [application]
   (str
@@ -369,7 +373,7 @@
   (with-language lang
     (when workflow
       (let [params {:invited-by (get-in invitation [:invitation/invited-by :name])
-                    :invitation-url (invitation-link (:invitation/token invitation) false)
+                    :invitation-url (invitation-link (:invitation/token invitation))
                     :recipient (:invitation/name invitation)
                     :workflow (:title workflow)}]
         {:to (:invitation/email invitation)
