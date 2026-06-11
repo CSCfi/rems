@@ -168,7 +168,7 @@
 
 (deftest test-submitted
   (let [mails (emails created-events submit-event)]
-    (is (= #{"applicant" "assistant" email-to"handler"} (email-recipients mails)))
+    (is (= #{"applicant" "assistant" "handler"} (email-recipients mails)))
     (is (= {:to-user "applicant"
             :subject "Your application 2001/3, \"Application title\" has been submitted"
             :body "Dear Alice Applicant,\n\nYour application 2001/3, \"Application title\" has been submitted. You will be notified by email when the application has been handled.\n\nYou can view the application at http://example.com/application/7"}
