@@ -17,9 +17,9 @@
 (defn base-url
   ([] (base-url false))
   ([use-external-frontend-url]
-  (if use-external-frontend-url
-    (or (:external-frontend-url env) (:public-url env))
-    (:public-url env))))
+   (if use-external-frontend-url
+     (or (:external-frontend-url env) (:public-url env))
+     (:public-url env))))
 
 ;; move this to a util namespace if its needed somewhere else
 (defn- link-to-application
