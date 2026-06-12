@@ -244,8 +244,7 @@
     (let [invited-user (:application/member event)
           params {:applicant (application-util/get-applicant-name application)
                   :application-id (format-application-for-email application)
-                  :invitation-url (invitation-link (:invitation/token event)
-                                                   (application-util/is-applying-user? application (:userid invited-user)))
+                  :invitation-url (invitation-link (:invitation/token event) true)
                   :recipient (application-util/get-member-name invited-user)}]
       [{:to (:email invited-user)
         :subject (text-format-map :t.email.member-invited/subject
@@ -262,8 +261,7 @@
   (let [invited-user (:application/reviewer event)
         params {:applicant (application-util/get-applicant-name application)
                 :application-id (format-application-for-email application)
-                :invitation-url (invitation-link (:invitation/token event)
-                                                 (application-util/is-applying-user? application (:userid invited-user)))
+                :invitation-url (invitation-link (:invitation/token event))
                 :recipient (application-util/get-member-name invited-user)}]
     (with-language (:default-language env)
       [{:to (:email invited-user)
@@ -282,8 +280,7 @@
     (let [invited-user (:application/decider event)
           params {:applicant (application-util/get-applicant-name application)
                   :application-id (format-application-for-email application)
-                  :invitation-url (invitation-link (:invitation/token event)
-                                                   (application-util/is-applying-user? application (:userid invited-user)))
+                  :invitation-url (invitation-link (:invitation/token event))
                   :recipient (application-util/get-member-name invited-user)}]
       [{:to (:email invited-user)
         :subject (text-format-map :t.email.decider-invited/subject

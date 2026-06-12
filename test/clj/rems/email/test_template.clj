@@ -154,10 +154,12 @@
 (def applicant-invited-event {:application/id 7
                               :event/type :application.event/member-invited
                               :event/actor "applicant"
-                              :application/member {:name "Some Body" :email "somebody@example.com"}})
+                              :application/member {:name "Some Body" :email "somebody@example.com"}
+                              :invitation/token "abc123"})
 
 (def reviewer-invited-event {:application/id 7
                              :event/type :application.event/reviewer-invited
+                             :event/actor "reviewer"
                              :application/reviewer {:email "actor@example.com" :name "Adam Actor"}
                              :invitation/token "abc123"})
 
@@ -199,7 +201,7 @@
           "Notification email should not forward the handler to the external frontend when this feature is enabled in config.edn.")
       (is (= [{:to "somebody@example.com"
                :subject "Invitation to participate in application 2001/3, \"Application title\""
-               :body "Dear Some Body,\n\nYou have been invited to participate in application 2001/3, \"Application title\", by Alice Applicant.\n\nYou can view the application and accept the terms of use at http://external-frontend-url.com/accept-invitation?token=abc"}]
+               :body "Dear Some Body,\n\nYou have been invited to participate in application 2001/3, \"Application title\", by Alice Applicant.\n\nYou can view the application and accept the terms of use at http://external-frontend-url.com/accept-invitation?token=abc123"}]
              emails-for-applicant-invitation)
           "Invitation email should forward the applicant to the external frontend when this feature is enabled in config.edn.")
       (is (= [{:to "actor@example.com"
@@ -211,7 +213,7 @@
 (deftest test-member-invited
   (is (= [{:to "somebody@example.com"
            :subject "Invitation to participate in application 2001/3, \"Application title\""
-           :body "Dear Some Body,\n\nYou have been invited to participate in application 2001/3, \"Application title\", by Alice Applicant.\n\nYou can view the application and accept the terms of use at http://example.com/accept-invitation?token=abc"}]
+           :body "Dear Some Body,\n\nYou have been invited to participate in application 2001/3, \"Application title\", by Alice Applicant.\n\nYou can view the application and accept the terms of use at http://example.com/accept-invitation?token=abc123"}]
          (emails base-events
                  applicant-invited-event))))
 
