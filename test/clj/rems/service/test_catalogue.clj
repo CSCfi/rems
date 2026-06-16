@@ -3,7 +3,7 @@
             [rems.db.catalogue]
             [rems.db.category]
             [rems.db.test-data-helpers :as test-helpers]
-            [rems.db.testing :refer [rollback-db-fixture test-db-fixture]]
+            [rems.db.testing :refer [rollback-db-fixture test-db-fixture owners-fixture]]
             [rems.service.catalogue]
             [rems.service.form]
             [rems.service.licenses]
@@ -12,8 +12,11 @@
             [rems.testing-util :refer [with-user]])
   (:import org.joda.time.DateTime))
 
-(use-fixtures :once test-db-fixture)
-(use-fixtures :each rollback-db-fixture)
+(use-fixtures
+  :each
+  test-db-fixture
+  rollback-db-fixture
+  owners-fixture)
 
 (def ^:private owner "owner")
 
@@ -33,8 +36,7 @@
   (select-keys (get-catalogue-item item-id) [:enabled :archived]))
 
 (deftest catalogue-item-enabled-archived-test
-  (let [_org (test-helpers/create-organization! {})
-        form-id (test-helpers/create-form! {:form/external-title {:en "form" :fi "form" :sv "form"}
+  (let [form-id (test-helpers/create-form! {:form/external-title {:en "form" :fi "form" :sv "form"}
                                             :form/internal-name "catalogue-item-enabled-archived-test-form"})
         lic-id (test-helpers/create-license! {})
         res-id (test-helpers/create-resource! {:resource-ext-id "ext" :license-ids [lic-id]})
@@ -179,8 +181,7 @@
       (is (:success (archive-catalogue-item! true))))))
 
 (deftest test-edit-catalogue-item
-  (let [_org (test-helpers/create-organization! {})
-        item-id (test-helpers/create-catalogue-item!
+  (let [item-id (test-helpers/create-catalogue-item!
                  {:title {:en "Old title"
                           :fi "Vanha nimi"}})
         old-item (first (get-catalogue-items))
@@ -198,7 +199,6 @@
 
 (deftest test-get-catalogue-items
   (let [owner "owner"
-        _org (test-helpers/create-organization! {})
         item-id (test-helpers/create-catalogue-item! {})]
 
     (testing "find all"
@@ -218,7 +218,7 @@
          (get-catalogue-tree)))
 
   (let [get-category (fn [category]
-                       (-> (rems.db.category/get-category (:category/id category))))
+                       (rems.db.category/get-category (:category/id category)))
         child {:category/id (test-helpers/create-category! {})}
         parent {:category/id (test-helpers/create-category! {:category/children [child]})}
         _empty {:category/id (test-helpers/create-category! {})} ; should not be seen
@@ -270,3 +270,65 @@
              (get-catalogue-tree {:archived false
                                   :empty false
                                   :enabled true}))))))
+
+(deftest test-validate-children
+  (let [validate-children! (fn [command] (with-user "owner" (rems.service.catalogue/validate-children! command)))
+        form-id (test-helpers/create-form! {:form/external-title {:en "form" :fi "form" :sv "form"}
+                                            :form/internal-name "catalogue-item-enabled-archived-test-form"})
+        lic-id (test-helpers/create-license! {})
+        res-id (test-helpers/create-resource! {:resource-ext-id "ext" :license-ids [lic-id]})
+        workflow-id (test-helpers/create-workflow! {:title "workflow"})
+        item-1 (get-catalogue-item (test-helpers/create-catalogue-item! {:resource-id res-id
+                                                                         :form-id form-id
+                                                                         :workflow-id workflow-id
+                                                                         :organization {:organization/id "organization1"}}))
+        item-2-id (test-helpers/create-catalogue-item! {:workflow-id workflow-id
+                                                        :organization {:organization/id "organization1"}})
+        child (get-catalogue-item (test-helpers/create-catalogue-item! {:workflow-id workflow-id
+                                                                        :organization {:organization/id "organization1"}}))
+        parent (get-catalogue-item (test-helpers/create-catalogue-item! {:resource-id res-id
+                                                                         :form-id form-id
+                                                                         :workflow-id workflow-id
+                                                                         :children [{:catalogue-item/id (:id child)}]}))
+        item-4-id-diff-workflow (test-helpers/create-catalogue-item! {})
+        item-5 (get-catalogue-item (test-helpers/create-catalogue-item! {:workflow-id workflow-id}))]
+
+    (testing "with valid items"
+      (is (nil? (validate-children! (assoc item-1 :children [{:catalogue-item/id item-2-id}])))))
+
+    (testing "with item from another organization"
+      (is (thrown-with-msg? rems.auth.ForbiddenException
+                            #"no access to organization \"organization1\""
+                            (with-user "organization-owner2"
+                              (rems.service.catalogue/validate-children!
+                               (assoc item-1 :children [{:catalogue-item/id item-2-id}]))))))
+
+    (testing "with non-existent item"
+      (is (= {:success false
+              :errors [{:catalogue-items [{:catalogue-item/id -1}]
+                        :type :t.administration.errors/dependencies-not-found}]}
+             (validate-children! (assoc item-1 :children [{:catalogue-item/id -1}])))))
+
+    (testing "with circular dependency"
+      (is (= {:success false
+              :errors [{:catalogue-items [{:catalogue-item/id (:id item-1)}]
+                        :type :t.administration.errors/self-as-child-catalogue-item-disallowed}]}
+             (validate-children! (assoc item-1 :children [{:catalogue-item/id (:id item-1)}])))))
+
+    (testing "with different workflow"
+      (is (= {:success false
+              :errors [{:catalogue-items [{:catalogue-item/id item-4-id-diff-workflow}]
+                        :type :t.administration.errors/unbundlable-workflow-id}]}
+             (validate-children! (assoc item-1 :children [{:catalogue-item/id item-4-id-diff-workflow}])))))
+
+    (testing "multi-level"
+      (is (= {:success false
+              :errors [{:catalogue-items [{:catalogue-item/id (:id parent)}]
+                        :type :t.administration.errors/multi-level-hierarchy-disallowed}]}
+             (validate-children! (assoc item-5 :children [{:catalogue-item/id (:id parent)}])))))
+
+    (testing "in-use-by"
+      (is (= {:success false
+              :errors [{:catalogue-items [{:catalogue-item/id (:id parent)}]
+                        :type :t.administration.errors/in-use-by}]}
+             (validate-children! (assoc item-1 :children [{:catalogue-item/id (:id child)}])))))))

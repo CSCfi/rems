@@ -45,6 +45,7 @@
                  [mount "0.1.23"]
                  [nano-id "1.1.0"]
                  [ns-tracker "1.0.0"]
+                 [nubank/matcher-combinators "3.10.0"]
                  ^{:antq/exclude "10"} [org.apache.lucene/lucene-core "9.12.3"] ; Next major release 10.4.x available but multiple tests throw a java.lang.IllegalArgumentException: No matching method doc found taking 1 args for class org.apache.lucene.search.IndexSearcher
                  ^{:antq/exclude "10"} [org.apache.lucene/lucene-queryparser "9.12.3"] ;... java.lang.IllegalArgumentException: No matching method doc ...
                  [org.babashka/sci "0.12.51"]

@@ -85,6 +85,9 @@
                    :cancel "Cancel"
                    :catalogue-item "Catalogue item"
                    :catalogue-items "Catalogue items"
+                   :catalogue-item-hierarchy-children "Complementary items"
+                   :catalogue-item-hierarchy-parent "Top-level catalogue item"
+                   :catalogue-item-hierarchy-no-child-items "No complementary items"
                    :categories "Categories"
                    :category "Category"
                    :category-children "Subcategories"
@@ -124,7 +127,10 @@
                             :in-use-by "It is in use by:"
                             :dependencies-not-found "Missing dependencies:"
                             :self-as-subcategory-disallowed "Cannot set category as it's own subcategory"
-                            :ancestor-as-subcategory-disallowed "Cannot set category as subcategory, because it would create a loop"}
+                            :ancestor-as-subcategory-disallowed "Cannot set category as subcategory, because it would create a loop"
+                            :self-as-child-catalogue-item-disallowed "Cannot set catalogue item as it's own complementary item"
+                            :unbundlable-workflow-id "Workflows don't match"
+                            :multi-level-hierarchy-disallowed "Cannot set catalogue item as complementary, because it already has complementary items"}
                    :export-applications "Export applications"
                    :external-title "Title"
                    :form "Form"

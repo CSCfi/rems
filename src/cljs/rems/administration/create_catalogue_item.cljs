@@ -1,11 +1,13 @@
 (ns rems.administration.create-catalogue-item
-  (:require [clojure.string :as str]
-            [medley.core :refer [find-first map-vals]]
+  (:require [clojure.set :as set]
+            [clojure.string :as str]
+            [medley.core :refer [find-first map-vals assoc-some]]
             [re-frame.core :as rf]
             [rems.administration.administration :as administration]
             [rems.administration.components :refer [localized-text-field organization-field perform-action-button]]
             [rems.atoms :as atoms :refer [document-title]]
             [rems.collapsible :as collapsible]
+            [rems.common.roles :as roles]
             [rems.common.util :refer [andstr]]
             [rems.config]
             [rems.dropdown :as dropdown]
@@ -14,7 +16,7 @@
             [rems.flash-message :as flash-message]
             [rems.globals]
             [rems.spinner :as spinner]
-            [rems.text :refer [text text-format localized get-localized-title]]
+            [rems.text :refer [get-localized-title localized text text-format]]
             [rems.util :refer [navigate! post! put! trim-when-string]]))
 
 (defn- item-by-id [items id-key id]
@@ -25,13 +27,16 @@
  (fn [{:keys [db]} [_ catalogue-item-id]]
    {:db (assoc db
                ::form nil
+               ::catalogue-item nil
                ::catalogue-item-id catalogue-item-id
                ::editing? (some? catalogue-item-id))
     :dispatch-n [[::workflows {:disabled true :archived true}]
                  [::resources {:disabled true :archived true}]
                  [::forms {:disabled true :archived true}]
                  [::categories]
-                 (when catalogue-item-id [::catalogue-item])]}))
+                 (when catalogue-item-id [::catalogue-item])
+                 (when-not (:rems.administration.catalogue-items/catalogue db)
+                   [:rems.administration.catalogue-items/fetch-catalogue])]}))
 
 (rf/reg-sub ::catalogue-item-id (fn [db _] (::catalogue-item-id db)))
 (rf/reg-sub ::editing? (fn [db _] (::editing? db)))
@@ -49,6 +54,13 @@
 
 (rf/reg-sub ::selected-categories (fn [db _] (get-in db [::form :categories])))
 (rf/reg-event-db ::set-selected-categories (fn [db [_ categories]] (assoc-in db [::form :categories] categories)))
+
+(rf/reg-sub ::catalogue-item-parent (fn [db _] (get-in db [::form :part-of])))
+
+(rf/reg-sub ::selected-catalogue-item-children (fn [db _] (get-in db [::form :children])))
+
+(rf/reg-event-db ::set-catalogue-hierarchy (fn [db [_ children]] (assoc-in db [::form :children] children)))
+
 
 (defn- valid-localization? [localization]
   (not (str/blank? (:title localization))))
@@ -68,17 +80,16 @@
     str))
 
 (defn build-request [form]
-  (let [request {:wfid (get-in form [:workflow :id])
-                 :resid (get-in form [:resource :id])
-                 :form (get-in form [:form :form/id])
-                 :organization {:organization/id (get-in form [:organization :organization/id])}
-                 :localizations (into {}
-                                      (for [lang @rems.config/languages]
-                                        [lang {:title (trim-when-string (get-in form [:title lang]))
-                                               :infourl (-> (get-in form [:infourl lang])
-                                                            empty-string-to-nil
-                                                            trim-when-string)}]))
-                 :categories (mapv #(select-keys % [:category/id]) (get-in form [:categories]))}]
+  (let [request (-> {:wfid (-> form :workflow :id)
+                     :resid (-> form :resource :id)
+                     :form (-> form :form :form/id)
+                     :organization (-> form :organization (select-keys [:organization/id]))
+                     :localizations (into {}
+                                          (for [lang @rems.config/languages]
+                                            [lang {:title (-> form :title lang trim-when-string)
+                                                   :infourl (-> form :infourl lang empty-string-to-nil trim-when-string)}]))}
+                    (assoc-some :categories (->> form :categories (mapv #(select-keys % [:category/id])) not-empty))
+                    (assoc-some :children (->> form :children (mapv #(select-keys % [:catalogue-item/id])) not-empty)))]
     (when (valid-request? request)
       request)))
 
@@ -109,7 +120,8 @@
           {:params {:id id
                     :organization (:organization request)
                     :localizations (:localizations request)
-                    :categories (:categories request)}
+                    :categories (:categories request)
+                    :children (:children request)}
            :handler (flash-message/default-success-handler
                      :top
                      description
@@ -127,7 +139,7 @@
    (merge
     db
     (when (::editing? db)
-      (when-let [{:keys [wfid resource-id formid localizations organization categories]} (get-in db [::catalogue-item :data])]
+      (when-let [{:keys [wfid resource-id formid localizations organization categories children part-of]} (get-in db [::catalogue-item :data])]
         (when-let [workflows (get-in db [::workflows :data])]
           (when-let [resources (get-in db [::resources :data])]
             (when-let [forms (get-in db [::forms :data])]
@@ -137,7 +149,9 @@
                        :organization organization
                        :title (map-vals :title localizations)
                        :infourl (map-vals :infourl localizations)
-                       :categories categories}}))))))))
+                       :categories categories
+                       :children children
+                       :part-of part-of}}))))))))
 
 (fetcher/reg-fetcher ::workflows "/api/workflows" {:on-success #(rf/dispatch [::update-loading!])})
 (fetcher/reg-fetcher ::resources "/api/resources" {:on-success #(rf/dispatch [::update-loading!])})
@@ -145,6 +159,27 @@
 (fetcher/reg-fetcher ::catalogue-item "/api/catalogue-items/:id" {:path-params (fn [db] {:id (::catalogue-item-id db)})
                                                                   :on-success #(rf/dispatch [::update-loading!])})
 (fetcher/reg-fetcher ::categories "/api/categories")
+
+(defn filter-possible-child-items [{:keys [id wfid] :as selected-catalogue-item} catalogue]
+  (let [xform (comp (filter roles/can-modify-organization-item?)
+                    (remove :archived)
+                    (remove :children)
+                    (filter (some-fn (comp #{id} :catalogue-item/id :part-of)
+                                     (complement :part-of))))]
+    (into []
+          (cond-> xform
+            selected-catalogue-item
+            (comp (remove (comp #{id} :id))
+                  (filter (comp #{wfid} :wfid))))
+          catalogue)))
+
+(rf/reg-sub
+ ::possible-child-items
+ (fn [_ _]
+   [(rf/subscribe [::catalogue-item])
+    (rf/subscribe [:rems.administration.catalogue-items/catalogue])])
+ (fn [[selected-catalogue-item catalogue :as _db] _]
+   (filter-possible-child-items selected-catalogue-item catalogue)))
 
 ;;;; UI
 
@@ -156,6 +191,8 @@
 (def ^:private resource-dropdown-id "resource-dropdown")
 (def ^:private form-dropdown-id "form-dropdown")
 (def ^:private categories-dropdown-id "categories-dropdown")
+(def ^:private catalogue-item-parent-id "catalogue-item-parent-id")
+(def ^:private catalogue-item-children-dropdown-id "catalogue-item-children-dropdown")
 
 (defn- catalogue-item-organization-field []
   [organization-field context {:keys [:organization]}])
@@ -276,6 +313,42 @@
        :placeholder (text :t.administration/no-categories)
        :on-change (fn [items] (rf/dispatch [::set-selected-categories (mapv #(dissoc % ::label) items)]))}]]))
 
+(defn- catalogue-item-parent-field [{parent-id :catalogue-item/id}]
+  [:div.form-group
+   [:label.administration-field-label {:for catalogue-item-parent-id} (text :t.administration/catalogue-item-hierarchy-parent)]
+   [:div
+    [atoms/link
+     {:href (str "/administration/catalogue-items/" parent-id)
+      :target :_blank
+      :label parent-id
+      :id catalogue-item-parent-id}]]])
+
+(defn- catalogue-item-children-field []
+  (let [dropdown-items (into [] (comp (map #(set/rename-keys % {:id :catalogue-item/id}))
+                                   (map #(assoc % ::label (str (or (get-localized-title %)
+                                                                   (:catalogue-item/id %))))))
+                             @(rf/subscribe [::possible-child-items]))
+        item-selected? (comp (into #{} (map :catalogue-item/id) @(rf/subscribe [::selected-catalogue-item-children]))
+                             :catalogue-item/id)]
+    [:div.form-group
+     [:label.administration-field-label {:for catalogue-item-children-dropdown-id} (text :t.administration/catalogue-item-hierarchy-children)]
+
+     [collapsible/info-toggle-control {:aria-label (str (text :t.create-form/collapse-aria-label)
+                                                        (text :t.administration/catalogue-item-hierarchy-children))
+                                       :collapsible-id (str catalogue-item-children-dropdown-id "-collapsible")}]
+     [collapsible/minimal {:id (str catalogue-item-children-dropdown-id "-collapsible")
+                           :collapse (text :t.administration/catalogue-item-hierarchy-children)}]
+     [dropdown/dropdown
+      {:id catalogue-item-children-dropdown-id
+       :items dropdown-items
+       :multi? true
+       :item-key :catalogue-item/id
+       :item-label ::label
+       :item-selected? item-selected?
+       :clearable? false
+       :placeholder (text :t.administration/catalogue-item-hierarchy-no-child-items)
+       :on-change (fn [items] (rf/dispatch [::set-catalogue-hierarchy (mapv #(dissoc % ::label) items)]))}]]))
+
 (defn- cancel-button [catalogue-item-id]
   [atoms/link {:id :cancel
                :class "btn btn-secondary"}
@@ -298,6 +371,7 @@
 (defn create-catalogue-item-page []
   (let [editing? @(rf/subscribe [::editing?])
         catalogue-item-id (when editing? @(rf/subscribe [::catalogue-item-id]))
+        parent-item @(rf/subscribe [::catalogue-item-parent])
         loading? (or @(rf/subscribe [::workflows :fetching?])
                      @(rf/subscribe [::resources :fetching?])
                      @(rf/subscribe [::forms :fetching?])
@@ -322,6 +396,9 @@
                    [catalogue-item-resource-field]
                    [catalogue-item-form-field]
                    [catalogue-item-categories-field]
+                   (if parent-item
+                     [catalogue-item-parent-field parent-item]
+                     [catalogue-item-children-field])
 
                    [:div.col.commands
                     [cancel-button catalogue-item-id]

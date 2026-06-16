@@ -90,14 +90,26 @@
                          (:form-name catalogue-item)])]
                      [inline-info-field (text :t.administration/categories)
                       (when-let [categories (:categories catalogue-item)]
-                        (interpose
-                         ", "
-                         (doall
-                          (for [cat categories]
-                            ^{:key (:category/id cat)}
-                            [atoms/link nil
-                             (str "/administration/categories/" (:category/id cat))
-                             (localized (:category/title cat))]))))]
+                        (doall
+                         (for [cat categories]
+                           ^{:key (:category/id cat)}
+                           [atoms/link nil
+                            (str "/administration/categories/" (:category/id cat))
+                            (localized (:category/title cat))])))]
+                     [inline-info-field (text :t.administration/catalogue-item-hierarchy-parent)
+                      (let [{id :catalogue-item/id} (:part-of catalogue-item)]
+                        (when id
+                          [atoms/link {:href (str "/administration/catalogue-items/" id)
+                                       :label id
+                                       :target :_blank}]))]
+                     [inline-info-field (text :t.administration/catalogue-item-hierarchy-children)
+                      (when-let [children (:children catalogue-item)]
+                        (doall
+                         (for [{id :catalogue-item/id} children]
+                           ^{:key id}
+                           [atoms/link {:href (str "/administration/catalogue-items/" id)
+                                        :label id
+                                        :target :_blank}])))]
                      [inline-info-field (text :t.administration/start) (localize-time (:start catalogue-item))]
                      [inline-info-field (text :t.administration/end) (localize-time (:end catalogue-item))]
                      [inline-info-field (text :t.administration/active) [readonly-checkbox {:value (status-flags/active? catalogue-item)}]]]))}]

@@ -1,4 +1,5 @@
-#kaocha/v1 {:tests [{:id :unit
+#kaocha/v1 {:bindings {clojure.core/*print-namespace-maps* false}
+            :tests [{:id :unit
                      :ns-patterns ["rems"]
                      :test-paths ["src" "test"]
                      :skip-meta [:browser :integration]}

@@ -54,4 +54,4 @@
 #?(:cljs
    (defn show-when-can-modify-organization-item [item & body]
      (when (can-modify-organization-item? item)
-       (into [:<> body]))))
+       (into [:<>] body))))
