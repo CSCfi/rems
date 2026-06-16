@@ -180,7 +180,7 @@ This will **disable and archive the old catalogue item** and create a new catalo
 
 Catalogue items can be grouped under **Categories** that display as folding sub-headers on the catalogue page, also referred to as the **catalogue tree**. Categories can have subcategories and they can be nested in a tree-like structure.
 
-Additionally, catalogue items may specify **complementary items** that must be applied for together with the **top-level catalogue item**. A top-level catalogue item may have many complementary items, and there can only be one top-level item for a given complementary item. A catalogue item that is already referenced by a top-level item may not have complementary items of it's oown.
+Additionally, catalogue items may specify **complementary items** that must be applied for together with the **top-level catalogue item**. A top-level catalogue item may have many complementary items, and there can only be one top-level item for a given complementary item. A catalogue item that is already referenced by a top-level item may not have complementary items of it's own.
 
 ## Disabling, and archiving items
 
