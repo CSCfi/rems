@@ -12,6 +12,7 @@ Changes since v2.39.1
 
 ### Additions
 
+- Added the `:external-frontend-url` configuration option. When configured, applicant-facing links in outbound emails will use this URL instead of the default REMS frontend URL.
 - Added a custom action button for approved applications. The button is defined in extra translations. (#3413)
 - Upgraded several libraries (#3421)
 
