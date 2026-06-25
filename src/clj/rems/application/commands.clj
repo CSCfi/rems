@@ -7,7 +7,6 @@
             [rems.common.application-util :as application-util]
             [rems.common.form :as form]
             [rems.common.util :refer [build-index getx getx-in]]
-            [rems.db.entitlements]
             [rems.form-validation :as form-validation]
             [rems.permissions :as permissions]
             [rems.util :refer [assert-ex try-catch-ex]]
