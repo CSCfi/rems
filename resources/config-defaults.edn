@@ -177,6 +177,7 @@
 
  ;; List of supported languages. They will be selectable in the UI.
  :languages [:en :fi]
+ :language-names {:en "English" :fi "Suomi"}
  :default-language :en
 
  ;; Path to a directory with translations for additional languages.
