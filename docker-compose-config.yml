@@ -15,7 +15,7 @@ services:
       - ./example-theme/extra-styles.css:/rems/example-theme/extra-styles.css
 
   db:
-    image: postgres:13
+    image: postgres:18
     environment:
       POSTGRES_USER: rems
       POSTGRES_PASSWORD: remspassword
