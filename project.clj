@@ -79,7 +79,7 @@
                          ^{:required-by "postal"
                            :antq/exclude "2"} [com.sun.mail/jakarta.mail "1.6.8"]
                          ^{:required-by "luminus-jetty"} [info.sunng/ring-jetty9-adapter "0.40.2"]
-                         ^{:required-by "clj-time"} [joda-time "2.14.1"]
+                         ^{:required-by "clj-time"} [joda-time "2.14.2"]
                          ^{:required-by "ring-webjars"} [org.apache.commons/commons-lang3 "3.20.0"]
                          ^{:required-by "clj-pdf"} [org.apache.xmlgraphics/xmlgraphics-commons "2.11"]
                          ^{:required-by "buddy-core"} [org.bouncycastle/bcpkix-jdk18on "1.84"]
