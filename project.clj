@@ -13,7 +13,7 @@
                  ^{:antq/exclude ["0.8.5" "0.8.x" "0.9"]} [conman "0.8.4"] ; 0.8.5 switches to next.jdbc, which breaks stuff and requires proper testing in production
                  [com.attendify/schema-refined "0.3.0-alpha5"]
                  [com.clojure-goes-fast/clj-async-profiler "1.7.0"] ; also check extra :jvm-opts https://github.com/clojure-goes-fast/clj-async-profiler?tab=readme-ov-file#tuning-for-better-accuracy
-                 [com.clojure-goes-fast/clj-memory-meter "0.4.0"]
+                 [com.clojure-goes-fast/clj-memory-meter "0.5.0"]
                  [com.cognitect/transit-clj "1.1.357"]
                  [com.draines/postal "2.0.5"]
                  [com.fasterxml.jackson.datatype/jackson-datatype-joda "2.21.2"]
