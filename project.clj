@@ -42,7 +42,7 @@
                  [metosin/jsonista "1.0.0"]
                  [metosin/ring-swagger "1.1.0"]
                  [metosin/ring-swagger-ui "5.32.6"]
-                 [mount "0.1.23"]
+                 [mount "0.1.24"]
                  [nano-id "1.1.0"]
                  [ns-tracker "1.0.0"]
                  [nubank/matcher-combinators "3.10.0"]
