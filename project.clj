@@ -8,7 +8,7 @@
                  [buddy/buddy-sign "3.6.1-359"]
                  [ch.qos.logback/logback-classic "1.5.38"]
                  [clj-http "3.13.1"]
-                 [clj-pdf "2.7.4"]
+                 [clj-pdf "2.8.0"]
                  [clj-time "0.15.2"]
                  ^{:antq/exclude ["0.8.5" "0.8.x" "0.9"]} [conman "0.8.4"] ; 0.8.5 switches to next.jdbc, which breaks stuff and requires proper testing in production
                  [com.attendify/schema-refined "0.3.0-alpha5"]
