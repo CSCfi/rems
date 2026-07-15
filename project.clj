@@ -143,7 +143,7 @@
    :dev [:project/dev :profiles/dev]
    :test [:project/dev :project/test :profiles/test]
 
-   :project/dev {:plugins [[lein-ancient "1.0.0-RC4-SNAPSHOT"]]
+   :project/dev {:plugins [[lein-ancient "1.0.0"]]
 
                  :jvm-opts ["-Drems.config=dev-config.edn"
                             "-Djdk.attach.allowAttachSelf" ; needed by clj-memory-meter on Java 9+
