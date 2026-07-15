@@ -13,7 +13,7 @@ defaults: &defaults
 
 orbs:
   browser-tools: circleci/browser-tools@2.4.2
-  docker: circleci/docker@3.0.1
+  docker: circleci/docker@4.0.1
 
 executors:
   clojure:
