@@ -6,7 +6,7 @@
                  [binaryage/devtools "1.0.7"]
                  [buddy/buddy-auth "3.0.323"]
                  [buddy/buddy-sign "3.6.1-359"]
-                 [ch.qos.logback/logback-classic "1.5.32"]
+                 [ch.qos.logback/logback-classic "1.5.38"]
                  [clj-http "3.13.1"]
                  [clj-pdf "2.7.4"]
                  [clj-time "0.15.2"]
