@@ -49,7 +49,7 @@
                  ^{:antq/exclude "10"} [org.apache.lucene/lucene-core "9.12.3"] ; Next major release 10.4.x available but multiple tests throw a java.lang.IllegalArgumentException: No matching method doc found taking 1 args for class org.apache.lucene.search.IndexSearcher
                  ^{:antq/exclude "10"} [org.apache.lucene/lucene-queryparser "9.12.3"] ;... java.lang.IllegalArgumentException: No matching method doc ...
                  [org.babashka/sci "0.15.56"]
-                 [org.clojure/clojure "1.12.4"]
+                 [org.clojure/clojure "1.12.5"]
                  [org.clojure/core.cache "1.2.263"]
                  [org.clojure/core.memoize "1.2.281"]
                  [org.clojure/data.csv "1.1.1"]
