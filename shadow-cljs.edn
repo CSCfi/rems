@@ -7,7 +7,7 @@
                 [dev.weavejester/medley "1.10.0"]
                 [markdown-clj "1.12.8"]
                 [metosin/komponentit "0.3.14"]
-                [re-frame "1.4.5"]
+                [re-frame "1.4.7"]
                 [reagent "2.0.1"]
                 [reagent-utils "0.3.8"]
                 [venantius/accountant "0.2.5"]
