@@ -1,8 +1,9 @@
 (ns rems.flash-message
-  (:require [clojure.test :refer [deftest is]]
+  (:require [clojure.string :as string]
+            [clojure.test :refer [deftest is are]]
             [clojure.walk]
-            [reagent.core :as r]
             [re-frame.core :as rf]
+            [reagent.core :as r]
             [rems.administration.status-flags :as status-flags]
             [rems.focus :as focus]
             [rems.text :refer [text text-format]]
@@ -119,6 +120,24 @@
            (when-let [text (:status-text error)] text)
            (when-let [text (:status error)]
              (str " (" text ")"))])))
+
+(defn argumentize-some-key
+  [& id-keys]
+  (fn argumentize [error]
+    (assoc error
+           :args
+           [(->> error
+                 ((apply some-fn id-keys))
+                 vector
+                 flatten
+                 (string/join ", "))])))
+
+(deftest test-argumentize-some-key
+  (are [expected input] (= expected ((argumentize-some-key :a :b) input))
+    {:args ["1"] :a 1} {:a 1}
+    {:args ["1"] :b 1} {:b 1}
+    {:args ["1"] :a [1]} {:a [1]}
+    {:args ["2, 3"] :b [2 3]} {:b [2 3]}))
 
 (defn format-response-error [response]
   (if (:response response)

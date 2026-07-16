@@ -218,6 +218,10 @@
                  :entitlement-end "Udløbsdato for rettighederne: %1."
                  ;; Format parameters for all events:
                  ;; %1 - name of event actor
+                 :errors {:disabled-catalogue-item "Disabled catalogue item: %1"
+                          :missing-top-level-item "Missing top-level item: %1"
+                          :invalid-catalogue-item "Invalid catalogue item: %1"
+                          :unbundlable-catalogue-items "Mismatching workflows in catalogue items: %1"}
                  :events {:applicant-changed "%1 ændrede ansøger til %2."
                           :approved "%1 godkendte ansøgningen."
                           :attachments-redacted nil

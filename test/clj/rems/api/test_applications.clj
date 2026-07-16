@@ -749,14 +749,14 @@
                                                              :enabled false}))
       (rems.db.applications/reload-cache!)
       (is (= {:success false
-              :errors [{:type "disabled-catalogue-item" :catalogue-item-id cat-id}]}
+              :errors [{:type "t.applications.errors/disabled-catalogue-item" :catalogue-item-id cat-id}]}
              (api-call :post "/api/applications/create" {:catalogue-item-ids [cat-id]}
                        "42" user-id))))
 
     (testing "can't create an application from catalogue items with different workflows"
       (let [cat-id-a (test-helpers/create-catalogue-item! {}) ; test helper creates a workflow each time unless an id is specified
             cat-id-b (test-helpers/create-catalogue-item! {})]
-        (is (= {:errors [{:type "unbundlable-catalogue-items"
+        (is (= {:errors [{:type "t.applications.errors/unbundlable-catalogue-items"
                           :catalogue-item-ids [cat-id-a cat-id-b]}]
                 :success false}
                (api-call :post "/api/applications/create" {:catalogue-item-ids [cat-id-a cat-id-b]} api-key user-id)))))
@@ -765,8 +765,8 @@
       (let [wfid (test-helpers/create-workflow! {:title "hierarchy"})
             cat-id-child (test-helpers/create-catalogue-item! {:workflow-id wfid})
             cat-id-parent (test-helpers/create-catalogue-item! {:workflow-id wfid :children [{:catalogue-item/id cat-id-child}]})]
-        (is (= {:errors [{:type "missing-top-level-item"
-                          :top-level-item-ids [{:catalogue-item/id cat-id-parent}]}]
+        (is (= {:errors [{:type "t.applications.errors/missing-top-level-item"
+                          :catalogue-item-ids [cat-id-parent]}]
                 :success false}
                (api-call :post "/api/applications/create" {:catalogue-item-ids [cat-id-child]} api-key user-id)))
         (is (match? {:success true

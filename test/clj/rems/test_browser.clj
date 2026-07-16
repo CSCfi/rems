@@ -897,6 +897,77 @@
               (testing "check a field answer"
                 (is (= "Test name" (btu/get-element-text description-field-selector)))))))))))
 
+(deftest test-new-application-via-url
+  (let [make-localized-title (fn [part] (test-helpers/make-localized (str "test-new-application-via-url " part (btu/get-seed))))
+        wfid (test-helpers/create-workflow! {:title (str "test-new-application-via-url workflow " (btu/get-seed))
+                                             :type :workflow/default})]
+    (btu/context-assoc! :complementary-item-id (test-helpers/create-catalogue-item!
+                                                {:title (make-localized-title "complementary")
+                                                 :workflow-id wfid}))
+    (btu/context-assoc! :top-level-item-id (test-helpers/create-catalogue-item!
+                                            {:title (make-localized-title "top-level")
+                                             :workflow-id wfid
+                                             :children [{:catalogue-item/id (btu/context-getx :complementary-item-id)}]})
+                        :disabled-item-id (test-helpers/create-catalogue-item!
+                                           {:title (make-localized-title "disabled")
+                                            :workflow-id wfid})
+                        :unbundlable-item-id (test-helpers/create-catalogue-item!
+                                              {:title (make-localized-title "unbundlable")})))
+  (with-user "owner"
+    (rems.service.catalogue/set-catalogue-item-enabled! {:id (btu/context-getx :disabled-item-id)
+                                                         :enabled false}))
+  (login-as "alice")
+
+  (testing "happy path"
+    (btu/go (str (btu/get-server-url) "application?items=" (btu/context-getx :top-level-item-id) "," (btu/context-getx :complementary-item-id)))
+    (btu/wait-page-loaded)
+    (is (wait-page-title (->> (get-application-from-api (get-application-id) "alice")
+                              :application/external-id
+                              (format "Application %s – REMS")))))
+
+  (testing "without catalogue items"
+    (btu/go (str (btu/get-server-url) "application?items="))
+    (btu/wait-page-loaded)
+    (is (wait-page-title "Catalogue – REMS")
+        "Applicant is redirected to catalogue page")
+    (btu/screenshot "without-catalogue-items")
+    (is (= ["Application: Failed"]
+           (get-error-summary :top))))
+
+  (testing "with non-existent catalogue item id"
+    (btu/go (str (btu/get-server-url) "application?items=-999"))
+    (btu/wait-page-loaded)
+    (is (wait-page-title "Catalogue – REMS")
+        "Applicant is redirected to catalogue page")
+    (btu/screenshot "invalid-catalogue-item")
+    (is (= ["Invalid catalogue item: -999"]
+           (get-error-summary :top))))
+
+  (testing "with disabled catalogue item"
+    (btu/go (str (btu/get-server-url) "application?items=" (btu/context-getx :disabled-item-id)))
+    (btu/wait-page-loaded)
+    (is (wait-page-title "Catalogue – REMS")
+        "Applicant is redirected to catalogue page")
+    (btu/screenshot "disabled-catalogue-items")
+    (is (= [(str "Disabled catalogue item: " (btu/context-getx :disabled-item-id))]
+           (get-error-summary :top))))
+
+  (testing "with unbundlable catalogue items"
+    (btu/go (str (btu/get-server-url) "application?items=" (btu/context-getx :top-level-item-id) "," (btu/context-getx :unbundlable-item-id)))
+    (is (wait-page-title "Catalogue – REMS")
+        "Applicant is redirected to catalogue page")
+    (btu/screenshot "unbundlable-catalogue-items")
+    (is (= [(str "Mismatching workflows in catalogue items: " (btu/context-getx :top-level-item-id) ", " (btu/context-getx :unbundlable-item-id))]
+           (get-error-summary :top))))
+
+  (testing "with missing top-level item"
+    (btu/go (str (btu/get-server-url) "application?items=" (btu/context-getx :complementary-item-id)))
+    (is (wait-page-title "Catalogue – REMS")
+        "Applicant is redirected to catalogue page")
+    (btu/screenshot "missing-top-level-item")
+    (is (= [(str "Missing top-level item: " (btu/context-getx :top-level-item-id))]
+           (get-error-summary :top)))))
+
 (deftest test-applicant-member-invite-action
   (testing "submit test data with API"
     (btu/context-assoc! :form-id (test-helpers/create-form! {:form/fields [{:field/title {:en "description" :fi "kuvaus" :sv "rubrik"}

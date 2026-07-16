@@ -91,7 +91,7 @@
 (defn- invalid-catalogue-item-error [catalogue-item-id {:keys [get-catalogue-item]}]
   (cond
     (not get-catalogue-item) {:errors [{:type :missing-injection :injection :get-catalogue-item}]}
-    (not (get-catalogue-item catalogue-item-id)) {:errors [{:type :invalid-catalogue-item :catalogue-item-id catalogue-item-id}]}))
+    (not (get-catalogue-item catalogue-item-id)) {:errors [{:type :t.applications.errors/invalid-catalogue-item :catalogue-item-id catalogue-item-id}]}))
 
 (defn- disabled-catalogue-items-error [ids injections]
   (let [errors (for [id ids
@@ -99,7 +99,7 @@
                      :when (or (not (getx item :enabled))
                                (getx item :archived) ; TODO is this correct? besides, doesn't archived imply disabled?
                                (getx item :expired))]
-                 {:type :disabled-catalogue-item :catalogue-item-id (getx item :id)})]
+                 {:type :t.applications.errors/disabled-catalogue-item :catalogue-item-id (getx item :id)})]
     (when (seq errors)
       {:errors (vec errors)})))
 
@@ -113,11 +113,11 @@
                             (remove (set catalogue-item-ids))
                             (map get-catalogue-item)
                             (filter (complement (comp entitled-to-resids :resource-id)))
-                            (map (fn [{:keys [id]}] {:catalogue-item/id id})))
+                            (map :id))
                       catalogue-item-ids)]
     (when (seq missing)
-      {:errors [{:type :missing-top-level-item
-                 :top-level-item-ids missing}]})))
+      {:errors [{:type :t.applications.errors/missing-top-level-item
+                 :catalogue-item-ids missing}]})))
 
 (defn- licenses-not-accepted-error [application userid]
   (when-not (application-util/accepted-licenses? application userid)
@@ -143,7 +143,7 @@
   [catalogue-item-ids {:keys [get-catalogue-item]}]
   (let [catalogue-items (map get-catalogue-item catalogue-item-ids)]
     (when-not (= 1 (count (set (map :wfid catalogue-items))))
-      {:errors [{:type :unbundlable-catalogue-items :catalogue-item-ids catalogue-item-ids}]})))
+      {:errors [{:type :t.applications.errors/unbundlable-catalogue-items :catalogue-item-ids catalogue-item-ids}]})))
 
 (defn- unbundlable-catalogue-items-for-actor
   "Checks that the given catalogue items are bundlable by the given actor."

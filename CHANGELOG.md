@@ -8,6 +8,9 @@ have notable changes.
 
 Changes since v2.39.1
 
+### Fixes
+- Fixed an issue where the application page would get stuck on a loop, displaying the "loading" indicator, when there was an error while creating the application (#3460).
+
 ## v2.39.1 "Jätkäsaarenlaituri +1" 2026-04-23
 
 ### Additions
