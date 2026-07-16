@@ -1,6 +1,6 @@
 (ns rems.api.schema
   "Shared schema definitions for the API"
-  (:require [rems.application.commands :as commands]
+  (:require [rems.application.schema :as application-schema]
             [rems.schema-base :as schema-base]
             [ring.swagger.json-schema :as rjs]
             [schema.core :as s])
@@ -218,7 +218,7 @@
          (s/optional-key :handler/active?) s/Bool))
 
 (s/defschema Permissions
-  #{(apply s/enum (conj commands/command-names :see-everything))})
+  #{(apply s/enum (conj application-schema/command-names :see-everything))})
 
 (s/defschema DuoCodeMatch
   {:duo/id s/Str

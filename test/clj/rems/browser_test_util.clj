@@ -101,10 +101,15 @@
   [driver]
   (et/set-window-rect driver {:width 1400 :height 7000}))
 
-(defn- init-session! [driver]
-  (doto driver
-    (enable-downloads!)
-    (reset-window-size!)))
+(defn- init-session!
+  ([driver] (init-session! driver nil))
+  ([driver url]
+   (doto driver
+     (enable-downloads!)
+     (reset-window-size!)
+     ;; for development, shut the re-frame-10x panel so it doesn't interfere with tests
+     (et/go (or url (get-server-url)))
+     (et/js-execute "if (window.hasOwnProperty('day8')) { day8?.re_frame_10x?.show_panel_BANG_(false) }"))))
 
 (def ^:private driver-defaults
   {:args ["--lang=en-US"
@@ -144,7 +149,7 @@
          :driver (et/with-wait-timeout 60
                    (-> browser-id
                        (et/boot-driver (get-driver-config mode))
-                       (init-session!)))
+                       (init-session! url)))
          :url url
          :mode mode
          :seed (random-seed)))

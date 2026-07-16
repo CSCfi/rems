@@ -104,7 +104,11 @@
    3 {:id 3 :resid "res3"}
    4 {:id 4 :resid "res4"}
    5 {:id 5 :resid "res5"}
-   6 {:id 6 :resid "res-disabled" :enabled false}})
+   6 {:id 6 :resid "res-disabled" :enabled false}
+   7 {:id 7 :resid "res-top-level"}
+   8 {:id 8 :resid "res-complementary"}
+   9 {:id 9 :resid "res-top-level-2"}
+   10 {:id 10 :resid "res-complementary-2"}})
 
 (defn dummy-get-catalogue-item [id]
   (when (< id 10000)
@@ -116,6 +120,10 @@
                     5 {:resource-id 5 :formid 2 :wfid 2}
                     6 {:resource-id 5 :formid nil}
                     7 {:resource-id 6 :enabled false}
+                    8 {:resource-id 7 :children [{:catalogue-item/id 9}]}
+                    9 {:resource-id 8}
+                    10 {:resource-id 9 :children [{:catalogue-item/id 11}]}
+                    11 {:resource-id 10}
                     42 nil})
              (merge {:enabled true :archived false :expired false
                      :id id :wfid 1 :formid 1}))))
@@ -128,7 +136,21 @@
             {:license/id 3}]
          4 []
          5 []
-         6 []} id))
+         6 []
+         8 [{:license/id 1}]
+         9 [{:license/id 1}]
+         10 [{:license/id 1}]
+         11 [{:license/id 1}]}
+        id))
+
+(defn dummy-get-dependents [{:catalogue-item/keys [_id] :as item}]
+  (get {{:catalogue-item/id 9} #{{:catalogue-item/id 8}}
+        {:catalogue-item/id 11} #{{:catalogue-item/id 10}}}
+       item))
+
+(defn dummy-get-entitlements [userid]
+  (get {applicant-user-id [{:resourceid 9}]}
+       userid))
 
 (def application-injections
   {:get-attachments-for-application {app-id [{:attachment/id 1
@@ -139,6 +161,8 @@
                                               :attachment/user decider-user-id}]}
    :get-form-template (fn [id] (getx dummy-forms id))
    :get-catalogue-item dummy-get-catalogue-item
+   :get-entitlements dummy-get-entitlements
+   :get-dependents dummy-get-dependents
    :get-config (constantly {})
    :get-license dummy-licenses
    :get-resource dummy-resources
@@ -464,6 +488,55 @@
            (fail-command {:type :application.command/create
                           :actor applicant-user-id
                           :catalogue-item-ids [1 4]}))))
+
+  (testing "with hierarchical items"
+    (is (= {:event/type :application.event/created
+            :event/actor applicant-user-id
+            :event/time (DateTime. 1000)
+            :application/id new-app-id
+            :application/external-id new-external-id
+            :application/resources [{:catalogue-item/id 8, :resource/ext-id "res-top-level"}
+                                    {:catalogue-item/id 9, :resource/ext-id "res-complementary"}]
+            :application/licenses [{:license/id 1}]
+            :application/forms [{:form/id 1}]
+            :workflow/id 1
+            :workflow/type :workflow/default}
+           (ok-command {:type :application.command/create
+                        :actor applicant-user-id
+                        :catalogue-item-ids [8 9]})))
+    (is (= {:event/type :application.event/created
+            :event/actor applicant-user-id
+            :event/time (DateTime. 1000)
+            :application/id new-app-id
+            :application/external-id new-external-id
+            :application/resources [{:catalogue-item/id 8, :resource/ext-id "res-top-level"}]
+            :application/licenses [{:license/id 1}]
+            :application/forms [{:form/id 1}]
+            :workflow/id 1
+            :workflow/type :workflow/default}
+           (ok-command {:type :application.command/create
+                        :actor applicant-user-id
+                        :catalogue-item-ids [8]})))
+    (is (= {:event/type :application.event/created
+            :event/actor applicant-user-id
+            :event/time (DateTime. 1000)
+            :application/id new-app-id
+            :application/external-id new-external-id
+            :application/resources [{:catalogue-item/id 11, :resource/ext-id "res-complementary-2"}]
+            :application/licenses [{:license/id 1}]
+            :application/forms [{:form/id 1}]
+            :workflow/id 1
+            :workflow/type :workflow/default}
+           (ok-command {:type :application.command/create
+                        :actor applicant-user-id
+                        :catalogue-item-ids [11]}))))
+
+  (testing "error: missing top level item"
+    (is (= {:errors [{:type :missing-top-level-item
+                      :top-level-item-ids [{:catalogue-item/id 8}]}]}
+           (fail-command {:type :application.command/create
+                          :actor applicant-user-id
+                          :catalogue-item-ids [9]}))))
 
   (testing "cannot execute the create command for an existing application"
     (reset! allocated-new-ids? false)

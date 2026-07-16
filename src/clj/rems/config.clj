@@ -8,7 +8,7 @@
             [cprop.tools :refer [merge-maps]]
             [medley.core :refer [update-existing]]
             [mount.core :refer [defstate]]
-            [rems.application.commands :as commands]
+            [rems.application.schema :as application-schema]
             [rems.application.events :as events]
             [rems.json :as json])
   (:import [java.io FileNotFoundException]
@@ -97,9 +97,9 @@
                (pr-str (select-keys config [:default-language :languages]))))
   (when (:oidc-domain config)
     (log/warn ":oidc-domain is deprecated, prefer :oidc-metadata-url"))
-  (when-let [invalid-commands (seq (remove (set commands/command-names) (:disable-commands config)))]
+  (when-let [invalid-commands (seq (remove (set application-schema/command-names) (:disable-commands config)))]
     (log/warn "Unrecognized values in :disable-commands :" (pr-str invalid-commands))
-    (log/warn "Supported-values:" (pr-str commands/command-names)))
+    (log/warn "Supported-values:" (pr-str application-schema/command-names)))
   (validate-malware-scanner (:malware-scanning config))
   (doseq [target (:event-notification-targets config)]
     (when-let [invalid-events (seq (remove (set events/event-types) (:event-types target)))]

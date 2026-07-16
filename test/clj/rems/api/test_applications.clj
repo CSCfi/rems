@@ -3,6 +3,7 @@
             [clojure.java.io :as io]
             [clojure.string :as str]
             [clojure.test :refer [deftest is testing use-fixtures]]
+            [matcher-combinators.test]
             [rems.service.attachment]
             [rems.service.catalogue]
             [rems.api.testing :refer [api-call api-fixture api-response assert-response-is-ok authenticate get-csrf-token login-with-cookies read-body read-ok-body response-is-forbidden? response-is-not-found? response-is-ok? response-is-payload-too-large? response-is-unauthorized? response-is-unsupported-media-type? transit-body]]
@@ -751,6 +752,26 @@
               :errors [{:type "disabled-catalogue-item" :catalogue-item-id cat-id}]}
              (api-call :post "/api/applications/create" {:catalogue-item-ids [cat-id]}
                        "42" user-id))))
+
+    (testing "can't create an application from catalogue items with different workflows"
+      (let [cat-id-a (test-helpers/create-catalogue-item! {}) ; test helper creates a workflow each time unless an id is specified
+            cat-id-b (test-helpers/create-catalogue-item! {})]
+        (is (= {:errors [{:type "unbundlable-catalogue-items"
+                          :catalogue-item-ids [cat-id-a cat-id-b]}]
+                :success false}
+               (api-call :post "/api/applications/create" {:catalogue-item-ids [cat-id-a cat-id-b]} api-key user-id)))))
+
+    (testing "can't create an application of hierarchical catalogue items without top-level item"
+      (let [wfid (test-helpers/create-workflow! {:title "hierarchy"})
+            cat-id-child (test-helpers/create-catalogue-item! {:workflow-id wfid})
+            cat-id-parent (test-helpers/create-catalogue-item! {:workflow-id wfid :children [{:catalogue-item/id cat-id-child}]})]
+        (is (= {:errors [{:type "missing-top-level-item"
+                          :top-level-item-ids [{:catalogue-item/id cat-id-parent}]}]
+                :success false}
+               (api-call :post "/api/applications/create" {:catalogue-item-ids [cat-id-child]} api-key user-id)))
+        (is (match? {:success true
+                     :application-id number?}
+                    (api-call :post "/api/applications/create" {:catalogue-item-ids [cat-id-parent cat-id-child]} api-key user-id)))))
 
     (testing "no forms"
       (let [no-form (test-helpers/create-catalogue-item! {:form-id nil})

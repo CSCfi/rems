@@ -1,206 +1,18 @@
 (ns rems.application.commands
-  (:require [clojure.test :refer [deftest is testing]]
-            [clojure.set]
+  (:require [clj-time.core :as time]
+            [clojure.set :as set]
+            [clojure.test :refer [deftest is testing]]
             [medley.core :refer [assoc-some distinct-by update-existing]]
+            [rems.application.schema :as application-schema]
             [rems.common.application-util :as application-util]
             [rems.common.form :as form]
-            [rems.common.util :refer [getx getx-in build-index]]
+            [rems.common.util :refer [build-index getx getx-in]]
             [rems.form-validation :as form-validation]
             [rems.permissions :as permissions]
-            [rems.schema-base :as schema-base]
             [rems.util :refer [assert-ex try-catch-ex]]
-            [schema-refined.core :as r]
-            [schema.core :as s]
-            [clj-time.core :as time])
+            [schema.core :as s])
   (:import [java.util UUID]
            [org.joda.time DateTime]))
-
-;;; Schemas
-
-(s/defschema CommandInternal
-  {:type s/Keyword
-   :actor schema-base/UserId
-   :time DateTime})
-
-(s/defschema CommandBase
-  {:application-id s/Int})
-
-(s/defschema CommandAttachment
-  {:attachment/id s/Int})
-
-(s/defschema CommandWithComment
-  (assoc CommandBase
-         (s/optional-key :comment) s/Str
-         (s/optional-key :attachments) [CommandAttachment]))
-
-(s/defschema AcceptInvitationCommand
-  (assoc CommandBase
-         :token s/Str))
-(s/defschema AcceptLicensesCommand
-  (assoc CommandBase
-         :accepted-licenses [s/Int]))
-(s/defschema AddLicensesCommand
-  (assoc CommandWithComment
-         :licenses [s/Int]))
-(s/defschema AddMemberCommand
-  (assoc CommandBase
-         :member schema-base/User))
-(s/defschema ApproveCommand
-  (assoc CommandWithComment
-         (s/optional-key :entitlement-end) DateTime))
-(s/defschema AssignExternalIdCommand
-  (assoc CommandBase
-         :external-id s/Str))
-(s/defschema ChangeProcessingStateCommand
-  (assoc CommandWithComment
-         :processing-state s/Str
-         :public s/Bool))
-(s/defschema ChangeResourcesCommand
-  (assoc CommandWithComment
-         :catalogue-item-ids [s/Int]))
-(s/defschema CloseCommand
-  CommandWithComment)
-(s/defschema CopyAsNewCommand
-  CommandBase)
-(s/defschema CreateCommand
-  {:catalogue-item-ids [s/Int]})
-(s/defschema DecideCommand
-  (assoc CommandWithComment
-         :decision (s/enum :approved :rejected)))
-(s/defschema InviteReviewerCommand
-  (assoc CommandWithComment
-         :reviewer {:name s/Str
-                    :email s/Str}))
-(s/defschema InviteDeciderCommand
-  (assoc CommandWithComment
-         :decider {:name s/Str
-                   :email s/Str}))
-(s/defschema InviteMemberCommand
-  (assoc CommandBase
-         :member {:name s/Str
-                  :email s/Str}))
-(s/defschema ChangeApplicantCommand
-  (assoc CommandWithComment
-         :member schema-base/User))
-(s/defschema RejectCommand
-  CommandWithComment)
-(s/defschema RedactAttachmentsCommand
-  (assoc CommandWithComment
-         :redacted-attachments [CommandAttachment]
-         :public s/Bool))
-(s/defschema RemarkCommand
-  (assoc CommandWithComment
-         :public s/Bool))
-(s/defschema RemoveMemberCommand
-  (assoc CommandWithComment
-         :member schema-base/User))
-(s/defschema RequestReviewCommand
-  (assoc CommandWithComment
-         :reviewers [schema-base/UserId]))
-(s/defschema RequestDecisionCommand
-  (assoc CommandWithComment
-         :deciders [schema-base/UserId]))
-(s/defschema ReturnCommand
-  CommandWithComment)
-(s/defschema ReviewCommand
-  CommandWithComment)
-(s/defschema RevokeCommand
-  CommandWithComment)
-(s/defschema SaveDraftCommand
-  (assoc CommandBase
-         :field-values [{:form schema-base/FormId
-                         :field schema-base/FieldId
-                         :value schema-base/FieldValue}]
-         (s/optional-key :duo-codes) [schema-base/DuoCode]))
-(s/defschema SendExpirationNotificationsCommand
-  (assoc CommandBase
-         :expires-on DateTime))
-(s/defschema SubmitCommand
-  CommandBase)
-(s/defschema DeleteCommand
-  (assoc CommandBase
-         (s/optional-key :expires-on) DateTime))
-(s/defschema UninviteMemberCommand
-  (assoc CommandWithComment
-         :member {:name s/Str
-                  :email s/Str}))
-(s/defschema VoteCommand
-  (assoc CommandWithComment
-         :vote s/Str))
-
-(def command-schemas
-  {:application.command/accept-invitation AcceptInvitationCommand
-   :application.command/accept-licenses AcceptLicensesCommand
-   :application.command/add-licenses AddLicensesCommand
-   :application.command/add-member AddMemberCommand
-   :application.command/approve ApproveCommand
-   :application.command/assign-external-id AssignExternalIdCommand
-   :application.command/change-applicant ChangeApplicantCommand
-   :application.command/change-processing-state ChangeProcessingStateCommand
-   :application.command/change-resources ChangeResourcesCommand
-   :application.command/close CloseCommand
-   :application.command/copy-as-new CopyAsNewCommand
-   :application.command/create CreateCommand
-   :application.command/decide DecideCommand
-   :application.command/delete DeleteCommand
-   :application.command/invite-decider InviteDeciderCommand
-   :application.command/invite-member InviteMemberCommand
-   :application.command/invite-reviewer InviteReviewerCommand
-   :application.command/redact-attachments RedactAttachmentsCommand
-   :application.command/reject RejectCommand
-   :application.command/remark RemarkCommand
-   :application.command/remove-member RemoveMemberCommand
-   :application.command/request-decision RequestDecisionCommand
-   :application.command/request-review RequestReviewCommand
-   :application.command/return ReturnCommand
-   :application.command/review ReviewCommand
-   :application.command/revoke RevokeCommand
-   :application.command/save-draft SaveDraftCommand
-   :application.command/send-expiration-notifications SendExpirationNotificationsCommand
-   :application.command/submit SubmitCommand
-   :application.command/uninvite-member UninviteMemberCommand
-   :application.command/vote VoteCommand})
-
-(def command-names
-  (keys command-schemas))
-
-(def commands-with-comments
-  (set (for [[command schema] command-schemas
-             :when (contains? schema (s/optional-key :comment))]
-         command)))
-
-(s/defschema Command
-  (merge (apply r/StructDispatch :type (flatten (seq command-schemas)))
-         CommandInternal))
-
-(def ^:private validate-command-schema
-  (s/validator Command))
-
-(defn- validate-command [cmd]
-  (assert-ex (contains? command-schemas (:type cmd))
-             {:error {:type ::unknown-type}
-              :value cmd})
-  (validate-command-schema cmd))
-
-(deftest test-validate-command
-  (testing "check specific command schema"
-    (is (validate-command {:application-id 42
-                           :type :application.command/submit
-                           :time (DateTime.)
-                           :actor "applicant"})))
-  (testing "missing event specific key"
-    (is (= {:actor 'missing-required-key}
-           (:error
-            (try-catch-ex
-             (validate-command {:application-id 42
-                                :type :application.command/submit
-                                :time (DateTime.)}))))))
-  (testing "unknown event type"
-    (is (= {:type ::unknown-type}
-           (:error
-            (try-catch-ex
-             (validate-command
-              {:type :does-not-exist})))))))
 
 (def todo-commands
   #{:application.command/approve
@@ -242,13 +54,13 @@
           :application.command/send-expiration-notifications
           :application.command/redact-attachments
           :application.command/change-processing-state}
-        all-commands (set command-names)]
+        all-commands (set application-schema/command-names)]
 
     ;; This test is to make sure that as new commands are added,
     ;; we will make a conscious decision whether a submitted application
     ;; with that permission should be shown on the Actions page as
     ;; an "open application" or a "processed application".
-    (is (= (clojure.set/difference all-commands non-todo-commands)
+    (is (= (set/difference all-commands non-todo-commands)
            todo-commands)
         "seems like a new command has been added; is it a todo or handled todo?")))
 
@@ -259,7 +71,7 @@
   (fn [cmd _application _injections] (:type cmd)))
 
 (deftest test-all-command-types-handled
-  (is (= (set command-names)
+  (is (= (set application-schema/command-names)
          (set (keys (methods command-handler))))))
 
 (defn- must-not-be-empty [cmd key]
@@ -290,6 +102,22 @@
                  {:type :disabled-catalogue-item :catalogue-item-id (getx item :id)})]
     (when (seq errors)
       {:errors (vec errors)})))
+
+(defn- invalid-catalogue-item-hierarchy-error
+  "For such an item in `catalogue-item-ids` that has a parent (dependent), check that the parent item is also included in `catalogue-item-ids`, or `actor` has an entitlement to the parent item's resource."
+  [catalogue-item-ids actor {:keys [get-catalogue-item get-dependents get-entitlements]}]
+  (let [entitled-to-resids (into #{} (map :resourceid) (get-entitlements actor))
+        missing (into []
+                      (comp (mapcat (fn [id] (get-dependents {:catalogue-item/id id})))
+                            (map :catalogue-item/id)
+                            (remove (set catalogue-item-ids))
+                            (map get-catalogue-item)
+                            (filter (complement (comp entitled-to-resids :resource-id)))
+                            (map (fn [{:keys [id]}] {:catalogue-item/id id})))
+                      catalogue-item-ids)]
+    (when (seq missing)
+      {:errors [{:type :missing-top-level-item
+                 :top-level-item-ids missing}]})))
 
 (defn- licenses-not-accepted-error [application userid]
   (when-not (application-util/accepted-licenses? application userid)
@@ -428,6 +256,7 @@
   (or (must-not-be-empty cmd :catalogue-item-ids)
       (invalid-catalogue-items catalogue-item-ids injections)
       (unbundlable-catalogue-items catalogue-item-ids injections)
+      (invalid-catalogue-item-hierarchy-error catalogue-item-ids actor injections)
       (disabled-catalogue-items-error catalogue-item-ids injections)
       (let [workflow-id (-> (first catalogue-item-ids)
                             get-catalogue-item
@@ -840,6 +669,35 @@
     (update cmd :deciders #(mapv (getx injections :find-userid) %))
 
     cmd))
+
+(def ^:private validate-command-schema
+  (s/validator application-schema/Command))
+
+(defn- validate-command [cmd]
+  (assert-ex (contains? application-schema/command-schemas (:type cmd))
+             {:error {:type ::unknown-type}
+              :value cmd})
+  (validate-command-schema cmd))
+
+(deftest test-validate-command
+  (testing "check specific command schema"
+    (is (validate-command {:application-id 42
+                           :type :application.command/submit
+                           :time (DateTime.)
+                           :actor "applicant"})))
+  (testing "missing event specific key"
+    (is (= {:actor 'missing-required-key}
+           (:error
+            (try-catch-ex
+             (validate-command {:application-id 42
+                                :type :application.command/submit
+                                :time (DateTime.)}))))))
+  (testing "unknown event type"
+    (is (= {:type ::unknown-type}
+           (:error
+            (try-catch-ex
+             (validate-command
+              {:type :does-not-exist})))))))
 
 (defn handle-command [cmd application injections]
   (validate-command cmd) ; this is here mostly for tests, commands via the api are validated by compojure-api

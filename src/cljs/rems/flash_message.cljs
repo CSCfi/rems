@@ -24,11 +24,13 @@
 (rf/reg-sub ::message
             (fn [db [_ location]]
               (get-in db [::message location])))
+
 (rf/reg-event-fx ::reset
                  (fn [{:keys [db]} [_ location]]
                    {:db (if (some? location)
                           (update db ::message #(dissoc % location))
                           (dissoc db ::message))}))
+
 (rf/reg-event-fx ::show-flash-message
                  (fn [{:keys [db]} [_ message {:keys [focus? timeout] :or {focus? true}}]]
                    (when focus?

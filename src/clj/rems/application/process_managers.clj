@@ -7,6 +7,7 @@
             [rems.common.application-util :as application-util]
             [rems.db.applications]
             [rems.db.attachments]
+            [rems.db.entitlements]
             [rems.service.attachment]
             [rems.service.blacklist]))
 
@@ -52,3 +53,26 @@
           :when (= :application.event/attachments-redacted (:event/type event))
           attachment (:event/redacted-attachments event)]
     (rems.db.attachments/redact-attachment! (:attachment/id attachment))))
+
+(defn update-entitlements-for-event [event]
+  ;; performance improvement: filter events which may affect entitlements
+  (when (contains? #{:application.event/approved
+                     :application.event/closed
+                     :application.event/licenses-accepted
+                     :application.event/member-removed
+                     :application.event/resources-changed
+                     :application.event/revoked}
+                   (:event/type event))
+    (let [application (rems.db.applications/get-application-internal (:application/id event))]
+      ;; performance improvement 2: only need to check entitlements in the "end states"
+      (when (contains? #{:application.state/approved
+                         :application.state/closed
+                         :application.state/revoked}
+                       (:application/state application))
+        (rems.db.entitlements/update-entitlements-for-application application event)))))
+
+(defn update-entitlements-for-events [events]
+  (doseq [event events]
+    (update-entitlements-for-event event))
+  ;; this is used as a process manager, so return an explicit empty vector of commands
+  [])

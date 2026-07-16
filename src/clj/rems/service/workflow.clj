@@ -1,5 +1,5 @@
 (ns rems.service.workflow
-  (:require [rems.application.commands :as commands]
+  (:require [rems.application.schema :as application-schema]
             [rems.common.util :refer [apply-filters]]
             [rems.db.applications]
             [rems.db.form]
@@ -29,7 +29,7 @@
                :licenses invalid}]}))
 
 (defn invalid-disable-commands-error [disable-commands]
-  (when-some [invalid (seq (remove (comp (set commands/command-names) :command) disable-commands))]
+  (when-some [invalid (seq (remove (comp (set application-schema/command-names) :command) disable-commands))]
     {:success false
      :errors [{:type :invalid-disable-commands
                :commands invalid}]}))

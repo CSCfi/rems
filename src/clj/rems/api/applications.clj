@@ -10,7 +10,7 @@
             [rems.service.licenses]
             [rems.service.users]
             [rems.api.util :as api-util :refer [extended-logging]] ; required for route :roles
-            [rems.application.commands :as commands]
+            [rems.application.schema :as application-schema]
             [rems.common.roles :refer [+admin-read-roles+]]
             [rems.db.applications]
             [rems.pdf :as pdf]
@@ -59,10 +59,11 @@
          (s/optional-key :application-id) s/Int))
 
 (s/defschema ValidateRequest
-  (assoc commands/CommandBase
+  (assoc application-schema/CommandBase
          :field-values [{:form schema-base/FormId
                          :field schema-base/FieldId
                          :value schema-base/FieldValue}]
+         (s/optional-key :catalogue-item-ids) [s/Int]
          (s/optional-key :duo-codes) [schema-base/DuoCode]))
 
 (s/defschema Count
@@ -171,7 +172,7 @@
     (POST "/copy-as-new" request
       :summary "Create a new application as a copy of an existing application."
       :roles #{:logged-in}
-      :body [request commands/CopyAsNewCommand]
+      :body [request application-schema/CopyAsNewCommand]
       :return CopyAsNewResponse
       (extended-logging request)
       (ok (api-command :application.command/copy-as-new request)))
@@ -244,36 +245,36 @@
       :summary "List of application commands"
       :roles +admin-read-roles+
       :return [s/Keyword]
-      (ok (sort commands/command-names)))
+      (ok (sort application-schema/command-names)))
 
-    (command-endpoint :application.command/accept-invitation commands/AcceptInvitationCommand)
-    (command-endpoint :application.command/accept-licenses commands/AcceptLicensesCommand)
-    (command-endpoint :application.command/add-licenses commands/AddLicensesCommand)
-    (command-endpoint :application.command/add-member commands/AddMemberCommand)
-    (command-endpoint :application.command/approve commands/ApproveCommand)
-    (command-endpoint :application.command/assign-external-id commands/AssignExternalIdCommand)
-    (command-endpoint :application.command/change-resources commands/ChangeResourcesCommand)
-    (command-endpoint :application.command/change-processing-state commands/ChangeProcessingStateCommand)
-    (command-endpoint :application.command/close commands/CloseCommand)
-    (command-endpoint :application.command/decide commands/DecideCommand)
-    (command-endpoint :application.command/delete commands/DeleteCommand "Only drafts can be deleted. Only applicants can delete drafts.")
-    (command-endpoint :application.command/invite-decider commands/InviteDeciderCommand)
-    (command-endpoint :application.command/invite-member commands/InviteMemberCommand)
-    (command-endpoint :application.command/invite-reviewer commands/InviteReviewerCommand)
-    (command-endpoint :application.command/change-applicant commands/ChangeApplicantCommand "Promote member of application to applicant. Previous applicant becomes a member.")
-    (command-endpoint :application.command/redact-attachments commands/RedactAttachmentsCommand)
-    (command-endpoint :application.command/reject commands/RejectCommand)
-    (command-endpoint :application.command/remark commands/RemarkCommand)
-    (command-endpoint :application.command/remove-member commands/RemoveMemberCommand)
-    (command-endpoint :application.command/request-decision commands/RequestDecisionCommand)
-    (command-endpoint :application.command/request-review commands/RequestReviewCommand)
-    (command-endpoint :application.command/return commands/ReturnCommand)
-    (command-endpoint :application.command/review commands/ReviewCommand)
-    (command-endpoint :application.command/revoke commands/RevokeCommand)
-    (command-endpoint :application.command/save-draft commands/SaveDraftCommand)
-    (command-endpoint :application.command/submit commands/SubmitCommand)
-    (command-endpoint :application.command/uninvite-member commands/UninviteMemberCommand)
-    (command-endpoint :application.command/vote commands/VoteCommand)
+    (command-endpoint :application.command/accept-invitation application-schema/AcceptInvitationCommand)
+    (command-endpoint :application.command/accept-licenses application-schema/AcceptLicensesCommand)
+    (command-endpoint :application.command/add-licenses application-schema/AddLicensesCommand)
+    (command-endpoint :application.command/add-member application-schema/AddMemberCommand)
+    (command-endpoint :application.command/approve application-schema/ApproveCommand)
+    (command-endpoint :application.command/assign-external-id application-schema/AssignExternalIdCommand)
+    (command-endpoint :application.command/change-resources application-schema/ChangeResourcesCommand)
+    (command-endpoint :application.command/change-processing-state application-schema/ChangeProcessingStateCommand)
+    (command-endpoint :application.command/close application-schema/CloseCommand)
+    (command-endpoint :application.command/decide application-schema/DecideCommand)
+    (command-endpoint :application.command/delete application-schema/DeleteCommand "Only drafts can be deleted. Only applicants can delete drafts.")
+    (command-endpoint :application.command/invite-decider application-schema/InviteDeciderCommand)
+    (command-endpoint :application.command/invite-member application-schema/InviteMemberCommand)
+    (command-endpoint :application.command/invite-reviewer application-schema/InviteReviewerCommand)
+    (command-endpoint :application.command/change-applicant application-schema/ChangeApplicantCommand "Promote member of application to applicant. Previous applicant becomes a member.")
+    (command-endpoint :application.command/redact-attachments application-schema/RedactAttachmentsCommand)
+    (command-endpoint :application.command/reject application-schema/RejectCommand)
+    (command-endpoint :application.command/remark application-schema/RemarkCommand)
+    (command-endpoint :application.command/remove-member application-schema/RemoveMemberCommand)
+    (command-endpoint :application.command/request-decision application-schema/RequestDecisionCommand)
+    (command-endpoint :application.command/request-review application-schema/RequestReviewCommand)
+    (command-endpoint :application.command/return application-schema/ReturnCommand)
+    (command-endpoint :application.command/review application-schema/ReviewCommand)
+    (command-endpoint :application.command/revoke application-schema/RevokeCommand)
+    (command-endpoint :application.command/save-draft application-schema/SaveDraftCommand)
+    (command-endpoint :application.command/submit application-schema/SubmitCommand)
+    (command-endpoint :application.command/uninvite-member application-schema/UninviteMemberCommand)
+    (command-endpoint :application.command/vote application-schema/VoteCommand)
 
     ;; the path parameter matches also non-numeric paths, so this route must be after all overlapping routes
     (GET "/:application-id" []

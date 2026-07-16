@@ -3,7 +3,7 @@
             [medley.core :refer [assoc-some update-existing]]
             [clojure.test :refer [deftest is]]
             [com.rpl.specter :refer [ALL must transform]]
-            [clojure.string]
+            [clojure.string :as str]
             [rems.service.attachment]
             [rems.service.catalogue]
             [rems.service.category]
@@ -27,6 +27,18 @@
 
 (defn select-config-langs [m]
   (select-keys m (:languages rems.config/env)))
+
+(defn make-localized
+  "Wrap `title` into a map with the keys being the configured languages and values being `title` suffixed with the language name
+   ```clojure
+  (make-localized \"example\")
+  ;=> {:en \"example EN\", :fi \"example FI\", :sv \"example SV\"}
+   ```"
+  [title]
+  (reduce (fn [acc lang]
+            (assoc acc lang (str title " " (str/upper-case (name lang)))))
+          {}
+          (:languages rems.config/env)))
 
 ;;; helpers for generating test data
 
@@ -257,6 +269,14 @@
     (assert (:success result) {:command command :result result})
     (:id result)))
 
+(defn edit-catalogue-item! [command]
+  (let [actor (or (:actor command) (create-owner!))
+        result (with-user actor
+                 (rems.service.catalogue/edit-catalogue-item! (dissoc command :actor)))]
+    (assert (:success result) {:command command :result result})
+    (:id result)))
+
+
 (defn create-application! [{:keys [catalogue-item-ids actor time]}]
   (:application-id (command! {:time (or time (time/now))
                               :type :application.command/create
@@ -300,7 +320,7 @@
                                                :multiselect (or multiselect
                                                                 (->> (:field/options field)
                                                                      (map :key)
-                                                                     (clojure.string/join " ")))
+                                                                     (str/join " ")))
                                                (or field-value "x"))})))))
 
 (defn fill-duo-codes! [{:keys [application-id actor duos] :as command}]
