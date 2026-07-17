@@ -8,6 +8,9 @@ have notable changes.
 
 Changes since v2.39.1
 
+### Additions
+- Added applicant UI for catalogue item hierarchy (see previous release note), and a configuration option to switch the feature on. (#3460, #3473). See (manual/owner.md)[manual/owner.md] and 
+
 ### Fixes
 - Fixed an issue where the application page would get stuck on a loop, displaying the "loading" indicator, when there was an error while creating the application (#3460).
 
