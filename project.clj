@@ -6,17 +6,17 @@
                  [binaryage/devtools "1.0.7"]
                  [buddy/buddy-auth "3.0.323"]
                  [buddy/buddy-sign "3.6.1-359"]
-                 [ch.qos.logback/logback-classic "1.5.32"]
+                 [ch.qos.logback/logback-classic "1.5.38"]
                  [clj-http "3.13.1"]
-                 [clj-pdf "2.7.4"]
+                 [clj-pdf "2.8.0"]
                  [clj-time "0.15.2"]
                  ^{:antq/exclude ["0.8.5" "0.8.x" "0.9"]} [conman "0.8.4"] ; 0.8.5 switches to next.jdbc, which breaks stuff and requires proper testing in production
                  [com.attendify/schema-refined "0.3.0-alpha5"]
                  [com.clojure-goes-fast/clj-async-profiler "1.7.0"] ; also check extra :jvm-opts https://github.com/clojure-goes-fast/clj-async-profiler?tab=readme-ov-file#tuning-for-better-accuracy
-                 [com.clojure-goes-fast/clj-memory-meter "0.4.0"]
+                 [com.clojure-goes-fast/clj-memory-meter "0.5.0"]
                  [com.cognitect/transit-clj "1.1.357"]
                  [com.draines/postal "2.0.5"]
-                 [com.fasterxml.jackson.datatype/jackson-datatype-joda "2.21.2"]
+                 [com.fasterxml.jackson.datatype/jackson-datatype-joda "2.22.1"]
                  ^{:antq/exclude "2"} [com.icegreen/greenmail "1.6.15"]
                  [com.nextjournal/beholder "1.0.3"]
                  [com.rpl/specter "1.1.6"]
@@ -41,22 +41,22 @@
                  [metosin/compojure-api "2.0.0-alpha33"]
                  [metosin/jsonista "1.0.0"]
                  [metosin/ring-swagger "1.1.0"]
-                 [metosin/ring-swagger-ui "5.32.1"]
-                 [mount "0.1.23"]
+                 [metosin/ring-swagger-ui "5.32.6"]
+                 [mount "0.1.24"]
                  [nano-id "1.1.0"]
                  [ns-tracker "1.0.0"]
-                 [nubank/matcher-combinators "3.10.0"]
+                 [nubank/matcher-combinators "3.10.1"]
                  ^{:antq/exclude "10"} [org.apache.lucene/lucene-core "9.12.3"] ; Next major release 10.4.x available but multiple tests throw a java.lang.IllegalArgumentException: No matching method doc found taking 1 args for class org.apache.lucene.search.IndexSearcher
                  ^{:antq/exclude "10"} [org.apache.lucene/lucene-queryparser "9.12.3"] ;... java.lang.IllegalArgumentException: No matching method doc ...
-                 [org.babashka/sci "0.12.51"]
-                 [org.clojure/clojure "1.12.4"]
+                 [org.babashka/sci "0.15.56"]
+                 [org.clojure/clojure "1.12.5"]
                  [org.clojure/core.cache "1.2.263"]
                  [org.clojure/core.memoize "1.2.281"]
                  [org.clojure/data.csv "1.1.1"]
                  [org.clojure/data.xml "0.0.8"]
                  [org.clojure/tools.cli "1.4.256"]
                  [org.clojure/tools.logging "1.3.1"]
-                 [org.postgresql/postgresql "42.7.10"]
+                 [org.postgresql/postgresql "42.7.13"]
                  ^{:antq/exclude "2"} [org.webjars.bower/tether "1.4.7"] ; doesn't work with "2.0.0-beta.5", error serving the file
                  [org.webjars.npm/axe-core "4.11.3"]
                  [org.webjars.npm/better-dateinput-polyfill "4.0.0-beta.2"]
@@ -68,9 +68,9 @@
                  [prismatic/schema-generators "0.1.5"]
                  [ring-cors "0.1.13"]
                  [ring-webjars "0.3.1"]
-                 [ring/ring-core "1.15.4"]
-                 [ring/ring-defaults "0.7.0"]
-                 [ring/ring-devel "1.15.4"]
+                 [ring/ring-core "1.15.5"]
+                 [ring/ring-defaults "0.7.1"]
+                 [ring/ring-devel "1.15.5"]
                  [ring/ring-mock "0.6.2"]
                  [se.haleby/stub-http "0.2.14"]]
   :managed-dependencies [^{:required-by "clj-http"} [commons-codec "1.22.0"]
@@ -78,12 +78,12 @@
                          ^{:required-by "ring-swagger"} [com.google.code.findbugs/jsr305 "3.0.2"]
                          ^{:required-by "postal"
                            :antq/exclude "2"} [com.sun.mail/jakarta.mail "1.6.8"]
-                         ^{:required-by "luminus-jetty"} [info.sunng/ring-jetty9-adapter "0.39.3"]
-                         ^{:required-by "clj-time"} [joda-time "2.14.1"]
+                         ^{:required-by "luminus-jetty"} [info.sunng/ring-jetty9-adapter "0.40.2"]
+                         ^{:required-by "clj-time"} [joda-time "2.14.2"]
                          ^{:required-by "ring-webjars"} [org.apache.commons/commons-lang3 "3.20.0"]
                          ^{:required-by "clj-pdf"} [org.apache.xmlgraphics/xmlgraphics-commons "2.11"]
-                         ^{:required-by "buddy-core"} [org.bouncycastle/bcpkix-jdk18on "1.84"]
-                         ^{:required-by "buddy-core"} [org.bouncycastle/bcprov-jdk18on "1.84"]
+                         ^{:required-by "buddy-core"} [org.bouncycastle/bcpkix-jdk18on "1.85"]
+                         ^{:required-by "buddy-core"} [org.bouncycastle/bcprov-jdk18on "1.85"]
                          ^{:required-by "tempura"} [org.clojure/tools.reader "1.6.0"]
                          ^{:required-by "tangle"} [org.flatland/ordered "1.15.12"]
                          ^{:required-by "clj-pdf"} [org.jfree/jfreechart "1.5.6"]
@@ -105,7 +105,7 @@
   :main rems.main
   :migratus {:store :database :db ~(get (System/getenv) "DATABASE_URL" "postgresql://localhost/rems?user=rems")}
 
-  :plugins [[dev.weavejester/lein-cljfmt "0.16.4"]
+  :plugins [[dev.weavejester/lein-cljfmt "0.16.5"]
             [lein-shell "0.5.0"]
             [migratus-lein "0.7.3"]
             [com.github.liquidz/antq "RELEASE"]
@@ -143,7 +143,7 @@
    :dev [:project/dev :profiles/dev]
    :test [:project/dev :project/test :profiles/test]
 
-   :project/dev {:plugins [[lein-ancient "1.0.0-RC4-SNAPSHOT"]]
+   :project/dev {:plugins [[lein-ancient "1.0.0"]]
 
                  :jvm-opts ["-Drems.config=dev-config.edn"
                             "-Djdk.attach.allowAttachSelf" ; needed by clj-memory-meter on Java 9+
