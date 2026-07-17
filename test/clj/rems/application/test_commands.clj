@@ -1,13 +1,13 @@
 (ns rems.application.test-commands
-  (:require [clojure.test :refer [deftest is testing]]
+  (:require [clj-time.core :as time]
+            [clojure.test :refer [deftest is testing]]
             [rems.application.commands :as commands]
             [rems.application.events :as events]
             [rems.application.model :as model]
             [rems.common.util :refer [getx]]
             [rems.permissions :as permissions]
-            [rems.util :refer [assert-ex]]
             [rems.testing-util :refer [with-fixed-time]]
-            [clj-time.core :as time])
+            [rems.util :refer [assert-ex]])
   (:import [clojure.lang ExceptionInfo]
            [java.util UUID]
            [org.joda.time DateTime]))
