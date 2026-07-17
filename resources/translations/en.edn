@@ -216,7 +216,10 @@
                  :empty "No applications."
                  ;; %1 - date
                  :entitlement-end "Access rights end %1."
-
+                 :errors {:disabled-catalogue-item "Disabled catalogue item: %1"
+                          :missing-top-level-item "Missing top-level item: %1"
+                          :invalid-catalogue-item "Invalid catalogue item: %1"
+                          :unbundlable-catalogue-items "Mismatching workflows in catalogue items: %1"}
                  ;; Format parameters for all events:
                  ;; %1 - %:event-actor% - name of event actor
                  ;;

@@ -209,6 +209,11 @@
                  :duos {:validation {:missing-duo-codes "DUO-koodit ovat määritetty resursseihin, mutta puuttuvat hakemuksesta:"}}
                  :empty "Ei hakemuksia."
                  :entitlement-end "Pääsyoikeudet loppuvat %1."
+                 :errors {:disabled-catalogue-item "Käytöstä poistettu aineisto: %1"
+                          :missing-top-level-item "Ylätason aineisto puuttuu: %1"
+                          :invalid-catalogue-item "Aineisto ei kelpaa: %1"
+                          :unbundlable-catalogue-items "Työvuo ei täsmää aineistoissa: %1"}
+
                  :events {:applicant-changed "%1 vaihtoi hakijan henkilöksi %2."
                           :approved "%1 hyväksyi hakemuksen."
                           :attachments-redacted "%1 poisti liitetiedostoja."

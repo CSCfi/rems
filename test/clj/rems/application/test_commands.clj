@@ -432,14 +432,14 @@
                           :catalogue-item-ids []}))))
 
   (testing "error: non-existing catalogue items"
-    (is (= {:errors [{:type :invalid-catalogue-item
+    (is (= {:errors [{:type :t.applications.errors/invalid-catalogue-item
                       :catalogue-item-id 999999}]}
            (fail-command {:type :application.command/create
                           :actor applicant-user-id
                           :catalogue-item-ids [999999]}))))
 
   (testing "error: disabled catalogue item"
-    (is (= {:errors [{:type :disabled-catalogue-item
+    (is (= {:errors [{:type :t.applications.errors/disabled-catalogue-item
                       :catalogue-item-id 7}]}
            (fail-command {:type :application.command/create
                           :actor applicant-user-id
@@ -483,7 +483,7 @@
                         :catalogue-item-ids [4 5]}))))
 
   (testing "error: catalogue items with different workflows"
-    (is (= {:errors [{:type :unbundlable-catalogue-items
+    (is (= {:errors [{:type :t.applications.errors/unbundlable-catalogue-items
                       :catalogue-item-ids [1 4]}]}
            (fail-command {:type :application.command/create
                           :actor applicant-user-id
@@ -532,8 +532,8 @@
                         :catalogue-item-ids [11]}))))
 
   (testing "error: missing top level item"
-    (is (= {:errors [{:type :missing-top-level-item
-                      :top-level-item-ids [{:catalogue-item/id 8}]}]}
+    (is (= {:errors [{:type :t.applications.errors/missing-top-level-item
+                      :catalogue-item-ids [8]}]}
            (fail-command {:type :application.command/create
                           :actor applicant-user-id
                           :catalogue-item-ids [9]}))))
@@ -740,7 +740,7 @@
                                                   dummy-submitted-event])))))
 
   (testing "applicant cannot add resources with different workflow"
-    (is (= {:errors [{:type :unbundlable-catalogue-items
+    (is (= {:errors [{:type :t.applications.errors/unbundlable-catalogue-items
                       :catalogue-item-ids [1 4]}]}
            (fail-command {:type :application.command/change-resources
                           :actor applicant-user-id
@@ -807,7 +807,7 @@
                            (build-application-view events)))))))
 
   (testing "the catalogue item must exist"
-    (is (= {:errors [{:type :invalid-catalogue-item :catalogue-item-id 42}]}
+    (is (= {:errors [{:type :t.applications.errors/invalid-catalogue-item :catalogue-item-id 42}]}
            (fail-command {:type :application.command/change-resources
                           :actor applicant-user-id
                           :catalogue-item-ids [42]}
