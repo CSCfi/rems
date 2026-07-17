@@ -1,5 +1,5 @@
 (ns rems.flash-message
-  (:require [clojure.string :as string]
+  (:require [clojure.string :as str]
             [clojure.test :refer [deftest is are]]
             [clojure.walk]
             [re-frame.core :as rf]
@@ -130,7 +130,7 @@
                  ((apply some-fn id-keys))
                  vector
                  flatten
-                 (string/join ", "))])))
+                 (str/join ", "))])))
 
 (deftest test-argumentize-some-key
   (are [expected input] (= expected ((argumentize-some-key :a :b) input))
