@@ -396,9 +396,10 @@
                    [catalogue-item-resource-field]
                    [catalogue-item-form-field]
                    [catalogue-item-categories-field]
-                   (if parent-item
-                     [catalogue-item-parent-field parent-item]
-                     [catalogue-item-children-field])
+                   (when (:enable-catalogue-hierarchy @rems.globals/config)
+                     (if parent-item
+                       [catalogue-item-parent-field parent-item]
+                       [catalogue-item-children-field]))
 
                    [:div.col.commands
                     [cancel-button catalogue-item-id]

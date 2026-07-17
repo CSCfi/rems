@@ -625,6 +625,9 @@
               :headers {"x-rems-api-key" "42"
                         "x-rems-user-id" (or userid "handler")}})))
 
+(defn- restart-handler! []
+  (mount/stop #'rems.handler/handler #'rems.main/http-server)
+  (mount/start #'rems.handler/handler #'rems.main/http-server))
 ;;; tests
 
 (deftest test-new-application
@@ -2585,7 +2588,55 @@
                  (into []
                        (map btu/value-of-el)
                        (-> (btu/query [{:class :application-resources}])
-                           (btu/children {:fn/has-class :application-resource}))))))))))
+                           (btu/children {:fn/has-class :application-resource}))))))))
+
+    (testing "with feature flag off"
+      (try
+        (with-redefs [rems.config/env (assoc rems.config/env :enable-catalogue-hierarchy false)]
+          (restart-handler!)
+
+          (testing "admin ui components are not visible"
+            (logout)
+            (login-as "owner")
+
+            (testing "create"
+              (go-to-admin "Catalogue items")
+              (btu/scroll-and-click :create-catalogue-item)
+              (wait-page-title "Create catalogue item – REMS")
+              (btu/wait-page-loaded)
+              (btu/screenshot "create-catalogue-item-when-hierarchy-off")
+              (is (= {}
+                     (select-keys
+                      (slurp-fields :catalogue-item-editor)
+                      ["Complementary items"
+                       "Top-level catalogue item"]))))
+
+            (testing "edit"
+              (btu/go (str (btu/get-server-url) "administration/catalogue-items/edit/" (btu/context-getx :parent-2-id)))
+              (btu/wait-page-loaded)
+              (btu/screenshot "edit-catalogue-item-when-hierarchy-off")
+              (is (= {}
+                     (select-keys
+                      (slurp-fields :catalogue-item-editor)
+                      ["Complementary items"
+                       "Top-level catalogue item"])))))
+
+          (testing "applicant can apply for child item on it's own"
+            (logout)
+            (login-as "alice")
+            (go-to-catalogue)
+            (add-to-cart (btu/context-getx :child-1-title-en))
+            (btu/screenshot "child-in-cart-when-hierarchy-off")
+            (click-cart-apply-single)
+            (wait-page-title (->> (get-application-from-api (get-application-id) "alice")
+                                  :application/external-id
+                                  (format "Application %s – REMS")))
+            (btu/screenshot "application-draft")
+            (send-application)))
+
+        (finally
+          (restart-handler!)
+          (btu/reload))))))
 
 (deftest test-update-catalogue-item
   (btu/with-postmortem
@@ -4269,9 +4320,6 @@
       (rems.db.user-settings/delete-user-settings! "alice")
       (rems.db.user-settings/delete-user-settings! "elsa")))) ; clear language settings
 
-(defn- restart-handler! []
-  (mount/stop #'rems.handler/handler #'rems.main/http-server)
-  (mount/start #'rems.handler/handler #'rems.main/http-server))
 
 (deftest test-hooks
   (btu/with-postmortem
