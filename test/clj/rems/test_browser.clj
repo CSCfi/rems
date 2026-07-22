@@ -2721,6 +2721,7 @@
       (btu/screenshot "test-update-catalogue-item-before-update-2")
       (btu/scroll-and-click {:tag :button :fn/text "Update catalogue item"})
       (is (btu/eventually-visible? {:css ".alert-success"}))
+      (btu/wait-for-idle)
       (btu/wait-disabled {:tag :button :fn/text "Update catalogue item"})
       (is (= [{"name" "test-update-catalogue-item 1 EN"
                "form" "test-update-catalogue-item form 1"
