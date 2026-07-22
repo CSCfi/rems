@@ -114,7 +114,8 @@
                               (remove (set catalogue-item-ids))
                               (map get-catalogue-item)
                               (filter (complement (comp entitled-to-resids :resource-id)))
-                              (map :id))
+                              (map :id)
+                              (distinct))
                         catalogue-item-ids)]
       (when (seq missing)
         {:errors [{:type :t.applications.errors/missing-top-level-item
