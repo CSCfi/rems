@@ -128,8 +128,7 @@
            :args
            [(->> error
                  ((apply some-fn id-keys))
-                 vector
-                 flatten
+                 ((fn [x] (cond-> x (not (seqable? x)) list)))
                  (str/join ", "))])))
 
 (deftest test-argumentize-some-key
