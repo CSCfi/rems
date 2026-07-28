@@ -789,6 +789,30 @@
                           :catalogue-item-ids [4]}
                          (build-application-view [dummy-created-event])))))
 
+  (testing "applicant can add hierarchical catalogue items"
+    (is (= {:event/type :application.event/resources-changed
+            :event/time test-time
+            :event/actor applicant-user-id
+            :application/id app-id
+            :application/forms [{:form/id 1}]
+            :application/resources [{:catalogue-item/id 2, :resource/ext-id "res2"}
+                                    {:catalogue-item/id 8 :resource/ext-id "res-top-level"}
+                                    {:catalogue-item/id 9 :resource/ext-id "res-complementary"}]
+            :application/licenses [{:license/id 2} {:license/id 1}]}
+           (ok-command {:type :application.command/change-resources
+                        :actor applicant-user-id
+                        :catalogue-item-ids [2 8 9]}
+                       (build-application-view [dummy-created-event])
+                       (assoc command-injections :get-config (constantly {:enable-catalogue-hierarchy true}))))))
+
+  (testing "applicant cannot change resources in a way that would violate catalogue item hierarchy"
+    (is (= {:errors [{:type :t.applications.errors/missing-top-level-item :catalogue-item-ids [8]}]}
+           (fail-command {:type :application.command/change-resources
+                          :actor applicant-user-id
+                          :catalogue-item-ids [2 9]}
+                         (build-application-view [dummy-created-event])
+                         (assoc command-injections :get-config (constantly {:enable-catalogue-hierarchy true}))))))
+
   (testing "applicant can replace resources with different form"
     (is (= {:event/type :application.event/resources-changed
             :event/time test-time
