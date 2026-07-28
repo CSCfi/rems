@@ -450,21 +450,21 @@
                                     :application/licenses (mapv (fn [id] {:license/id id}) (:licenses cmd))})))
 
 (defmethod command-handler :application.command/change-resources
-  [cmd application {:keys [get-catalogue-item get-workflow] :as injections}]
-  (let [cat-ids (:catalogue-item-ids cmd)
-        workflow (when (seq cat-ids)
-                   (get-workflow (-> (first cat-ids)
+  [{:keys [catalogue-item-ids actor] :as cmd} application {:keys [get-catalogue-item get-workflow] :as injections}]
+  (let [workflow (when (seq catalogue-item-ids)
+                   (get-workflow (-> (first catalogue-item-ids)
                                      get-catalogue-item
                                      :wfid)))]
     (or (must-not-be-empty cmd :catalogue-item-ids)
-        (invalid-catalogue-items cat-ids injections)
-        (unbundlable-catalogue-items-for-actor application cat-ids (:actor cmd) injections)
-        (changes-original-workflow application cat-ids (:actor cmd) injections)
+        (invalid-catalogue-items catalogue-item-ids injections)
+        (unbundlable-catalogue-items-for-actor application catalogue-item-ids actor injections)
+        (changes-original-workflow application catalogue-item-ids actor injections)
+        (invalid-catalogue-item-hierarchy-error catalogue-item-ids actor injections)
         (add-comment-and-attachments cmd application injections
                                      {:event/type :application.event/resources-changed
-                                      :application/forms (build-forms-list workflow cat-ids injections)
-                                      :application/resources (build-resources-list cat-ids injections)
-                                      :application/licenses (build-licenses-list cat-ids injections)}))))
+                                      :application/forms (build-forms-list workflow catalogue-item-ids injections)
+                                      :application/resources (build-resources-list catalogue-item-ids injections)
+                                      :application/licenses (build-licenses-list catalogue-item-ids injections)}))))
 
 (defmethod command-handler :application.command/add-member
   [cmd application injections]

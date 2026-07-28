@@ -1,12 +1,16 @@
 (ns rems.actions.change-resources
-  (:require [re-frame.core :as rf]
-            [rems.actions.components :refer [action-button action-form-view comment-field collapse-action-form perform-action-button]]
-            [rems.globals]
+  (:require [clojure.set :as set]
+            [medley.core :refer [distinct-by]]
+            [re-frame.core :as rf]
+            [rems.actions.components :refer [action-button action-form-view
+                                             collapse-action-form
+                                             comment-field
+                                             perform-action-button]]
             [rems.dropdown :as dropdown]
             [rems.flash-message :as flash-message]
-            [medley.core :refer [distinct-by]]
+            [rems.globals]
             [rems.spinner :as spinner]
-            [rems.text :refer [text get-localized-title]]
+            [rems.text :refer [get-localized-title text]]
             [rems.util :refer [post!]]))
 
 (def ^:private action-form-id "change-resources")
@@ -18,10 +22,14 @@
    (merge
     {:db (assoc db
                 ::initial-resources (into #{} (map :catalogue-item/id initial-resources))
-                ::selected-resources (into #{} (map :catalogue-item/id initial-resources)))
-     :dispatch-n (concat [[:rems.actions.components/set-comment action-form-id ""]]
-                         (when-not (:rems.catalogue/catalogue db)
-                           [[:rems.catalogue/full-catalogue]]))})))
+                ::selected-resources (into #{} (map :catalogue-item/id initial-resources))
+                ::error nil)
+     :dispatch-n (cond-> [[:rems.actions.components/set-comment action-form-id ""]]
+                   (not (:rems.catalogue/catalogue db))
+                   (conj [:rems.catalogue/full-catalogue])
+
+                   (:enable-catalogue-hierarchy @rems.globals/config)
+                   (conj [:rems.catalogue/entitlements->catalogue-item-ids]))})))
 
 (rf/reg-sub
  ::catalogue
@@ -44,6 +52,9 @@
 (rf/reg-sub ::selected-resources (fn [db _] (::selected-resources db)))
 (rf/reg-event-db ::set-selected-resources (fn [db [_ resources]] (assoc db ::selected-resources (set (map :id resources)))))
 
+(rf/reg-sub ::command-error (fn [db _] some? (::command-error db)))
+(rf/reg-event-db ::set-command-error (fn [db [_ error]] (assoc db ::command-error error)))
+
 (def ^:private dropdown-id "change-resources-dropdown")
 
 ;; The API allows us to add attachments to this command
@@ -57,12 +68,25 @@
                              :catalogue-item-ids (vec resources)}
                             (when comment
                               {:comment comment}))
-             :handler (flash-message/default-success-handler
-                       :change-resources
-                       description
-                       (fn [_]
-                         (collapse-action-form action-form-id)
-                         (on-finished)))
+             :handler (fn [{:keys [success errors] :as response}]
+                        (cond success
+                              (do
+                                ((flash-message/default-success-handler
+                                  :change-resources
+                                  description
+                                  (fn [_]
+                                    (collapse-action-form action-form-id)
+                                    (on-finished)))
+                                 response)
+                                (rf/dispatch [::set-command-error nil]))
+                              errors
+                              (do
+                                (flash-message/show-error!
+                                 :change-resources
+                                 (->> errors
+                                      (mapv (flash-message/argumentize-some-key :catalogue-item-id :catalogue-item-ids))
+                                      flash-message/format-errors))
+                                (rf/dispatch [::set-command-error errors]))))
              :error-handler (flash-message/default-error-handler :change-resources description)}))
    {}))
 
@@ -74,21 +98,31 @@
 (defn compatible-item? [item original-workflow-id]
   (= original-workflow-id (:wfid item)))
 
+(defn compatible-hierarchy? [catalogue-item selected-resources entitlements]
+  (if-let [top-level-id (-> catalogue-item :part-of :catalogue-item/id)]
+    (contains? (set/union entitlements selected-resources) top-level-id)
+    true))
+
 (defn change-resources-view
-  [{:keys [application initial-resources selected-resources catalogue can-comment? on-set-resources on-send]}]
+  [{:keys [application initial-resources selected-resources catalogue entitlements can-comment? on-set-resources on-send]}]
   (let [original-workflow-id (get-in application [:application/workflow :workflow/id])
         compatible-first-sort-fn #(if (compatible-item? % original-workflow-id) -1 1)
         sorted-selected-catalogue (->> catalogue
                                        (sort-by #(get-localized-title %))
                                        (sort-by compatible-first-sort-fn))
-        enable-cart? (:enable-cart @rems.globals/config)]
+        enable-cart? (:enable-cart @rems.globals/config)
+        enable-hierarchy? (:enable-catalogue-hierarchy @rems.globals/config)
+        item-disabled? #(or (not (compatible-item? % original-workflow-id))
+                            (and enable-hierarchy?
+                                 (not (compatible-hierarchy? % selected-resources entitlements))))]
     [action-form-view action-form-id
      (text :t.actions/change-resources)
      [[perform-action-button {:id "change-resources"
                               :text (text :t.actions/change-resources)
                               :class "btn-primary"
                               :disabled (or (empty? selected-resources)
-                                            (= selected-resources initial-resources))
+                                            (and (not @(rf/subscribe [::command-error]))
+                                                 (= selected-resources initial-resources)))
                               :on-click on-send}]]
      (if (empty? catalogue)
        [spinner/big]
@@ -106,7 +140,7 @@
           {:id dropdown-id
            :items (->> sorted-selected-catalogue
                        (mapv #(assoc % ::label (get-localized-title %))))
-           :item-disabled? #(not (compatible-item? % original-workflow-id))
+           :item-disabled? item-disabled?
            :item-key :id
            :item-label ::label
            :item-selected? #(contains? (set selected-resources) (% :id))
@@ -121,11 +155,13 @@
   (let [initial-resources @(rf/subscribe [::initial-resources])
         selected-resources @(rf/subscribe [::selected-resources])
         catalogue @(rf/subscribe [::catalogue])
+        entitlements @(rf/subscribe [:rems.catalogue/entitlements->catalogue-item-ids])
         comment @(rf/subscribe [:rems.actions.components/comment action-form-id])]
     [change-resources-view {:application application
                             :initial-resources initial-resources
                             :selected-resources selected-resources
                             :catalogue catalogue
+                            :entitlements entitlements
                             :can-comment? can-comment?
                             :on-set-resources #(rf/dispatch [::set-selected-resources %])
                             :on-send #(rf/dispatch [::send-change-resources {:application-id (:application/id application)
