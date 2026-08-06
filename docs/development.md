@@ -286,3 +286,14 @@ This will set local REMS instance as the target and start 3 concurrent browser i
 ## CircleCI
 
 CircleCI offers a [command-line tool](https://circleci.com/docs/guides/toolkit/local-cli/) for debugging and validating the [config file](/.circleci/config.yml) (and much more)
+
+
+## Lucene
+
+The binary release of Lucene includes a GUI tool (Luke) that can be useful for viewing and searching the index. Download the binary from the [Lucene website](https://lucene.apache.org/core/downloads.html), extract it somewhere, `cd` to that directory and launch the tool with
+```sh
+bin/luke.sh
+```
+Then choose the index you want to inspect (`rems/target/search-index-dev`, `...-test`) and pick `NIOFSDirectory` for "Directory implementation". 
+
+The tool is somewhat klunky: any fields indexed as Long need to be set as such (from the default int) under Search > Query Parser > Point range query
