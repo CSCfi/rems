@@ -2,7 +2,7 @@
   (:require [clojure.set :as set]
             [clojure.string :as str]
             [clojure.test :refer [deftest is testing use-fixtures]]
-            [hiccup.core :as hiccup]
+            [hiccup2.core :as hiccup]
             [medley.core :refer [map-vals]]
             [rems.api.schema :as schema]
             [rems.application.events :as events]
@@ -387,7 +387,7 @@
          (for [role roles]
            (let [{:keys [always-perms sometimes-perms]} (get perms-by-state-and-role [state role])]
              [:td {:valign :top}
-              "<!-- role: " (name role) " -->"
+              (hiccup/raw "<!-- role: " (name role) " -->")
               (for [perm (sort always-perms)]
                 [:div (nowrap (name perm))])
               (for [perm (sort sometimes-perms)]
