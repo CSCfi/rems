@@ -143,7 +143,8 @@
    :dev [:project/dev :profiles/dev]
    :test [:project/dev :project/test :profiles/test]
 
-   :project/dev {:plugins [[lein-ancient "1.0.0"]]
+   :project/dev {:dependencies [[lambdaisland/kaocha-cloverage "1.1.89"]]
+                 :plugins [[lein-ancient "1.0.0"]]
 
                  :jvm-opts ["-Drems.config=dev-config.edn"
                             "-Djdk.attach.allowAttachSelf" ; needed by clj-memory-meter on Java 9+
