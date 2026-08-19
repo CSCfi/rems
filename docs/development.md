@@ -297,3 +297,20 @@ bin/luke.sh
 Then choose the index you want to inspect (`rems/target/search-index-dev`, `...-test`) and pick `NIOFSDirectory` for "Directory implementation". 
 
 The tool is somewhat klunky: any fields indexed as Long need to be set as such (from the default int) under Search > Query Parser > Point range query
+
+
+## Test coverage
+
+Kaocha features a Cloverage plugin. To use it, supply [tests-cloverage.edn](/tests-cloverage.edn) as the config file. 
+
+```sh
+lein kaocha --config-file tests-cloverage.edn
+```
+
+### Interpreting coverage results
+
+It is common engineering knowledge but bears repeating that these tools are limited to quantity, not quality, i.e. they don't take into consideration whether the test actually has any probative value, is performed with relevant input, or the feature being tested a meaningful part of the product. It's obviously useful to be able to see if there are any untested code paths, but at least equal if not more effort should be made to write good tests that represent how the application will be used, document the acceptance criteria and corner cases of a given feature, and over time, make sure existing tests keep on doing so as well.
+
+In addition to line coverage, Cloverage is able to inspect coverage by forms, which is an interesting feature in itself, but likely to generate false positives of untested forms, as form coverage is performed with macroexpansion: https://quanttype.net/p/the-joys-of-coverage/
+
+Kaocha and Cloverage target only Clojure - ClojureScript code is not instrumented. However, browser tests that interact with the backend do count towards coverage of the instrumented backend code.
