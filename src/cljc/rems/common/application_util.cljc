@@ -17,11 +17,18 @@
     :application.state/rejected
     :application.state/returned
     :application.state/revoked
+    :application.state/soft-deleted
     :application.state/submitted})
-;; TODO deleted state?
 
 (defn draft? [application]
   (= :application.state/draft (:application/state application)))
+
+(defn expirable?
+  [config application]
+  (contains?
+   (into #{} (or (-> config :application-expiration keys)
+                #{:application.state/draft}))
+   (:application/state application)))
 
 (defn accepted-licenses? [application userid]
   (let [application-licenses (map :license/id (:application/licenses application))

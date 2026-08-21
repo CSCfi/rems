@@ -35,6 +35,7 @@
           :application.command/create
           :application.command/delete
           :application.command/save-draft
+          :application.command/soft-delete
           :application.command/submit
           ;; will not change the application's state, so they
           ;; can be ignored from a workflow point of view
@@ -629,6 +630,23 @@
                       #{:application.command/create})]
     (when-not (contains? permissions (:type cmd))
       {:errors [{:type :forbidden}]})))
+
+(defn- expiration-state-error
+  "It is an error if the application state is not `:application.state/draft` (default),
+  or if `:application-expiration` is configured, one of those states for which the config applies to."
+  [application {:keys [get-config]}]
+  (let [expiration-states (into #{} (or (-> (get-config) :application-expiration keys)
+                                        #{:application.state/draft}))]
+    (when-not (contains? expiration-states (:application/state application))
+      {:errors [{:type :disallowed-state
+                 :application/state (:application/state application)
+                 :allowed-states expiration-states}]})))
+
+(defmethod command-handler :application.command/soft-delete
+  [cmd application injections]
+  (or (expiration-state-error application injections)
+      (ok {:event/type :application.event/soft-deleted
+           :event/time (:time cmd)})))
 
 (defmethod command-handler :application.command/delete
   [_cmd application _injections]

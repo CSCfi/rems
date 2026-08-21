@@ -116,7 +116,8 @@
    :application.state/rejected :t.applications.states/rejected
    :application.state/closed :t.applications.states/closed
    :application.state/returned :t.applications.states/returned
-   :application.state/revoked :t.applications.states/revoked})
+   :application.state/revoked :t.applications.states/revoked
+   :application.state/soft-deleted :t.applications.states/soft-deleted})
 
 (defn localize-state [state]
   (text (get states state :t.applications.states/unknown)))
@@ -220,6 +221,7 @@
    :application.event/reviewer-invited :t.applications.events/reviewer-invited
    :application.event/reviewer-joined :t.applications.events/reviewer-joined
    :application.event/revoked :t.applications.events/revoked
+   :application.event/soft-deleted :t.applications.events/soft-deleted
    :application.event/submitted :t.applications.events/submitted
    :application.event/voted :t.applications.events/voted})
 
@@ -353,6 +355,7 @@
    :application.command/review :t.commands/review
    :application.command/revoke :t.commands/revoke
    :application.command/save-draft :t.commands/save-draft
+   :application.command/soft-delete :t.commands/soft-delete
    ;; :application.command/send-expiration-notifications
    :application.command/submit :t.commands/submit
    :application.command/uninvite-member :t.commands/uninvite-member

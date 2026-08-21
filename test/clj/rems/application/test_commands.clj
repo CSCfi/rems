@@ -1991,7 +1991,9 @@
 
   (doseq [user [applicant-user-id "expirer-bot"]]
     (testing (str user " cannot delete submitted application")
-      (is (= {:errors [{:type :only-draft-may-be-deleted}]}
+      (is (= {:errors [{:type :disallowed-state
+                        :allowed-states #{:application.state/draft}
+                        :application/state :application.state/submitted}]}
              (fail-command {:type :application.command/delete
                             :actor user}
                            (build-application-view [dummy-created-event
@@ -2004,6 +2006,40 @@
              (ok-command {:type :application.command/delete
                           :actor user}
                          (build-application-view [dummy-created-event])))))))
+
+(deftest test-soft-delete
+  (testing "without configuration"
+    (is (= {:application/id app-id
+            :event/actor handler-user-id
+            :event/time test-time
+            :event/type :application.event/soft-deleted}
+           (ok-command {:type :application.command/soft-delete
+                        :actor handler-user-id}
+                       (build-application-view [dummy-created-event])))
+        "handler is allowed to soft-delete a draft")
+    (is (= {:errors [{:type :disallowed-state
+                      :allowed-states #{:application.state/draft}
+                      :application/state :application.state/submitted}]}
+           (fail-command {:type :application.command/soft-delete
+                          :actor handler-user-id}
+                         (build-application-view [dummy-created-event
+                                                  dummy-submitted-event])))
+        "it is not allowed to soft-delete a submitted application"))
+
+  (testing "with application expiration configured"
+    (let [get-config (constantly {:application-expiration
+                                  {:application.state/closed {:delete-after "P90D"
+                                                              :reminder-before "P7D"}}})]
+      (is (= {:application/id app-id
+              :event/actor handler-user-id
+              :event/time test-time
+              :event/type :application.event/soft-deleted}
+             (ok-command {:type :application.command/soft-delete
+                          :actor handler-user-id}
+                         (build-application-view [dummy-created-event
+                                                  dummy-submitted-event
+                                                  dummy-closed-event])
+                         (assoc command-injections :get-config get-config)))))))
 
 (deftest test-handle-command
   (let [application (build-application-view [dummy-created-event])
