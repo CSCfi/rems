@@ -13,7 +13,8 @@
             [rems.db.test-data-helpers :as test-helpers]
             [rems.db.user-settings]
             [rems.testing-util :refer [with-fixed-time]]
-            [clojure.string :as str]))
+            [clojure.string :as str]
+            [rems.common.application-util :as application-util]))
 
 (use-fixtures :once test-db-fixture)
 (use-fixtures :each rollback-db-fixture)

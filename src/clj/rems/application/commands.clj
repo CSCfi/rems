@@ -35,6 +35,7 @@
           :application.command/create
           :application.command/delete
           :application.command/save-draft
+          :application.command/soft-delete
           :application.command/submit
           ;; will not change the application's state, so they
           ;; can be ignored from a workflow point of view
@@ -639,16 +640,29 @@
     (when-not (contains? permissions (:type cmd))
       {:errors [{:type :forbidden}]})))
 
+(defn- expiration-state-error
+  "It is an error if `application`'s state is not `:application.state/draft` (default),
+  or any of the states defined in `:application-expiration`, when that is configured."
+  [application {:keys [get-config]}]
+  (let [config (get-config)]
+    (when-not (application-util/deletable? config application)
+      {:errors [{:type :disallowed-state
+                 :application/state (:application/state application)
+                 :allowed-states (application-util/deletable-states config)}]})))
+
+(defmethod command-handler :application.command/soft-delete
+  [cmd _application _injections]
+  (ok {:event/type :application.event/soft-deleted
+       :event/time (:time cmd)}))
+
 (defmethod command-handler :application.command/delete
-  [_cmd application _injections]
-  (or (when-not (application-util/draft? application)
-        {:errors [{:type :only-draft-may-be-deleted}]})
+  [_cmd application injections]
+  (or (expiration-state-error application injections)
       (ok {:event/type :application.event/deleted})))
 
 (defmethod command-handler :application.command/send-expiration-notifications
-  [cmd application _injections]
-  (or (when-not (application-util/draft? application)
-        {:errors [{:type :only-draft-may-be-expired}]})
+  [cmd application injections]
+  (or (expiration-state-error application injections)
       (ok {:event/type :application.event/expiration-notifications-sent
            :application/expires-on (:expires-on cmd)})))
 

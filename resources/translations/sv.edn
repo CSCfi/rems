@@ -245,6 +245,7 @@
                           :reviewer-invited "%1 bjöd in %2 som granskare." ; TODO check
                           :reviewer-joined "%1 blev granskare." ; TODO check
                           :revoked "%1 återkallade rättigheter."
+                          :soft-deleted "Ansökan vill bli raderat."
                           :submitted "%1 lämnade in ansökan."
                           :unknown "Okänd"
                           :voted "%1 röstade %2."}
@@ -273,6 +274,7 @@
                           :rejected "Avslagen"
                           :returned "Returnerad"
                           :revoked "Återkallad"
+                          :soft-deleted "Raderas"
                           :submitted "Inlämnad"
                           :unknown "Okänd"}
                  :submitted "Inlämnad"
@@ -339,6 +341,7 @@
              :review "Granska"
              :revoke "Återkalla rättigheter"
              :save-draft "Spara utkast"
+             :soft-delete "Radera ansöken"
              ;; :send-expiration-notifications
              :submit "Lämna in ansökningen"
              :uninvite-member "Ta bort deltagare"

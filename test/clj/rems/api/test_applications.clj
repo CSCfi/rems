@@ -302,7 +302,8 @@
                  "application.command/assign-external-id"
                  "application.command/change-applicant"
                  "see-everything"
-                 "application.command/accept-invitation"}
+                 "application.command/accept-invitation"
+                 "application.command/soft-delete"}
                (set (get application :application/permissions))))))
 
     (testing "disabling a command"
@@ -328,7 +329,8 @@
                      "application.command/assign-external-id"
                      "application.command/change-applicant"
                      "see-everything"
-                     "application.command/accept-invitation"}
+                     "application.command/accept-invitation"
+                     "application.command/soft-delete"}
                    (set (get application :application/permissions))))))
         (testing "disabled command fails"
           (is (= {:success false
@@ -850,14 +852,20 @@
                               :type :application.command/submit
                               :actor applicant})
       (testing "can't delete submitted application"
-        (is (= {:errors [{:type "only-draft-may-be-deleted"}] :success false}
+        (is (= {:errors [{:type "disallowed-state"
+                          :allowed-states ["application.state/draft"]
+                          :application/state "application.state/submitted"}]
+                :success false}
                (api-call :post "/api/applications/delete" {:application-id app-id}
                          api-key applicant))))
       (test-helpers/command! {:application-id app-id
                               :type :application.command/return
                               :actor handler-id})
       (testing "can't delete returned application"
-        (is (= {:errors [{:type "only-draft-may-be-deleted"}] :success false}
+        (is (= {:errors [{:type "disallowed-state"
+                          :allowed-states ["application.state/draft"]
+                          :application/state "application.state/returned"}]
+                :success false}
                (api-call :post "/api/applications/delete" {:application-id app-id}
                          api-key applicant)))))))
 
@@ -2916,7 +2924,8 @@
                            "application.command/change-resources"]
                :expirer ["application.command/send-expiration-notifications"
                          "application.command/delete"]
-               :handler ["application.command/accept-invitation"]}
+               :handler ["application.command/accept-invitation"
+                         "application.command/soft-delete"]}
               :application/modified "2010-01-01T00:00:00.000Z"
               :application/user-roles {:alice ["applicant"] :handler ["handler"] :reporter ["reporter"]}
               :application/external-id "2010/1"
