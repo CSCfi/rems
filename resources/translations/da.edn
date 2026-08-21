@@ -261,6 +261,7 @@
                           :reviewer-invited "%1 inviterede %2 til at gennemse ansøgningen."
                           :reviewer-joined "%1 accepterede invitation til gennemsyn."
                           :revoked "%1 tilbagekaldte rettigheder."
+                          :soft-deleted "The application is marked for deletion."
                           :submitted "%1 indsendte ansøgningen til gennemsyn."
                           :unknown "Unknown"
                           :voted "%1 stemte %2."}
@@ -289,6 +290,7 @@
                           :rejected "Afslået"
                           :returned "Returneret"
                           :revoked "Tilbagekaldt"
+                          :soft-deleted "To be deleted"
                           :submitted "Indsendt"
                           :unknown "Ukendt"}
                  :submitted "Sendt"
@@ -360,6 +362,7 @@
              :review "Gennemse"
              :revoke "Tilbagekald rettigheder"
              :save-draft "Gem som kladde"
+             :soft-delete "Slet ansøgning"
              ;; :send-expiration-notifications
              :submit "Indsend ansøgning"
              :uninvite-member "Fjern deltagerinvitation"
