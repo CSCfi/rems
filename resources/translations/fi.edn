@@ -246,6 +246,7 @@
                           :reviewer-invited "%1 kutsui käyttäjän %2 katselmoijaksi."
                           :reviewer-joined "%1 hyväksyi kutsun katselmoijaksi."
                           :revoked "%1 perui käyttöoikeuden."
+                          :soft-deleted "Hakemus on asetettu poistettavaksi."
                           :submitted "%1 lähetti hakemuksen käsiteltäväksi."
                           :unknown "Tuntematon"
                           :voted "%1 äänesti %2."}
@@ -274,6 +275,7 @@
                           :rejected "Hylätty"
                           :returned "Palautettu"
                           :revoked "Peruttu"
+                          :soft-deleted "Poistetaan"
                           :submitted "Haettu"
                           :unknown "Tuntematon"}
                  :submitted "Lähetetty"
@@ -340,6 +342,7 @@
              :review "Katselmoi"
              :revoke "Peru käyttöoikeus"
              :save-draft "Tallenna"
+             :soft-delete "Aseta poistettavaksi"
              ;; :send-expiration-notifications
              :submit "Lähetä hakemus"
              :uninvite-member "Poista henkilö"
