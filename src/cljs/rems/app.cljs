@@ -249,12 +249,16 @@
     [:div
      [document-title (text :t.error-page/title)]
      [flash-message/component :top]
-     (let [args (:args error)]
-       [:p (text-format
-            (:key error)
-            (if (string? args)
-              (text args)
-              (str/join ", " (map text args))))])]))
+     (let [{args :args
+            error-key :key} error]
+       [:p
+        (if-not (str/blank? error-key)
+          (text-format
+           error-key
+           (if (string? args)
+             (text args)
+             (str/join ", " (map text args))))
+          (text :t.error-page/unknown-error))])]))
 
 (defn not-found-page []
   [:div

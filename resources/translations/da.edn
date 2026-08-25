@@ -685,6 +685,6 @@
   :unknown "Ukendt"
   :forbidden-page {:forbidden "Forbudt"
                    :you-are-forbidden "Adgang til indholdet ikke tlladt."}
-  :error-page {:title "Problem"}
+  :error-page {:title "Problem" :unknown-error "Ukendt fejl."}
   :meta {:description "Resource Entitlement Management System is a tool for managing access rights to resources, such as research datasets."
          :keywords "REMS, entitlement, access management, tool, access rights, resources, datasets"}}}
