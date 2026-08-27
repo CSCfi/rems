@@ -148,9 +148,9 @@
         {:catalogue-item/id 11} #{{:catalogue-item/id 10}}}
        item))
 
-(defn dummy-get-entitlements [userid]
+(defn dummy-get-entitlements [{:keys [user-id]}]
   (get {applicant-user-id [{:resourceid 9}]}
-       userid))
+       user-id))
 
 (def application-injections
   {:get-attachments-for-application {app-id [{:attachment/id 1
@@ -534,6 +534,7 @@
                         :catalogue-item-ids [8]}
                        nil
                        (assoc command-injections :get-config (constantly {:enable-catalogue-hierarchy true})))))
+
     (testing "with existing entitlement to top-level resource"
       (is (= {:event/type :application.event/created
               :event/actor applicant-user-id

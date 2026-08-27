@@ -2705,7 +2705,7 @@
       (is (= ["Accept invitation: Failed"
               (str "Missing top-level item: " (btu/context-getx :parent-2-id))]
              (get-error-summary :top)))
-      (is (empty? (rems.db.entitlements/get-entitlements "frank")))
+      (is (empty? (rems.db.entitlements/get-entitlements {:user-id "frank"})))
 
       (testing "with entitlement granted for invited user"
         (create-and-approve-application! {:actor "frank"
@@ -2727,11 +2727,11 @@
                                           :catalogue-item-ids [(btu/context-getx :parent-3-id)]})
         (is (match? [{:resourceid (btu/context-getx :resource-4)}]
                     (filterv (comp #{(btu/context-getx :resource-4)} :resourceid)
-                             (rems.db.entitlements/get-entitlements "alice")))
+                             (rems.db.entitlements/get-entitlements {:user-id "alice"})))
             "Alice now has entitlement to parent 3, so she could apply for child 5 on it's own.")
         (is (= []
                (filterv (comp #{(btu/context-getx :resource-4)} :resourceid)
-                        (rems.db.entitlements/get-entitlements "frank ")))
+                        (rems.db.entitlements/get-entitlements {:user-id "frank"})))
             "Frank doesn't have entitlement, and with him as a member, the application's resources cannot be changed to include child 5.")
         (logout)
         (login-as "alice")
