@@ -108,7 +108,7 @@
   "For such an item in `catalogue-item-ids` that has a parent (dependent), check that the parent item is also included in `catalogue-item-ids`, or `actor` has an entitlement to the parent item's resource."
   [catalogue-item-ids actor {:keys [get-catalogue-item get-dependents get-entitlements get-config]}]
   (when (:enable-catalogue-hierarchy (get-config))
-    (let [entitled-to-resids (into #{} (map :resourceid) (get-entitlements actor))
+    (let [entitled-to-resids (into #{} (map :resourceid) (get-entitlements {:user-id actor}))
           missing (into []
                         (comp (mapcat (fn [id] (get-dependents {:catalogue-item/id id})))
                               (map :catalogue-item/id)
