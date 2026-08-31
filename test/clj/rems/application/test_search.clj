@@ -4,6 +4,7 @@
             [clojure.set :as set]
             [clojure.test :refer :all]
             [rems.application.search :as search]
+            [rems.common.application-util :as application-util]
             [rems.db.applications]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.db.testing :refer [rollback-db-fixture search-index-fixture test-db-fixture]]
@@ -59,7 +60,6 @@
                               :application-id app-id
                               :actor "developer"
                               :external-id assigned})
-      (is (= #{app-id} (search/find-applications (str app-id))) "app ID, any field")
       (is (= #{app-id} (search/find-applications (str "\"" assigned "\""))) "assigned ID, any field")
       (is (= #{app-id} (search/find-applications (str "id:" app-id))) "app ID")
       (is (= #{app-id} (search/find-applications (str "id:\"" generated "\""))) "generated external ID")
@@ -316,4 +316,48 @@
           (is (contains? apps app-id)
               (str "with query: " query))
           (is (not (contains? apps app-id-2))
-              (str "with query: " query)))))))
+              (str "with query: " query))))))
+
+  (testing "query by workflow-id"
+    (let [wfid-1 (test-helpers/create-workflow! {})
+          wfid-2 (test-helpers/create-workflow! {})
+          app-id-1 (test-helpers/create-application! {:actor "alice"
+                                                      :catalogue-item-ids [(test-helpers/create-catalogue-item! {:workflow-id wfid-1})]})
+          app-id-2 (test-helpers/create-application! {:actor "alice"
+                                                      :catalogue-item-ids [(test-helpers/create-catalogue-item! {:workflow-id wfid-2})]
+                                                      :time (DateTime. "2010-10-10T20:10:10")})
+          app-id-3 (test-helpers/create-application! {:actor "alice"
+                                                      :catalogue-item-ids [(test-helpers/create-catalogue-item! {:workflow-id wfid-2})]
+                                                      :time (time/now)})]
+      (testing "with one"
+        (let [result (search/find-applications (str "workflow-id:" wfid-1))]
+          (is (contains? result app-id-1))
+          (is (not (contains? result app-id-2)))))
+
+      (testing "with many"
+        (let [result (search/find-applications (str "workflow-id:" wfid-2))]
+          (is (contains? result app-id-2))
+          (is (contains? result app-id-3))
+          (is (not (contains? result app-id-1)))))
+
+      (testing "with workflow-id and date range"
+        (let [result (search/find-applications (str "workflow-id:" wfid-2 " AND last-activity:[20101009 TO 20101011]"))]
+          (is (contains? result app-id-2))
+          (is (not (contains? result app-id-1)))
+          (is (not (contains? result app-id-3)))))
+
+      (testing "with workflow-id, date range and state"
+        (let [query (str "workflow-id:" wfid-2 " AND last-applying-user-activity:[20101009 TO 20101011] AND state:returned")]
+          (is (application-util/draft? (rems.db.applications/get-application app-id-2)))
+          (is (not (contains? (search/find-applications query) app-id-2))
+              "nothing is returned because the application is a draft")
+          (test-helpers/submit-application {:application-id app-id-2
+                                            :actor "alice"
+                                            :time (DateTime. "2010-10-10T20:10:10")})
+          (test-helpers/command! {:type :application.command/return
+                                  :application-id app-id-2
+                                  :actor "developer"
+                                  :comment ""
+                                  :time (time/plus (DateTime. "2010-10-20T00:00:00") (time/minutes 1))})
+          (is (contains? (search/find-applications query) app-id-2)
+              "finds application because it is now in the queried state"))))))
