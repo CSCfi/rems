@@ -423,7 +423,7 @@
   [label text & [opts]]
   (let [id (get-form-field-id label opts)]
     ;; XXX: need to use `fill-human`, because `fill` is so quick that the form drops characters here and there
-    (btu/fill-human {:id id} text)))
+    (btu/fill {:id id} text)))
 
 (defn fill-localized-form-field
   "Fills a localized form field `langcode`, named by `field-label`, with `text`."
@@ -434,7 +434,7 @@
                first
                (btu/get-element-attr-el :for))]
     ;; XXX: need to use `fill-human`, because `fill` is so quick that the form drops characters here and there
-    (btu/fill-human {:id id} text)))
+    (btu/fill {:id id} text)))
 
 (defn set-date [id date]
   ;; XXX: The date format depends on operating system settings and is unaffected by browser locale,
@@ -490,15 +490,15 @@
     (btu/click-el remove-button)))
 
 (defn fill-category-fields [{:keys [title description display-order categories]}]
-  (btu/fill-human :title-en title)
-  (btu/fill-human :title-fi (str title " (FI)"))
-  (btu/fill-human :title-sv (str title " (SV)"))
+  (btu/fill :title-en title)
+  (btu/fill :title-fi (str title " (FI)"))
+  (btu/fill :title-sv (str title " (SV)"))
   (when description
-    (btu/fill-human :description-en (str description " (EN)"))
-    (btu/fill-human :description-fi (str description " (FI)"))
-    (btu/fill-human :description-sv (str description " (SV)")))
+    (btu/fill :description-en (str description " (EN)"))
+    (btu/fill :description-fi (str description " (FI)"))
+    (btu/fill :description-sv (str description " (SV)")))
   (when display-order
-    (btu/fill-human :display-order (str display-order)))
+    (btu/fill :display-order (str display-order)))
   (when (seq categories)
     (doseq [cat categories]
       (select-option "Subcategories" cat))))
@@ -551,21 +551,21 @@
 
 (defn fill-license-fields [{:keys [title external-links inline-text attachments attachment-load-text]}]
   (when title
-    (btu/fill-human :localizations-en-title (str title " (EN)"))
-    (btu/fill-human :localizations-fi-title (str title " (FI)"))
-    (btu/fill-human :localizations-sv-title (str title " (SV)")))
+    (btu/fill :localizations-en-title (str title " (EN)"))
+    (btu/fill :localizations-fi-title (str title " (FI)"))
+    (btu/fill :localizations-sv-title (str title " (SV)")))
   (when external-links
     (btu/scroll-and-click :licensetype-link)
     (btu/eventually-visible? :localizations-en-link)
-    (some->> (:en external-links) (btu/fill-human :localizations-en-link))
-    (some->> (:fi external-links) (btu/fill-human :localizations-fi-link))
-    (some->> (:sv external-links) (btu/fill-human :localizations-sv-link)))
+    (some->> (:en external-links) (btu/fill :localizations-en-link))
+    (some->> (:fi external-links) (btu/fill :localizations-fi-link))
+    (some->> (:sv external-links) (btu/fill :localizations-sv-link)))
   (when inline-text
     (btu/scroll-and-click :licensetype-text)
     (btu/eventually-visible? :localizations-en-text)
-    (btu/fill-human :localizations-en-text (str inline-text " (EN)"))
-    (btu/fill-human :localizations-fi-text (str inline-text " (FI)"))
-    (btu/fill-human :localizations-sv-text (str inline-text " (SV)")))
+    (btu/fill :localizations-en-text (str inline-text " (EN)"))
+    (btu/fill :localizations-fi-text (str inline-text " (FI)"))
+    (btu/fill :localizations-sv-text (str inline-text " (SV)")))
   (when attachments
     (btu/scroll-and-click :licensetype-attachment)
     (btu/eventually-visible? :upload-license-button-en)
@@ -749,10 +749,10 @@
         (is (btu/eventually-visible? (keyword (str table-field-id "-row0-col1"))))
         (btu/scroll-and-click (keyword (str table-field-id "-add-row")))
         (is (btu/eventually-visible? (keyword (str table-field-id "-row1-col1"))))
-        (btu/fill-human (keyword (str table-field-id "-row0-col1")) "a")
-        (btu/fill-human (keyword (str table-field-id "-row0-col2")) "b")
-        (btu/fill-human (keyword (str table-field-id "-row1-col1")) "c")
-        (btu/fill-human (keyword (str table-field-id "-row1-col2")) "d")
+        (btu/fill (keyword (str table-field-id "-row0-col1")) "a")
+        (btu/fill (keyword (str table-field-id "-row0-col2")) "b")
+        (btu/fill (keyword (str table-field-id "-row1-col1")) "c")
+        (btu/fill (keyword (str table-field-id "-row1-col2")) "d")
 
         ;; leave "Text field with max length" empty
         ;; leave "Text are with max length" empty
@@ -998,8 +998,8 @@
       (is (not (btu/visible? [:actions-invite-member {:fn/has-text "Invite member"}])))
       (btu/scroll-and-click :invite-member-action-button)
       (is (btu/eventually-visible? [:actions-invite-member {:fn/has-text "Invite member"}]))
-      (btu/fill-human [:actions-invite-member :name-invite-member] "John Smith")
-      (btu/fill-human [:actions-invite-member :email-invite-member] "john.smith@generic.name")
+      (btu/fill [:actions-invite-member :name-invite-member] "John Smith")
+      (btu/fill [:actions-invite-member :email-invite-member] "john.smith@generic.name")
       (btu/scroll-and-click :invite-member)
       (open-collapsible :applicants-info-collapsible)
       (btu/wait-invisible [:actions-invite-member {:fn/has-text "Invite member"}])
@@ -1027,7 +1027,7 @@
       (is (not (btu/visible? :actions-invite0-info-operations-remove)))
       (btu/scroll-and-click :invite0-info-operations-remove-action-button)
       (is (btu/eventually-visible? :actions-invite0-info-operations-remove))
-      (btu/fill-human :comment-invite0-info-operations-remove-comment "sorry but no")
+      (btu/fill :comment-invite0-info-operations-remove-comment "sorry but no")
       (btu/scroll-and-click :invite0-info-operations-remove-submit)
       (is (btu/eventually-visible? [{:css ".alert-success" :fn/has-text "Remove member: Success"}]))
       (btu/wait-invisible :actions-invite0-info-operations-remove)
@@ -1043,8 +1043,8 @@
       (is (not (btu/visible? [:actions-invite-member {:fn/has-text "Invite member"}])))
       (btu/scroll-and-click :invite-member-action-button)
       (is (btu/eventually-visible? [:actions-invite-member {:fn/has-text "Invite member"}]))
-      (btu/fill-human [:actions-invite-member :name-invite-member] "Jane Smith")
-      (btu/fill-human [:actions-invite-member :email-invite-member] "jane.smith@generic.name")
+      (btu/fill [:actions-invite-member :name-invite-member] "Jane Smith")
+      (btu/fill [:actions-invite-member :email-invite-member] "jane.smith@generic.name")
       (btu/scroll-and-click :invite-member)
       (is (btu/eventually-visible? {:fn/has-string "Invite member: Success"})))
 
@@ -1053,8 +1053,8 @@
       (is (not (btu/visible? [:actions-invite-member {:fn/has-text "Invite member"}])))
       (btu/scroll-and-click :invite-member-action-button)
       (is (btu/eventually-visible? [:actions-invite-member {:fn/has-text "Invite member"}]))
-      (btu/fill-human [:actions-invite-member :name-invite-member] "Developer")
-      (btu/fill-human [:actions-invite-member :email-invite-member] "developer@example.com")
+      (btu/fill [:actions-invite-member :name-invite-member] "Developer")
+      (btu/fill [:actions-invite-member :email-invite-member] "developer@example.com")
       (btu/scroll-and-click :invite-member)
       (is (btu/eventually-visible? {:fn/has-string "Invite member: Success"}))
 
@@ -1231,7 +1231,7 @@
       (open-collapsible :applicants-info-collapsible)
       (btu/scroll-and-click :member1-info-operations-remove-action-button)
       (is (btu/eventually-visible? :actions-member1-info-operations-remove))
-      (btu/fill-human :comment-member1-info-operations-remove-comment "not in research group anymore")
+      (btu/fill :comment-member1-info-operations-remove-comment "not in research group anymore")
       (btu/scroll-and-click :member1-info-operations-remove-submit)
       (is (btu/eventually-visible? [{:fn/has-string "Remove member: Success"}]))
       (btu/wait-invisible :actions-member1-info-operations-remove)
@@ -1324,7 +1324,7 @@
       (btu/scroll-and-click :approve-reject-action-button))
     (testing "add a comment and two attachments"
       (is (btu/eventually-visible? :comment-approve-reject))
-      (btu/fill-human :comment-approve-reject "this is a comment")
+      (btu/fill :comment-approve-reject "this is a comment")
       (btu/upload-file :upload-approve-reject-input "test-data/test.txt")
       (is (btu/eventually-visible? [{:css ".attachment-link"}]))
       (btu/upload-file :upload-approve-reject-input "test-data/test-fi.txt")
@@ -1478,8 +1478,8 @@
       (btu/scroll-and-click :invite-decider-action-button)
 
       (is (btu/eventually-visible? :name-invite-decider))
-      (btu/fill-human :name-invite-decider "anybody will do")
-      (btu/fill-human :email-invite-decider "user@example.com")
+      (btu/fill :name-invite-decider "anybody will do")
+      (btu/fill :email-invite-decider "user@example.com")
       (btu/scroll-and-click :invite-decider)
       (is (btu/eventually-visible? {:css ".alert-success"}))
       (btu/screenshot "decider-invited"))
@@ -1522,7 +1522,7 @@
     (testing "submit decision"
       (btu/scroll-and-click :decide-action-button)
       (is (btu/eventually-visible? :comment-decide))
-      (btu/fill-human :comment-decide "ok")
+      (btu/fill :comment-decide "ok")
       (btu/screenshot "about-to-decide")
       (btu/scroll-and-click :decide-approve)
       (btu/wait-page-loaded)
@@ -1802,7 +1802,7 @@
     (testing "approve"
       (btu/scroll-and-click :approve-reject-action-button)
       (is (btu/eventually-visible? :comment-approve-reject))
-      (btu/fill-human :comment-approve-reject "this is a comment")
+      (btu/fill :comment-approve-reject "this is a comment")
       (set-date :approve-end "2100-05-06")
       (btu/scroll-and-click :approve)
       (btu/wait-predicate #(= "Approved" (btu/get-element-text :application-state))))
@@ -1870,22 +1870,22 @@
   (testing "create"
     (btu/scroll-and-click :create-organization)
     (is (btu/eventually-visible? :id))
-    (btu/fill-human :id (btu/context-getx :organization-id))
-    (btu/fill-human :short-name-en "SNEN")
-    (btu/fill-human :short-name-fi "SNFI")
-    (btu/fill-human :short-name-sv "SNSV")
-    (btu/fill-human :name-en (str (btu/context-getx :organization-name) " EN"))
-    (btu/fill-human :name-fi (str (btu/context-getx :organization-name) " FI"))
-    (btu/fill-human :name-sv (str (btu/context-getx :organization-name) " SV"))
+    (btu/fill :id (btu/context-getx :organization-id))
+    (btu/fill :short-name-en "SNEN")
+    (btu/fill :short-name-fi "SNFI")
+    (btu/fill :short-name-sv "SNSV")
+    (btu/fill :name-en (str (btu/context-getx :organization-name) " EN"))
+    (btu/fill :name-fi (str (btu/context-getx :organization-name) " FI"))
+    (btu/fill :name-sv (str (btu/context-getx :organization-name) " SV"))
     (select-option "Owners" "Organization owner 1")
     (btu/scroll-and-click :add-review-email)
     (btu/scroll-and-click :add-review-email)
 
     (is (btu/eventually-visible? :review-emails-1-name-en))
-    (btu/fill-human :review-emails-1-name-en "Review mail EN") ; fill second
-    (btu/fill-human :review-emails-1-name-fi "Review mail FI")
-    (btu/fill-human :review-emails-1-name-sv "Review mail SV")
-    (btu/fill-human :review-emails-1-email "review.email@example.com")
+    (btu/fill :review-emails-1-name-en "Review mail EN") ; fill second
+    (btu/fill :review-emails-1-name-fi "Review mail FI")
+    (btu/fill :review-emails-1-name-sv "Review mail SV")
+    (btu/fill :review-emails-1-email "review.email@example.com")
     (btu/scroll-and-click {:css ".remove"}) ; remove first
     (btu/scroll-and-click :save)
     (is (btu/eventually-visible? {:css ".alert-success"}))
@@ -1900,12 +1900,12 @@
       (btu/wait-page-loaded)
       (select-option "Organization" "nbn")
       (btu/scroll-and-click :licensetype-link)
-      (btu/fill-human :localizations-en-title (str (btu/context-getx :license-name) " EN"))
-      (btu/fill-human :localizations-en-link "https://www.csc.fi/home")
-      (btu/fill-human :localizations-fi-title (str (btu/context-getx :license-name) " FI"))
-      (btu/fill-human :localizations-fi-link "https://www.csc.fi/etusivu")
-      (btu/fill-human :localizations-sv-title (str (btu/context-getx :license-name) " SV"))
-      (btu/fill-human :localizations-sv-link "https://www.csc.fi/home")
+      (btu/fill :localizations-en-title (str (btu/context-getx :license-name) " EN"))
+      (btu/fill :localizations-en-link "https://www.csc.fi/home")
+      (btu/fill :localizations-fi-title (str (btu/context-getx :license-name) " FI"))
+      (btu/fill :localizations-fi-link "https://www.csc.fi/etusivu")
+      (btu/fill :localizations-sv-title (str (btu/context-getx :license-name) " SV"))
+      (btu/fill :localizations-sv-link "https://www.csc.fi/home")
       (btu/screenshot "about-to-create-license")
       (btu/scroll-and-click :save)
       (wait-page-title "License – REMS")
@@ -2119,7 +2119,7 @@
   (go-to-admin "Catalogue items")
   (btu/wait-page-loaded)
   ;; incidentally test search while we're at it
-  (btu/fill-human :catalogue-search item-name)
+  (btu/fill :catalogue-search item-name)
   (btu/wait-page-loaded)
   (btu/screenshot "about-to-enable-catalogue-item")
   (btu/scroll-and-click {:css ".modify-dropdown"})
@@ -2214,7 +2214,7 @@
             "Resource" "test-edit-catalogue-item resource"
             "Complementary items" "No complementary items"}
            (slurp-fields :catalogue-item-editor)))
-    (btu/fill-human :infourl-en "http://google.com")
+    (btu/fill :infourl-en "http://google.com")
     (btu/screenshot "test-edit-catalogue-item-2")
     (btu/scroll-and-click :save)
     (wait-page-title "Catalogue item – REMS")
@@ -2796,19 +2796,19 @@
     (btu/wait-visible (field-editor))))
 
 (defn fill-localized-title! [fmt]
-  (btu/fill-human (field-component :title-en) (format fmt "EN"))
-  (btu/fill-human (field-component :title-fi) (format fmt "FI"))
-  (btu/fill-human (field-component :title-sv) (format fmt "SV")))
+  (btu/fill (field-component :title-en) (format fmt "EN"))
+  (btu/fill (field-component :title-fi) (format fmt "FI"))
+  (btu/fill (field-component :title-sv) (format fmt "SV")))
 
 (defn fill-localized-placeholder! [fmt]
-  (btu/fill-human (field-component :placeholder-en) (format fmt "EN"))
-  (btu/fill-human (field-component :placeholder-fi) (format fmt "FI"))
-  (btu/fill-human (field-component :placeholder-sv) (format fmt "SV")))
+  (btu/fill (field-component :placeholder-en) (format fmt "EN"))
+  (btu/fill (field-component :placeholder-fi) (format fmt "FI"))
+  (btu/fill (field-component :placeholder-sv) (format fmt "SV")))
 
 (defn fill-localized-description! [fmt]
-  (btu/fill-human (field-component :info-text-en) (format fmt "EN"))
-  (btu/fill-human (field-component :info-text-fi) (format fmt "FI"))
-  (btu/fill-human (field-component :info-text-sv) (format fmt "SV"))
+  (btu/fill (field-component :info-text-en) (format fmt "EN"))
+  (btu/fill (field-component :info-text-fi) (format fmt "FI"))
+  (btu/fill (field-component :info-text-sv) (format fmt "SV"))
   ;; check preview as well
   (btu/scroll-and-click {:css (aria-controls (:id (preview-component :collapsible)))})
   (is (btu/eventually-visible? (preview-component :collapsible)))
@@ -2855,7 +2855,7 @@
             (btu/scroll-and-click (field-component :optional)))
           (testing "set maximum length"
             (open-collapsible (:id (field-settings-collapsible)))
-            (btu/fill-human (field-component :max-length) "127")))
+            (btu/fill (field-component :max-length) "127")))
 
         (testing "create text area"
           (add-form-field!)
@@ -2872,7 +2872,7 @@
             (btu/scroll-and-click (field-component :optional)))
           (testing "set maximum length"
             (open-collapsible (:id (field-settings-collapsible)))
-            (btu/fill-human (field-component :max-length) "127")))
+            (btu/fill (field-component :max-length) "127")))
 
         (testing "create option field"
           (add-form-field!)
@@ -2885,17 +2885,17 @@
           (testing "create two options"
             (btu/scroll-and-click (field-component :add-option))
             (is (btu/eventually-visible? (field-component :options-0-key)))
-            (btu/fill-human (field-component :options-0-key) "true")
-            (btu/fill-human (field-component :options-0-label-en) "Yes")
-            (btu/fill-human (field-component :options-0-label-fi) "Kyllä")
-            (btu/fill-human (field-component :options-0-label-sv) "Ja")
+            (btu/fill (field-component :options-0-key) "true")
+            (btu/fill (field-component :options-0-label-en) "Yes")
+            (btu/fill (field-component :options-0-label-fi) "Kyllä")
+            (btu/fill (field-component :options-0-label-sv) "Ja")
 
             (btu/scroll-and-click (field-component :add-option))
             (is (btu/eventually-visible? (field-component :options-1-key)))
-            (btu/fill-human (field-component :options-1-key) "false")
-            (btu/fill-human (field-component :options-1-label-en) "No")
-            (btu/fill-human (field-component :options-1-label-fi) "Ei")
-            (btu/fill-human (field-component :options-1-label-sv) "Nej")))
+            (btu/fill (field-component :options-1-key) "false")
+            (btu/fill (field-component :options-1-label-en) "No")
+            (btu/fill (field-component :options-1-label-fi) "Ei")
+            (btu/fill (field-component :options-1-label-sv) "Nej")))
 
         (testing "create multi-select field"
           (add-form-field!)
@@ -2908,10 +2908,10 @@
                           label-id (comp keyword (partial format "options-%s-label-%s" i) name)]]
               (btu/scroll-and-click (field-component :add-option))
               (is (btu/eventually-visible? (field-component option-id)))
-              (btu/fill-human (field-component option-id) (format "multi-select-option-%s" i))
-              (btu/fill-human (field-component (label-id :en)) (format "Multi-select option %s (EN)" i))
-              (btu/fill-human (field-component (label-id :fi)) (format "Multi-select option %s (FI)" i))
-              (btu/fill-human (field-component (label-id :sv)) (format "Multi-select option %s (SV)" i))))
+              (btu/fill (field-component option-id) (format "multi-select-option-%s" i))
+              (btu/fill (field-component (label-id :en)) (format "Multi-select option %s (EN)" i))
+              (btu/fill (field-component (label-id :fi)) (format "Multi-select option %s (FI)" i))
+              (btu/fill (field-component (label-id :sv)) (format "Multi-select option %s (SV)" i))))
           (testing "preview is updated when multi-select option order changes"
             (is (= ["multi-select-option-0"
                     "multi-select-option-1"
@@ -2935,10 +2935,10 @@
                           label-id (comp keyword (partial format "columns-%s-label-%s" i) name)]]
               (btu/scroll-and-click (field-component :add-column))
               (btu/wait-visible (field-component column-id))
-              (btu/fill-human (field-component column-id) (format "table-column-%s" i))
-              (btu/fill-human (field-component (label-id :en)) (format "Table column %s (EN)" i))
-              (btu/fill-human (field-component (label-id :fi)) (format "Table column %s (FI)" i))
-              (btu/fill-human (field-component (label-id :sv)) (format "Table column %s (SV)" i)))
+              (btu/fill (field-component column-id) (format "table-column-%s" i))
+              (btu/fill (field-component (label-id :en)) (format "Table column %s (EN)" i))
+              (btu/fill (field-component (label-id :fi)) (format "Table column %s (FI)" i))
+              (btu/fill (field-component (label-id :sv)) (format "Table column %s (SV)" i)))
             (testing "preview shows correct table headers"
               (is (= (->> (btu/query-all [(field-preview) {:tag :table} {:tag :th}])
                           (map btu/value-of-el)
@@ -3088,9 +3088,9 @@
         (open-collapsible (str "field-collapsible-" (btu/context-getx :field-id)))
         (btu/scroll-and-click (field-component :type-description))
         (open-collapsible (:id (field-description-collapsible)))
-        (btu/fill-human (field-component :info-text-en) "Description (EN)")
-        (btu/fill-human (field-component :info-text-fi) "Description (FI)")
-        (btu/fill-human (field-component :info-text-sv) " ")
+        (btu/fill (field-component :info-text-en) "Description (EN)")
+        (btu/fill (field-component :info-text-fi) "Description (FI)")
+        (btu/fill (field-component :info-text-sv) " ")
 
         (btu/scroll-and-click {:fn/text "Save"})
 
@@ -3105,7 +3105,7 @@
 
         (testing "fill empty field and save successfully"
           (btu/clear (field-component :info-text-sv))
-          (btu/fill-human (field-component :info-text-sv) "Description (SV)")
+          (btu/fill (field-component :info-text-sv) "Description (SV)")
           (Thread/sleep 2000) ; XXX: too fast for rate limited button, could wait for attribute
           (btu/scroll-and-click {:fn/text "Save"})
           (btu/wait-page-loaded)
@@ -3269,17 +3269,17 @@
         (testing "create two options"
           (btu/scroll-and-click (field-component :add-option))
           (is (btu/eventually-visible? (field-component :options-0-key)))
-          (btu/fill-human (field-component :options-0-key) "true")
-          (btu/fill-human (field-component :options-0-label-en) "Yes")
-          (btu/fill-human (field-component :options-0-label-fi) "Kyllä")
-          (btu/fill-human (field-component :options-0-label-sv) "Ja")
+          (btu/fill (field-component :options-0-key) "true")
+          (btu/fill (field-component :options-0-label-en) "Yes")
+          (btu/fill (field-component :options-0-label-fi) "Kyllä")
+          (btu/fill (field-component :options-0-label-sv) "Ja")
 
           (btu/scroll-and-click (field-component :add-option))
           (is (btu/eventually-visible? (field-component :options-1-key)))
-          (btu/fill-human (field-component :options-1-key) "false")
-          (btu/fill-human (field-component :options-1-label-en) "No")
-          (btu/fill-human (field-component :options-1-label-fi) "Ei")
-          (btu/fill-human (field-component :options-1-label-sv) "Nej")))
+          (btu/fill (field-component :options-1-key) "false")
+          (btu/fill (field-component :options-1-label-en) "No")
+          (btu/fill (field-component :options-1-label-fi) "Ei")
+          (btu/fill (field-component :options-1-label-sv) "Nej")))
 
       (testing "create multiselect field"
         (add-form-field!)
@@ -3289,24 +3289,24 @@
         (testing "create three options"
           (btu/scroll-and-click (field-component :add-option))
           (is (btu/eventually-visible? (field-component :options-0-key)))
-          (btu/fill-human (field-component :options-0-key) "x")
-          (btu/fill-human (field-component :options-0-label-en) "X")
-          (btu/fill-human (field-component :options-0-label-fi) "X")
-          (btu/fill-human (field-component :options-0-label-sv) "X")
+          (btu/fill (field-component :options-0-key) "x")
+          (btu/fill (field-component :options-0-label-en) "X")
+          (btu/fill (field-component :options-0-label-fi) "X")
+          (btu/fill (field-component :options-0-label-sv) "X")
 
           (btu/scroll-and-click (field-component :add-option))
           (is (btu/eventually-visible? (field-component :options-1-key)))
-          (btu/fill-human (field-component :options-1-key) "y")
-          (btu/fill-human (field-component :options-1-label-en) "Y")
-          (btu/fill-human (field-component :options-1-label-fi) "Y")
-          (btu/fill-human (field-component :options-1-label-sv) "Y")
+          (btu/fill (field-component :options-1-key) "y")
+          (btu/fill (field-component :options-1-label-en) "Y")
+          (btu/fill (field-component :options-1-label-fi) "Y")
+          (btu/fill (field-component :options-1-label-sv) "Y")
 
           (btu/scroll-and-click (field-component :add-option))
           (is (btu/eventually-visible? (field-component :options-2-key)))
-          (btu/fill-human (field-component :options-2-key) "z")
-          (btu/fill-human (field-component :options-2-label-en) "Z")
-          (btu/fill-human (field-component :options-2-label-fi) "Z")
-          (btu/fill-human (field-component :options-2-label-sv) "Z")))
+          (btu/fill (field-component :options-2-key) "z")
+          (btu/fill (field-component :options-2-label-en) "Z")
+          (btu/fill (field-component :options-2-label-fi) "Z")
+          (btu/fill (field-component :options-2-label-sv) "Z")))
 
       (testing "create conditional text field"
         (add-form-field!)
@@ -3527,8 +3527,8 @@
       (is (btu/eventually-visible? :blacklist))
       (is (= [{"rems-no-rows" "No rows"}]
              (slurp-rows :blacklist)))
-      (btu/fill-human :blacklist-user "baddie\n")
-      (btu/fill-human :blacklist-comment "This is a test.")
+      (btu/fill :blacklist-user "baddie\n")
+      (btu/fill :blacklist-comment "This is a test.")
       (btu/screenshot "test-blacklist-1")
       (btu/scroll-and-click :blacklist-add)
       (is (btu/eventually-visible? {:css ".alert-success"}))
@@ -3679,11 +3679,11 @@
       (is (btu/eventually-visible? :short-name-en))
       (select-option "Owners" "Organization owner 2")
       (btu/clear :short-name-en)
-      (btu/fill-human :short-name-en "SNEN2")
+      (btu/fill :short-name-en "SNEN2")
       (btu/clear :short-name-fi)
-      (btu/fill-human :short-name-fi "SNFI2")
+      (btu/fill :short-name-fi "SNFI2")
       (btu/clear :short-name-sv)
-      (btu/fill-human :short-name-sv "SNSV2")
+      (btu/fill :short-name-sv "SNSV2")
       (btu/scroll-and-click :save)
       (is (btu/eventually-visible? {:css ".alert-success"}))
       (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
@@ -3711,7 +3711,7 @@
       (btu/scroll-and-click :create-resource)
       (btu/wait-page-loaded)
       (is (btu/eventually-visible? :organization))
-      (btu/fill-human :resid (str "resource for " (btu/context-getx :organization-name)))
+      (btu/fill :resid (str "resource for " (btu/context-getx :organization-name)))
       (select-option "Organization" (btu/context-getx :organization-name))
       (btu/scroll-and-click :save)
       (is (btu/eventually-visible? {:css ".alert-success"})))
@@ -3759,11 +3759,11 @@
         (btu/wait-page-loaded)
         (is (btu/eventually-visible? :short-name-en))
         (btu/clear :short-name-en)
-        (btu/fill-human :short-name-en "SNEN")
+        (btu/fill :short-name-en "SNEN")
         (btu/clear :short-name-fi)
-        (btu/fill-human :short-name-fi "SNFI")
+        (btu/fill :short-name-fi "SNFI")
         (btu/clear :short-name-sv)
-        (btu/fill-human :short-name-sv "SNSV")
+        (btu/fill :short-name-sv "SNSV")
         (btu/scroll-and-click :save)
         (is (btu/eventually-visible? {:css ".alert-success"}))
         (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success"))
@@ -3892,7 +3892,7 @@
       (btu/scroll-and-click {:css ".edit-category"})
       (btu/wait-visible :title-en)
       (btu/clear :title-en)
-      (btu/fill-human :title-en (str (btu/context-getx :category-name) " Edited"))
+      (btu/fill :title-en (str (btu/context-getx :category-name) " Edited"))
       (btu/scroll-and-click :save)
 
       (testing "after edit"
