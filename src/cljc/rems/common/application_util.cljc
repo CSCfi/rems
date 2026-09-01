@@ -25,10 +25,10 @@
 
 (defn expirable?
   [config application]
-  (contains?
-   (into #{} (or (-> config :application-expiration keys)
-                #{:application.state/draft}))
-   (:application/state application)))
+  (let [configured-states (into #{} (-> config :application-expiration keys))]
+    (if (seq configured-states)
+      (contains? configured-states (:application/state application))
+      (draft? application))))
 
 (defn accepted-licenses? [application userid]
   (let [application-licenses (map :license/id (:application/licenses application))

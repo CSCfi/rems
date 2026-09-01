@@ -79,7 +79,14 @@
  :application-id-column :generated-and-assigned-external-id
  :enable-assign-external-id-ui true
  :attachment-max-size 10000000 ;; 10MB
- :application-expiration nil
+
+ :application-expiration {;:application.state/draft {:reminder-before "P1d" :delete-after "P3d"}
+                          :application.state/closed nil
+                          :application.state/soft-deleted {:reminder-before "PT15s"
+                                                           :delete-after    "PT30s"}}
+
+ :application-expiration-process-limit 1
+
  :enable-permissions-api true
  ;; example keys from https://tools.ietf.org/html/rfc7517#appendix-A
  :ga4gh-visa-private-key "test-data/example-private-key.jwk"

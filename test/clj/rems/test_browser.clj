@@ -4489,3 +4489,20 @@
         (is (= ["/administration/workflows"
                 "/catalogue"]
                (btu/js-execute "return window.test_navigations;")))))))
+
+
+(deftest test-error-page
+  (btu/with-postmortem
+    (testing "with supplied key, error page displays error message"
+      (btu/go (btu/get-server-url))
+      (btu/go (str (btu/get-server-url) "error?key=:t.login.errors/unknown"))
+      (wait-page-title "Problem - REMS")
+      (is (btu/eventually-visible? {:tag :p :fn/has-text "There was a problem logging you in. Please check your identity provider."}))
+      (wait-page-title "Problem - REMS"))
+    (testing "without key or value, uknown error is shown"
+      (btu/go (str (btu/get-server-url) "error?key="))
+      (wait-page-title "Problem - REMS")
+      (is (btu/eventually-visible? {:tag :p :fn/has-text "Unknown error."}))
+      (btu/go (str (btu/get-server-url) "error"))
+      (wait-page-title "Problem - REMS")
+      (is (btu/eventually-visible? {:tag :p :fn/has-text "Unknown error."})))))

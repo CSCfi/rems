@@ -62,6 +62,10 @@
   (when-let [reminder-before (:reminder-before expiration)]
     (time/plus notification-time (Period/parse reminder-before))))
 
+(comment
+  (Period/parse "PT1m")
+  (time/plus (time/now) (Period/parse "PT1m")))
+
 (defn- enough-time-has-passed-since-notification?
   "Has the user had enough time to react to the reminder?"
   [expiration application now]
@@ -172,7 +176,16 @@
                                          :application/last-activity exactly-90d-ago
                                          :application/events [(created-event exactly-90d-ago)]}
                                         (permissions/give-role-to-users :applicant #{"alice"}))
+                                    now))))
+
+    (testing "if configuration is empty"
+      (is (nil? (expire-application {}
+                                    (-> {:application/state :application.state/draft
+                                         :application/last-activity exactly-90d-ago
+                                         :application/events [(created-event exactly-90d-ago)]}
+                                        (permissions/give-role-to-users :applicant #{"alice"}))
                                     now))))))
+
 
 (deftest test-calculate-reminder-time
   (let [now (time/now)

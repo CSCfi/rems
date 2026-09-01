@@ -8,7 +8,8 @@
             [rems.db.applications]
             [rems.scheduler :as scheduler]
             [rems.service.command :as command]
-            [rems.service.users]))
+            [rems.service.users]
+            [rems.common.application-util :as application-util]))
 
 (defn run-commands! [cmds]
   (doseq [cmd cmds]
@@ -39,7 +40,11 @@
                    (count (->> cmds (filter #(= :application.command/send-expiration-notifications (:type %)))))
                    process-limit)
 
-    (run-commands! (take process-limit cmds)))
+    (run-commands! (take process-limit cmds))
+    ;; tsekkaa jääkö cacheen jotain vielä
+
+    )
+
   (log/info :finish #'process-applications!))
 
 (mount/defstate expired-application-poller
@@ -54,12 +59,8 @@
 (comment
   (mount/defstate expired-application-poller-test
     :start (scheduler/start! "expired-application-poller-test"
-                             (fn [] (with-redefs [env (assoc env
-                                                             :application-expiration {:application.state/draft {:delete-after "P1D"
-                                                                                                                :reminder-before "P1D"}}
-                                                             :application-expiration-process-limit 1)]
-                                      (process-applications!)))
-                             (.toStandardDuration (time/seconds 10)))
+                             process-applications!
+                             (.toStandardDuration (time/seconds 5)))
     :stop (scheduler/stop! expired-application-poller-test))
 
   (mount/start #{#'expired-application-poller-test})
@@ -71,3 +72,10 @@
                            :application-expiration-process-limit 1)]
     (process-applications!)))
 
+
+;; eli jäi siihen että :closed saatiin lähetettyä sposti
+;; epäselvää poistuisiko se myös koska P1D ei ehkä vielä täyttynyt (tälle joku utility funkkari tai missä toi tieto asuu kannassa)
+;; tutki koko putki läpi
+
+;;tee testi  tolle process applications paluuarvolle jos ei jo ole
+;; jatkotiketti entitlement poistamiselle ja sitä odotellessa dokumentoi että niin kantsii tehdä käsin

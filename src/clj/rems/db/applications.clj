@@ -453,11 +453,12 @@
 
   nil)
 
+
 (defn delete-application!
   [app-id]
   (refresh-all-applications-cache!) ; NB: try make sure the cache is up to date so we have any new applications present
-  (assert (application-util/draft? (get-application app-id))
-          (str "Tried to delete application " app-id " which is not a draft!"))
+  (assert (application-util/expirable? env (get-application app-id))
+          (str "Tried to delete application " app-id " which is not a draft!")) ;fix
   (delete-from-all-applications-cache! app-id)
   (rems.db.attachments/delete-application-attachments! app-id)
   (rems.db.events/delete-application-events! app-id)

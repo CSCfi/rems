@@ -337,6 +337,14 @@ WHERE 1=1
 /*~ ) ~*/
 ORDER BY entitlement.userId, res.resId, catAppId, entitlement.start, entitlement.endt;
 
+-- :name get-entitlements-for-deletion :? :*
+SELECT id, catAppId, userId, resId FROM entitlement
+WHERE catAppId = :application;
+
+-- :name delete-entitlement! :! :n
+DELETE FROM entitlement
+WHERE id = :id;
+
 -- :name save-attachment! :insert
 INSERT INTO attachment
 (appId, userid, filename, type, data)

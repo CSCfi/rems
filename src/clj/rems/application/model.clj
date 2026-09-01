@@ -258,10 +258,9 @@
   application)
 
 (defmethod application-base-view :application.event/soft-deleted
-  [application event]
+  [application _event]
   (-> application
-      (assoc :application/state :application.state/soft-deleted
-             :application/deleted-at (:event/time event))))
+      (assoc :application/state :application.state/soft-deleted)))
 
 (defmethod application-base-view :application.event/expiration-notifications-sent
   [application _event]
