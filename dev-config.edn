@@ -89,6 +89,7 @@
  :enable-doi true
  :enable-duo true
  :enable-catalogue-tree true
+ :enable-catalogue-hierarchy true
  :enable-save-compaction true
  :enable-autosave true
  :enable-extended-logging true

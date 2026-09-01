@@ -6,6 +6,7 @@
             [re-frame.core :as rf]
             [rems.atoms :as atoms]
             [rems.common.catalogue-util :refer [catalogue-items->ids]]
+            [rems.globals]
             [rems.guide-util :refer [component-info example]]
             [rems.text :refer [get-localized-title text text-format]]
             [rems.util :refer [navigate!]]))
@@ -28,49 +29,53 @@
    (update db ::cart #(remove (comp #{item-id} :id) %))))
 
 (defn disable-remove-from-cart-button? [item cart-item-ids entitlement-catids]
-  (when-let [children-ids (seq (map :catalogue-item/id (:children item)))]
-    (and (not (contains? (set entitlement-catids) (:id item)))
-         (some (set cart-item-ids) children-ids))))
+  (when (:enable-catalogue-hierarchy @rems.globals/config)
+    (when-let [children-ids (seq (map :catalogue-item/id (:children item)))]
+      (and (not (contains? (set entitlement-catids) (:id item)))
+           (some (set cart-item-ids) children-ids)))))
 
 (deftest test-disable-remove-from-cart-button
-  (testing "without hierarchy"
-    (is (nil? (disable-remove-from-cart-button? {:id 1} [1] nil))
-        "can remove item")
-    (is (nil? (disable-remove-from-cart-button? {:id 1} [1 2 3] nil))
-        "can remove item"))
-  (testing "with item and children in cart"
-    (is (disable-remove-from-cart-button? {:id 2 :children [{:catalogue-item/id 3}]} [2 3] nil)
-        "cannot remove parent")
-    (is (nil? (disable-remove-from-cart-button? {:id 3 :part-of {:catalogue-item/id 2}} [2 3] nil))
-        "can remove child"))
-  (testing "with parent in cart"
-    (is (nil? (disable-remove-from-cart-button? {:id 2 :children [{:catalogue-item/id 3}]} [2] nil))
-        "can remove item"))
-  (testing "with item and children in cart, and previous entitlement to item"
-    (is (false? (disable-remove-from-cart-button? {:id 2 :children [{:catalogue-item/id 3}]} [2 3] [2]))
-        "can remove item")))
+  (with-redefs [rems.globals/config (atom {:enable-catalogue-hierarchy true})]
+    (testing "without hierarchy"
+      (is (nil? (disable-remove-from-cart-button? {:id 1} [1] nil))
+          "can remove item")
+      (is (nil? (disable-remove-from-cart-button? {:id 1} [1 2 3] nil))
+          "can remove item"))
+    (testing "with item and children in cart"
+      (is (disable-remove-from-cart-button? {:id 2 :children [{:catalogue-item/id 3}]} [2 3] nil)
+          "cannot remove parent")
+      (is (nil? (disable-remove-from-cart-button? {:id 3 :part-of {:catalogue-item/id 2}} [2 3] nil))
+          "can remove child"))
+    (testing "with parent in cart"
+      (is (nil? (disable-remove-from-cart-button? {:id 2 :children [{:catalogue-item/id 3}]} [2] nil))
+          "can remove item"))
+    (testing "with item and children in cart, and previous entitlement to item"
+      (is (false? (disable-remove-from-cart-button? {:id 2 :children [{:catalogue-item/id 3}]} [2 3] [2]))
+          "can remove item"))))
 
 (defn disable-add-to-cart-button? [item cart-item-ids entitlement-catids]
-  (when-let [parent-id (-> item :part-of :catalogue-item/id)]
-    (not (contains? (set/union (set cart-item-ids) (set entitlement-catids))
-                    parent-id))))
+  (when (:enable-catalogue-hierarchy @rems.globals/config)
+    (when-let [parent-id (-> item :part-of :catalogue-item/id)]
+      (not (contains? (set/union (set cart-item-ids) (set entitlement-catids))
+                      parent-id)))))
 
 (deftest test-disable-add-to-cart-button
-  (testing "without hierarchy"
-    (is (nil? (disable-add-to-cart-button? {:id 1} nil nil))
-        "can add to cart"))
-  (testing "with parent, and unrelated item in cart"
-    (is (nil? (disable-add-to-cart-button? {:id 2 :children [{:catalogue-item/id 3}]} [1] nil))
-        "can add to cart"))
-  (testing "with child, without parent in cart"
-    (is (true? (disable-add-to-cart-button? {:id 3 :part-of {:catalogue-item/id 2}} [1] nil))
-        "cannot add to cart"))
-  (testing "with child, and parent in cart"
-    (is (false? (disable-add-to-cart-button? {:id 3 :part-of {:catalogue-item/id 2}} [2] nil))
-        "can add to cart"))
-  (testing "with child, without parent in cart, with entitlement to parent"
-    (is (false? (disable-add-to-cart-button? {:id 3 :part-of {:catalogue-item/id 2}} [1] [2]))
-        "can add to cart")))
+  (with-redefs [rems.globals/config (atom {:enable-catalogue-hierarchy true})]
+    (testing "without hierarchy"
+      (is (nil? (disable-add-to-cart-button? {:id 1} nil nil))
+          "can add to cart"))
+    (testing "with parent, and unrelated item in cart"
+      (is (nil? (disable-add-to-cart-button? {:id 2 :children [{:catalogue-item/id 3}]} [1] nil))
+          "can add to cart"))
+    (testing "with child, without parent in cart"
+      (is (true? (disable-add-to-cart-button? {:id 3 :part-of {:catalogue-item/id 2}} [1] nil))
+          "cannot add to cart"))
+    (testing "with child, and parent in cart"
+      (is (false? (disable-add-to-cart-button? {:id 3 :part-of {:catalogue-item/id 2}} [2] nil))
+          "can add to cart"))
+    (testing "with child, without parent in cart, with entitlement to parent"
+      (is (false? (disable-add-to-cart-button? {:id 3 :part-of {:catalogue-item/id 2}} [1] [2]))
+          "can add to cart"))))
 
 (defn add-to-cart-button
   "Hiccup fragment that contains a button that adds the given item to the cart"

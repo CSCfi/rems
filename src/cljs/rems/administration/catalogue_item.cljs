@@ -6,8 +6,9 @@
             [rems.administration.status-flags :as status-flags]
             [rems.atoms :as atoms :refer [document-title readonly-checkbox]]
             [rems.collapsible :as collapsible]
-            [rems.flash-message :as flash-message]
             [rems.common.roles :as roles]
+            [rems.flash-message :as flash-message]
+            [rems.globals]
             [rems.spinner :as spinner]
             [rems.text :refer [get-localized-title localize-time localized text]]
             [rems.util :refer [fetch]]))
@@ -95,22 +96,22 @@
                            ^{:key (:category/id cat)}
                            [atoms/link nil
                             (str "/administration/categories/" (:category/id cat))
-                            (localized (:category/title cat))])))]
-                     [inline-info-field (text :t.administration/catalogue-item-hierarchy-parent)
-                      (let [{id :catalogue-item/id} (:part-of catalogue-item)]
-                        (when id
+                            (localized (:category/title cat))])))]]
+                    (when (:enable-catalogue-hierarchy @rems.globals/config)
+                      [[inline-info-field (text :t.administration/catalogue-item-hierarchy-parent)
+                        (when-let [id (:catalogue-item/id (:part-of catalogue-item))]
                           [atoms/link {:href (str "/administration/catalogue-items/" id)
                                        :label id
-                                       :target :_blank}]))]
-                     [inline-info-field (text :t.administration/catalogue-item-hierarchy-children)
-                      (when-let [children (:children catalogue-item)]
-                        (doall
-                         (for [{id :catalogue-item/id} children]
-                           ^{:key id}
-                           [atoms/link {:href (str "/administration/catalogue-items/" id)
-                                        :label id
-                                        :target :_blank}])))]
-                     [inline-info-field (text :t.administration/start) (localize-time (:start catalogue-item))]
+                                       :target :_blank}])]
+                       [inline-info-field (text :t.administration/catalogue-item-hierarchy-children)
+                        (when-let [children (:children catalogue-item)]
+                          (doall
+                           (for [{id :catalogue-item/id} children]
+                             ^{:key id}
+                             [atoms/link {:href (str "/administration/catalogue-items/" id)
+                                          :label id
+                                          :target :_blank}])))]])
+                    [[inline-info-field (text :t.administration/start) (localize-time (:start catalogue-item))]
                      [inline-info-field (text :t.administration/end) (localize-time (:end catalogue-item))]
                      [inline-info-field (text :t.administration/active) [readonly-checkbox {:value (status-flags/active? catalogue-item)}]]]))}]
    (let [id (:id catalogue-item)]

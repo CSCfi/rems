@@ -1,13 +1,13 @@
 (ns rems.application.test-commands
-  (:require [clojure.test :refer [deftest is testing]]
+  (:require [clj-time.core :as time]
+            [clojure.test :refer [deftest is testing]]
             [rems.application.commands :as commands]
             [rems.application.events :as events]
             [rems.application.model :as model]
             [rems.common.util :refer [getx]]
             [rems.permissions :as permissions]
-            [rems.util :refer [assert-ex]]
             [rems.testing-util :refer [with-fixed-time]]
-            [clj-time.core :as time])
+            [rems.util :refer [assert-ex]])
   (:import [clojure.lang ExceptionInfo]
            [java.util UUID]
            [org.joda.time DateTime]))
@@ -503,7 +503,9 @@
             :workflow/type :workflow/default}
            (ok-command {:type :application.command/create
                         :actor applicant-user-id
-                        :catalogue-item-ids [8 9]})))
+                        :catalogue-item-ids [8 9]}
+                       nil
+                       (assoc command-injections :get-config (constantly {:enable-catalogue-hierarchy true})))))
     (is (= {:event/type :application.event/created
             :event/actor applicant-user-id
             :event/time (DateTime. 1000)
@@ -516,27 +518,60 @@
             :workflow/type :workflow/default}
            (ok-command {:type :application.command/create
                         :actor applicant-user-id
-                        :catalogue-item-ids [8]})))
-    (is (= {:event/type :application.event/created
-            :event/actor applicant-user-id
-            :event/time (DateTime. 1000)
-            :application/id new-app-id
-            :application/external-id new-external-id
-            :application/resources [{:catalogue-item/id 11, :resource/ext-id "res-complementary-2"}]
-            :application/licenses [{:license/id 1}]
-            :application/forms [{:form/id 1}]
-            :workflow/id 1
-            :workflow/type :workflow/default}
-           (ok-command {:type :application.command/create
-                        :actor applicant-user-id
-                        :catalogue-item-ids [11]}))))
+                        :catalogue-item-ids [8]}
+                       nil
+                       (assoc command-injections :get-config (constantly {:enable-catalogue-hierarchy true})))))
+    (testing "with existing entitlement to top-level resource"
+      (is (= {:event/type :application.event/created
+              :event/actor applicant-user-id
+              :event/time (DateTime. 1000)
+              :application/id new-app-id
+              :application/external-id new-external-id
+              :application/resources [{:catalogue-item/id 11, :resource/ext-id "res-complementary-2"}]
+              :application/licenses [{:license/id 1}]
+              :application/forms [{:form/id 1}]
+              :workflow/id 1
+              :workflow/type :workflow/default}
+             (ok-command {:type :application.command/create
+                          :actor applicant-user-id
+                          :catalogue-item-ids [11]}
+                         nil
+                         (assoc command-injections :get-config (constantly {:enable-catalogue-hierarchy true})))))))
 
   (testing "error: missing top level item"
     (is (= {:errors [{:type :t.applications.errors/missing-top-level-item
                       :catalogue-item-ids [8]}]}
            (fail-command {:type :application.command/create
                           :actor applicant-user-id
-                          :catalogue-item-ids [9]}))))
+                          :catalogue-item-ids [9]}
+                         nil
+                         (assoc command-injections :get-config (constantly {:enable-catalogue-hierarchy true}))))))
+
+  (testing "with hierarchy toggled off"
+    (is (= {:application/external-id new-external-id
+            :application/id new-app-id
+            :event/time (DateTime. 1000)
+            :workflow/type :workflow/default
+            :application/resources [{:catalogue-item/id 9, :resource/ext-id "res-complementary"}]
+            :application/forms [{:form/id 1}]
+            :workflow/id 1
+            :event/actor applicant-user-id
+            :event/type :application.event/created
+            :application/licenses [{:license/id 1}]}
+           (ok-command {:type :application.command/create
+                        :actor applicant-user-id
+                        :catalogue-item-ids [9]})
+           (ok-command {:type :application.command/create
+                        :actor applicant-user-id
+                        :catalogue-item-ids [9]}
+                       nil
+                       command-injections)
+           (ok-command {:type :application.command/create
+                        :actor applicant-user-id
+                        :catalogue-item-ids [9]}
+                       nil
+                       (assoc command-injections :get-config (constantly {:enable-catalogue-hierarchy false}))))
+        "the feature is not used unless config key exists and is truthy"))
 
   (testing "cannot execute the create command for an existing application"
     (reset! allocated-new-ids? false)

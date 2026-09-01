@@ -70,5 +70,6 @@
  :enable-doi true
  :enable-duo true
  :enable-catalogue-tree true
+ :enable-catalogue-hierarchy true
  :enable-voting true
  :enable-processing-states true}

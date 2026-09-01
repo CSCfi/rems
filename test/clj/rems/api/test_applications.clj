@@ -771,7 +771,12 @@
                (api-call :post "/api/applications/create" {:catalogue-item-ids [cat-id-child]} api-key user-id)))
         (is (match? {:success true
                      :application-id number?}
-                    (api-call :post "/api/applications/create" {:catalogue-item-ids [cat-id-parent cat-id-child]} api-key user-id)))))
+                    (api-call :post "/api/applications/create" {:catalogue-item-ids [cat-id-parent cat-id-child]} api-key user-id)))
+        (testing "with hierarchy toggled off"
+          (with-redefs [rems.config/env (assoc rems.config/env :enable-catalogue-hierarchy false)]
+            (is (match? {:success true
+                         :application-id number?}
+                        (api-call :post "/api/applications/create" {:catalogue-item-ids [cat-id-child]} api-key user-id)))))))
 
     (testing "no forms"
       (let [no-form (test-helpers/create-catalogue-item! {:form-id nil})

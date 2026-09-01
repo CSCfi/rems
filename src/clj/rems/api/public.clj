@@ -43,6 +43,7 @@
    (s/optional-key :enable-catalogue-tree) s/Bool
    (s/optional-key :catalogue-tree-show-matching-parents) s/Bool
    (s/optional-key :enable-cart) s/Bool
+   (s/optional-key :enable-catalogue-hierarchy) s/Bool
    (s/optional-key :application-list-hidden-columns) [s/Keyword]
    (s/optional-key :enable-autosave) s/Bool
    (s/optional-key :show-resources-section) s/Bool

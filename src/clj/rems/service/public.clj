@@ -36,6 +36,7 @@
                     :enable-catalogue-tree
                     :catalogue-tree-show-matching-parents
                     :enable-cart
+                    :enable-catalogue-hierarchy
                     :application-list-hidden-columns
                     :enable-autosave
                     :show-resources-section
