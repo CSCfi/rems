@@ -8,7 +8,8 @@
             [rems.db.applications]
             [rems.scheduler :as scheduler]
             [rems.service.command :as command]
-            [rems.service.users]))
+            [rems.service.users]
+            [rems.common.application-util :as application-util]))
 
 (defn run-commands! [cmds]
   (doseq [cmd cmds]
@@ -40,6 +41,7 @@
                    process-limit)
 
     (run-commands! (take process-limit cmds)))
+
   (log/info :finish #'process-applications!))
 
 (mount/defstate expired-application-poller
@@ -54,12 +56,8 @@
 (comment
   (mount/defstate expired-application-poller-test
     :start (scheduler/start! "expired-application-poller-test"
-                             (fn [] (with-redefs [env (assoc env
-                                                             :application-expiration {:application.state/draft {:delete-after "P1D"
-                                                                                                                :reminder-before "P1D"}}
-                                                             :application-expiration-process-limit 1)]
-                                      (process-applications!)))
-                             (.toStandardDuration (time/seconds 10)))
+                             process-applications!
+                             (.toStandardDuration (time/seconds 5)))
     :stop (scheduler/stop! expired-application-poller-test))
 
   (mount/start #{#'expired-application-poller-test})
@@ -70,4 +68,3 @@
                                                                               :reminder-before "P7D"}}
                            :application-expiration-process-limit 1)]
     (process-applications!)))
-

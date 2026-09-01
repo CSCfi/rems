@@ -25,11 +25,13 @@
                                                     :comment (:application/comment event)})))
 
 (defn delete-applications
-  "The deleted event causes a side-effect that completely deletes the application."
+  "The deleted event causes a side-effect that completely deletes the application and the entitlements granted by it."
   [new-events]
-  (doseq [event new-events]
-    (when (= :application.event/deleted (:event/type event))
-      (rems.db.applications/delete-application! (:application/id event)))))
+  (doseq [{application-id :application/id
+           event-type :event/type} new-events]
+    (when (= :application.event/deleted event-type)
+      (rems.db.entitlements/delete-entitlements! application-id)
+      (rems.db.applications/delete-application! application-id))))
 
 (defn delete-orphan-attachments [application-id]
   (let [application (rems.db.applications/get-application-internal application-id)

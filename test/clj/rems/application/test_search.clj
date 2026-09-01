@@ -332,7 +332,8 @@
       (testing "with one"
         (let [result (search/find-applications (str "workflow-id:" wfid-1))]
           (is (contains? result app-id-1))
-          (is (not (contains? result app-id-2)))))
+          (is (not (contains? result app-id-2)))
+          (is (not (contains? result app-id-3)))))
 
       (testing "with many"
         (let [result (search/find-applications (str "workflow-id:" wfid-2))]

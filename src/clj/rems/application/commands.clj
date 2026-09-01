@@ -2,6 +2,7 @@
   (:require [clj-time.core :as time]
             [clojure.set :as set]
             [clojure.test :refer [deftest is testing]]
+            [clojure.tools.logging :as log]
             [medley.core :refer [assoc-some distinct-by update-existing]]
             [rems.application.schema :as application-schema]
             [rems.common.application-util :as application-util]
@@ -657,16 +658,63 @@
       (ok {:event/type :application.event/soft-deleted
            :event/time (:time cmd)})))
 
+(comment (defn- invalid-catalogue-item-hierarchy-error
+           "For such an item in `catalogue-item-ids` that has a parent (dependent), check that the parent item is also included in `catalogue-item-ids`, or `actor` has an entitlement to the parent item's resource."
+           [catalogue-item-ids actor {:keys [get-catalogue-item get-dependents get-entitlements get-config]}]
+           (when (:enable-catalogue-hierarchy (get-config))
+             (let [entitled-to-resids (into #{} (map :resourceid) (get-entitlements {:user-id actor}))
+                   missing (into []
+                                 (comp (mapcat (fn [id] (get-dependents {:catalogue-item/id id})))
+                                       (map :catalogue-item/id)
+                                       (remove (set catalogue-item-ids))
+                                       (map get-catalogue-item)
+                                       (filter (complement (comp entitled-to-resids :resource-id)))
+                                       (map :id)
+                                       (distinct))
+                                 catalogue-item-ids)]
+               (when (seq missing)
+                 {:errors [{:type :t.applications.errors/missing-top-level-item
+                            :catalogue-item-ids missing}]})))))
+
+(defn dependency-error
+  "Check whether an entitlement exists for the application"
+  [application {:keys [get-entitlements]}]
+  (let [entitlements (get-entitlements {:application-id (:application/id application)
+                                        :active-at nil})]
+    (when entitlements
+      {:errors [{:type :entitlement-still-exists}]})))
+
+(comment (rems.db.applications/get-application 23)
+         (keys (first  (rems.db.entitlements/get-entitlements {:application-id 23 :active-at nil}))))
+
+(defn- expiration-state-error
+  "It is an error if `application`'s state is not `:application.state/draft` (default),
+  or any of the states defined in `:application-expiration`, when that is configured."
+  [application {:keys [get-config]}]
+  (let [expiration-states (into #{} (or (-> (get-config) :application-expiration keys)
+                                        #{:application.state/draft}))]
+    (log/info "juuh")
+    (log/info {:app-id (:application/id application) :state (:application/state application) :states  expiration-states})
+    (when-not (contains? expiration-states (:application/state application))
+      {:errors [{:type :disallowed-state
+                 :application/state (:application/state application)
+                 :allowed-states expiration-states}]})))
+
+(defmethod command-handler :application.command/soft-delete
+  [cmd application injections]
+  (or ;(dependency-error application injections)
+   (expiration-state-error application injections)
+   (ok {:event/type :application.event/soft-deleted
+        :event/time (:time cmd)})))
+
 (defmethod command-handler :application.command/delete
-  [_cmd application _injections]
-  (or (when-not (application-util/draft? application)
-        {:errors [{:type :only-draft-may-be-deleted}]})
+  [cmd application injections]
+  (or (expiration-state-error application injections)
       (ok {:event/type :application.event/deleted})))
 
 (defmethod command-handler :application.command/send-expiration-notifications
-  [cmd application _injections]
-  (or (when-not (application-util/draft? application)
-        {:errors [{:type :only-draft-may-be-expired}]})
+  [cmd application injections]
+  (or (expiration-state-error application injections)
       (ok {:event/type :application.event/expiration-notifications-sent
            :application/expires-on (:expires-on cmd)})))
 

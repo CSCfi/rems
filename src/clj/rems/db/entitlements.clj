@@ -162,7 +162,27 @@
 (defn get-entitlements
   [{:keys [user-id application-id active-at]
     :or {active-at (time/now)}}]
+  (log/info (assoc-some {}
+                        :user user-id
+                        :application application-id
+                        :active-at active-at))
   (db/get-entitlements (assoc-some {}
                                    :user user-id
                                    :application application-id
                                    :active-at active-at)))
+
+(defn delete-entitlements! [application-id]
+  (when-let [entitlements (seq (db/get-entitlements-for-deletion {:application application-id}))]
+    (doseq [{:keys [id userid resid]} entitlements]
+      (log/infof "Deleting entitlements of application %d: entitlement-id %d, user %s, resource-id %d"  application-id id userid resid)
+      (db/delete-entitlement! {:id id})))
+     ;;; reset cache
+  )
+
+(comment
+  (get-entitlements {:application 23})
+  (db/get-entitlements {:user-id "alice"})
+  (db/get-entitlements-for-deletion {:application 23})
+  (db/delete-entitlement! {:id 3})
+  (delete-entitlements! 23)
+  (get-entitlements-by-user 23))
