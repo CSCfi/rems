@@ -50,4 +50,19 @@
              (linkify "(See http://www.abc.com?)"))))
     (testing "a link without http-prefix"
       (is (= ["(See www-page at " [:a {:target :_blank :href "http://www.abc.com"} "www.abc.com"] ".)"]
-             (linkify "(See www-page at www.abc.com.)"))))))
+             (linkify "(See www-page at www.abc.com.)"))))
+    (testing "change newlines to hiccup line breaks"
+      (is (= ["a" [:br] "b"]
+             (linkify "a\nb")))
+      (is (= ["a" [:br] "b" [:br] "c"]
+             (linkify "a\nb\nc"))))
+    (testing "retain empty lines around line breaks"
+      (is (= ["" [:br] "a"]
+             (linkify "\na")))
+      (is (= ["a" [:br] ""]
+             (linkify "a\n")))
+      (is (= ["a" [:br] "" [:br] "b"]
+             (linkify "a\n\nb"))))
+    (testing "combine links and line breaks"
+      (is (= ["See " link [:br] "and more"]
+             (linkify "See http://www.abc.com\nand more"))))))
