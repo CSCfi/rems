@@ -24,6 +24,7 @@
             [rems.config]
             [rems.db.api-key]
             [rems.db.applications]
+            [rems.db.entitlements]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.db.test-data-users :as test-users]
             [rems.db.testing :refer [save-cache-statistics!]]
@@ -174,6 +175,15 @@
   btu/accessibility-report-fixture)
 
 ;;; common functionality
+
+(defn create-and-approve-application! [{:keys [catalogue-item-ids actor time handler] :as args}]
+  (let [app-id (test-helpers/create-application! args)]
+    (test-helpers/submit-application (-> args
+                                         (dissoc :catalogue-item-ids)
+                                         (assoc :application-id app-id)))
+    (test-helpers/command! {:type :application.command/approve
+                            :application-id app-id
+                            :actor "handler"})))
 
 (defn login-as [username]
   (btu/go (btu/get-server-url))
@@ -2312,19 +2322,31 @@
                         :resource-4 (test-helpers/create-resource!
                                      {:resource-ext-id (str "test-catalogue-item-hierarchy" (btu/get-seed) " resource-4")
                                       :organization {:organization/id (btu/context-getx :organization-id)}})
+                        :resource-5 (test-helpers/create-resource!
+                                     {:resource-ext-id (str "test-catalogue-item-hierarchy" (btu/get-seed) " resource-5")
+                                      :organization {:organization/id (btu/context-getx :organization-id)}})
+                        :resource-6 (test-helpers/create-resource!
+                                     {:resource-ext-id (str "test-catalogue-item-hierarchy" (btu/get-seed) " resource-6")
+                                      :organization {:organization/id (btu/context-getx :organization-id)}})
+                        :resource-7 (test-helpers/create-resource!
+                                     {:resource-ext-id (str "test-catalogue-item-hierarchy" (btu/get-seed) " resource-7")
+                                      :organization {:organization/id (btu/context-getx :organization-id)}})
                         :form (test-helpers/create-form!
                                {:form/internal-name "test-catalogue-item-hierarchy form"
                                 :form/external-title (test-helpers/make-localized "Test Edit Catalogue Item Children Form EN")
                                 :form/fields []
                                 :form/organization {:organization/id (btu/context-getx :organization-id)}}))
     (btu/context-assoc! :parent-1-name (str "test-catalogue-item-hierarchy parent created with form " (btu/get-seed))
-                        :parent-2-name (str "test-catalogue-item-hierarchy-parent " (btu/get-seed))
+                        :parent-2-name (str "test-catalogue-item-hierarchy-parent 2 " (btu/get-seed))
+                        :parent-3-name (str "test-catalogue-item-hierarchy-parent 3 " (btu/get-seed))
                         :child-1-name (str "test-catalogue-item-hierarchy-child-1 " (btu/get-seed))
                         :child-2-name (str "test-catalogue-item-hierarchy-child-2 " (btu/get-seed))
                         :child-3-name (str "test-catalogue-item-hierarchy-child-3 " (btu/get-seed))
-                        :child-4-name (str "test-catalogue-item-hierarchy-child-4 " (btu/get-seed)))
+                        :child-4-name (str "test-catalogue-item-hierarchy-child-4 " (btu/get-seed))
+                        :child-5-name (str "test-catalogue-item-hierarchy-child-5 " (btu/get-seed)))
     (btu/context-assoc! :parent-1-title-en (:en (test-helpers/make-localized (btu/context-getx :parent-1-name)))
                         :parent-2-title-en (:en (test-helpers/make-localized (btu/context-getx :parent-2-name)))
+                        :parent-3-title-en (:en (test-helpers/make-localized (btu/context-getx :parent-3-name)))
                         :child-1-title-en (:en (test-helpers/make-localized (btu/context-getx :child-1-name)))
                         :child-2-title-en (:en (test-helpers/make-localized (btu/context-getx :child-2-name)))
                         :child-3-title-en (:en (test-helpers/make-localized (btu/context-getx :child-3-name)))
@@ -2337,22 +2359,36 @@
                                       :organization {:organization/id (btu/context-getx :organization-id)}})
                         :parent-2-id (test-helpers/create-catalogue-item!
                                       {:title (test-helpers/make-localized (btu/context-getx :parent-2-name))
-                                       :resource-id (btu/context-getx :resource-1)
+                                       :resource-id (btu/context-getx :resource-3)
+                                       :form-id (btu/context-getx :form)
+                                       :workflow-id (btu/context-getx :workflow)
+                                       :organization {:organization/id (btu/context-getx :organization-id)}})
+                        :parent-3-id (test-helpers/create-catalogue-item!
+                                      {:title (test-helpers/make-localized (btu/context-getx :parent-3-name))
+                                       :resource-id (btu/context-getx :resource-4)
                                        :form-id (btu/context-getx :form)
                                        :workflow-id (btu/context-getx :workflow)
                                        :organization {:organization/id (btu/context-getx :organization-id)}})
                         :child-2-id (test-helpers/create-catalogue-item!
                                      {:title (test-helpers/make-localized (btu/context-getx :child-2-name))
-                                      :resource-id (btu/context-getx :resource-3)
+                                      :resource-id (btu/context-getx :resource-5)
                                       :form-id (btu/context-getx :form)
                                       :workflow-id (btu/context-getx :workflow)
                                       :organization {:organization/id (btu/context-getx :organization-id)}})
                         :child-3-id (test-helpers/create-catalogue-item!
                                      {:title (test-helpers/make-localized (btu/context-getx :child-3-name))
-                                      :resource-id (btu/context-getx :resource-3)
+                                      :resource-id (btu/context-getx :resource-6)
+                                      :form-id (btu/context-getx :form)
+                                      :workflow-id (btu/context-getx :workflow)
+                                      :organization {:organization/id (btu/context-getx :organization-id)}})
+                        :child-5-id (test-helpers/create-catalogue-item!
+                                     {:title (test-helpers/make-localized (btu/context-getx :child-5-name))
+                                      :resource-id (btu/context-getx :resource-7)
                                       :form-id (btu/context-getx :form)
                                       :workflow-id (btu/context-getx :workflow)
                                       :organization {:organization/id (btu/context-getx :organization-id)}}))
+    (test-helpers/edit-catalogue-item! {:id (btu/context-getx :parent-3-id)
+                                        :children [{:catalogue-item/id (btu/context-getx :child-5-id)}]})
     (login-as "owner")
 
     (testing "create catalogue item with child"
@@ -2532,12 +2568,13 @@
                               :actor "handler"})
       (let [child-4-id (test-helpers/create-catalogue-item!
                         {:title (test-helpers/make-localized (btu/context-getx :child-4-name))
-                         :resource-id (btu/context-getx :resource-4)
+                         :resource-id (btu/context-getx :resource-5)
                          :form-id (btu/context-getx :form)
                          :workflow-id (btu/context-getx :workflow)
                          :organization {:organization/id (btu/context-getx :organization-id)}})]
         (test-helpers/edit-catalogue-item! {:id (btu/context-getx :parent-2-id)
-                                            :children [{:catalogue-item/id child-4-id}]}))
+                                            :children [{:catalogue-item/id child-4-id}]})
+        (btu/context-assoc! :child-4-id child-4-id))
 
       (testing "with entitlement"
         (go-to-catalogue)
@@ -2588,7 +2625,67 @@
                  (into []
                        (map btu/value-of-el)
                        (-> (btu/query [{:class :application-resources}])
-                           (btu/children {:fn/has-class :application-resource}))))))))
+                           (btu/children {:fn/has-class :application-resource}))))))
+
+        (btu/context-assoc! :application-id (Integer/parseInt (get-application-id)))))
+
+    (testing "invited user cannot join application of complementary item without also having entitlement to top-level item"
+      (test-helpers/command! {:type :application.command/invite-member
+                              :actor "alice"
+                              :application-id (btu/context-getx :application-id)
+                              :member {:name "Frank" :email "frank@example.com"}})
+      (btu/context-assoc! :invitation-token (-> (btu/context-getx :application-id)
+                                                rems.db.applications/get-application-internal
+                                                :application/invitation-tokens
+                                                first
+                                                key))
+      (logout)
+      (login-as "frank")
+      (btu/go (str (btu/get-server-url) "application/accept-invitation/" (btu/context-getx :invitation-token)))
+      (is (= ["Accept invitation: Failed"
+              (str "Missing top-level item: " (btu/context-getx :parent-2-id))]
+             (get-error-summary :top)))
+      (is (empty? (rems.db.entitlements/get-entitlements "frank")))
+
+      (testing "with entitlement granted for invited user"
+        (create-and-approve-application! {:actor "frank"
+                                          :catalogue-item-ids [(btu/context-getx :parent-2-id)]})
+        (btu/go (str (btu/get-server-url) "application/accept-invitation/" (btu/context-getx :invitation-token)))
+        (is (btu/eventually-visible? {:fn/has-string "Frank Roleless joined to the application."})
+            "Frank can now join")
+        (is (= {:event/type :application.event/member-joined
+                :event/actor "frank"}
+               (-> (btu/context-getx :application-id)
+                   rems.db.applications/get-application-internal
+                   :application/events
+                   last
+                   (select-keys [:event/actor :event/type])))))
+
+      (testing "cannot change resource to a complementary item, when invited member doesn't have entitlement to it's parent"
+        (create-and-approve-application! {:actor "alice"
+                                          :catalogue-item-ids [(btu/context-getx :parent-3-id)]})
+        (is (match? [{:resourceid (btu/context-getx :resource-4)}]
+                    (filterv (comp #{(btu/context-getx :resource-4)} :resourceid)
+                             (rems.db.entitlements/get-entitlements "alice")))
+            "Alice now has entitlement to parent 3, so she could apply for child 5 on it's own.")
+        (is (= []
+               (filterv (comp #{(btu/context-getx :resource-4)} :resourceid)
+                        (rems.db.entitlements/get-entitlements "frank ")))
+            "Frank doesn't have entitlement, and with him as a member, the application's resources cannot be changed to include child 5.")
+        (logout)
+        (login-as "alice")
+        (go-to-application (btu/context-getx :application-id))
+        (btu/scroll-and-click :change-resources-action-button)
+        (select-option "Resources included in the application:" (btu/context-getx :child-5-name))
+        (btu/scroll-and-click :change-resources)
+        (is (btu/visible? [:flash-message-change-resources
+                           {:tag :p
+                            :fn/has-text (str "Missing top-level item: " (btu/context-getx :parent-3-id))}])))
+
+      (testing "with parent item present, changing resources becomes possible again"
+        (select-option "Resources included in the application:" (btu/context-getx :parent-3-name))
+        (btu/scroll-and-click :change-resources)
+        (is (btu/eventually-visible? [:flash-message-change-resources {:id :status-success}]))))
 
     (testing "with feature flag off"
       (try

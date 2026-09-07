@@ -124,19 +124,24 @@
 (defn argumentize-some-key
   [& id-keys]
   (fn argumentize [error]
-    (assoc error
-           :args
-           [(->> error
-                 ((apply some-fn id-keys))
-                 ((fn [x] (cond-> x (not (seqable? x)) list)))
-                 (str/join ", "))])))
+    (if-not (:args error)
+      (assoc error
+             :args
+             [(->> error
+                   ((apply some-fn id-keys))
+                   ((fn [x] (cond-> x (not (seqable? x)) list)))
+                   (str/join ", "))])
+      error)))
 
 (deftest test-argumentize-some-key
   (are [expected input] (= expected ((argumentize-some-key :a :b) input))
-    {:args ["1"] :a 1} {:a 1}
-    {:args ["1"] :b 1} {:b 1}
-    {:args ["1"] :a [1]} {:a [1]}
-    {:args ["2, 3"] :b [2 3]} {:b [2 3]}))
+    {:args ["1"] :a 1}        {:a 1}
+    {:args ["1"] :b 1}        {:b 1}
+    {:args ["1"] :a [1]}      {:a [1]}
+    {:args ["2, 3"] :b [2 3]} {:b [2 3]}
+    {:args ["1"] :a 1 :b 2}   {:a 1 :b 2}
+    {:args 1}                 {:args 1}
+    {:other-key 1 :args [""]} {:other-key 1}))
 
 (defn format-response-error [response]
   (if (:response response)
