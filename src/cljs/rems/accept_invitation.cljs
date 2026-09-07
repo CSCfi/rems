@@ -16,11 +16,13 @@
  ::accept-invitation
  (fn [[type token]]
    (let [error-handler (fn [response]
-                         ((flash-message/default-error-handler :top [text :t.accept-invitation/header]) response)
+                         ((flash-message/default-error-handler :top [text :t.accept-invitation/header])
+                          response)
                          (navigate! "/catalogue"))]
      (post! "/api/invitations/accept-invitation"
             {:url-params {:token token}
              :handler (fn [response]
+                        (js/console.log response)
                         (let [error (first (:errors response))]
                           (cond
                             (:success response)
