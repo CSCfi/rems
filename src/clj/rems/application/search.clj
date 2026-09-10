@@ -1,5 +1,7 @@
 (ns rems.application.search
-  (:require [clojure.java.io :as io]
+  (:require [clj-time.core :as time-core]
+            [clj-time.format]
+            [clojure.java.io :as io]
             [clojure.string :as str]
             [clojure.tools.logging :as log]
             [com.rpl.specter :refer [ALL select]]
@@ -10,16 +12,16 @@
             [rems.db.applications]
             [rems.db.events]
             [rems.text :as text]
-            [rems.util :refer [delete-directory-contents-recursively]]
-            [clj-time.core :as time-core])
+            [rems.util :refer [delete-directory-contents-recursively]])
   (:import [org.apache.lucene.analysis Analyzer]
            [org.apache.lucene.analysis.standard StandardAnalyzer]
-           [org.apache.lucene.document Document StringField Field$Store TextField]
+           [org.apache.lucene.document Document Field$Store StringField TextField DateTools DateTools$Resolution]
            [org.apache.lucene.index IndexWriter IndexWriterConfig IndexWriterConfig$OpenMode Term]
            [org.apache.lucene.queryparser.flexible.core QueryNodeException]
            [org.apache.lucene.queryparser.flexible.standard StandardQueryParser]
-           [org.apache.lucene.search IndexSearcher ScoreDoc TopDocs SearcherManager SearcherFactory Query]
-           [org.apache.lucene.store Directory NIOFSDirectory]))
+           [org.apache.lucene.search IndexSearcher ScoreDoc SearcherFactory SearcherManager TopDocs Query]
+           [org.apache.lucene.store Directory NIOFSDirectory]
+           [org.joda.time DateTime]))
 
 (def ^:private ^Analyzer analyzer (StandardAnalyzer.))
 
@@ -49,6 +51,18 @@
   [(:userid member)
    (application-util/get-member-name member)
    (:email member)])
+
+
+(defn ->lucene-date-str
+  "Transform Joda DateTime (clj-time) `dt` to Lucene date string.
+  ```clj
+  (->lucene-date-str (DateTime. \"2026-07-28T06:14:43.717Z\"))
+  ;=> 20260728
+  ```"
+  [^DateTime dt]
+  (when dt
+    (DateTools/dateToString (. dt toDate)
+                            DateTools$Resolution/DAY)))
 
 (defn- index-terms-for-application [app]
   {:id (->> [(:application/id app)
@@ -80,7 +94,17 @@
               (cons (str (:application/todo app)))
               (str/join " "))
    :form (->> (select [:application/forms ALL :form/fields ALL :field/value] app) ;; TODO: filter out checkboxes, attachments etc?
-              (str/join " "))})
+              (str/join " "))
+   :first-submitted (-> app
+                        :application/first-submitted
+                        ->lucene-date-str)
+   :last-activity (-> app
+                      :application/last-activity
+                      ->lucene-date-str)
+   :last-applying-user-activity (-> app
+                                    application-util/get-last-applying-user-event
+                                    :event/time
+                                    ->lucene-date-str)})
 
 (defn- index-application! [^IndexWriter writer app]
   (let [app-id (str (:application/id app))]
@@ -91,9 +115,16 @@
         ;; metadata
         (.add doc (StringField. app-id-field app-id Field$Store/YES))
         ;; searchable fields
-        (doseq [[k v] terms]
-          (.add doc (TextField. (name k) v Field$Store/NO)))
-        (.add doc (TextField. "all" (str/join " " (vals (into (sorted-map) terms))) Field$Store/NO))
+        (doseq [[k v] terms
+                :when v]
+          (.add doc (TextField. (name k) ^String v Field$Store/NO)))
+
+        (.add doc (TextField. "all"
+                              (->> terms
+                                   (into (sorted-map))
+                                   vals
+                                   (str/join " "))
+                              Field$Store/NO))
         (.updateDocument writer (Term. app-id-field app-id) doc))
       (catch Throwable t
         (throw (Error. (str "Error indexing application " app-id) t))))))
@@ -127,10 +158,10 @@
                  app-id (.get doc app-id-field)]
              (Long/parseLong app-id)))))
 
-(defn- ^Query parse-query [^String query]
+(defn- parse-query ^Query [^String query]
   (try
-    (-> (StandardQueryParser. analyzer)
-        (.parse query "all"))
+    (let [parser (StandardQueryParser. analyzer)]
+      (.parse parser query "all"))
     (catch QueryNodeException e
       (log/info (str "Failed to parse query '" query "', " e))
       nil)))
@@ -150,3 +181,42 @@
       (not app-ids) (filter (constantly true))
       (empty? app-ids) (filter (constantly false))
       :else (filter #(contains? app-ids %)))))
+
+
+(comment
+  (find-applications "applicant:alice")
+  ;;=> #{7 20 27 1 24 4 15 13 6 28 25 17 3 12 2 19 11 9 5 14 26 16 10 18 8}
+
+  (defn make-query
+    "get sensible values for time range queries"
+    [field-name f]
+    (let [[range-start range-end]
+          (->> (rems.db.applications/get-all-unrestricted-applications)
+               (keep f)
+               sort
+               ((juxt first last))
+               (map ->lucene-date-str))]
+      (str field-name ":[" range-start " TO " range-end "]")))
+
+  (make-query "last-applying-user-activity"
+              (comp :event/time
+                    application-util/get-last-applying-user-event))
+  ;;=> "last-applying-user-activity:[20260421 TO 20260730]"
+
+  (parse-query
+   (make-query "last-applying-user-activity"
+               (comp :event/time
+                     application-util/get-last-applying-user-event)))
+  ;;=> #object[org.apache.lucene.search.TermRangeQuery 0x6df99121 "last-applying-user-activity:[20260421 TO 20260730]"]
+
+  (find-applications
+   (make-query "last-applying-user-activity"
+               (comp :event/time
+                     application-util/get-last-applying-user-event)))
+  ;;=> #{7 20 27 1 24 4 15 21 13 22 6 28 25 17 3 12 2 23 19 11 9 5 14 26 16 10 18 8}
+
+  (find-applications
+   (make-query "first-submitted"
+               :application/first-submitted))
+  ;;=> #{27 24 15 13 22 25 17 12 23 19 14 26 16 18}
+  )

@@ -1,10 +1,14 @@
 (ns ^:integration rems.application.test-search
-  (:require [clojure.test :refer :all]
+  (:require [clj-time.coerce :as time-coerce]
+            [clj-time.core :as time]
+            [clojure.set :as set]
+            [clojure.test :refer :all]
             [rems.application.search :as search]
             [rems.db.applications]
-            [rems.service.test-data :as test-data]
             [rems.db.test-data-helpers :as test-helpers]
-            [rems.db.testing :refer [rollback-db-fixture search-index-fixture test-db-fixture]]))
+            [rems.db.testing :refer [rollback-db-fixture search-index-fixture test-db-fixture]]
+            [rems.service.test-data :as test-data])
+  (:import [org.joda.time DateTime]))
 
 (use-fixtures
   :once
@@ -12,6 +16,9 @@
   search-index-fixture)
 
 (use-fixtures :each rollback-db-fixture)
+
+(defn query-range [field ^DateTime range-min ^DateTime range-max]
+  (str field ":[" (search/->lucene-date-str range-min) " TO " (search/->lucene-date-str range-max) "]"))
 
 (deftest test-application-search
   ;; generate users with full names and emails
@@ -187,4 +194,126 @@
     (is (< 1 (count (search/find-applications "alice")))))
 
   (testing "invalid query"
-    (is (= nil (search/find-applications "+")))))
+    (is (= nil (search/find-applications "+"))))
+
+  (testing "query by last applying user activity"
+    (let [test-time (DateTime. 1000000000000)
+          next-day (time/plus test-time (time/days 1))
+          prev-day (time/minus test-time (time/days 1))
+          app-id (test-helpers/create-application! {:actor "alice"
+                                                    :time test-time})]
+      ;; for clarity, these are the string values of the dates
+      (are [t expected] (= expected (search/->lucene-date-str t))
+        test-time "20010909"
+        next-day "20010910"
+        prev-day "20010908")
+
+      (testing "happy path"
+        (are [from-time to-time] (contains?
+                                  (search/find-applications (query-range "last-applying-user-activity" from-time to-time))
+                                  app-id)
+          test-time     next-day
+          prev-day      test-time
+          (DateTime. 0) test-time
+          test-time     test-time
+          test-time     (time/now)))
+
+      (testing "resolution is 1 day"
+        (is (contains?
+             (search/find-applications (query-range "last-applying-user-activity" (time/plus test-time (time/minutes 1)) next-day))
+             app-id))
+        (is (contains?
+             (search/find-applications (query-range "last-applying-user-activity" (time/plus test-time (time/hours 1)) next-day))
+             app-id)))
+
+      (testing "with activity"
+        (let [last-activity (time/plus test-time (time/days 2))]
+          (test-helpers/submit-application {:application-id app-id
+                                            :actor "alice"
+                                            :time last-activity})
+          (is (contains?
+               (search/find-applications (query-range "last-applying-user-activity" last-activity (time/plus last-activity (time/days 1))))
+               app-id))
+          (is (not (contains?
+                    (search/find-applications (query-range "last-applying-user-activity" test-time (time/minus last-activity (time/days 1))))
+                    app-id))
+              "the earlier submit event is no longer the last")))))
+
+  (testing "range query by last submitted event"
+    (let [test-time (DateTime. 100000000)
+          app-id (test-helpers/create-application! {:actor "alice"
+                                                    :time test-time})
+          test-time-2 (time/plus test-time (time/days 10))
+          app-id-2 (test-helpers/create-application! {:actor "alice"
+                                                      :time test-time-2})]
+      (test-helpers/submit-application {:application-id  app-id
+                                        :actor "alice"
+                                        :time (time/plus test-time (time/days 1))})
+      (test-helpers/command! {:type :application.command/return
+                              :application-id app-id
+                              :actor "developer"
+                              :time (time/plus test-time (time/days 1) (time/minutes 1))
+                              :comment ""})
+      (test-helpers/submit-application {:application-id app-id
+                                        :actor "alice"
+                                        :time (time/plus test-time (time/days 2))})
+      (test-helpers/submit-application {:application-id  app-id-2
+                                        :actor "alice"
+                                        :time (time/plus test-time-2 (time/days 1))})
+      (test-helpers/command! {:type :application.command/return
+                              :application-id app-id-2
+                              :actor "developer"
+                              :time (time/plus test-time-2 (time/days 1))
+                              :comment ""})
+      (test-helpers/submit-application {:application-id  app-id-2
+                                        :actor "alice"
+                                        :time (time/plus test-time-2 (time/days 2))})
+      (testing "returns the first application"
+        (let [query (query-range "first-submitted" test-time (time/plus test-time (time/days 3)))
+              apps-in-t+3d (search/find-applications query)]
+          (is (contains? apps-in-t+3d app-id)
+              (str "with query: " query))
+          (is (not (contains? apps-in-t+3d app-id-2))
+              (str "with query: " query))))
+
+      (testing "returns the other application"
+        (let [query (query-range "first-submitted" test-time-2 (time/plus test-time-2 (time/days 3)))
+              apps-in-t2+3d (search/find-applications query)]
+          (is (contains? apps-in-t2+3d app-id-2)
+              (str "with query: " query))
+          (is (not (contains? apps-in-t2+3d app-id))
+              (str "with query: " query))))
+
+      (testing "returns both applications"
+        (let [query (query-range "first-submitted" test-time (time/plus test-time-2 (time/days 3)))
+              apps (search/find-applications query)]
+          (is (set/subset? #{app-id app-id-2} apps)
+              (str "with query: " query))))
+
+      (testing "returns neither"
+        (let [query (query-range "first-submitted" (time/plus test-time-2 (time/days 3)) (time/now))
+              apps (search/find-applications query)]
+          (is (empty? (set/intersection #{app-id app-id-2} apps))
+              (str "with query: " query))))))
+
+  (testing "with leap day"
+    (let [app-id (test-helpers/create-application! {:actor "alice"
+                                                    :time (DateTime. "2024-02-29T10:00:00")})
+          app-id-2 (test-helpers/create-application! {:actor "alice"
+                                                      :time (DateTime. "2024-03-01T10:00:00")})]
+      (testing "with inclusive range"
+        (let [query "last-activity:[20240201 TO 20240301]"
+              apps (search/find-applications query)]
+          (is (contains? apps app-id)
+              (str "with query: " query))
+          (is (contains? apps app-id-2)
+              (str "with query: " query))))
+
+      (testing "with exclusive range"
+        ;; "get all applications from date x up until end of february without having to know the number of the last day"
+        (let [query "last-activity:[20240201 TO 20240301}"
+              apps (search/find-applications query)]
+          (is (contains? apps app-id)
+              (str "with query: " query))
+          (is (not (contains? apps app-id-2))
+              (str "with query: " query)))))))

@@ -45,7 +45,23 @@ for more details.
 `state:approved` - find by application state
 
 `form:platypus` - find by application form content
-  
+
+`last-activity:[20260101 TO 20260601]` - find by date range when the application last had some action perfomed to (`yyyymmdd`)
+
+`last-applying-user-activity:[20260101 TO 20260601]` - find by date range when an applying user performed some action to the application (`yyyymmdd`) 
+
+`first-submitted:[20260101 TO 20260601]` - find by date range when the application was first submitted (`yyyymmdd`)
+
+`last-activity:20260501` - exact date
+
+`last-activity:202605*` - wildcard, any day of May 2026
+
+`last-activity:20??0401` - wildcard, any April first
+
+`last-activity:{x TO y}` - exclusive range
+
+`last-activity:[x TO y}`, `{x TO y]` - from date x to before y, eg. for taking account of the possibility of a leap day: `[x TO 20240301}`
+
 
 ## Other Searches
 

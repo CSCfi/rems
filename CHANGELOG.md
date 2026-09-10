@@ -10,6 +10,7 @@ Changes since v2.39.1
 
 ### Additions
 - Added applicant UI for catalogue item hierarchy (see previous release note), and a configuration option to switch the feature on. (#3460, #3473). See (manual/owner.md)[manual/owner.md] and 
+- Search feature now includes the fields `last-activity`, `last-applying-user-activity` and `first-submitted`, which support range queries (#2348, #2682). See (manual/search.md)[manual/search.md]
 
 ### Fixes
 - Fixed an issue where the application page would get stuck on a loop, displaying the "loading" indicator, when there was an error while creating the application (#3460).
