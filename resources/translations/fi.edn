@@ -561,6 +561,10 @@
           :long "%1: %2 – %3"
           :optional "%1 (valinnainen)"
           :parens "%1 (%2)"}
+  :language-names {:en "English"
+                   :sv "Svenska"
+                   :fi "Suomi"
+                   :da "Dansk"}
   :link {:download-file "Lataa tiedosto"
          :opens-in-new-window "Aukeaa uuteen ikkunaan"}
   :login {:alternative "Muut kirjautumisvaihtoehdot"

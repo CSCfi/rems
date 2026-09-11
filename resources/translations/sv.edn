@@ -560,6 +560,10 @@
           :long "%1: %2 – %3"
           :optional "%1 (valfritt)"
           :parens "%1 (%2)"}
+  :language-names {:en "English"
+                   :sv "Svenska"
+                   :fi "Suomi"
+                   :da "Dansk"}
   :link {:download-file "Ladda ner fil"
          :opens-in-new-window "Öppnas i nytt fönster"}
   :login {:alternative "Andra alternativ för inloggning"

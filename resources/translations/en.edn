@@ -662,6 +662,10 @@
           :long "%1: %2 – %3"
           :optional "%1 (optional)"
           :parens "%1 (%2)"}
+  :language-names {:en "English"
+                   :sv "Svenska"
+                   :fi "Suomi"
+                   :da "Dansk"}
   :link {:download-file "Download file"
          :opens-in-new-window "Opens in a new window"}
   :login {:alternative "Other login options"
