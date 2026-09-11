@@ -5,7 +5,7 @@
    interface (CLI). Various user scenarios are implemented as functions in this
    namespace, enabling flexible testing of different workflows. Multiple
    simulations can run concurrently to test system performance and user load.
-   
+
    User simulator can be started from CLI with e.g. Leiningen:
    - `lein run user-simulator` (uses default values), or
    - `lein run user-simulator http://localhost:3000/ alice,elsa,frank` when replacing default values"
@@ -64,7 +64,7 @@
                 (et/delete-cookies (btu/get-driver))
                 (btu/go (btu/get-server-url))
                 (et/refresh (btu/get-driver))
-                (btu/scroll-and-click [{:css ".language-switcher"} {:fn/text "EN"}]) ; make sure language is stable
+                (btu/scroll-and-click [{:css ".language-switcher"} {:fn/text "English"}]) ; make sure language is stable
                 (action)))))
 
         (catch InterruptedException e
