@@ -2831,15 +2831,16 @@
       (btu/screenshot "test-update-catalogue-item-done-1"))
 
     (testing "can change form and workflow"
-      (select-option "Form" "test-update-catalogue-item form 1")
-      (select-option "Workflow" "test-update-catalogue-item workflow 3")
-      (btu/wait-enabled {:tag :button :fn/text "Update catalogue item"})
-      (btu/screenshot "test-update-catalogue-item-before-update-2")
-      (btu/scroll-and-click {:tag :button :fn/text "Update catalogue item"})
-      (is (btu/eventually-visible? {:css ".alert-success"}))
-      (btu/wait-for-idle)
-      (btu/screenshot "test-update-catalogue-item-after-update-2")
-      (btu/wait-disabled {:tag :button :fn/text "Update catalogue item"})
+      (let [update-catalogue-item-button-q {:tag :button :id :update-catalogue-item}]
+        (select-option "Form" "test-update-catalogue-item form 1")
+        (select-option "Workflow" "test-update-catalogue-item workflow 3")
+        (btu/wait-enabled update-catalogue-item-button-q)
+        (btu/screenshot "test-update-catalogue-item-before-update-2")
+        (btu/scroll-and-click update-catalogue-item-button-q)
+        (is (btu/eventually-visible? {:css ".alert-success"}))
+        (btu/wait-for-idle)
+        (btu/screenshot "test-update-catalogue-item-after-update-2")
+        (btu/wait-disabled update-catalogue-item-button-q))
       (is (= [{"name" "test-update-catalogue-item 1 EN"
                "form" "test-update-catalogue-item form 1"
                "workflow" "test-update-catalogue-item workflow 3"}
