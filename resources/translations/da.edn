@@ -608,6 +608,10 @@
           :long "%1: %2 – %3"
           :optional "%1 (valgfrit)"
           :parens "%1 (%2)"}
+  :language-names {:en "English"
+                   :sv "Svenska"
+                   :fi "Suomi"
+                   :da "Dansk"}
   :link {:download-file "Download fil"
          :opens-in-new-window "Åbner i nyt vindue"}
   :login {:alternative "Andre muligheder for log-ind"
