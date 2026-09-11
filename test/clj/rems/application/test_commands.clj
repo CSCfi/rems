@@ -279,6 +279,19 @@
                           :application/forms [{:form/id 1}]
                           :workflow/id 1
                           :workflow/type :workflow/default})
+
+(def dummy-created-event-with-complementary-item
+  {:event/type :application.event/created
+   :event/time test-time
+   :event/actor applicant-user-id
+   :application/id app-id
+   :application/external-id "2000/123"
+   :application/forms [{:form/id 1}]
+   :application/resources [{:catalogue-item/id 11, :resource/ext-id "res-complementary-2"}]
+   :application/licenses [{:license/id 1}]
+   :workflow/id 1
+   :workflow/type :workflow/default})
+
 (def dummy-submitted-event {:event/type :application.event/submitted
                             :event/time test-time
                             :event/actor applicant-user-id
@@ -788,6 +801,54 @@
                           :actor applicant-user-id
                           :catalogue-item-ids [4]}
                          (build-application-view [dummy-created-event])))))
+
+  (testing "applicant can add hierarchical catalogue items"
+    (is (= {:event/type :application.event/resources-changed
+            :event/time test-time
+            :event/actor applicant-user-id
+            :application/id app-id
+            :application/forms [{:form/id 1}]
+            :application/resources [{:catalogue-item/id 2, :resource/ext-id "res2"}
+                                    {:catalogue-item/id 8 :resource/ext-id "res-top-level"}
+                                    {:catalogue-item/id 9 :resource/ext-id "res-complementary"}]
+            :application/licenses [{:license/id 2} {:license/id 1}]}
+           (ok-command {:type :application.command/change-resources
+                        :actor applicant-user-id
+                        :catalogue-item-ids [2 8 9]}
+                       (build-application-view [dummy-created-event])
+                       (assoc command-injections :get-config (constantly {:enable-catalogue-hierarchy true}))))))
+
+  (testing "applicant can add complementary item, when they have entitlement to it's top-level item"
+    (is (= {:event/type :application.event/resources-changed
+            :event/time test-time
+            :event/actor applicant-user-id
+            :application/id app-id
+            :application/forms [{:form/id 1}]
+            :application/resources [{:catalogue-item/id 11, :resource/ext-id "res-complementary-2"}]
+            :application/licenses [{:license/id 1}]}
+           (ok-command {:type :application.command/change-resources
+                        :actor applicant-user-id
+                        :catalogue-item-ids [11]}
+                       (build-application-view [dummy-created-event])
+                       (assoc command-injections :get-config (constantly {:enable-catalogue-hierarchy true}))))))
+
+  (testing "applicant cannot change resources in a way that would violate catalogue item hierarchy"
+    (is (= {:errors [{:type :t.applications.errors/missing-top-level-item :catalogue-item-ids [8]}]}
+           (fail-command {:type :application.command/change-resources
+                          :actor applicant-user-id
+                          :catalogue-item-ids [1 9]}
+                         (build-application-view [dummy-created-event])
+                         (assoc command-injections :get-config (constantly {:enable-catalogue-hierarchy true}))))))
+
+  (testing "applicant cannot change resources to include such a complementary item, to whose top-level item another member is not entitled to"
+    (is (= {:errors [{:type :t.applications.errors/missing-top-level-item :catalogue-item-ids [10]}]}
+           (fail-command {:type :application.command/change-resources
+                          :actor applicant-user-id
+                          :catalogue-item-ids [11]}
+                         (build-application-view [dummy-created-event
+                                                  dummy-member-invited-event
+                                                  dummy-member-joined-event])
+                         (assoc command-injections :get-config (constantly {:enable-catalogue-hierarchy true}))))))
 
   (testing "applicant can replace resources with different form"
     (is (= {:event/type :application.event/resources-changed
@@ -1463,7 +1524,17 @@
                            (build-application-view [dummy-created-event
                                                     dummy-member-invited-event
                                                     dummy-submitted-event
-                                                    dummy-closed-event]))))))
+                                                    dummy-closed-event])))))
+
+    (testing "cannot join an application with complementary catalogue items without entitlement to the top-level item"
+      (is (= {:errors [{:type :t.applications.errors/missing-top-level-item :catalogue-item-ids [10]}]}
+             (fail-command {:type :application.command/accept-invitation
+                            :actor "somebody"
+                            :token "very-secure"}
+                           (build-application-view [dummy-created-event-with-complementary-item
+                                                    dummy-member-invited-event])
+                           (assoc command-injections :get-config (constantly {:enable-catalogue-hierarchy true})))))))
+
   (testing "invited reviewer"
     (let [reviewer-invited-event {:event/type :application.event/reviewer-invited
                                   :event/time test-time

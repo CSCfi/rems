@@ -22,14 +22,18 @@
  ::enter-page
  (fn [{:keys [db]} _]
    {:db (dissoc db ::catalogue ::draft-applications)
-    :dispatch-n [[:rems.table/reset]
-                 [::entitlements]
-                 (when @roles/logged-in?
-                   [::draft-applications])
-                 (when (:enable-catalogue-tree @rems.globals/config)
-                   [::full-catalogue-tree])
-                 (when (:enable-catalogue-table @rems.globals/config)
-                   [::full-catalogue])]}))
+    :dispatch-n (cond-> [[:rems.table/reset]]
+                  @roles/logged-in?
+                  (conj [::draft-applications])
+
+                  (:enable-catalogue-tree @rems.globals/config)
+                  (conj [::full-catalogue-tree])
+
+                  (:enable-catalogue-table @rems.globals/config)
+                  (conj [::full-catalogue])
+
+                  (:enable-catalogue-hierarchy @rems.globals/config)
+                  (conj [::entitlements]))}))
 
 (fetcher/reg-fetcher ::full-catalogue "/api/catalogue?join-organization=false")
 (fetcher/reg-fetcher ::full-catalogue-tree "/api/catalogue/tree?join-organization=false" {:result :roots})
@@ -51,7 +55,7 @@
 (rf/reg-sub
  ::entitlements->catalogue-item-ids
  :<- [::entitlements]
- :<- [::catalogue]
+ :<- [::full-catalogue]
  (fn [[entitlements catalogue] _]
    (let [entitled-to-resources (into #{} (map :resource) entitlements)]
      (into #{}
