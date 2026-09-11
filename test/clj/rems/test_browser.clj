@@ -2505,6 +2505,7 @@
                             (slurp-rows :catalogue))))))
 
       (testing "with empty cart"
+        (btu/screenshot "empty-cart")
         (is (btu/disabled? (->add-to-cart-button-q (btu/context-getx :child-1-title-en))))
         (is (btu/disabled? (->add-to-cart-button-q (btu/context-getx :child-1-title-en) :catalogue-tree)))
         (is (not (btu/disabled? (->add-to-cart-button-q (btu/context-getx :child-2-title-en))))
@@ -2514,6 +2515,7 @@
 
       (testing "with parent in cart"
         (add-to-cart (btu/context-getx :parent-1-title-en))
+        (btu/screenshot "parent-in-cart")
         (is (not (btu/disabled? (->remove-from-cart-button-q (btu/context-getx :parent-1-title-en))))
             "can remove parent")
         (is (not (btu/disabled? (->remove-from-cart-button-q (btu/context-getx :parent-1-title-en) :catalogue-tree)))
@@ -2525,6 +2527,7 @@
 
       (testing "with child in cart"
         (add-to-cart (btu/context-getx :child-1-title-en))
+        (btu/screenshot "child-in-cart")
         (is (btu/disabled? (->remove-from-cart-button-q (btu/context-getx :parent-1-title-en)))
             "cannot remove parent")
         (is (btu/disabled? (->remove-from-cart-button-q (btu/context-getx :parent-1-title-en) :cart))
@@ -2540,6 +2543,7 @@
 
       (testing "with child removed from cart"
         (remove-from-cart (btu/context-getx :child-1-title-en))
+        (btu/screenshot "child-removed-from-cart")
         (is (not (btu/disabled? (->remove-from-cart-button-q (btu/context-getx :parent-1-title-en))))
             "can remove parent again")
         (is (not (btu/disabled? (->remove-from-cart-button-q (btu/context-getx :parent-1-title-en) :catalogue-tree)))
@@ -2549,11 +2553,13 @@
       (testing "new application"
         (add-to-cart (btu/context-getx :parent-2-title-en))
         (add-to-cart (btu/context-getx :child-3-title-en))
+        (btu/screenshot "about-to-apply")
         (click-cart-apply-bundle)
         (btu/context-assoc! :application-id (Integer/parseInt (get-application-id)))
         (wait-page-title (->> (get-application-from-api (btu/context-getx :application-id) "alice")
                               :application/external-id
                               (format "Application %s – REMS")))
+        (btu/screenshot "draft-application")
         (is (match? (m/in-any-order [(btu/context-getx :parent-2-title-en)
                                      (btu/context-getx :child-3-title-en)])
                     (into []
@@ -2580,11 +2586,12 @@
         (go-to-catalogue)
 
         (testing "can add child item to cart on it's own"
+          (btu/screenshot "before-add-child")
           (is (not (btu/disabled? (->add-to-cart-button-q (btu/context-getx :child-4-title-en)))))
           (is (not (btu/disabled? (->add-to-cart-button-q (btu/context-getx :child-4-title-en) :catalogue-tree))))
           (add-to-cart (btu/context-getx :child-4-title-en))
           (btu/wait-page-loaded)
-
+          (btu/screenshot "after-add-child")
           (is (= [(btu/context-getx :child-4-title-en)]
                  (into []
                        (mapcat (comp vals #(dissoc % "commands")))
@@ -2643,6 +2650,8 @@
       (login-as "frank")
       (btu/go (str (btu/get-server-url) "application/accept-invitation/" (btu/context-getx :invitation-token)))
       (btu/wait-page-loaded)
+      (btu/screenshot "after-accept-invitation-fail")
+      (btu/eventually-exists? :flash-message-top)
       (is (= ["Accept invitation: Failed"
               (str "Missing top-level item: " (btu/context-getx :parent-2-id))]
              (get-error-summary :top)))
@@ -2654,6 +2663,7 @@
         (btu/go (str (btu/get-server-url) "application/accept-invitation/" (btu/context-getx :invitation-token)))
         (is (btu/eventually-visible? {:fn/has-string "Frank Roleless joined to the application."})
             "Frank can now join")
+        (btu/screenshot "after-accept-invitation-success")
         (is (= {:event/type :application.event/member-joined
                 :event/actor "frank"}
                (-> (btu/context-getx :application-id)
@@ -2679,15 +2689,22 @@
         (btu/scroll-and-click :change-resources-action-button)
         (btu/wait-page-loaded)
         (select-option "Resources included in the application:" (btu/context-getx :child-5-name))
+        (btu/screenshot "about-to-change-resources")
         (btu/scroll-and-click :change-resources)
+        (btu/wait-page-loaded)
         (is (btu/eventually-visible? [:flash-message-change-resources
                                       {:tag :p
-                                       :fn/has-text (str "Missing top-level item: " (btu/context-getx :parent-3-id))}])))
+                                       :fn/has-text (str "Missing top-level item: " (btu/context-getx :parent-3-id))}]))
+        (btu/screenshot "after-change-resources"))
 
       (testing "with parent item present, changing resources becomes possible again"
         (select-option "Resources included in the application:" (btu/context-getx :parent-3-name))
+        (btu/wait-page-loaded)
+        (btu/screenshot "about-to-change-resources")
         (btu/scroll-and-click :change-resources)
-        (is (btu/eventually-visible? [:flash-message-change-resources {:id :status-success}]))))
+        (btu/wait-page-loaded)
+        (is (btu/eventually-visible? [:flash-message-change-resources {:id :status-success}]))
+        (btu/screenshot "after-change-resources")))
 
     (testing "with feature flag off"
       (try
