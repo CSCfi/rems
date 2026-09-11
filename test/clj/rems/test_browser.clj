@@ -2642,6 +2642,7 @@
       (logout)
       (login-as "frank")
       (btu/go (str (btu/get-server-url) "application/accept-invitation/" (btu/context-getx :invitation-token)))
+      (btu/wait-page-loaded)
       (is (= ["Accept invitation: Failed"
               (str "Missing top-level item: " (btu/context-getx :parent-2-id))]
              (get-error-summary :top)))
@@ -2676,11 +2677,12 @@
         (login-as "alice")
         (go-to-application (btu/context-getx :application-id))
         (btu/scroll-and-click :change-resources-action-button)
+        (btu/wait-page-loaded)
         (select-option "Resources included in the application:" (btu/context-getx :child-5-name))
         (btu/scroll-and-click :change-resources)
-        (is (btu/visible? [:flash-message-change-resources
-                           {:tag :p
-                            :fn/has-text (str "Missing top-level item: " (btu/context-getx :parent-3-id))}])))
+        (is (btu/eventually-visible? [:flash-message-change-resources
+                                      {:tag :p
+                                       :fn/has-text (str "Missing top-level item: " (btu/context-getx :parent-3-id))}])))
 
       (testing "with parent item present, changing resources becomes possible again"
         (select-option "Resources included in the application:" (btu/context-getx :parent-3-name))
