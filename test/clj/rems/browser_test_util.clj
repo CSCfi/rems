@@ -561,7 +561,7 @@
 
     (io/make-parents dir)
 
-    (screenshot (str "error-screenshot"))
+    (screenshot "error-screenshot")
 
     (spit (io/file dir (str (get-file-base) "error-stacktrace.txt"))
           (with-out-str (clojure.stacktrace/print-stack-trace ex)))
