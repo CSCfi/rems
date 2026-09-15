@@ -12,7 +12,6 @@
             [clojure.set :as set]
             [clojure.string :as str]
             [clojure.test :refer [compose-fixtures deftest is testing use-fixtures]]
-            [com.rpl.specter :refer [ALL select]]
             [etaoin.keys]
             [matcher-combinators.matchers :as m]
             [matcher-combinators.test]
@@ -434,7 +433,8 @@
   (let [id (get-form-field-id label opts)]
     (btu/scroll-query {:id id} {"block" "center"})
     ;; XXX: need to use `fill-human`, because `fill` is so quick that the form drops characters here and there
-    (btu/fill-human {:id id} text)))
+    (btu/fill-human {:id id} text)
+    (keyword id)))
 
 (defn fill-localized-form-field
   "Fills a localized form field `langcode`, named by `field-label`, with `text`."
@@ -644,6 +644,7 @@
 (defn- restart-handler! []
   (mount/stop #'rems.handler/handler #'rems.main/http-server)
   (mount/start #'rems.handler/handler #'rems.main/http-server))
+
 ;;; tests
 
 (deftest test-new-application
@@ -670,14 +671,19 @@
             conditional-field (get-in application [:application/forms 0 :form/fields 9])
             conditional-field-id (str "form-" form-id "-field-" (:field/id conditional-field))
             table-field (get-in application [:application/forms 0 :form/fields 11])
-            table-field-id (str "form-" form-id "-field-" (:field/id table-field))]
+            table-field-id (str "form-" form-id "-field-" (:field/id table-field))
+            table-add-row (keyword (str table-field-id "-add-row"))
+            table-row0-col1 (keyword (str table-field-id "-row0-col1"))
+            table-row0-col2 (keyword (str table-field-id "-row0-col2"))
+            table-row1-col1 (keyword (str table-field-id "-row1-col1"))
+            table-row1-col2 (keyword (str table-field-id "-row1-col2"))]
         ;; sanity checks:
         (is (= "attachment" (:field/type attachment-field)))
         (is (= "table" (:field/type table-field)))
         (is (:field/visibility conditional-field))
 
-        (fill-form-field "Application title field" "Test name")
-        (fill-form-field "Text area" "Test2")
+        (-> (fill-form-field "Application title field" "Test name") (btu/context-assoc-element-text! :title-field))
+        (-> (fill-form-field "Text area" "Test2") (btu/context-assoc-element-text! :text-area))
         (set-date-for-label "Date field" "2050-01-02")
 
         ;; TODO: return to DUO tests once features are complete
@@ -750,7 +756,7 @@
               "Conditional field is not visible before selecting option")
           (select-option "Option list" "First option")
           (btu/wait-predicate #(btu/field-visible? "Conditional field"))
-          (fill-form-field "Conditional field" "Conditional")
+          (-> (fill-form-field "Conditional field" "Conditional") (btu/context-assoc-element-text! :conditional-field))
           (select-option "Option list" "Second option")
           (btu/wait-predicate #(not (btu/field-visible? "Conditional field")))
           (Thread/sleep 1000) ; XXX: conditional field check sometimes fails due to rendering latency
@@ -758,26 +764,28 @@
             (btu/wait-visible {:css ".alert-success" :fn/text "Application is saved."}))
           (select-option "Option list" "First option")
           (btu/wait-predicate #(btu/field-visible? "Conditional field"))
-          (is (= "Conditional" (btu/value-of {:id conditional-field-id}))))
+          (is (= (btu/context-getx :conditional-field)
+                 (btu/value-of {:id conditional-field-id}))))
 
         ;; pick two options for the multi-select field:
         (btu/check-box "Option2")
         (btu/check-box "Option3")
         ;; fill in two rows for the table
-        (btu/scroll-and-click (keyword (str table-field-id "-add-row")))
-        (is (btu/eventually-visible? (keyword (str table-field-id "-row0-col1"))))
-        (btu/scroll-and-click (keyword (str table-field-id "-add-row")))
-        (is (btu/eventually-visible? (keyword (str table-field-id "-row1-col1"))))
-        (btu/fill-human (keyword (str table-field-id "-row0-col1")) "a")
-        (btu/fill-human (keyword (str table-field-id "-row0-col2")) "b")
-        (btu/fill-human (keyword (str table-field-id "-row1-col1")) "c")
-        (btu/fill-human (keyword (str table-field-id "-row1-col2")) "d")
+        (btu/scroll-and-click table-add-row)
+        (is (btu/eventually-visible? table-row0-col1))
+        (btu/scroll-and-click table-add-row)
+        (is (btu/eventually-visible? table-row1-col1))
+        (doseq [id [(btu/fill-human table-row0-col1 "a")
+                    (btu/fill-human table-row0-col2 "b")
+                    (btu/fill-human table-row1-col1 "c")
+                    (btu/fill-human table-row1-col2 "d")]]
+          (btu/context-assoc-element-text! id))
 
         ;; leave "Text field with max length" empty
         ;; leave "Text are with max length" empty
 
-        (fill-form-field "Phone number" "+358450000100")
-        (fill-form-field "IP address" "142.250.74.110")
+        (-> (fill-form-field "Phone number" "+358450000100") (btu/context-assoc-element-text! :phone-number))
+        (-> (fill-form-field "IP address" "142.250.74.110") (btu/context-assoc-element-text! :ip-address))
 
         (fill-form-field "Simple text field" "Private field answer before autosave")
 
@@ -795,7 +803,7 @@
         ;; let's also try autosave
         (btu/with-client-config {:enable-autosave true}
           (clear-form-field "Simple text field")
-          (fill-form-field "Simple text field" "Private field answer")
+          (btu/context-assoc-element-text! (fill-form-field "Simple text field" "Private field answer") :private-field)
           (btu/wait-visible {:css ".alert-success" :fn/text "Application is saved."})
           (is (btu/eventually-visible? :status-warning))
           (is (= ["Invalid email address."] ; only invalid values are warned about
@@ -811,8 +819,8 @@
           (is (= "Field \"Text field\" is required."
                  (get-validation-for-field "Text field"))))
 
-        (fill-form-field "Email field" "@example.com") ; to complete email field value
-        (fill-form-field "Text field" "Test")
+        (-> (fill-form-field "Email field" "@example.com") (btu/context-assoc-element-text! :email)) ; to complete email field value
+        (-> (fill-form-field "Text field" "Test") (btu/context-assoc-element-text! :text-field))
 
         (accept-licenses)
         (btu/gather-axe-results "accepted-licenses")
@@ -832,15 +840,6 @@
         (is (btu/eventually-visible? :application-state))
         (is (= "Applied" (btu/get-element-text :application-state)))
 
-        (testing "check a field answer"
-          (is (= "Test name" (btu/get-element-text description-field-selector))))
-
-        (testing "check that table field values are visible"
-          (is (= "a" (btu/value-of (keyword (str table-field-id "-row0-col1")))))
-          (is (= "b" (btu/value-of (keyword (str table-field-id "-row0-col2")))))
-          (is (= "c" (btu/value-of (keyword (str table-field-id "-row1-col1")))))
-          (is (= "d" (btu/value-of (keyword (str table-field-id "-row1-col2"))))))
-
         (testing "fetch application from API"
           (let [application (get-application-from-api (btu/context-getx :application-id))]
             (btu/context-assoc! :attachment-ids (mapv :attachment/id (:application/attachments application))
@@ -852,7 +851,7 @@
               (is (= {:id (btu/context-getx :application-id)
                       :resource "Default workflow, Default workflow with private form"
                       :state "Applied"
-                      :description "Test name"}
+                      :description (btu/context-getx :title-field)}
                      (get-application-summary (btu/context-getx :application-id)))))
 
             (testing "attachments"
@@ -882,30 +881,70 @@
               (is (= (set (map :license/id (:application/licenses application)))
                      (set (get-in application [:application/accepted-licenses :alice])))))
             (testing "form fields"
-              (is (= "Test name" (:application/description application)))
-              (is (= [["label" ""]
-                      ["description" "Test name"]
-                      ["text" "Test"]
-                      ["texta" "Test2"]
-                      ["header" ""]
-                      ["date" "2050-01-02"]
-                      ["email" "user@example.com"]
-                      ["attachment" (str/join "," (btu/context-getx :attachment-ids))]
-                      ["option" "Option1"]
-                      ["text" "Conditional"]
-                      ["multiselect" "Option2 Option3"]
-                      ["table" [[{:column "col1", :value "a"} {:column "col2", :value "b"}]
-                                [{:column "col1", :value "c"} {:column "col2", :value "d"}]]]
-                      ["label" ""]
-                      ["text" ""]
-                      ["texta" ""]
-                      ["phone-number" "+358450000100"]
-                      ["ip-address" "142.250.74.110"]
-                      ["text" "Private field answer"]]
-                     (for [field (select [:application/forms ALL :form/fields ALL] application)]
-                       ;; TODO could test other fields here too, e.g. title
-                       [(:field/type field)
-                        (:field/value field)]))))
+              (is (= (btu/context-getx :title-field) (:application/description application)))
+              (is (match? (m/in-any-order
+                           [{:form/title "Example form with all field types"
+                             :form/fields [{:field/type "label"
+                                            :field/title {:en "This form demonstrates all possible field types. This is a link https://www.example.org/label (This text itself is a label field.)"}
+                                            :field/value str/blank?}
+                                           {:field/type "description"
+                                            :field/title {:en "Application title field"}
+                                            :field/value (btu/context-getx :title-field)}
+                                           {:field/type "text"
+                                            :field/title {:en "Text field"}
+                                            :field/value (btu/context-getx :text-field)}
+                                           {:field/type "texta"
+                                            :field/title {:en "Text area"}
+                                            :field/value (btu/context-getx :text-area)}
+                                           {:field/type "header"
+                                            :field/title {:en "Header"}
+                                            :field/value str/blank?}
+                                           {:field/type "date"
+                                            :field/title {:en "Date field"}
+                                            :field/value "2050-01-02"}
+                                           {:field/type "email"
+                                            :field/title {:en "Email field"}
+                                            :field/value (btu/context-getx :email)}
+                                                        ;; accept whichever way the uploads got an id this time
+                                           {:field/type "attachment"
+                                            :field/title {:en "Attachment"}
+                                            :field/value (m/via #(mapv Integer/parseInt (str/split % #","))
+                                                                (m/in-any-order (btu/context-getx :attachment-ids)))}
+                                           {:field/type "option"
+                                            :field/title {:en "Option list. Choose the first option to reveal a new field."}
+                                            :field/value "Option1"}
+                                           {:field/type "text"
+                                            :field/title {:en "Conditional field. Shown only if first option is selected above."}
+                                            :field/value "Conditional"}
+                                           {:field/type "multiselect"
+                                            :field/title {:en "Multi-select list"}
+                                            :field/value "Option2 Option3"}
+                                           {:field/type "table"
+                                            :field/title {:en "Table"}
+                                            :field/value [[{:column "col1", :value (btu/context-getx table-row0-col1)}
+                                                           {:column "col2" :value (btu/context-getx table-row0-col2)}]
+                                                          [{:column "col1" :value (btu/context-getx table-row1-col1)}
+                                                           {:column "col2" :value (btu/context-getx table-row1-col2)}]]}
+                                           {:field/type "label"
+                                            :field/title {:en "The following field types can have a max length."}
+                                            :field/value str/blank?}
+                                           {:field/type "text"
+                                            :field/title {:en "Text field with max length"}
+                                            :field/value str/blank?}
+                                           {:field/type "texta"
+                                            :field/title {:en "Text area with max length"}
+                                            :field/value str/blank?}
+                                           {:field/type "phone-number"
+                                            :field/title {:en "Phone number"}
+                                            :field/value (btu/context-getx :phone-number)}
+                                           {:field/type "ip-address"
+                                            :field/title {:en "IP address"}
+                                            :field/value (btu/context-getx :ip-address)}]}
+                            {:form/title "Simple form"
+                             :form/fields [{:field/type "text"
+                                            :field/title {:en "Simple text field"}
+                                            :field/value (btu/context-getx :private-field)}]}])
+                          (:application/forms application))))
             (testing "after navigating to the application view again"
               (btu/scroll-and-click [{:css "table.my-applications"}
                                      {:tag :tr :data-row (btu/context-getx :application-id)}
@@ -914,7 +953,9 @@
               (btu/wait-page-loaded)
               (btu/gather-axe-results "application-page-again")
               (testing "check a field answer"
-                (is (= "Test name" (btu/get-element-text description-field-selector)))))))))))
+                (is (= (btu/context-getx :title-field)
+                       (btu/get-element-text description-field-selector))
+                    "is unchanged end-to-end")))))))))
 
 (deftest test-new-application-via-url
   (let [make-localized-title (fn [part] (test-helpers/make-localized (str "test-new-application-via-url " part (btu/get-seed))))

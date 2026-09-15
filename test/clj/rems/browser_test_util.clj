@@ -9,6 +9,7 @@
             [clojure.tools.logging :as log]
             [com.rpl.specter :refer [ALL select]]
             [etaoin.api :as et]
+            [etaoin.keys]
             [medley.core :refer [assoc-some]]
             [rems.common.util :refer [conj-vec getx parse-int]]
             [rems.config :refer [env]]
@@ -295,6 +296,8 @@
 (def get-element-attr-el (wrap-etaoin et/get-element-attr-el))
 (def get-element-text (wrap-etaoin et/get-element-text))
 (def get-element-text-el (wrap-etaoin et/get-element-text-el))
+(def get-element-value-el (wrap-etaoin et/get-element-value-el))
+(def get-element-value (wrap-etaoin et/get-element-value))
 (def get-title (wrap-etaoin et/get-title))
 (def get-url (wrap-etaoin et/get-url))
 (def go (wrap-etaoin et/go))
@@ -348,7 +351,8 @@
 (defn fill-human [q text]
   (wait-for-idle)
   (et/fill-human (get-driver) q text {:pause-max 0.03
-                                      :mistake-prob 0.05}))
+                                      :mistake-prob 0.05})
+  q)
 
 (defn visible-el?
   "Checks whether an element is visible on the page."
@@ -582,3 +586,16 @@
      (catch Exception e#
        (rems.browser-test-util/postmortem-handler e#)
        (throw e#))))
+
+(defn press-enter []
+  (doto (get-driver)
+    (et/perform-actions (-> (et/make-key-input)
+                            (et/add-key-press etaoin.keys/enter)))
+    (et/release-actions)))
+
+(defn context-assoc-element-text!
+  ([element-id]
+   (context-assoc-element-text! element-id element-id))
+  ([element-id ctx-key]
+   (wait-for-idle)
+   (context-assoc! ctx-key (get-element-value element-id))))
