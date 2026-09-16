@@ -296,7 +296,7 @@
 (def get-element-attr-el (wrap-etaoin et/get-element-attr-el))
 (def get-element-text (wrap-etaoin et/get-element-text))
 (def get-element-text-el (wrap-etaoin et/get-element-text-el))
-(def get-element-value-el (wrap-etaoin et/get-element-value-el))
+(def get-element-value-el (wrap-etaoin et/get-element-value-el)) ; see also `[[value-of]]`, `[[value-of-el]]`
 (def get-element-value (wrap-etaoin et/get-element-value))
 (def get-title (wrap-etaoin et/get-title))
 (def get-url (wrap-etaoin et/get-url))
@@ -348,6 +348,14 @@
   (wait-for-idle)
   (no-timeout? #(apply wait-invisible args)))
 
+(defn eventually-enabled? [& args]
+  (wait-for-idle)
+  (no-timeout? #(apply wait-enabled args)))
+
+(defn eventually-disabled? [& args]
+  (wait-for-idle)
+  (no-timeout? #(apply wait-disabled args)))
+
 (defn fill-human [q text]
   (wait-for-idle)
   (et/fill-human (get-driver) q text {:pause-max 0.03
@@ -388,6 +396,20 @@
   (scroll-query q {"block" "center"})
   (assert (not (get-element-attr q "disabled")))
   (click q))
+
+(defn scroll-and-click-until-disabled
+  [q & [opt]]
+  (wait-for-idle)
+  (let [element (query q)
+        not-disabled? (fn [] (not (get-element-attr-el element "disabled")))]
+    (wait-visible-el element opt)
+    (scroll-query-el element {"block" "center"})
+    (assert (not-disabled?))
+    (doseq [retries (range 5)
+            :while (not-disabled?)]
+      (click-el element)
+      (Thread/sleep (* 1000 retries)))))
+
 
 (defn scroll-and-click-el
   "Wait a button to become visible, scroll it to middle
