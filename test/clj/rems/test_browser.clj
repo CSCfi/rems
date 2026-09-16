@@ -432,6 +432,7 @@
   Optionally give `:index` when several items match. It starts from 0."
   [label text & [opts]]
   (let [id (get-form-field-id label opts)]
+    (btu/scroll-query {:id id} {"block" "center"})
     ;; XXX: need to use `fill-human`, because `fill` is so quick that the form drops characters here and there
     (btu/fill-human {:id id} text)))
 
