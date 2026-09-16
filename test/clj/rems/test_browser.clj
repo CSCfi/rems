@@ -99,19 +99,19 @@
         form (test-data/create-all-field-types-example-form! "owner" {:organization/id "nbn"} "Example form with all field types" {:en "Example form with all field types"
                                                                                                                                    :fi "Esimerkkilomake kaikin kenttätyypein"
                                                                                                                                    :sv "Exempelblankett med alla fälttyper"})
-        _simple-form (test-helpers/create-form! {:actor "owner"
-                                                 :organization {:organization/id "nbn"}
-                                                 :form/internal-name "Simple form"
-                                                 :form/external-title {:en "Simple Form"
-                                                                       :fi "Yksinkertainen lomake"
-                                                                       :sv "Enkelt Blankett"}
-                                                 :form/fields [{:field/title {:en "Simple text field"
-                                                                              :fi "Yksinkertainen tekstikenttä"
-                                                                              :sv "Textfält"}
-                                                                :field/optional false
-                                                                :field/type :text
-                                                                :field/max-length 100
-                                                                :field/privacy :private}]})
+        simple-form (test-helpers/create-form! {:actor "owner"
+                                                :organization {:organization/id "nbn"}
+                                                :form/internal-name "Simple form"
+                                                :form/external-title {:en "Simple Form"
+                                                                      :fi "Yksinkertainen lomake"
+                                                                      :sv "Enkelt Blankett"}
+                                                :form/fields [{:field/title {:en "Simple text field"
+                                                                             :fi "Yksinkertainen tekstikenttä"
+                                                                             :sv "Textfält"}
+                                                               :field/optional false
+                                                               :field/type :text
+                                                               :field/max-length 100
+                                                               :field/privacy :private}]})
         res-id1 (test-helpers/create-resource! nil)
         res-id2 (test-helpers/create-resource! nil)
         ;; duo-resource (test-helpers/create-resource! {:resource-ext-id "All DUO codes with restrictions"
@@ -136,7 +136,7 @@
         ;;                                                                                                            :values ["csc"]}]}]}})
         item-id1 (test-helpers/create-catalogue-item! {:form-id form :workflow-id wfid :title {:en "Default workflow" :fi "Oletustyövuo"
                                                                                                :sv "Standard arbetsflöde"} :resource-id res-id1})
-        _ (test-helpers/create-catalogue-item! {:form-id _simple-form
+        _ (test-helpers/create-catalogue-item! {:form-id simple-form
                                                 :workflow-id wfid
                                                 :title {:en "Default workflow with private form"
                                                         :fi "Oletustyövuo yksityisellä lomakkeella"
