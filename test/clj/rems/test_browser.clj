@@ -1525,8 +1525,8 @@
       (btu/scroll-and-click :invite-decider-action-button)
 
       (is (btu/eventually-visible? :name-invite-decider))
-      (btu/fill-human :name-invite-decider "anybody will do")
-      (btu/fill-human :email-invite-decider "user@example.com")
+      (-> (btu/fill-human :name-invite-decider "anybody will do") (btu/context-assoc-element-text! :name-invite-decider))
+      (-> (btu/fill-human :email-invite-decider "user@example.com") (btu/context-assoc-element-text! :email-invite-decider))
       (btu/scroll-and-click :invite-decider)
       (is (btu/eventually-visible? {:css ".alert-success"}))
       (btu/screenshot "decider-invited"))
@@ -1539,7 +1539,8 @@
                                    :application/invitation-tokens
                                    first)]
         (is (string? token))
-        (is (= {:application/decider {:name "anybody will do" :email "user@example.com"}
+        (is (= {:application/decider {:name (btu/context-getx :name-invite-decider)
+                                      :email (btu/context-getx :email-invite-decider)}
                 :event/actor "developer"}
                invitation))
         (btu/context-assoc! :token token)))
