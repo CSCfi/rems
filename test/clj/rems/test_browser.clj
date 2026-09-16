@@ -1058,15 +1058,15 @@
       (is (not (btu/visible? [:actions-invite-member {:fn/has-text "Invite member"}])))
       (btu/scroll-and-click :invite-member-action-button)
       (is (btu/eventually-visible? [:actions-invite-member {:fn/has-text "Invite member"}]))
-      (btu/fill-human [:actions-invite-member :name-invite-member] "John Smith")
-      (btu/fill-human [:actions-invite-member :email-invite-member] "john.smith@generic.name")
+      (-> (btu/fill-human [:actions-invite-member :name-invite-member] "John Smith") (btu/context-assoc-element-text! :name-john))
+      (-> (btu/fill-human [:actions-invite-member :email-invite-member] "john.smith@generic.name") (btu/context-assoc-element-text! :email-john))
       (btu/scroll-and-click :invite-member)
       (open-collapsible :applicants-info-collapsible)
       (btu/wait-invisible [:actions-invite-member {:fn/has-text "Invite member"}])
       (open-collapsible :invite0-info-collapsible)
       (open-collapsible :header-collapsible) ; show events
-      (is (= {"Name" "John Smith"
-              "Email" "john.smith@generic.name"}
+      (is (= {"Name" (btu/context-getx :name-john)
+              "Email" (btu/context-getx :email-john)}
              (slurp-fields :invite0-info-collapsible)))
       (is (string? (-> (btu/context-getx :application-id)
                        rems.db.applications/get-application-internal
@@ -1074,8 +1074,8 @@
                        keys
                        first)))
       (is (= {:event/actor "alice"
-              :application/member {:name "John Smith"
-                                   :email "john.smith@generic.name"}}
+              :application/member {:name (btu/context-getx :name-john)
+                                   :email (btu/context-getx :email-john)}}
              (-> (btu/context-getx :application-id)
                  rems.db.applications/get-application-internal
                  :application/invitation-tokens
@@ -1103,8 +1103,8 @@
       (is (not (btu/visible? [:actions-invite-member {:fn/has-text "Invite member"}])))
       (btu/scroll-and-click :invite-member-action-button)
       (is (btu/eventually-visible? [:actions-invite-member {:fn/has-text "Invite member"}]))
-      (btu/fill-human [:actions-invite-member :name-invite-member] "Jane Smith")
-      (btu/fill-human [:actions-invite-member :email-invite-member] "jane.smith@generic.name")
+      (-> (btu/fill-human [:actions-invite-member :name-invite-member] "Jane Smith") (btu/context-assoc-element-text! :name-jane))
+      (-> (btu/fill-human [:actions-invite-member :email-invite-member] "jane.smith@generic.name") (btu/context-assoc-element-text! :email-jane))
       (btu/scroll-and-click :invite-member)
       (is (btu/eventually-visible? {:fn/has-string "Invite member: Success"})))
 
@@ -1113,8 +1113,8 @@
       (is (not (btu/visible? [:actions-invite-member {:fn/has-text "Invite member"}])))
       (btu/scroll-and-click :invite-member-action-button)
       (is (btu/eventually-visible? [:actions-invite-member {:fn/has-text "Invite member"}]))
-      (btu/fill-human [:actions-invite-member :name-invite-member] "Developer")
-      (btu/fill-human [:actions-invite-member :email-invite-member] "developer@example.com")
+      (-> (btu/fill-human [:actions-invite-member :name-invite-member] "Developer") (btu/context-assoc-element-text! :name-developer))
+      (-> (btu/fill-human [:actions-invite-member :email-invite-member] "developer@example.com") (btu/context-assoc-element-text! :email-developer))
       (btu/scroll-and-click :invite-member)
       (is (btu/eventually-visible? {:fn/has-string "Invite member: Success"}))
 
@@ -1124,7 +1124,8 @@
                                      :application/invitation-tokens
                                      second)]
           (is (string? token))
-          (is (= {:application/member {:name "Developer" :email "developer@example.com"}
+          (is (= {:application/member {:name (btu/context-getx :name-developer)
+                                       :email (btu/context-getx :email-developer)}
                   :event/actor "alice"}
                  invitation))
           (btu/context-assoc! :handler-token token)))
@@ -1169,7 +1170,8 @@
                                    :application/invitation-tokens
                                    first)]
         (is (string? token))
-        (is (= {:application/member {:name "Jane Smith" :email "jane.smith@generic.name"}
+        (is (= {:application/member {:name (btu/context-getx :name-jane)
+                                     :email (btu/context-getx :email-jane)}
                 :event/actor "alice"}
                invitation))
         (btu/context-assoc! :token token)))
