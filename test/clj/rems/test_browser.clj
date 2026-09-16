@@ -3624,7 +3624,7 @@
       (is (= [{"rems-no-rows" "No rows"}]
              (slurp-rows :blacklist)))
       (btu/fill-human :blacklist-user "baddie\n")
-      (btu/fill-human :blacklist-comment "This is a test.")
+      (-> (btu/fill-human :blacklist-comment "This is a test.") (btu/context-assoc-element-text!))
       (btu/screenshot "test-blacklist-1")
       (btu/scroll-and-click :blacklist-add)
       (is (btu/eventually-visible? {:css ".alert-success"}))
@@ -3636,7 +3636,7 @@
                "userid" "baddie"
                "email" "bruce@example.com"
                "added-by" "Owner"
-               "comment" "This is a test."
+               "comment" (btu/context-getx :blacklist-comment)
                "commands" "Remove"}]
              (mapv #(dissoc % "added-at") (slurp-rows :blacklist)))))
     (testing "check entry on blacklist page"
@@ -3649,7 +3649,7 @@
                "userid" "baddie"
                "email" "bruce@example.com"
                "added-by" "Owner"
-               "comment" "This is a test."
+               "comment" (btu/context-getx :blacklist-comment)
                "commands" "Remove"}]
              (mapv #(dissoc % "added-at") (slurp-rows :blacklist)))))
     (testing "remove entry"
