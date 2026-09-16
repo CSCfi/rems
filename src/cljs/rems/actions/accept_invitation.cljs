@@ -16,7 +16,7 @@
  (fn [token]
    (let [error-handler (fn [response]
                          ((flash-message/default-error-handler :top [text :t.actions/accept-invitation])
-                          response)
+                          (update response :errors #(mapv (flash-message/argumentize-some-key :catalogue-item-ids) %)))
                          (navigate! "/catalogue"))]
      (post! "/api/applications/accept-invitation"
             {:url-params {:invitation-token token}

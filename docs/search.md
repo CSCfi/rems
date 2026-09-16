@@ -11,7 +11,7 @@ syntax it's possible to build more specific queries. Wildcards `?` and `*` are
 supported, plus many more. See the [query syntax documentation][query-syntax]
 for more details.
 
-[query-syntax]: https://lucene.apache.org/core/8_2_0/queryparser/org/apache/lucene/queryparser/classic/package-summary.html#package.description
+[query-syntax]: https://lucene.apache.org/core/9_12_3/queryparser/org/apache/lucene/queryparser/classic/package-summary.html
 
 ### Examples
 

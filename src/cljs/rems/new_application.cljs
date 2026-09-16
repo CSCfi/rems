@@ -28,7 +28,6 @@
                         errors
                         (do
                           (replace-url! "/catalogue")
-                          (js/console.log errors)
                           (flash-message/show-error! :top (->> errors
                                                                (mapv (flash-message/argumentize-some-key :catalogue-item-id :catalogue-item-ids))
                                                                flash-message/format-errors)))))
