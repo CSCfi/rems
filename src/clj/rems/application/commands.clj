@@ -703,9 +703,9 @@
 (defmethod command-handler :application.command/soft-delete
   [cmd application injections]
   (or ;(dependency-error application injections)
-      (expiration-state-error application injections)
-      (ok {:event/type :application.event/soft-deleted
-           :event/time (:time cmd)})))
+   (expiration-state-error application injections)
+   (ok {:event/type :application.event/soft-deleted
+        :event/time (:time cmd)})))
 
 (defmethod command-handler :application.command/delete
   [cmd application injections]

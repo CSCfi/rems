@@ -40,10 +40,7 @@
                    (count (->> cmds (filter #(= :application.command/send-expiration-notifications (:type %)))))
                    process-limit)
 
-    (run-commands! (take process-limit cmds))
-    ;; tsekkaa jääkö cacheen jotain vielä
-
-    )
+    (run-commands! (take process-limit cmds)))
 
   (log/info :finish #'process-applications!))
 

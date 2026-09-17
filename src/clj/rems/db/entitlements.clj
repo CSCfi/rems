@@ -163,9 +163,9 @@
   [{:keys [user-id application-id active-at]
     :or {active-at (time/now)}}]
   (log/info (assoc-some {}
-                                   :user user-id
-                                   :application application-id
-                                   :active-at active-at))
+                        :user user-id
+                        :application application-id
+                        :active-at active-at))
   (db/get-entitlements (assoc-some {}
                                    :user user-id
                                    :application application-id
@@ -180,10 +180,9 @@
   )
 
 (comment
-  (get-entitlements {:application 23 })
+  (get-entitlements {:application 23})
   (db/get-entitlements {:user-id "alice"})
   (db/get-entitlements-for-deletion {:application 23})
   (db/delete-entitlement! {:id 3})
   (delete-entitlements! 23)
-  (get-entitlements-by-user 23)
-  )
+  (get-entitlements-by-user 23))
