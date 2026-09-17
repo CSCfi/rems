@@ -118,33 +118,33 @@
 
     (testing "does not remove applications in other states than configured"
       (with-redefs [rems.db.outbox/puts! (fn [emails] (swap! outbox-emails concat emails))
-                    env] {:application-expiration {:application.state/closed {:delete-after "P90D"}}}
-                   (log-test/with-log
-                     (testing "processing applications does not delete applications"
-                       (is (= #{draft old-submitted expired-draft} (set (get-all-application-ids "alice"))))
-                       (eraser/process-applications!)
-                       (is (= #{draft old-submitted expired-draft} (set (get-all-application-ids "alice")))))
+                    env {:application-expiration {:application.state/closed {:delete-after "P90D"}}}]
+        (log-test/with-log
+          (testing "processing applications does not delete applications"
+            (is (= #{draft old-submitted expired-draft} (set (get-all-application-ids "alice"))))
+            (eraser/process-applications!)
+            (is (= #{draft old-submitted expired-draft} (set (get-all-application-ids "alice")))))
 
-                     (testing "expiration notification events are not created and emails are not sent"
-                       (is (empty? (filter expiration-notifications-sent (get-events draft))))
-                       (is (empty? (filter expiration-notifications-sent (get-events old-submitted))))
-                       (is (empty? (filter expiration-notifications-sent (get-events expired-draft))))
-                       (is (empty? (log-test/matches "rems.application.eraser" :info #"application.command/send-expiration-notifications")))
-                       (is (empty? @outbox-emails)))
+          (testing "expiration notification events are not created and emails are not sent"
+            (is (empty? (filter expiration-notifications-sent (get-events draft))))
+            (is (empty? (filter expiration-notifications-sent (get-events old-submitted))))
+            (is (empty? (filter expiration-notifications-sent (get-events expired-draft))))
+            (is (empty? (log-test/matches "rems.application.eraser" :info #"application.command/send-expiration-notifications")))
+            (is (empty? @outbox-emails)))
 
-                     (testing "attempt to delete submitted application is logged"
-                       (let [cmds (log-test/matches "rems.application.eraser" :info #"application.command/delete")
-                             msg (:message (first cmds))]
-                         (is (= 1 (count cmds)))
-                         (is (str/includes? msg (str ":application-id " old-submitted))))
+          (testing "attempt to delete submitted application is logged"
+            (let [cmds (log-test/matches "rems.application.eraser" :info #"application.command/delete")
+                  msg (:message (first cmds))]
+              (is (= 1 (count cmds)))
+              (is (str/includes? msg (str ":application-id " old-submitted))))
 
-                       (let [warnings (log-test/matches "rems.application.eraser" :warn #"Command validation failed")
-                             msg (:message (first warnings))]
-                         (is (= 1 (count warnings)))
-                         (is (str/includes? msg ":application.command/delete"))
-                         (is (str/includes? msg (str ":application-id " old-submitted))))
+            (let [warnings (log-test/matches "rems.application.eraser" :warn #"Command validation failed")
+                  msg (:message (first warnings))]
+              (is (= 1 (count warnings)))
+              (is (str/includes? msg ":application.command/delete"))
+              (is (str/includes? msg (str ":application-id " old-submitted))))
 
-                       (is (not (log-test/logged? "rems.db.applications" :info #"Finished deleting application")))))))
+            (is (not (log-test/logged? "rems.db.applications" :info #"Finished deleting application")))))))
 
     (testing "other states"
       (with-redefs [rems.db.outbox/puts! (fn [emails] (swap! outbox-emails concat emails))
