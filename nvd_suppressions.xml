@@ -32,4 +32,36 @@
    <vulnerabilityName>CVE-2020-8908</vulnerabilityName>
   </suppress>
 
+  <!-- Transitive dependency of ring-mock; only used in tests -->
+  <suppress>
+   <notes><![CDATA[
+   file name: httpclient5-5.5.jar
+   ]]></notes>
+   <packageUrl regex="true">^pkg:maven/org\.apache\.httpcomponents\.client5/httpclient5@.*$</packageUrl>
+   <vulnerabilityName>CVE-2026-71290</vulnerabilityName>
+   <vulnerabilityName>CVE-2026-40542</vulnerabilityName>
+   <vulnerabilityName>CVE-2026-64607</vulnerabilityName>
+  </suppress>
+
+  <!-- Transitive dependency of ring-mock; only used in tests -->
+  <suppress>
+   <notes><![CDATA[
+   file name: httpcore5-5.3.4.jar
+   ]]></notes>
+   <packageUrl regex="true">^pkg:maven/org\.apache\.httpcomponents\.core5/httpcore5@.*$</packageUrl>
+   <cve>CVE-2026-54399</cve>
+   <cve>CVE-2026-54428</cve>
+  </suppress>
+
+  <!-- Transitive dependency of ring-mock; only used in tests -->
+  <suppress>
+   <notes><![CDATA[
+   file name: httpcore5-h2-5.3.4.jar
+   ]]></notes>
+   <packageUrl regex="true">^pkg:maven/org\.apache\.httpcomponents\.core5/httpcore5-h2@.*$</packageUrl>
+   <cve>CVE-2026-54399</cve>
+   <cve>CVE-2026-54428</cve>
+</suppress>
+
 </suppressions>
+
