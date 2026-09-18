@@ -127,7 +127,7 @@
               body (-> (request :post "/api/applications/save-draft")
                        (add-login-cookies "alice")
                        (json-body {:application-id app-id
-                                   :field-values [{:field "fld1" :form 1 :value "nonexistent"}]})
+                                   :field-values [{:value "nonexistent" :field "fld1" :form 1}]})
                        handler
                        assert-response-is-ok
                        read-body)]
@@ -147,14 +147,13 @@
           (is (:success body))
           (is (= [:info (str "> params: {:application-id " app-id ", :file {:filename test.txt, :content-type text/plain, :tempfile ring-would-name-this-file-randomly, :size 16}}")] @log))))
 
-      (binding [*print-namespace-maps* true] ; in case set to false locally
-        (let [body (-> (request :post "/api/resources/create")
-                       (add-login-cookies "owner")
-                       (json-body {:resid "extended-logging"
-                                   :organization {:organization/id "nbn"}
-                                   :licenses []})
-                       handler
-                       assert-response-is-ok
-                       read-body)]
-          (is (:success body))
-          (is (= [:info "> params: {:licenses [], :organization #:organization{:id nbn}, :resid extended-logging}"] @log)))))))
+      (let [body (-> (request :post "/api/resources/create")
+                     (add-login-cookies "owner")
+                     (json-body {:licenses []
+                                 :organization {:organization/id "nbn"}
+                                 :resid "extended-logging"})
+                     handler
+                     assert-response-is-ok
+                     read-body)]
+        (is (:success body))
+        (is (= [:info "> params: {:licenses [], :organization {:organization/id nbn}, :resid extended-logging}"] @log))))))
