@@ -869,7 +869,10 @@
                                                      :form/external-title {:en "Form"
                                                                            :fi "Lomake"
                                                                            :sv "Blankett"}
-                                                     :form/fields [(merge text-field {:field/max-length 100
+                                                     :form/fields [(merge text-field {:field/title {:en "Simple text field"
+                                                                                                    :fi "Yksinkertainen tekstikenttä"
+                                                                                                    :sv "Textfält"}
+                                                                                      :field/max-length 100
                                                                                       :field/privacy :private})]})
 
         form-private-thl (test-helpers/create-form! {:actor owner

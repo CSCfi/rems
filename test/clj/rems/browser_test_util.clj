@@ -9,6 +9,7 @@
             [clojure.tools.logging :as log]
             [com.rpl.specter :refer [ALL select]]
             [etaoin.api :as et]
+            [etaoin.keys]
             [medley.core :refer [assoc-some]]
             [rems.common.util :refer [conj-vec getx parse-int]]
             [rems.config :refer [env]]
@@ -277,46 +278,49 @@
 (defn wrap-etaoin [f]
   (fn [& args] (apply f (get-driver) args)))
 
-(def set-window-rect (wrap-etaoin et/set-window-rect))
-(def go (wrap-etaoin et/go))
-(def wait-visible (wrap-etaoin et/wait-visible))
-(def wait-invisible (wrap-etaoin et/wait-invisible))
-(def get-element-attr-el (wrap-etaoin et/get-element-attr-el))
-(def get-element-attr (wrap-etaoin et/get-element-attr))
-(def js-execute (wrap-etaoin et/js-execute))
-(def js-async (wrap-etaoin et/js-async))
+(def accept-alert (wrap-etaoin et/accept-alert))
+(def child (wrap-etaoin et/child))
+(def children (wrap-etaoin et/children))
+(def clear (wrap-etaoin et/clear))
+(def clear-el (wrap-etaoin et/clear-el))
+(def click (wrap-etaoin et/click))
+(def click-el (wrap-etaoin et/click-el))
+(def delete-cookies (wrap-etaoin et/delete-cookies))
+(def disabled? (wrap-etaoin et/disabled?))
+(def displayed-el? (wrap-etaoin et/displayed-el?))
+(def enabled? (wrap-etaoin et/enabled?))
+(def exists? (wrap-etaoin et/exists?))
 (def fill (wrap-etaoin et/fill))
 (def fill-el (wrap-etaoin et/fill-el))
-(def wait-has-class (wrap-etaoin et/wait-has-class))
+(def get-element-attr (wrap-etaoin et/get-element-attr))
+(def get-element-attr-el (wrap-etaoin et/get-element-attr-el))
+(def get-element-text (wrap-etaoin et/get-element-text))
 (def get-element-text-el (wrap-etaoin et/get-element-text-el))
+(def get-element-value-el (wrap-etaoin et/get-element-value-el)) ; see also `[[value-of]]`, `[[value-of-el]]`
+(def get-element-value (wrap-etaoin et/get-element-value))
+(def get-title (wrap-etaoin et/get-title))
+(def get-url (wrap-etaoin et/get-url))
+(def go (wrap-etaoin et/go))
+(def has-class-el? (wrap-etaoin et/has-class-el?))
+(def has-class? (wrap-etaoin et/has-class?))
+(def has-text? (wrap-etaoin et/has-text?))
+(def js-async (wrap-etaoin et/js-async))
+(def js-execute (wrap-etaoin et/js-execute))
 (def query (wrap-etaoin et/query))
 (def query-all (wrap-etaoin et/query-all))
 (def query-tree (wrap-etaoin et/query-tree))
-(def child (wrap-etaoin et/child))
-(def children (wrap-etaoin et/children))
-(def upload-file (wrap-etaoin et/upload-file))
-(def get-element-text (wrap-etaoin et/get-element-text))
-(def click-el (wrap-etaoin et/click-el))
-(def delete-cookies (wrap-etaoin et/delete-cookies))
-(def get-url (wrap-etaoin et/get-url))
+(def reload (wrap-etaoin et/reload))
 (def scroll-query (wrap-etaoin et/scroll-query))
-(def click (wrap-etaoin et/click))
+(def set-window-rect (wrap-etaoin et/set-window-rect))
+(def upload-file (wrap-etaoin et/upload-file))
 (def visible? (wrap-etaoin et/visible?))
-(def displayed-el? (wrap-etaoin et/displayed-el?))
-(def has-text? (wrap-etaoin et/has-text?))
-(def has-class? (wrap-etaoin et/has-class?))
-(def has-class-el? (wrap-etaoin et/has-class-el?))
-(def disabled? (wrap-etaoin et/disabled?))
-(def enabled? (wrap-etaoin et/enabled?))
 (def wait-disabled (wrap-etaoin et/wait-disabled))
 (def wait-enabled (wrap-etaoin et/wait-enabled))
-(def clear (wrap-etaoin et/clear))
-(def clear-el (wrap-etaoin et/clear-el))
 (def wait-has-alert (wrap-etaoin et/wait-has-alert))
-(def accept-alert (wrap-etaoin et/accept-alert))
-(def reload (wrap-etaoin et/reload))
-(def get-title (wrap-etaoin et/get-title))
-(def exists? (wrap-etaoin et/exists?))
+(def wait-has-class (wrap-etaoin et/wait-has-class))
+(def wait-invisible (wrap-etaoin et/wait-invisible))
+(def wait-visible (wrap-etaoin et/wait-visible))
+
 ;; TODO add more of etaoin here
 
 ;;; etaoin extensions
@@ -344,10 +348,19 @@
   (wait-for-idle)
   (no-timeout? #(apply wait-invisible args)))
 
+(defn eventually-enabled? [& args]
+  (wait-for-idle)
+  (no-timeout? #(apply wait-enabled args)))
+
+(defn eventually-disabled? [& args]
+  (wait-for-idle)
+  (no-timeout? #(apply wait-disabled args)))
+
 (defn fill-human [q text]
   (wait-for-idle)
   (et/fill-human (get-driver) q text {:pause-max 0.03
-                                      :mistake-prob 0.05}))
+                                      :mistake-prob 0.05})
+  q)
 
 (defn visible-el?
   "Checks whether an element is visible on the page."
@@ -383,6 +396,20 @@
   (scroll-query q {"block" "center"})
   (assert (not (get-element-attr q "disabled")))
   (click q))
+
+(defn scroll-and-click-until-disabled
+  [q & [opt]]
+  (wait-for-idle)
+  (let [element (query q)
+        not-disabled? (fn [] (not (get-element-attr-el element "disabled")))]
+    (wait-visible-el element opt)
+    (scroll-query-el element {"block" "center"})
+    (assert (not-disabled?))
+    (doseq [retries (range 5)
+            :while (not-disabled?)]
+      (click-el element)
+      (Thread/sleep (* 1000 retries)))))
+
 
 (defn scroll-and-click-el
   "Wait a button to become visible, scroll it to middle
@@ -560,7 +587,7 @@
 
     (io/make-parents dir)
 
-    (screenshot (str "error-screenshot"))
+    (screenshot "error-screenshot")
 
     (spit (io/file dir (str (get-file-base) "error-stacktrace.txt"))
           (with-out-str (clojure.stacktrace/print-stack-trace ex)))
@@ -581,3 +608,16 @@
      (catch Exception e#
        (rems.browser-test-util/postmortem-handler e#)
        (throw e#))))
+
+(defn press-enter []
+  (doto (get-driver)
+    (et/perform-actions (-> (et/make-key-input)
+                            (et/add-key-press etaoin.keys/enter)))
+    (et/release-actions)))
+
+(defn context-assoc-element-text!
+  ([element-id]
+   (context-assoc-element-text! element-id element-id))
+  ([element-id ctx-key]
+   (wait-for-idle)
+   (context-assoc! ctx-key (get-element-value element-id))))

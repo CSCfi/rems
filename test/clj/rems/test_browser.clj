@@ -12,7 +12,6 @@
             [clojure.set :as set]
             [clojure.string :as str]
             [clojure.test :refer [compose-fixtures deftest is testing use-fixtures]]
-            [com.rpl.specter :refer [ALL select]]
             [etaoin.keys]
             [matcher-combinators.matchers :as m]
             [matcher-combinators.test]
@@ -100,19 +99,19 @@
         form (test-data/create-all-field-types-example-form! "owner" {:organization/id "nbn"} "Example form with all field types" {:en "Example form with all field types"
                                                                                                                                    :fi "Esimerkkilomake kaikin kenttätyypein"
                                                                                                                                    :sv "Exempelblankett med alla fälttyper"})
-        _simple-form (test-helpers/create-form! {:actor "owner"
-                                                 :organization {:organization/id "nbn"}
-                                                 :form/internal-name "Simple form"
-                                                 :form/external-title {:en "Simple Form"
-                                                                       :fi "Yksinkertainen lomake"
-                                                                       :sv "Enkelt Blankett"}
-                                                 :form/fields [{:field/title {:en "Simple text field"
-                                                                              :fi "Yksinkertainen tekstikenttä"
-                                                                              :sv "Textfält"}
-                                                                :field/optional false
-                                                                :field/type :text
-                                                                :field/max-length 100
-                                                                :field/privacy :private}]})
+        simple-form (test-helpers/create-form! {:actor "owner"
+                                                :organization {:organization/id "nbn"}
+                                                :form/internal-name "Simple form"
+                                                :form/external-title {:en "Simple Form"
+                                                                      :fi "Yksinkertainen lomake"
+                                                                      :sv "Enkelt Blankett"}
+                                                :form/fields [{:field/title {:en "Simple text field"
+                                                                             :fi "Yksinkertainen tekstikenttä"
+                                                                             :sv "Textfält"}
+                                                               :field/optional false
+                                                               :field/type :text
+                                                               :field/max-length 100
+                                                               :field/privacy :private}]})
         res-id1 (test-helpers/create-resource! nil)
         res-id2 (test-helpers/create-resource! nil)
         ;; duo-resource (test-helpers/create-resource! {:resource-ext-id "All DUO codes with restrictions"
@@ -137,7 +136,7 @@
         ;;                                                                                                            :values ["csc"]}]}]}})
         item-id1 (test-helpers/create-catalogue-item! {:form-id form :workflow-id wfid :title {:en "Default workflow" :fi "Oletustyövuo"
                                                                                                :sv "Standard arbetsflöde"} :resource-id res-id1})
-        _ (test-helpers/create-catalogue-item! {:form-id _simple-form
+        _ (test-helpers/create-catalogue-item! {:form-id simple-form
                                                 :workflow-id wfid
                                                 :title {:en "Default workflow with private form"
                                                         :fi "Oletustyövuo yksityisellä lomakkeella"
@@ -432,8 +431,10 @@
   Optionally give `:index` when several items match. It starts from 0."
   [label text & [opts]]
   (let [id (get-form-field-id label opts)]
+    (btu/scroll-query {:id id} {"block" "center"})
     ;; XXX: need to use `fill-human`, because `fill` is so quick that the form drops characters here and there
-    (btu/fill-human {:id id} text)))
+    (btu/fill-human {:id id} text)
+    (keyword id)))
 
 (defn fill-localized-form-field
   "Fills a localized form field `langcode`, named by `field-label`, with `text`."
@@ -643,6 +644,7 @@
 (defn- restart-handler! []
   (mount/stop #'rems.handler/handler #'rems.main/http-server)
   (mount/start #'rems.handler/handler #'rems.main/http-server))
+
 ;;; tests
 
 (deftest test-new-application
@@ -669,14 +671,19 @@
             conditional-field (get-in application [:application/forms 0 :form/fields 9])
             conditional-field-id (str "form-" form-id "-field-" (:field/id conditional-field))
             table-field (get-in application [:application/forms 0 :form/fields 11])
-            table-field-id (str "form-" form-id "-field-" (:field/id table-field))]
+            table-field-id (str "form-" form-id "-field-" (:field/id table-field))
+            table-add-row (keyword (str table-field-id "-add-row"))
+            table-row0-col1 (keyword (str table-field-id "-row0-col1"))
+            table-row0-col2 (keyword (str table-field-id "-row0-col2"))
+            table-row1-col1 (keyword (str table-field-id "-row1-col1"))
+            table-row1-col2 (keyword (str table-field-id "-row1-col2"))]
         ;; sanity checks:
         (is (= "attachment" (:field/type attachment-field)))
         (is (= "table" (:field/type table-field)))
         (is (:field/visibility conditional-field))
 
-        (fill-form-field "Application title field" "Test name")
-        (fill-form-field "Text area" "Test2")
+        (-> (fill-form-field "Application title field" "Test name") (btu/context-assoc-element-text! :title-field))
+        (-> (fill-form-field "Text area" "Test2") (btu/context-assoc-element-text! :text-area))
         (set-date-for-label "Date field" "2050-01-02")
 
         ;; TODO: return to DUO tests once features are complete
@@ -749,7 +756,7 @@
               "Conditional field is not visible before selecting option")
           (select-option "Option list" "First option")
           (btu/wait-predicate #(btu/field-visible? "Conditional field"))
-          (fill-form-field "Conditional field" "Conditional")
+          (-> (fill-form-field "Conditional field" "Conditional") (btu/context-assoc-element-text! :conditional-field))
           (select-option "Option list" "Second option")
           (btu/wait-predicate #(not (btu/field-visible? "Conditional field")))
           (Thread/sleep 1000) ; XXX: conditional field check sometimes fails due to rendering latency
@@ -757,26 +764,28 @@
             (btu/wait-visible {:css ".alert-success" :fn/text "Application is saved."}))
           (select-option "Option list" "First option")
           (btu/wait-predicate #(btu/field-visible? "Conditional field"))
-          (is (= "Conditional" (btu/value-of {:id conditional-field-id}))))
+          (is (= (btu/context-getx :conditional-field)
+                 (btu/value-of {:id conditional-field-id}))))
 
         ;; pick two options for the multi-select field:
         (btu/check-box "Option2")
         (btu/check-box "Option3")
         ;; fill in two rows for the table
-        (btu/scroll-and-click (keyword (str table-field-id "-add-row")))
-        (is (btu/eventually-visible? (keyword (str table-field-id "-row0-col1"))))
-        (btu/scroll-and-click (keyword (str table-field-id "-add-row")))
-        (is (btu/eventually-visible? (keyword (str table-field-id "-row1-col1"))))
-        (btu/fill-human (keyword (str table-field-id "-row0-col1")) "a")
-        (btu/fill-human (keyword (str table-field-id "-row0-col2")) "b")
-        (btu/fill-human (keyword (str table-field-id "-row1-col1")) "c")
-        (btu/fill-human (keyword (str table-field-id "-row1-col2")) "d")
+        (btu/scroll-and-click table-add-row)
+        (is (btu/eventually-visible? table-row0-col1))
+        (btu/scroll-and-click table-add-row)
+        (is (btu/eventually-visible? table-row1-col1))
+        (doseq [id [(btu/fill-human table-row0-col1 "a")
+                    (btu/fill-human table-row0-col2 "b")
+                    (btu/fill-human table-row1-col1 "c")
+                    (btu/fill-human table-row1-col2 "d")]]
+          (btu/context-assoc-element-text! id))
 
         ;; leave "Text field with max length" empty
         ;; leave "Text are with max length" empty
 
-        (fill-form-field "Phone number" "+358450000100")
-        (fill-form-field "IP address" "142.250.74.110")
+        (-> (fill-form-field "Phone number" "+358450000100") (btu/context-assoc-element-text! :phone-number))
+        (-> (fill-form-field "IP address" "142.250.74.110") (btu/context-assoc-element-text! :ip-address))
 
         (fill-form-field "Simple text field" "Private field answer before autosave")
 
@@ -794,7 +803,7 @@
         ;; let's also try autosave
         (btu/with-client-config {:enable-autosave true}
           (clear-form-field "Simple text field")
-          (fill-form-field "Simple text field" "Private field answer")
+          (btu/context-assoc-element-text! (fill-form-field "Simple text field" "Private field answer") :private-field)
           (btu/wait-visible {:css ".alert-success" :fn/text "Application is saved."})
           (is (btu/eventually-visible? :status-warning))
           (is (= ["Invalid email address."] ; only invalid values are warned about
@@ -810,8 +819,8 @@
           (is (= "Field \"Text field\" is required."
                  (get-validation-for-field "Text field"))))
 
-        (fill-form-field "Email field" "@example.com") ; to complete email field value
-        (fill-form-field "Text field" "Test")
+        (-> (fill-form-field "Email field" "@example.com") (btu/context-assoc-element-text! :email)) ; to complete email field value
+        (-> (fill-form-field "Text field" "Test") (btu/context-assoc-element-text! :text-field))
 
         (accept-licenses)
         (btu/gather-axe-results "accepted-licenses")
@@ -831,15 +840,6 @@
         (is (btu/eventually-visible? :application-state))
         (is (= "Applied" (btu/get-element-text :application-state)))
 
-        (testing "check a field answer"
-          (is (= "Test name" (btu/get-element-text description-field-selector))))
-
-        (testing "check that table field values are visible"
-          (is (= "a" (btu/value-of (keyword (str table-field-id "-row0-col1")))))
-          (is (= "b" (btu/value-of (keyword (str table-field-id "-row0-col2")))))
-          (is (= "c" (btu/value-of (keyword (str table-field-id "-row1-col1")))))
-          (is (= "d" (btu/value-of (keyword (str table-field-id "-row1-col2"))))))
-
         (testing "fetch application from API"
           (let [application (get-application-from-api (btu/context-getx :application-id))]
             (btu/context-assoc! :attachment-ids (mapv :attachment/id (:application/attachments application))
@@ -851,7 +851,7 @@
               (is (= {:id (btu/context-getx :application-id)
                       :resource "Default workflow, Default workflow with private form"
                       :state "Applied"
-                      :description "Test name"}
+                      :description (btu/context-getx :title-field)}
                      (get-application-summary (btu/context-getx :application-id)))))
 
             (testing "attachments"
@@ -881,30 +881,70 @@
               (is (= (set (map :license/id (:application/licenses application)))
                      (set (get-in application [:application/accepted-licenses :alice])))))
             (testing "form fields"
-              (is (= "Test name" (:application/description application)))
-              (is (= [["label" ""]
-                      ["description" "Test name"]
-                      ["text" "Test"]
-                      ["texta" "Test2"]
-                      ["header" ""]
-                      ["date" "2050-01-02"]
-                      ["email" "user@example.com"]
-                      ["attachment" (str/join "," (btu/context-getx :attachment-ids))]
-                      ["option" "Option1"]
-                      ["text" "Conditional"]
-                      ["multiselect" "Option2 Option3"]
-                      ["table" [[{:column "col1", :value "a"} {:column "col2", :value "b"}]
-                                [{:column "col1", :value "c"} {:column "col2", :value "d"}]]]
-                      ["label" ""]
-                      ["text" ""]
-                      ["texta" ""]
-                      ["phone-number" "+358450000100"]
-                      ["ip-address" "142.250.74.110"]
-                      ["text" "Private field answer"]]
-                     (for [field (select [:application/forms ALL :form/fields ALL] application)]
-                       ;; TODO could test other fields here too, e.g. title
-                       [(:field/type field)
-                        (:field/value field)]))))
+              (is (= (btu/context-getx :title-field) (:application/description application)))
+              (is (match? (m/in-any-order
+                           [{:form/title "Example form with all field types"
+                             :form/fields [{:field/type "label"
+                                            :field/title {:en "This form demonstrates all possible field types. This is a link https://www.example.org/label (This text itself is a label field.)"}
+                                            :field/value str/blank?}
+                                           {:field/type "description"
+                                            :field/title {:en "Application title field"}
+                                            :field/value (btu/context-getx :title-field)}
+                                           {:field/type "text"
+                                            :field/title {:en "Text field"}
+                                            :field/value (btu/context-getx :text-field)}
+                                           {:field/type "texta"
+                                            :field/title {:en "Text area"}
+                                            :field/value (btu/context-getx :text-area)}
+                                           {:field/type "header"
+                                            :field/title {:en "Header"}
+                                            :field/value str/blank?}
+                                           {:field/type "date"
+                                            :field/title {:en "Date field"}
+                                            :field/value "2050-01-02"}
+                                           {:field/type "email"
+                                            :field/title {:en "Email field"}
+                                            :field/value (btu/context-getx :email)}
+                                                        ;; accept whichever way the uploads got an id this time
+                                           {:field/type "attachment"
+                                            :field/title {:en "Attachment"}
+                                            :field/value (m/via #(mapv Integer/parseInt (str/split % #","))
+                                                                (m/in-any-order (btu/context-getx :attachment-ids)))}
+                                           {:field/type "option"
+                                            :field/title {:en "Option list. Choose the first option to reveal a new field."}
+                                            :field/value "Option1"}
+                                           {:field/type "text"
+                                            :field/title {:en "Conditional field. Shown only if first option is selected above."}
+                                            :field/value "Conditional"}
+                                           {:field/type "multiselect"
+                                            :field/title {:en "Multi-select list"}
+                                            :field/value "Option2 Option3"}
+                                           {:field/type "table"
+                                            :field/title {:en "Table"}
+                                            :field/value [[{:column "col1", :value (btu/context-getx table-row0-col1)}
+                                                           {:column "col2" :value (btu/context-getx table-row0-col2)}]
+                                                          [{:column "col1" :value (btu/context-getx table-row1-col1)}
+                                                           {:column "col2" :value (btu/context-getx table-row1-col2)}]]}
+                                           {:field/type "label"
+                                            :field/title {:en "The following field types can have a max length."}
+                                            :field/value str/blank?}
+                                           {:field/type "text"
+                                            :field/title {:en "Text field with max length"}
+                                            :field/value str/blank?}
+                                           {:field/type "texta"
+                                            :field/title {:en "Text area with max length"}
+                                            :field/value str/blank?}
+                                           {:field/type "phone-number"
+                                            :field/title {:en "Phone number"}
+                                            :field/value (btu/context-getx :phone-number)}
+                                           {:field/type "ip-address"
+                                            :field/title {:en "IP address"}
+                                            :field/value (btu/context-getx :ip-address)}]}
+                            {:form/title "Simple form"
+                             :form/fields [{:field/type "text"
+                                            :field/title {:en "Simple text field"}
+                                            :field/value (btu/context-getx :private-field)}]}])
+                          (:application/forms application))))
             (testing "after navigating to the application view again"
               (btu/scroll-and-click [{:css "table.my-applications"}
                                      {:tag :tr :data-row (btu/context-getx :application-id)}
@@ -913,7 +953,9 @@
               (btu/wait-page-loaded)
               (btu/gather-axe-results "application-page-again")
               (testing "check a field answer"
-                (is (= "Test name" (btu/get-element-text description-field-selector)))))))))))
+                (is (= (btu/context-getx :title-field)
+                       (btu/get-element-text description-field-selector))
+                    "is unchanged end-to-end")))))))))
 
 (deftest test-new-application-via-url
   (let [make-localized-title (fn [part] (test-helpers/make-localized (str "test-new-application-via-url " part (btu/get-seed))))
@@ -1016,15 +1058,15 @@
       (is (not (btu/visible? [:actions-invite-member {:fn/has-text "Invite member"}])))
       (btu/scroll-and-click :invite-member-action-button)
       (is (btu/eventually-visible? [:actions-invite-member {:fn/has-text "Invite member"}]))
-      (btu/fill-human [:actions-invite-member :name-invite-member] "John Smith")
-      (btu/fill-human [:actions-invite-member :email-invite-member] "john.smith@generic.name")
+      (-> (btu/fill-human [:actions-invite-member :name-invite-member] "John Smith") (btu/context-assoc-element-text! :name-john))
+      (-> (btu/fill-human [:actions-invite-member :email-invite-member] "john.smith@generic.name") (btu/context-assoc-element-text! :email-john))
       (btu/scroll-and-click :invite-member)
       (open-collapsible :applicants-info-collapsible)
       (btu/wait-invisible [:actions-invite-member {:fn/has-text "Invite member"}])
       (open-collapsible :invite0-info-collapsible)
       (open-collapsible :header-collapsible) ; show events
-      (is (= {"Name" "John Smith"
-              "Email" "john.smith@generic.name"}
+      (is (= {"Name" (btu/context-getx :name-john)
+              "Email" (btu/context-getx :email-john)}
              (slurp-fields :invite0-info-collapsible)))
       (is (string? (-> (btu/context-getx :application-id)
                        rems.db.applications/get-application-internal
@@ -1032,8 +1074,8 @@
                        keys
                        first)))
       (is (= {:event/actor "alice"
-              :application/member {:name "John Smith"
-                                   :email "john.smith@generic.name"}}
+              :application/member {:name (btu/context-getx :name-john)
+                                   :email (btu/context-getx :email-john)}}
              (-> (btu/context-getx :application-id)
                  rems.db.applications/get-application-internal
                  :application/invitation-tokens
@@ -1061,8 +1103,8 @@
       (is (not (btu/visible? [:actions-invite-member {:fn/has-text "Invite member"}])))
       (btu/scroll-and-click :invite-member-action-button)
       (is (btu/eventually-visible? [:actions-invite-member {:fn/has-text "Invite member"}]))
-      (btu/fill-human [:actions-invite-member :name-invite-member] "Jane Smith")
-      (btu/fill-human [:actions-invite-member :email-invite-member] "jane.smith@generic.name")
+      (-> (btu/fill-human [:actions-invite-member :name-invite-member] "Jane Smith") (btu/context-assoc-element-text! :name-jane))
+      (-> (btu/fill-human [:actions-invite-member :email-invite-member] "jane.smith@generic.name") (btu/context-assoc-element-text! :email-jane))
       (btu/scroll-and-click :invite-member)
       (is (btu/eventually-visible? {:fn/has-string "Invite member: Success"})))
 
@@ -1071,8 +1113,8 @@
       (is (not (btu/visible? [:actions-invite-member {:fn/has-text "Invite member"}])))
       (btu/scroll-and-click :invite-member-action-button)
       (is (btu/eventually-visible? [:actions-invite-member {:fn/has-text "Invite member"}]))
-      (btu/fill-human [:actions-invite-member :name-invite-member] "Developer")
-      (btu/fill-human [:actions-invite-member :email-invite-member] "developer@example.com")
+      (-> (btu/fill-human [:actions-invite-member :name-invite-member] "Developer") (btu/context-assoc-element-text! :name-developer))
+      (-> (btu/fill-human [:actions-invite-member :email-invite-member] "developer@example.com") (btu/context-assoc-element-text! :email-developer))
       (btu/scroll-and-click :invite-member)
       (is (btu/eventually-visible? {:fn/has-string "Invite member: Success"}))
 
@@ -1082,7 +1124,8 @@
                                      :application/invitation-tokens
                                      second)]
           (is (string? token))
-          (is (= {:application/member {:name "Developer" :email "developer@example.com"}
+          (is (= {:application/member {:name (btu/context-getx :name-developer)
+                                       :email (btu/context-getx :email-developer)}
                   :event/actor "alice"}
                  invitation))
           (btu/context-assoc! :handler-token token)))
@@ -1127,7 +1170,8 @@
                                    :application/invitation-tokens
                                    first)]
         (is (string? token))
-        (is (= {:application/member {:name "Jane Smith" :email "jane.smith@generic.name"}
+        (is (= {:application/member {:name (btu/context-getx :name-jane)
+                                     :email (btu/context-getx :email-jane)}
                 :event/actor "alice"}
                invitation))
         (btu/context-assoc! :token token)))
@@ -1496,8 +1540,8 @@
       (btu/scroll-and-click :invite-decider-action-button)
 
       (is (btu/eventually-visible? :name-invite-decider))
-      (btu/fill-human :name-invite-decider "anybody will do")
-      (btu/fill-human :email-invite-decider "user@example.com")
+      (-> (btu/fill-human :name-invite-decider "anybody will do") (btu/context-assoc-element-text! :name-invite-decider))
+      (-> (btu/fill-human :email-invite-decider "user@example.com") (btu/context-assoc-element-text! :email-invite-decider))
       (btu/scroll-and-click :invite-decider)
       (is (btu/eventually-visible? {:css ".alert-success"}))
       (btu/screenshot "decider-invited"))
@@ -1510,7 +1554,8 @@
                                    :application/invitation-tokens
                                    first)]
         (is (string? token))
-        (is (= {:application/decider {:name "anybody will do" :email "user@example.com"}
+        (is (= {:application/decider {:name (btu/context-getx :name-invite-decider)
+                                      :email (btu/context-getx :email-invite-decider)}
                 :event/actor "developer"}
                invitation))
         (btu/context-assoc! :token token)))
@@ -2803,27 +2848,27 @@
       (is (btu/eventually-visible? {:fn/text "test-update-catalogue-item 1 EN"}))
       (is (btu/eventually-visible? {:fn/text "test-update-catalogue-item 2 EN"}))
       (is (btu/eventually-visible? {:fn/text "test-update-catalogue-item 3 EN"}))
-      (btu/wait-disabled {:tag :button :fn/text "Update catalogue item"}))
+      (is (btu/eventually-disabled? {:tag :button :fn/text "Update catalogue item"})))
 
     (testing "select to go to update"
       (btu/scroll-and-click {:fn/text "test-update-catalogue-item 1 EN"})
       (btu/scroll-and-click {:fn/text "test-update-catalogue-item 2 EN"})
       (btu/scroll-and-click {:fn/text "test-update-catalogue-item 3 EN"})
-      (btu/wait-enabled {:tag :button :fn/text "Update catalogue item"})
-      (btu/scroll-and-click {:fn/text "Update catalogue item"})
+      (is (btu/eventually-enabled? {:tag :button :fn/text "Update catalogue item"}))
+      (btu/scroll-and-click {:tag :button :fn/text "Update catalogue item"})
       (wait-page-title "Update catalogue item – REMS"))
 
     (testing "initial state"
       (btu/screenshot "test-update-catalogue-item-initial-state")
-      (btu/wait-disabled {:tag :button :fn/text "Update catalogue item"}))
+      (btu/eventually-disabled? {:tag :button :fn/text "Update catalogue item"}))
 
     (testing "can set form to empty"
       (select-option "Form" "No form")
-      (btu/wait-enabled {:tag :button :fn/text "Update catalogue item"})
+      (btu/eventually-enabled? {:tag :button :fn/text "Update catalogue item"})
       (btu/screenshot "test-update-catalogue-item-before-update-1")
-      (btu/scroll-and-click {:tag :button :fn/text "Update catalogue item"})
+      (btu/scroll-and-click-until-disabled {:tag :button :fn/text "Update catalogue item"})
       (is (btu/eventually-visible? {:css ".alert-success"}))
-      (btu/wait-disabled {:tag :button :fn/text "Update catalogue item"})
+      (is (btu/eventually-disabled? {:tag :button :fn/text "Update catalogue item"}))
       (is (= [{"name" "test-update-catalogue-item 1 EN"
                "form" "No form"
                "workflow" "test-update-catalogue-item workflow 1"}
@@ -2837,16 +2882,13 @@
       (btu/screenshot "test-update-catalogue-item-done-1"))
 
     (testing "can change form and workflow"
-      (let [update-catalogue-item-button-q {:tag :button :id :update-catalogue-item}]
-        (select-option "Form" "test-update-catalogue-item form 1")
-        (select-option "Workflow" "test-update-catalogue-item workflow 3")
-        (btu/wait-enabled update-catalogue-item-button-q)
-        (btu/screenshot "test-update-catalogue-item-before-update-2")
-        (btu/scroll-and-click update-catalogue-item-button-q)
-        (is (btu/eventually-visible? {:css ".alert-success"}))
-        (btu/wait-for-idle)
-        (btu/screenshot "test-update-catalogue-item-after-update-2")
-        (btu/wait-disabled update-catalogue-item-button-q))
+      (select-option "Form" "test-update-catalogue-item form 1")
+      (select-option "Workflow" "test-update-catalogue-item workflow 3")
+      (is (btu/eventually-enabled? {:tag :button :fn/text "Update catalogue item"}))
+      (btu/screenshot "test-update-catalogue-item-before-update-2")
+      (btu/scroll-and-click-until-disabled {:tag :button :fn/text "Update catalogue item"})
+      (is (btu/eventually-visible? {:css ".alert-success"}))
+      (is (btu/eventually-disabled? {:tag :button :fn/text "Update catalogue item"}))
       (is (= [{"name" "test-update-catalogue-item 1 EN"
                "form" "test-update-catalogue-item form 1"
                "workflow" "test-update-catalogue-item workflow 3"}
@@ -2901,10 +2943,10 @@
                (every? #(= "View" (get % "commands"))))))
 
     (testing "update is disabled when not owner of selected items"
-      (btu/wait-disabled {:tag :button :fn/text "Update catalogue item"})
+      (is (btu/eventually-disabled? {:tag :button :fn/text "Update catalogue item"}))
       (btu/scroll-and-click {:fn/text "test-update-catalogue-item 4 EN"})
       (btu/scroll-and-click {:fn/text "test-update-catalogue-item 1 EN"})
-      (btu/wait-disabled {:tag :button :fn/text "Update catalogue item"})
+      (is (btu/eventually-disabled? {:tag :button :fn/text "Update catalogue item"}))
       (btu/scroll-and-click {:fn/text "test-update-catalogue-item 1 EN"})
       (btu/wait-enabled {:tag :button :fn/text "Update catalogue item"})
 
@@ -2915,7 +2957,7 @@
         (btu/scroll-and-click {:id ":rems.administration.catalogue-items/catalogue-selection-toggle-all"})
         (btu/wait-page-loaded)
         (is (not-empty (slurp-tds [:catalogue {:css "tr:has(td.selection *[aria-checked=true])"}])))
-        (btu/wait-disabled {:tag :button :fn/text "Update catalogue item"}))
+        (is (btu/eventually-disabled? {:tag :button :fn/text "Update catalogue item"})))
 
       (testing "update is enabled when selecting all items under the user's organization with toggle-all"
         (btu/scroll-and-click {:id ":rems.administration.catalogue-items/catalogue-selection-toggle-all"})
@@ -2925,7 +2967,7 @@
         (is (= ["test-update-catalogue-item 4 EN"]
                (mapv #(get % "name")
                      (slurp-tds [:catalogue {:css "tr:has(td.selection *[aria-checked=true])"}]))))
-        (btu/wait-enabled {:tag :button :fn/text "Update catalogue item"})))
+        (is (btu/eventually-enabled? {:tag :button :fn/text "Update catalogue item"}))))
 
     (testing "edit buttons are not visible"
       (btu/scroll-and-click {:fn/text "Own organization only"})
@@ -3704,7 +3746,7 @@
       (is (= [{"rems-no-rows" "No rows"}]
              (slurp-rows :blacklist)))
       (btu/fill-human :blacklist-user "baddie\n")
-      (btu/fill-human :blacklist-comment "This is a test.")
+      (-> (btu/fill-human :blacklist-comment "This is a test.") (btu/context-assoc-element-text!))
       (btu/screenshot "test-blacklist-1")
       (btu/scroll-and-click :blacklist-add)
       (is (btu/eventually-visible? {:css ".alert-success"}))
@@ -3716,7 +3758,7 @@
                "userid" "baddie"
                "email" "bruce@example.com"
                "added-by" "Owner"
-               "comment" "This is a test."
+               "comment" (btu/context-getx :blacklist-comment)
                "commands" "Remove"}]
              (mapv #(dissoc % "added-at") (slurp-rows :blacklist)))))
     (testing "check entry on blacklist page"
@@ -3729,7 +3771,7 @@
                "userid" "baddie"
                "email" "bruce@example.com"
                "added-by" "Owner"
-               "comment" "This is a test."
+               "comment" (btu/context-getx :blacklist-comment)
                "commands" "Remove"}]
              (mapv #(dissoc % "added-at") (slurp-rows :blacklist)))))
     (testing "remove entry"
