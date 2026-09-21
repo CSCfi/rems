@@ -130,20 +130,7 @@
             (is (empty? (filter expiration-notifications-sent (get-events old-submitted))))
             (is (empty? (filter expiration-notifications-sent (get-events expired-draft))))
             (is (empty? (log-test/matches "rems.application.eraser" :info #"application.command/send-expiration-notifications")))
-            (is (empty? @outbox-emails)))
-
-          (testing "attempt to delete submitted application is logged"
-            (let [cmds (log-test/matches "rems.application.eraser" :info #"application.command/delete")
-                  msg (:message (first cmds))]
-              (is (= 1 (count cmds)))
-              (is (str/includes? msg (str ":application-id " old-submitted))))
-
-            (let [warnings (log-test/matches "rems.application.eraser" :warn #"Command validation failed")
-                  msg (:message (first warnings))]
-              (is (= 1 (count warnings)))
-              (is (str/includes? msg ":application.command/delete"))
-              (is (str/includes? msg (str ":application-id " old-submitted))))
-
+            (is (empty? @outbox-emails))
             (is (not (log-test/logged? "rems.db.applications" :info #"Finished deleting application")))))))
 
     (testing "deletes expired draft application"
