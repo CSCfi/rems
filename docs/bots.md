@@ -81,7 +81,7 @@ of two commands:
 NB: `:expirer` role must be granted to Expirer bot. This can be done via CLI,
 using the command `grant-role`.
 
-NB: currently only draft application removal is supported by REMS.
+The Expirer bot can be configured for all application states.
 
 Example of creating the bot user with the API.
 
