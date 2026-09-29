@@ -6,11 +6,15 @@ have notable changes.
 
 ## Unreleased
 
-Changes since v2.39.1
+Changes since v2.40
+
+## v2.40 "Länsilinkki" 2026-09-29
 
 ### Additions
-- Added applicant UI for catalogue item hierarchy (see previous release note), and a configuration option to switch the feature on. (#3460, #3473). See (manual/owner.md)[manual/owner.md] and 
-- Search feature now includes the fields `last-activity`, `last-applying-user-activity` and `first-submitted`, which support range queries (#2348, #2682). See (manual/search.md)[manual/search.md]
+- Catalogue items can now be defined in a hierarchical relationship where a **top-level catalogue item** may reference a number of **complementary catalogue items** in a parent-child-type relationship, where the complementary catalogue item must be applied for together with the top-level item. The relationship is administered under the catalogue item page. Toggle the config key `:enable-catalogue-hierarchy` to `true`to use the feature. See [manual/owner.md](manual/owner.md) for more. (#3412, #3460, #3473)
+- Search feature now includes the fields `last-activity`, `last-applying-user-activity` and `first-submitted`, which support range queries (#2348, #2682). See [manual/search.md](manual/search.md) for examples.
+- Added the `:external-frontend-url` configuration option. When configured, applicant-facing links in outbound emails will use this URL instead of the default REMS frontend URL.
+- REMS now supports PostgreSQL version 18. (#3451)
 
 ### Fixes
 - Fixed an issue where the application page would get stuck on a loop, displaying the "loading" indicator, when there was an error while creating the application (#3460).
@@ -19,11 +23,8 @@ Changes since v2.39.1
 
 ### Additions
 
-- REMS now supports PostgreSQL version 18. (#3451)
-- Added the `:external-frontend-url` configuration option. When configured, applicant-facing links in outbound emails will use this URL instead of the default REMS frontend URL.
 - Added a custom action button for approved applications. The button is defined in extra translations. (#3413)
 - Upgraded several libraries (#3421)
-- Catalogue items can now be defined in a hierarchical relationship where a **top-level catalogue item** may reference a number of **complementary catalogue items** in a parent-child-type relationship, where the complementary catalogue item must be applied for together with the top-level item (applicant UI forthcoming). The relationship is administered under the catalogue item page. (#3412)
 
 ## v2.39 "Jätkäsaarenlaituri" 2026-01-21
 
