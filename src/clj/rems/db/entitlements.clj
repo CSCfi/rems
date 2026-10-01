@@ -117,6 +117,14 @@
               [userid (set (map :resourceid rows))]))
        (into {})))
 
+(defn delete-entitlements!
+  "Delete the entitlement permanently."
+  [application-id]
+  (when-let [entitlements (seq (db/get-entitlements-for-deletion {:application application-id}))]
+    (doseq [{:keys [id userid resid]} entitlements]
+      (log/infof "Deleting entitlements of application %d: entitlement-id %d, user %s, resource-id %d"  application-id id userid resid)
+      (db/delete-entitlement! {:id id}))))
+
 (defn update-entitlements-for-application
   "If the given application is approved, licenses accepted etc. add an entitlement to the db
   and call the entitlement REST callback (if defined). Likewise if a resource is removed, member left etc.
