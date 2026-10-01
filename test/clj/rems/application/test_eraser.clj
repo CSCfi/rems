@@ -116,9 +116,9 @@
           (is (not (log-test/logged? "rems.application.eraser" :warn "Cannot process applications, because user expirer-bot does not exist")))
           (is (log-test/logged? "rems.application.eraser" :info "No applications to process")))))
 
-    (testing "cannot remove other than draft applications"
+    (testing "does not remove applications in other states than configured"
       (with-redefs [rems.db.outbox/puts! (fn [emails] (swap! outbox-emails concat emails))
-                    env {:application-expiration {:application.state/submitted {:delete-after "P90D"}}}]
+                    env {:application-expiration {:application.state/closed {:delete-after "P90D"}}}]
         (log-test/with-log
           (testing "processing applications does not delete applications"
             (is (= #{draft old-submitted expired-draft} (set (get-all-application-ids "alice"))))
