@@ -2056,38 +2056,23 @@
                          (build-application-view [dummy-created-event])))))))
 
 (deftest test-soft-delete
-  (testing "without configuration"
+  (testing ""
     (is (= {:application/id app-id
             :event/actor handler-user-id
             :event/time test-time
             :event/type :application.event/soft-deleted}
            (ok-command {:type :application.command/soft-delete
                         :actor handler-user-id}
-                       (build-application-view [dummy-created-event])))
-        "handler is allowed to soft-delete a draft")
-    (is (= {:errors [{:type :disallowed-state
-                      :allowed-states #{:application.state/draft}
-                      :application/state :application.state/submitted}]}
-           (fail-command {:type :application.command/soft-delete
-                          :actor handler-user-id}
-                         (build-application-view [dummy-created-event
-                                                  dummy-submitted-event])))
-        "it is not allowed to soft-delete a submitted application"))
-
-  (testing "with application expiration configured"
-    (let [get-config (constantly {:application-expiration
-                                  {:application.state/closed {:delete-after "P90D"
-                                                              :reminder-before "P7D"}}})]
-      (is (= {:application/id app-id
-              :event/actor handler-user-id
-              :event/time test-time
-              :event/type :application.event/soft-deleted}
-             (ok-command {:type :application.command/soft-delete
-                          :actor handler-user-id}
-                         (build-application-view [dummy-created-event
-                                                  dummy-submitted-event
-                                                  dummy-closed-event])
-                         (assoc command-injections :get-config get-config)))))))
+                       (build-application-view [dummy-created-event]))))
+    (is (= {:application/id app-id
+            :event/actor handler-user-id
+            :event/time test-time
+            :event/type :application.event/soft-deleted}
+           (ok-command {:type :application.command/soft-delete
+                        :actor handler-user-id}
+                       (build-application-view [dummy-created-event
+                                                dummy-submitted-event
+                                                dummy-closed-event]))))))
 
 (deftest test-handle-command
   (let [application (build-application-view [dummy-created-event])
@@ -2276,7 +2261,9 @@
 
 (deftest send-expiration-notifications-command
   (testing "fails if application is not a draft"
-    (is (= {:errors [{:type :only-draft-may-be-expired}]}
+    (is (= {:errors [{:type :disallowed-state
+                      :allowed-states #{:application.state/draft}
+                      :application/state :application.state/submitted}]}
            (fail-command {:type :application.command/send-expiration-notifications
                           :actor "expirer-bot"
                           :expires-on test-time}
@@ -2291,7 +2278,22 @@
            (ok-command {:type :application.command/send-expiration-notifications
                         :actor "expirer-bot"
                         :expires-on (time/plus test-time (time/hours 1))}
-                       (build-application-view [dummy-created-event]))))))
+                       (build-application-view [dummy-created-event])))))
+  (testing "when configured, expiration notifications can be sent for other states"
+    (is (= {:event/type :application.event/expiration-notifications-sent
+            :event/time test-time
+            :event/actor "expirer-bot"
+            :application/id app-id
+            :application/expires-on (time/plus test-time (time/hours 1))}
+           (ok-command {:type :application.command/send-expiration-notifications
+                        :actor "expirer-bot"
+                        :expires-on (time/plus test-time (time/hours 1))}
+                       (build-application-view [dummy-created-event dummy-submitted-event dummy-closed-event])
+                       (assoc command-injections
+                              :get-config
+                              (constantly {:application-expiration
+                                           {:application.state/closed {:delete-after "P90D"
+                                                                       :reminder-before "P7D"}}})))))))
 
 (defn- add-processing-states [injections {:keys [workflow-id]}]
   (-> injections
