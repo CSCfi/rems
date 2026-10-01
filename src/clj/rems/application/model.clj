@@ -255,7 +255,7 @@
 
 (defmethod application-base-view :application.event/deleted
   [application _event]
-  application)
+  (assoc application :application/state :application.state/deleted))
 
 (defmethod application-base-view :application.event/soft-deleted
   [application _event]

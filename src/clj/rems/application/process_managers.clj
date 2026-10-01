@@ -61,13 +61,15 @@
                      :application.event/licenses-accepted
                      :application.event/member-removed
                      :application.event/resources-changed
-                     :application.event/revoked}
+                     :application.event/revoked
+                     :application.event/deleted}
                    (:event/type event))
     (let [application (rems.db.applications/get-application-internal (:application/id event))]
       ;; performance improvement 2: only need to check entitlements in the "end states"
       (when (contains? #{:application.state/approved
                          :application.state/closed
-                         :application.state/revoked}
+                         :application.state/revoked
+                         :application.state/deleted}
                        (:application/state application))
         (rems.db.entitlements/update-entitlements-for-application application event)))))
 
