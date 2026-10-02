@@ -4,6 +4,7 @@
             [clj-time.core :as time]
             [clojure.set :refer [union]]
             [clojure.tools.logging :as log]
+            [medley.core :refer [assoc-some]]
             [mount.core :as mount]
             [rems.common.application-util :as application-util]
             [rems.config :refer [env]]
@@ -116,6 +117,14 @@
               [userid (set (map :resourceid rows))]))
        (into {})))
 
+(defn delete-entitlements!
+  "Delete the entitlement permanently."
+  [application-id]
+  (when-let [entitlements (seq (db/get-entitlements-for-deletion {:application application-id}))]
+    (doseq [{:keys [id userid resid]} entitlements]
+      (log/infof "Deleting entitlements of application %d: entitlement-id %d, user %s, resource-id %d"  application-id id userid resid)
+      (db/delete-entitlement! {:id id}))))
+
 (defn update-entitlements-for-application
   "If the given application is approved, licenses accepted etc. add an entitlement to the db
   and call the entitlement REST callback (if defined). Likewise if a resource is removed, member left etc.
@@ -158,5 +167,10 @@
       (doseq [[userid resource-ids] entitlements-to-remove]
         (revoke-entitlements! application-id userid resource-ids actor event-time)))))
 
-(defn get-entitlements [user-id]
-  (db/get-entitlements {:user user-id :active-at (time/now)}))
+(defn get-entitlements
+  [{:keys [user-id application-id active-at]
+    :or {active-at (time/now)}}]
+  (db/get-entitlements (assoc-some {}
+                                   :user user-id
+                                   :application application-id
+                                   :active-at active-at)))
