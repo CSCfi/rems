@@ -6,10 +6,23 @@ have notable changes.
 
 ## Unreleased
 
-Changes since v2.40
+Changes since v2.41
+
+### Additions
+- Reinstated all changes of v2.40: catalogue item hierarchy, new field in search index etc.
+- Removed restriction that hierarchical catalogue items must have the same workflow. (#3500)
+- Form labels can now have line breaks (#3481)
 
 ### Fixes
-- Removed restriction that hierarchical catalogue items must have the same workflow.  (#3500)
+- Fixed the catalogue page performance degradation (#3499)
+
+## v2.41 "Ruoholahdenranta" 2026-10-09
+
+### Fixes
+
+This release rolls back the changes introduced in v2.40 due to a performance regression in the catalogue page.
+
+v2.41 is functionally equivalent to v2.39.1
 
 ## v2.40 "Länsilinkki" 2026-09-29
 
