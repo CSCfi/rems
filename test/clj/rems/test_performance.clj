@@ -9,15 +9,17 @@
             [rems.config]
             [rems.db.applications]
             [rems.db.events]
+            [rems.db.test-data-users :refer [+fake-user-data+ +fake-users+]]
             [rems.db.user-settings]
-            [rems.db.test-data-users :refer [+fake-users+ +fake-user-data+]]
             [rems.email.template]
             [rems.locales]
             [rems.markdown]
             [rems.service.application]
             [rems.service.caches]
+            [rems.service.catalogue]
             [rems.service.test-data :as test-data]
             [rems.tempura]
+            [rems.testing-util :as testing-util]
             [rems.text])
   (:import [java.util Locale]))
 
@@ -86,6 +88,16 @@
                       :benchmark test-get-todos
                       :setup cached}])
     (println "cache size" (mm/measure rems.db.applications/all-applications-cache))))
+
+(defn benchmark-get-catalogue []
+  (let [test-get-catalogue-table #(doall (testing-util/with-user "alice"
+                                           (rems.service.catalogue/get-catalogue-table)))
+        test-get-catalogue-tree #(doall (testing-util/with-user "alice"
+                                          (rems.service.catalogue/get-catalogue-tree)))]
+    (run-benchmarks [{:name "get-catalogue-table"
+                      :benchmark test-get-catalogue-table}
+                     {:name "get-catalogue-tree"
+                      :benchmark test-get-catalogue-tree}])))
 
 (defn benchmark-get-application []
   (let [test-get-application #(rems.db.applications/get-application-for-user "developer" 12)]
@@ -305,5 +317,12 @@
                              (mapv (juxt :name :size :statistics)))})]
       (println row)))
 
+  (benchmark-get-catalogue)
+
   (prof/clear-results)
+
+  (prof/profile
+   ;; replace with the function call you need to profile
+   (benchmark-get-catalogue))
+
   (prof/serve-ui 8080))
