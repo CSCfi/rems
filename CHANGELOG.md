@@ -6,7 +6,26 @@ have notable changes.
 
 ## Unreleased
 
-Changes since v2.39.1
+Changes since v2.41
+
+## v2.41 "Ruoholahdenranta" 2026-10-09
+
+### Fixes
+
+This release rolls back the changes introduced in v2.40 due to a performance regression in the catalogue page.
+
+v2.41 is functionally equivalent to v2.39.1
+
+## ~~v2.40 "Länsilinkki" 2026-09-29~~
+
+### ~~Additions~~
+- ~~Catalogue items can now be defined in a hierarchical relationship where a **top-level catalogue item** may reference a number of **complementary catalogue items** in a parent-child-type relationship, where the complementary catalogue item must be applied for together with the top-level item. The relationship is administered under the catalogue item page. Toggle the config key `:enable-catalogue-hierarchy` to `true`to use the feature. See [manual/owner.md](manual/owner.md) for more. (#3412, #3460, #3473)~~
+- ~~Search feature now includes the fields `last-activity`, `last-applying-user-activity` and `first-submitted`, which support range queries (#2348, #2682). See [manual/search.md](manual/search.md) for examples.~~
+- ~~Added the `:external-frontend-url` configuration option. When configured, applicant-facing links in outbound emails will use this URL instead of the default REMS frontend URL.~~
+- ~~REMS now supports PostgreSQL version 18. (#3451)~~
+
+### ~~Fixes~~
+- ~~Fixed an issue where the application page would get stuck on a loop, displaying the "loading" indicator, when there was an error while creating the application (#3460).~~
 
 ## v2.39.1 "Jätkäsaarenlaituri +1" 2026-04-23
 
