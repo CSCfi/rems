@@ -65,19 +65,12 @@
         test-get-my-applications #(doall (rems.db.applications/get-my-applications-full "alice"))
         ;; developer can view much more applications than alice, so it takes longer to filter reviews from all apps
         test-get-todos #(doall (rems.service.application/get-todos "developer"))
-        no-cache (fn []
-                   (mount/stop #'rems.db.applications/all-applications-cache
-                               #'rems.db.events/low-level-events-cache)
-                   (rems.service.caches/reset-all-caches!))
         cached (fn []
                  (mount/stop #'rems.db.applications/all-applications-cache #'rems.db.events/low-level-events-cache)
                  (mount/start #'rems.db.applications/all-applications-cache #'rems.db.events/low-level-events-cache)
                  (rems.service.caches/start-all-caches!)
                  (test-get-all-unrestricted-applications))]
-    (run-benchmarks [{:name "get-all-unrestricted-applications, no cache"
-                      :benchmark test-get-all-unrestricted-applications
-                      :setup no-cache}
-                     {:name "get-all-unrestricted-applications, cached"
+    (run-benchmarks [{:name "get-all-unrestricted-applications, cached"
                       :benchmark test-get-all-unrestricted-applications
                       :setup cached}
                      {:name "get-all-applications, cached"
