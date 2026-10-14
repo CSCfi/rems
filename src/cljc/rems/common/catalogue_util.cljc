@@ -92,6 +92,13 @@
                                  :resource-id 3
                                  :children [{:catalogue-item/id 1}]}]))))
 
+(def ->catalogue-item-id
+  (comp (partial hash-map :catalogue-item/id) :id))
+
+(deftest test-->catalogue-item-id
+  (is (= {:catalogue-item/id 1}
+         (->catalogue-item-id {:id 1
+                               :children [{:catalogue-item/id 2}]}))))
 (def top-level-item-ids
   (comp (keep :part-of)
         (map :catalogue-item/id)))
