@@ -272,6 +272,7 @@
     (command-endpoint :application.command/review application-schema/ReviewCommand)
     (command-endpoint :application.command/revoke application-schema/RevokeCommand)
     (command-endpoint :application.command/save-draft application-schema/SaveDraftCommand)
+    (command-endpoint :application.command/soft-delete application-schema/SoftDeleteCommand)
     (command-endpoint :application.command/submit application-schema/SubmitCommand)
     (command-endpoint :application.command/uninvite-member application-schema/UninviteMemberCommand)
     (command-endpoint :application.command/vote application-schema/VoteCommand)

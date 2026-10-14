@@ -1,7 +1,10 @@
 (ns rems
-  (:require [clojure.pprint :refer [pprint]]
+  (:require [clojure.data]
+            [clojure.pprint :refer [pprint]]
             [clojure.tools.namespace.repl :as repl]
             [kaocha.repl]
+            [mount.core :as mount]
+            [rems.config]
             [rems.main]
             [rems.repl-utils]))
 
@@ -34,3 +37,14 @@
   (rems.repl-utils/pptransit))
 
 (def kaocha kaocha.repl/run)
+
+(defn stop-start-component [component]
+  (mount/stop component)
+  (mount/start component))
+
+(defn reload-config []
+  (let [before rems.config/env]
+    (stop-start-component #'rems.config/env)
+    (if-let [diff-after (second (clojure.data/diff before rems.config/env))]
+      diff-after
+      (println "No configuration changes were reloaded."))))

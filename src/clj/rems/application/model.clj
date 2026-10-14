@@ -255,7 +255,11 @@
 
 (defmethod application-base-view :application.event/deleted
   [application _event]
-  application)
+  (assoc application :application/state :application.state/deleted))
+
+(defmethod application-base-view :application.event/soft-deleted
+  [application _event]
+  (assoc application :application/state :application.state/soft-deleted))
 
 (defmethod application-base-view :application.event/expiration-notifications-sent
   [application _event]
@@ -319,6 +323,7 @@
     {:permission :application.command/review}
     {:permission :application.command/revoke}
     {:permission :application.command/save-draft}
+    {:permission :application.command/soft-delete}
     {:permission :application.command/submit}
     {:permission :application.command/uninvite-member}
     {:permission :application.command/vote}
@@ -358,6 +363,7 @@
     {:permission :application.command/vote}
     {:role :decider :permission :application.command/approve}
     {:role :decider :permission :application.command/reject}
+    {:role :decider :permission :application.command/soft-delete}
     {:role :expirer :permission :application.command/delete}
     {:role :expirer :permission :application.command/send-expiration-notifications}]))
 
@@ -619,6 +625,7 @@
                         :application.event/resources-changed
                         :application.event/returned
                         :application.event/revoked
+                        :application.event/soft-deleted
                         :application.event/submitted}]
     (is (= #{}
            (set/intersection sensitive-events public-events)))

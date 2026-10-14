@@ -8,6 +8,11 @@ have notable changes.
 
 Changes since v2.40
 
+### Additions 
+- Applications can now be soft-deleted (marked for deletion later). There is a new command `application.commands/soft-delete` that's available for users in the handler role (default workflow) or decider role (decider workflow). Owners are advised to refer to workflow settings if there is a need to restrict the command to certain application states. (#3478)
+- [Expirer Bot](docs/bots.md#expirer-bot) can now be configured for all application states, for example `application.state/soft-deleted` to finalize the deletion.
+
+
 ## v2.40 "Länsilinkki" 2026-09-29
 
 ### Additions

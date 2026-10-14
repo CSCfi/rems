@@ -3,7 +3,6 @@
 
   NB: An event manager should return an empty sequence (or `nil`) if it doesn't create new events itself."
   (:require [clojure.set :refer [difference]]
-            [rems.application.expirer-bot :as expirer-bot]
             [rems.common.application-util :as application-util]
             [rems.db.applications]
             [rems.db.attachments]
@@ -25,11 +24,13 @@
                                                     :comment (:application/comment event)})))
 
 (defn delete-applications
-  "The deleted event causes a side-effect that completely deletes the application."
+  "The deleted event causes a side-effect that completely deletes the application and the entitlements granted by it."
   [new-events]
-  (doseq [event new-events]
-    (when (= :application.event/deleted (:event/type event))
-      (rems.db.applications/delete-application! (:application/id event)))))
+  (doseq [{application-id :application/id
+           event-type :event/type} new-events]
+    (when (= :application.event/deleted event-type)
+      (rems.db.entitlements/delete-entitlements! application-id)
+      (rems.db.applications/delete-application! application-id))))
 
 (defn delete-orphan-attachments [application-id]
   (let [application (rems.db.applications/get-application-internal application-id)
@@ -61,13 +62,15 @@
                      :application.event/licenses-accepted
                      :application.event/member-removed
                      :application.event/resources-changed
-                     :application.event/revoked}
+                     :application.event/revoked
+                     :application.event/deleted}
                    (:event/type event))
     (let [application (rems.db.applications/get-application-internal (:application/id event))]
       ;; performance improvement 2: only need to check entitlements in the "end states"
       (when (contains? #{:application.state/approved
                          :application.state/closed
-                         :application.state/revoked}
+                         :application.state/revoked
+                         :application.state/deleted}
                        (:application/state application))
         (rems.db.entitlements/update-entitlements-for-application application event)))))
 

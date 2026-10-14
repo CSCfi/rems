@@ -381,3 +381,14 @@
                         :application/events
                         last
                         :invitation/token)}))
+
+(defn create-and-approve-application! [{:keys [catalogue-item-ids actor time handler] :as args}]
+  (let [app-id (create-application! args)]
+    (accept-licenses! {:application-id app-id
+                       :actor actor})
+    (submit-application (-> args
+                            (dissoc :catalogue-item-ids)
+                            (assoc :application-id app-id)))
+    (command! {:type :application.command/approve
+               :application-id app-id
+               :actor "handler"})))

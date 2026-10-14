@@ -104,7 +104,8 @@
    :last-applying-user-activity (-> app
                                     application-util/get-last-applying-user-event
                                     :event/time
-                                    ->lucene-date-str)})
+                                    ->lucene-date-str)
+   :workflow-id (-> app :application/workflow :workflow/id str)})
 
 (defn- index-application! [^IndexWriter writer app]
   (let [app-id (str (:application/id app))]

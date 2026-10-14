@@ -283,6 +283,7 @@
                           :reviewer-invited "%:event-actor% invited %:invited-user% to review the application."
                           :reviewer-joined "%:event-actor% accepted the invitation to review."
                           :revoked "%:event-actor% revoked the entitlement."
+                          :soft-deleted "The application is marked for deletion."
                           :submitted "%:event-actor% submitted the application for review."
                           :unknown "Unknown"
                           ;; Extra parameters for voted:
@@ -313,6 +314,7 @@
                           :rejected "Rejected"
                           :returned "Returned"
                           :revoked "Revoked"
+                          :soft-deleted "To be deleted"
                           :submitted "Applied"
                           :unknown "Unknown"}
                  :submitted "Sent"
@@ -384,6 +386,7 @@
              :review "Review"
              :revoke "Revoke entitlement"
              :save-draft "Save as draft"
+             :soft-delete "Mark to be deleted"
              ;; :send-expiration-notifications
              :submit "Send application"
              :uninvite-member "Uninvite member"

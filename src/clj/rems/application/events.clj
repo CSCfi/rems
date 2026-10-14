@@ -20,10 +20,12 @@
          :event/type (s/enum :application.event/attachments-redacted)
          :event/redacted-attachments [EventAttachment]
          :event/public s/Bool))
+
 (s/defschema ApplicantChangedEvent
   (assoc EventWithComment
          :event/type (s/enum :application.event/applicant-changed)
          :application/applicant schema-base/User))
+
 (s/defschema ApprovedEvent
   (assoc EventWithComment
          ;; single-value enums are supported by swagger, unlike s/eq.
@@ -31,19 +33,23 @@
          ;; the future
          :event/type (s/enum :application.event/approved)
          (s/optional-key :entitlement/end) DateTime))
+
 (s/defschema ClosedEvent
   (assoc EventWithComment
          :event/type (s/enum :application.event/closed)))
+
 (s/defschema CopiedFromEvent
   (assoc schema-base/EventBase
          :event/type (s/enum :application.event/copied-from)
          :application/copied-from {:application/id s/Int
                                    :application/external-id s/Str}))
+
 (s/defschema CopiedToEvent
   (assoc schema-base/EventBase
          :event/type (s/enum :application.event/copied-to)
          :application/copied-to {:application/id s/Int
                                  :application/external-id s/Str}))
+
 (s/defschema CreatedEvent
   (assoc schema-base/EventBase
          :event/type (s/enum :application.event/created)
@@ -54,11 +60,13 @@
          :application/forms [{:form/id schema-base/FormId}]
          :workflow/id s/Int
          :workflow/type (apply s/enum application-util/workflow-types)))
+
 (s/defschema DecidedEvent
   (assoc EventWithComment
          :event/type (s/enum :application.event/decided)
          :application/request-id s/Uuid
          :application/decision (s/enum :approved :rejected)))
+
 (s/defschema DeciderInvitedEvent
   (assoc EventWithComment
          :event/type (s/enum :application.event/decider-invited)
@@ -66,19 +74,23 @@
                                :email s/Str}
          ;; TODO allocate request-id already here?
          :invitation/token s/Str))
+
 (s/defschema DeciderJoinedEvent
   (assoc schema-base/EventBase
          :event/type (s/enum :application.event/decider-joined)
          :application/request-id s/Uuid
          :invitation/token s/Str))
+
 (s/defschema DecisionRequestedEvent
   (assoc EventWithComment
          :event/type (s/enum :application.event/decision-requested)
          :application/request-id s/Uuid
          :application/deciders [schema-base/UserId]))
+
 (s/defschema DeletedEvent
   (assoc schema-base/EventBase
          :event/type (s/enum :application.event/deleted)))
+
 (s/defschema DraftSavedEvent
   (assoc schema-base/EventBase
          :event/type (s/enum :application.event/draft-saved)
@@ -86,57 +98,70 @@
                                      :field schema-base/FieldId
                                      :value schema-base/FieldValue}]
          (s/optional-key :application/duo-codes) [schema-base/DuoCode]))
+
 (s/defschema ExternalIdAssignedEvent
   (assoc schema-base/EventBase
          :event/type (s/enum :application.event/external-id-assigned)
          :application/external-id s/Str))
+
 (s/defschema ExpirationNotificationsSentEvent
   (assoc schema-base/EventBase
          :event/type (s/enum :application.event/expiration-notifications-sent)
          :application/expires-on DateTime))
+
 (s/defschema LicensesAcceptedEvent
   (assoc schema-base/EventBase
          :event/type (s/enum :application.event/licenses-accepted)
          :application/accepted-licenses #{s/Int}))
+
 (s/defschema LicensesAddedEvent
   (assoc EventWithComment
          :event/type (s/enum :application.event/licenses-added)
          :application/licenses [{:license/id s/Int}]))
+
 (s/defschema MemberAddedEvent
   (assoc schema-base/EventBase
          :event/type (s/enum :application.event/member-added)
          :application/member schema-base/User))
+
 (s/defschema MemberInvitedEvent
   (assoc schema-base/EventBase
          :event/type (s/enum :application.event/member-invited)
          :application/member {:name s/Str
                               :email s/Str}
          :invitation/token s/Str))
+
 (s/defschema MemberJoinedEvent
   (assoc schema-base/EventBase
          :event/type (s/enum :application.event/member-joined)
          :invitation/token s/Str))
+
 (s/defschema MemberRemovedEvent
   (assoc EventWithComment
          :event/type (s/enum :application.event/member-removed)
          :application/member schema-base/User))
+
 (s/defschema MemberUninvitedEvent
   (assoc EventWithComment
          :event/type (s/enum :application.event/member-uninvited)
          :application/member {:name s/Str
                               :email s/Str}))
+
 (s/defschema ProcessingStateChangedEvent
   (assoc EventWithComment
          :event/type (s/enum :application.event/processing-state-changed)
          :event/public s/Bool
          :application/processing-state {:processing-state/value s/Str}))
+
 (s/defschema RejectedEvent
   (assoc EventWithComment
          :event/type (s/enum :application.event/rejected)))
+
 (s/defschema RemarkedEvent
   (assoc EventWithComment
          :event/type (s/enum :application.event/remarked)
          :event/public s/Bool))
+
 (s/defschema ResourcesChangedEvent
   (assoc EventWithComment
          :event/type (s/enum :application.event/resources-changed)
@@ -144,21 +169,26 @@
          :application/resources [{:catalogue-item/id s/Int
                                   :resource/ext-id s/Str}]
          :application/licenses [{:license/id s/Int}]))
+
 (s/defschema ReturnedEvent
   (assoc EventWithComment
          :event/type (s/enum :application.event/returned)))
+
 (s/defschema ReviewedEvent
   (assoc EventWithComment
          :event/type (s/enum :application.event/reviewed)
          :application/request-id s/Uuid))
+
 (s/defschema RevokedEvent
   (assoc EventWithComment
          :event/type (s/enum :application.event/revoked)))
+
 (s/defschema ReviewRequestedEvent
   (assoc EventWithComment
          :event/type (s/enum :application.event/review-requested)
          :application/request-id s/Uuid
          :application/reviewers [schema-base/UserId]))
+
 (s/defschema ReviewerInvitedEvent
   (assoc EventWithComment
          :event/type (s/enum :application.event/reviewer-invited)
@@ -166,14 +196,21 @@
                                 :email s/Str}
          ;; TODO allocate request-id already here?
          :invitation/token s/Str))
+
 (s/defschema ReviewerJoinedEvent
   (assoc schema-base/EventBase
          :event/type (s/enum :application.event/reviewer-joined)
          :application/request-id s/Uuid
          :invitation/token s/Str))
+
+(s/defschema SoftDeletedEvent
+  (assoc schema-base/EventBase
+         :event/type (s/enum :application.event/soft-deleted)))
+
 (s/defschema SubmittedEvent
   (assoc schema-base/EventBase
          :event/type (s/enum :application.event/submitted)))
+
 (s/defschema VotedEvent
   (assoc EventWithComment
          :event/type (s/enum :application.event/voted)
@@ -212,6 +249,7 @@
    :application.event/review-requested ReviewRequestedEvent
    :application.event/reviewer-invited ReviewerInvitedEvent
    :application.event/reviewer-joined ReviewerJoinedEvent
+   :application.event/soft-deleted SoftDeletedEvent
    :application.event/submitted SubmittedEvent
    :application.event/voted VotedEvent})
 
