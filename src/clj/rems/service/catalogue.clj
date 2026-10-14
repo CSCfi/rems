@@ -4,6 +4,7 @@
             [rems.common.catalogue-util :refer [->catalogue-item-id]]
             [rems.common.roles :as roles]
             [rems.common.util :refer [apply-filters build-dags]]
+            [rems.config]
             [rems.db.applications]
             [rems.db.catalogue]
             [rems.db.category]
@@ -83,17 +84,10 @@
 (defn- join-dependencies [item & [opts]]
   (let [join-organization? (:join-organization? opts true)
         expand-names? (:expand-names? opts false)
-        resource (rems.db.resource/get-resource (:resource-id item))
-        parent (->> (dependencies/get-all-dependents {:catalogue-item/id (:id item)})
-                    (filter :catalogue-item/id)
-                    first)]
+        resource (rems.db.resource/get-resource (:resource-id item))]
     (cond-> item
       true (update-existing :categories rems.db.category/enrich-categories)
       true (assoc :resid (:resid resource))
-
-      (and (empty? (:children item))
-           (some? parent))
-      (assoc :part-of parent)
 
       join-organization? rems.db.organizations/join-organization
 
@@ -109,17 +103,35 @@
                  :resid resource}]
     (apply-filters (remove-vals nil? filters))))
 
+(defn hierarchy-lookup
+  "Create a lookup map for what complementary items belong to which top-level item"
+  [catalogue-items]
+  (reduce (fn [acc top-level-item]
+            (reduce (fn [acc child]
+                      (assoc acc (:catalogue-item/id child) (->catalogue-item-id top-level-item)))
+                    acc
+                    (:children top-level-item)))
+          {}
+          catalogue-items))
+
 (defn get-catalogue-items
   {:arglists '([& [{:keys [archived enabled expand-names? expired join-organization? resource]}]])}
   [& [opts]]
-  (->> (rems.db.catalogue/get-catalogue-items)
-       (eduction (map #(join-dependencies % opts))
-                 (query-filter (merge {:archived false}
-                                      opts
-                                      (when-not (apply roles/has-roles? roles/+admin-read-roles+)
+  (let [catalogue-items (rems.db.catalogue/get-catalogue-items)
+        lookup (when (:enable-catalogue-hierarchy rems.config/env)
+                 (hierarchy-lookup catalogue-items))
+        join-hierarchy (if lookup
+                         (map #(medley.core/assoc-some % :part-of (lookup (:id %))))
+                         identity)]
+    (->> catalogue-items
+         (eduction (map #(join-dependencies % opts))
+                   join-hierarchy
+                   (query-filter (merge {:archived false}
+                                        opts
+                                        (when-not (apply roles/has-roles? roles/+admin-read-roles+)
                                         ;; only admins get enabled and disabled items
-                                        {:enabled true}))))
-       seq))
+                                          {:enabled true}))))
+         seq)))
 
 (defn get-catalogue-item
   {:arglists '([id & [{:keys [expand-names? join-organization?]}]])}
