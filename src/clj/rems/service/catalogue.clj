@@ -1,6 +1,7 @@
 (ns rems.service.catalogue
   (:require [clojure.set :as set]
             [medley.core :refer [assoc-some remove-vals update-existing]]
+            [rems.common.catalogue-util :refer [->catalogue-item-id]]
             [rems.common.roles :as roles]
             [rems.common.util :refer [apply-filters build-dags]]
             [rems.db.applications]
@@ -24,8 +25,7 @@
 
 (defn validate-children! [{children :children, parent-wfid :wfid, parent-id :id, :as _command}]
   (when (seq children)
-    (let [->catalogue-item-id (comp (partial hash-map :catalogue-item/id) :id)
-          child-catalogue-items (sequence (comp (map :catalogue-item/id)
+    (let [child-catalogue-items (sequence (comp (map :catalogue-item/id)
                                                 (map rems.db.catalogue/get-catalogue-item))
                                           children)]
       (or (invalid-items->error (->> child-catalogue-items
