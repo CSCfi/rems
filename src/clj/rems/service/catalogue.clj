@@ -15,6 +15,16 @@
             [rems.service.dependencies :as dependencies]
             [rems.service.util :as util]))
 
+(defn hierarchy-lookup
+  "Create a lookup map for what complementary items belong to which top-level item"
+  [catalogue-items]
+  (reduce (fn [acc top-level-item]
+            (reduce (fn [acc child]
+                      (assoc acc (:catalogue-item/id child) (->catalogue-item-id top-level-item)))
+                    acc
+                    (:children top-level-item)))
+          {}
+          catalogue-items))
 
 (defn- invalid-items->error
   "Create error response from `invalid-catalogue-items`, of type `error-type`"
@@ -28,7 +38,8 @@
   (when (seq children)
     (let [child-catalogue-items (sequence (comp (map :catalogue-item/id)
                                                 (map rems.db.catalogue/get-catalogue-item))
-                                          children)]
+                                          children)
+          lookup (hierarchy-lookup (rems.db.catalogue/get-catalogue-items))]
       (or (invalid-items->error (->> child-catalogue-items
                                      (into #{} (map ->catalogue-item-id))
                                      (set/difference (set children)))
@@ -54,12 +65,10 @@
                                           child-catalogue-items)
                                 :t.administration.errors/unbundlable-workflow-id)
 
-          (invalid-items->error (eduction (mapcat dependencies/get-all-dependents)
-                                          (filter :catalogue-item/id)
+          (invalid-items->error (eduction (keep (comp lookup :catalogue-item/id))
                                           (remove (comp #{parent-id} :catalogue-item/id))
                                           children)
                                 :t.administration.errors/in-use-by)))))
-
 
 (defn create-catalogue-item! [{:keys [archived categories children enabled form localizations organization resid start wfid] :as command}]
   (util/check-allowed-organization! organization)
@@ -107,16 +116,7 @@
                  :resid resource}]
     (apply-filters (remove-vals nil? filters))))
 
-(defn hierarchy-lookup
-  "Create a lookup map for what complementary items belong to which top-level item"
-  [catalogue-items]
-  (reduce (fn [acc top-level-item]
-            (reduce (fn [acc child]
-                      (assoc acc (:catalogue-item/id child) (->catalogue-item-id top-level-item)))
-                    acc
-                    (:children top-level-item)))
-          {}
-          catalogue-items))
+
 
 (defn join-hierarchy
   [catalogue-items]
