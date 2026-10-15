@@ -2,6 +2,7 @@
   (:require [clojure.set :as set]
             [medley.core :refer [assoc-some remove-vals update-existing]]
             [rems.common.catalogue-util :refer [->catalogue-item-id]]
+            [rems.common.dependency]
             [rems.common.roles :as roles]
             [rems.common.util :refer [apply-filters build-dags]]
             [rems.config]
@@ -28,7 +29,8 @@
   (when (seq children)
     (let [child-catalogue-items (sequence (comp (map :catalogue-item/id)
                                                 (map rems.db.catalogue/get-catalogue-item))
-                                          children)]
+                                          children)
+          dependency-graph (dependencies/db-dependency-graph)]
       (or (invalid-items->error (->> child-catalogue-items
                                      (into #{} (map ->catalogue-item-id))
                                      (set/difference (set children)))
@@ -54,12 +56,11 @@
                                           child-catalogue-items)
                                 :t.administration.errors/unbundlable-workflow-id)
 
-          (invalid-items->error (eduction (mapcat dependencies/get-all-dependents)
+          (invalid-items->error (eduction (mapcat (partial rems.common.dependency/get-dependents dependency-graph))
                                           (filter :catalogue-item/id)
                                           (remove (comp #{parent-id} :catalogue-item/id))
                                           children)
                                 :t.administration.errors/in-use-by)))))
-
 
 (defn create-catalogue-item! [{:keys [archived categories children enabled form localizations organization resid start wfid] :as command}]
   (util/check-allowed-organization! organization)
@@ -188,7 +189,8 @@
       (util/check-allowed-organization! organization))
 
     (or
-     (validate-children! (merge command {:wfid (:wfid target-item)}))
+     (when (:enable-catalogue-hierarchy rems.config/env)
+       (validate-children! (merge command {:wfid (:wfid target-item)})))
      (do
        (rems.db.catalogue/edit-catalogue-item! id {:categories categories
                                                    :children children

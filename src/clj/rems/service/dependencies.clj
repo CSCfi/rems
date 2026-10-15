@@ -107,6 +107,11 @@
         (remove :archived)
         (dep/get-all-dependents (db-dependency-graph) item)))
 
+(defn get-dependents [item]
+  (into #{}
+        (remove :archived)
+        (dep/get-dependents (db-dependency-graph) item)))
+
 (defn- archive-errors
   "Return errors if given item is depended on by non-archived items"
   [item]
