@@ -8,6 +8,7 @@
             [rems.common.util :refer [recursive-keys to-keyword]]
             [rems.config]
             [rems.db.applications]
+            [rems.db.catalogue]
             [rems.db.events]
             [rems.db.test-data-users :refer [+fake-user-data+ +fake-users+]]
             [rems.db.user-settings]
@@ -17,6 +18,7 @@
             [rems.service.application]
             [rems.service.caches]
             [rems.service.catalogue]
+            [rems.service.dependencies :as dependencies]
             [rems.service.test-data :as test-data]
             [rems.tempura]
             [rems.testing-util :as testing-util]
@@ -279,6 +281,10 @@
                                 (map count)
                                 (reduce + 0))})))
 
+(defn benchmark-dependency-graph []
+  (run-benchmarks [{:name "db-dependency-tree"
+                    :benchmark #(doall (dependencies/db-dependency-graph))}]))
+
 (comment
   (benchmark-get-events)
   (benchmark-get-all-applications)
@@ -317,7 +323,16 @@
                              (mapv (juxt :name :size :statistics)))})]
       (println row)))
 
+  (let [catalogue-items (seq (rems.db.catalogue/get-catalogue-items))]
+    (println "")
+    (println "Catalogue size")
+    (println (count catalogue-items) "catalogue items, of which")
+    (println "•" (count (keep :children catalogue-items)) "are top-level items")
+    (println "•" (count (mapcat :children catalogue-items)) "are complementary items"))
+
   (benchmark-get-catalogue)
+
+  (benchmark-dependency-graph)
 
   (prof/clear-results)
 
