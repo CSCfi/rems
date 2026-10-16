@@ -1,8 +1,11 @@
 (ns rems.service.catalogue
   (:require [clojure.set :as set]
             [medley.core :refer [assoc-some remove-vals update-existing]]
+            [rems.common.catalogue-util :refer [->catalogue-item-id]]
+            [rems.common.dependency]
             [rems.common.roles :as roles]
             [rems.common.util :refer [apply-filters build-dags]]
+            [rems.config]
             [rems.db.applications]
             [rems.db.catalogue]
             [rems.db.category]
@@ -24,10 +27,10 @@
 
 (defn validate-children! [{children :children, parent-wfid :wfid, parent-id :id, :as _command}]
   (when (seq children)
-    (let [->catalogue-item-id (comp (partial hash-map :catalogue-item/id) :id)
-          child-catalogue-items (sequence (comp (map :catalogue-item/id)
+    (let [child-catalogue-items (sequence (comp (map :catalogue-item/id)
                                                 (map rems.db.catalogue/get-catalogue-item))
-                                          children)]
+                                          children)
+          dependency-graph (dependencies/db-dependency-graph)]
       (or (invalid-items->error (->> child-catalogue-items
                                      (into #{} (map ->catalogue-item-id))
                                      (set/difference (set children)))
@@ -53,12 +56,11 @@
                                           child-catalogue-items)
                                 :t.administration.errors/unbundlable-workflow-id)
 
-          (invalid-items->error (eduction (mapcat dependencies/get-all-dependents)
+          (invalid-items->error (eduction (mapcat (partial rems.common.dependency/get-dependents dependency-graph))
                                           (filter :catalogue-item/id)
                                           (remove (comp #{parent-id} :catalogue-item/id))
                                           children)
                                 :t.administration.errors/in-use-by)))))
-
 
 (defn create-catalogue-item! [{:keys [archived categories children enabled form localizations organization resid start wfid] :as command}]
   (util/check-allowed-organization! organization)
@@ -80,20 +82,17 @@
      {:success true
       :id id})))
 
-(defn- join-dependencies [item & [opts]]
+(defn join-dependencies [item & [opts]]
   (let [join-organization? (:join-organization? opts true)
         expand-names? (:expand-names? opts false)
-        resource (rems.db.resource/get-resource (:resource-id item))
-        parent (->> (dependencies/get-all-dependents {:catalogue-item/id (:id item)})
-                    (filter :catalogue-item/id)
-                    first)]
+        join-parent (:join-parent-fn opts identity)
+        resource (rems.db.resource/get-resource (:resource-id item))]
     (cond-> item
       true (update-existing :categories rems.db.category/enrich-categories)
       true (assoc :resid (:resid resource))
 
-      (and (empty? (:children item))
-           (some? parent))
-      (assoc :part-of parent)
+      (:enable-catalogue-hierarchy rems.config/env)
+      join-parent
 
       join-organization? rems.db.organizations/join-organization
 
@@ -109,17 +108,38 @@
                  :resid resource}]
     (apply-filters (remove-vals nil? filters))))
 
+(defn hierarchy-lookup
+  "Create a lookup map for what complementary items belong to which top-level item"
+  [catalogue-items]
+  (reduce (fn [acc top-level-item]
+            (reduce (fn [acc child]
+                      (assoc acc (:catalogue-item/id child) (->catalogue-item-id top-level-item)))
+                    acc
+                    (:children top-level-item)))
+          {}
+          catalogue-items))
+
+(defn join-hierarchy
+  [catalogue-items]
+  (let [lookup (hierarchy-lookup catalogue-items)]
+    (fn join-parent [item]
+      (if (empty? (:children item))
+        (assoc-some item :part-of (lookup (:id item)))
+        item))))
+
 (defn get-catalogue-items
   {:arglists '([& [{:keys [archived enabled expand-names? expired join-organization? resource]}]])}
   [& [opts]]
-  (->> (rems.db.catalogue/get-catalogue-items)
-       (eduction (map #(join-dependencies % opts))
-                 (query-filter (merge {:archived false}
-                                      opts
-                                      (when-not (apply roles/has-roles? roles/+admin-read-roles+)
+  (let [catalogue-items (rems.db.catalogue/get-catalogue-items)]
+    (->> catalogue-items
+         (eduction (map #(join-dependencies % (merge {:join-parent-fn (join-hierarchy catalogue-items)}
+                                                     opts)))
+                   (query-filter (merge {:archived false}
+                                        opts
+                                        (when-not (apply roles/has-roles? roles/+admin-read-roles+)
                                         ;; only admins get enabled and disabled items
-                                        {:enabled true}))))
-       seq))
+                                          {:enabled true}))))
+         seq)))
 
 (defn get-catalogue-item
   {:arglists '([id & [{:keys [expand-names? join-organization?]}]])}
@@ -127,7 +147,8 @@
   (when-let [item (rems.db.catalogue/get-catalogue-item id)]
     (when (or (:enabled item)
               (apply roles/has-roles? roles/+admin-read-roles+)) ; only admins get enabled and disabled items
-      (join-dependencies item opts))))
+      (join-dependencies item (merge {:join-parent-fn (join-hierarchy (rems.db.catalogue/get-catalogue-items))}
+                                     opts)))))
 
 (defn get-catalogue-table
   {:arglists '([& [{:keys [join-organization?]}]])}
@@ -176,7 +197,8 @@
       (util/check-allowed-organization! organization))
 
     (or
-     (validate-children! (merge command {:wfid (:wfid target-item)}))
+     (when (:enable-catalogue-hierarchy rems.config/env)
+       (validate-children! (merge command {:wfid (:wfid target-item)})))
      (do
        (rems.db.catalogue/edit-catalogue-item! id {:categories categories
                                                    :children children

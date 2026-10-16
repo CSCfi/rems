@@ -332,3 +332,15 @@
               :errors [{:catalogue-items [{:catalogue-item/id (:id parent)}]
                         :type :t.administration.errors/in-use-by}]}
              (validate-children! (assoc item-1 :children [{:catalogue-item/id (:id child)}])))))))
+
+(deftest test-hierarchy-lookup
+  (is (= {1 {:catalogue-item/id 2}
+          4 {:catalogue-item/id 6}
+          5 {:catalogue-item/id 6}}
+         (rems.service.catalogue/hierarchy-lookup [{:id 1}
+                                                   {:id 2 :children [{:catalogue-item/id 1}]}
+                                                   {:id 3}
+                                                   {:id 4}
+                                                   {:id 5}
+                                                   {:id 6 :children [{:catalogue-item/id 4}
+                                                                     {:catalogue-item/id 5}]}]))))

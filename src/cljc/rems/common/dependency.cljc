@@ -29,6 +29,11 @@
   [g node]
   (dep/transitive-dependencies g node))
 
+(defn get-dependents
+  "Given dependency graph `g` returns the set of immediate dependents of `node`"
+  [g node]
+  (dep/immediate-dependents g node))
+
 (defn get-all-dependents
   "Given dependency graph `g` returns the set of all things which depend upon `node`, directly or transitively."
   [g node]
