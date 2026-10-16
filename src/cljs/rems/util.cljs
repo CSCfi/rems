@@ -131,23 +131,39 @@
 
 (def ^:private link-regex #"(?:http://|https://|www\.\w).*?(?=[^a-zA-Z0-9_/]*(?: |$))")
 
-(defn linkify
+(defn- linkify-links
   "Given a string, return a vector that, when concatenated, forms the
   original string, except that all substrings that resemble a link have
   been changed to hiccup links."
   [s]
+  (let [splitted (-> s
+                     (str/replace link-regex #(str "\t" %1 "\t"))
+                     (str/split "\t"))
+        link? (fn [s] (re-matches link-regex s))
+        text-to-url (fn [s] (if (re-matches #"^(http://|https://).*" s)
+                              s
+                              (str "http://" s)))]
+    (map #(if (link? %)
+            ^{:key %} [:a {:target :_blank :href (text-to-url %)} %]
+            %)
+         splitted)))
+
+(defn linkify
+  "Given a string, return a vector that, when concatenated, forms the
+  original string, except that all substrings that resemble a link have
+  been changed to hiccup links, and all newlines have been changed to
+  hiccup line breaks."
+  [s]
   (when s
-    (let [splitted (-> s
-                       (str/replace link-regex #(str "\t" %1 "\t"))
-                       (str/split "\t"))
-          link? (fn [s] (re-matches link-regex s))
-          text-to-url (fn [s] (if (re-matches #"^(http://|https://).*" s)
-                                s
-                                (str "http://" s)))]
-      (map #(if (link? %)
-              ^{:key %} [:a {:target :_blank :href (text-to-url %)} %]
-              %)
-           splitted))))
+(let [make-br (fn [] ^{:key (gensym "br")} [:br])]
+    (transduce
+     (map linkify-links)
+     (completing (fn [acc line]
+                   (concat acc
+                           (when-not (empty? acc)
+                             [(make-br)])
+                           line)))
+     (str/split s #"\n" -1)))))
 
 (defn visibility-ratio
   "Given a DOM node, return a number from 0.0 to 1.0 describing how much of an element is inside the viewport."
