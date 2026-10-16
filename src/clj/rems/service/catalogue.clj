@@ -82,13 +82,17 @@
      {:success true
       :id id})))
 
-(defn- join-dependencies [item & [opts]]
+(defn join-dependencies [item & [opts]]
   (let [join-organization? (:join-organization? opts true)
         expand-names? (:expand-names? opts false)
+        join-parent (:join-parent-fn opts identity)
         resource (rems.db.resource/get-resource (:resource-id item))]
     (cond-> item
       true (update-existing :categories rems.db.category/enrich-categories)
       true (assoc :resid (:resid resource))
+
+      (:enable-catalogue-hierarchy rems.config/env)
+      join-parent
 
       join-organization? rems.db.organizations/join-organization
 
@@ -115,18 +119,21 @@
           {}
           catalogue-items))
 
+(defn join-hierarchy
+  [catalogue-items]
+  (let [lookup (hierarchy-lookup catalogue-items)]
+    (fn join-parent [item]
+      (if (empty? (:children item))
+        (assoc-some item :part-of (lookup (:id item)))
+        item))))
+
 (defn get-catalogue-items
   {:arglists '([& [{:keys [archived enabled expand-names? expired join-organization? resource]}]])}
   [& [opts]]
-  (let [catalogue-items (rems.db.catalogue/get-catalogue-items)
-        lookup (when (:enable-catalogue-hierarchy rems.config/env)
-                 (hierarchy-lookup catalogue-items))
-        join-hierarchy (if lookup
-                         (map #(medley.core/assoc-some % :part-of (lookup (:id %))))
-                         identity)]
+  (let [catalogue-items (rems.db.catalogue/get-catalogue-items)]
     (->> catalogue-items
-         (eduction (map #(join-dependencies % opts))
-                   join-hierarchy
+         (eduction (map #(join-dependencies % (merge {:join-parent-fn (join-hierarchy catalogue-items)}
+                                                     opts)))
                    (query-filter (merge {:archived false}
                                         opts
                                         (when-not (apply roles/has-roles? roles/+admin-read-roles+)
@@ -140,7 +147,8 @@
   (when-let [item (rems.db.catalogue/get-catalogue-item id)]
     (when (or (:enabled item)
               (apply roles/has-roles? roles/+admin-read-roles+)) ; only admins get enabled and disabled items
-      (join-dependencies item opts))))
+      (join-dependencies item (merge {:join-parent-fn (join-hierarchy (rems.db.catalogue/get-catalogue-items))}
+                                     opts)))))
 
 (defn get-catalogue-table
   {:arglists '([& [{:keys [join-organization?]}]])}
