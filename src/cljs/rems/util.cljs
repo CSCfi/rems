@@ -155,11 +155,15 @@
   hiccup line breaks."
   [s]
   (when s
-    (let [lines (str/split s #"\n" -1)]
-      (->> lines
-           (map linkify-links)
-           (interpose (list ^{:key (gensym "br")} [:br]))
-           (apply concat)))))
+(let [make-br (fn [] ^{:key (gensym "br")} [:br])]
+    (transduce
+     (map linkify-links)
+     (completing (fn [acc line]
+                   (concat acc
+                           (when-not (empty? acc)
+                             [(make-br)])
+                           line)))
+     (str/split s #"\n" -1)))))
 
 (defn visibility-ratio
   "Given a DOM node, return a number from 0.0 to 1.0 describing how much of an element is inside the viewport."
