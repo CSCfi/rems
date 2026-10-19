@@ -11,7 +11,7 @@
   (:require [clj-http.client :as http]
             [clojure.set :as set]
             [clojure.string :as str]
-            [clojure.test :refer [compose-fixtures deftest is testing use-fixtures]]
+            [clojure.test :refer [compose-fixtures deftest is are testing use-fixtures]]
             [etaoin.keys]
             [matcher-combinators.matchers :as m]
             [matcher-combinators.test]
@@ -2684,7 +2684,47 @@
                        (-> (btu/query [{:class :application-resources}])
                            (btu/children {:fn/has-class :application-resource}))))))
 
-        (btu/context-assoc! :application-id (Integer/parseInt (get-application-id)))))
+        (btu/context-assoc! :application-id (Integer/parseInt (get-application-id))))
+
+      (testing "with different workflows"
+        (let [org {:organization/id (btu/context-getx :organization-id)}]
+          (btu/context-assoc! :child-x-title (test-helpers/make-localized (str "complementary1 " (btu/get-seed)))
+                              :parent-title (test-helpers/make-localized (str "top-level1 " (btu/get-seed))))
+          (btu/context-assoc! :child-x (test-helpers/create-catalogue-item!
+                                        {:title (btu/context-getx :child-x-title)
+                                         :resource-id (test-helpers/create-resource! {:organization org})
+                                         :organization org}))
+          (btu/context-assoc! :parent-x (test-helpers/create-catalogue-item!
+                                         {:title (btu/context-getx :parent-title)
+                                          :resource-id (test-helpers/create-resource! {:organization org})
+                                          :workflow-id (btu/context-getx :workflow)
+                                          :organization org
+                                          :children [{:catalogue-item/id (btu/context-getx :child-x)}]})))
+        (logout)
+        (login-as "alice")
+        (go-to-catalogue)
+
+        (btu/screenshot "empty-cart")
+        (is (btu/disabled? (->add-to-cart-button-q (:en (btu/context-getx :child-x-title)))))
+        (is (not (btu/disabled? (->add-to-cart-button-q (:en (btu/context-getx :parent-title))))))
+        (add-to-cart (:en (btu/context-getx :parent-title)))
+        (is (btu/disabled? (->add-to-cart-button-q (:en (btu/context-getx :child-x-title))))
+            "remains disabled because it can't be bundled with parent, and without entitlement to parent, a child item is not applicable on it's own")
+        (btu/screenshot "parent-in-cart")
+        (click-cart-apply-single)
+        (wait-page-title (->> (get-application-from-api (get-application-id) "alice")
+                              :application/external-id
+                              (format "Application %s – REMS")))
+        (btu/context-assoc! :application-id (Integer/parseInt (get-application-id)))
+        (test-helpers/submit-application {:application-id (btu/context-getx :application-id)
+                                          :actor "alice"})
+        (test-helpers/command! {:type :application.command/approve
+                                :application-id (btu/context-getx :application-id)
+                                :actor "handler"})
+        (go-to-catalogue)
+        (is (not (btu/disabled? (->add-to-cart-button-q (:en (btu/context-getx :child-x-title)))))
+            "not disabled anymore with entitlement to parent")))
+
 
     (testing "invited user cannot join application of complementary item without also having entitlement to top-level item"
       (test-helpers/command! {:type :application.command/invite-member

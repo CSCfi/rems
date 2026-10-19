@@ -316,10 +316,7 @@
              (validate-children! (assoc item-1 :children [{:catalogue-item/id (:id item-1)}])))))
 
     (testing "with different workflow"
-      (is (= {:success false
-              :errors [{:catalogue-items [{:catalogue-item/id item-4-id-diff-workflow}]
-                        :type :t.administration.errors/unbundlable-workflow-id}]}
-             (validate-children! (assoc item-1 :children [{:catalogue-item/id item-4-id-diff-workflow}])))))
+      (is (nil? (validate-children! (assoc item-1 :children [{:catalogue-item/id item-4-id-diff-workflow}])))))
 
     (testing "multi-level"
       (is (= {:success false

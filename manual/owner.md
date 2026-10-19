@@ -176,13 +176,23 @@ If you want to only change the catalogue item’s application form, select the c
 
 This will **disable and archive the old catalogue item** and create a new catalogue item that has a different form but is otherwise the same as the old catalogue item. This means that the applicants cannot see or apply for access to the old catalogue item anymore.
 
-#### Catalogue item hierarchy
+#### Catalogue item categories 
 
 Catalogue items can be grouped under **Categories** that display as folding sub-headers on the catalogue page, also referred to as the **catalogue tree**. Categories can have subcategories and they can be nested in a tree-like structure.
 
-Additionally, catalogue items may specify **complementary items** that must be applied for together with the **top-level catalogue item**. To use this feature, configure `:enable-catalogue-hierarchy` to `true`. 
+#### Catalogue item hierarchy
 
-A top-level catalogue item may have many complementary items, and there can only be one top-level item for a given complementary item. A catalogue item that is already referenced by a top-level item may not have complementary items of it's own. Once the applicant has been given entitlement to the resource of a top-level item, it's complementary items become applicable on their own as ordinary catalogue items.
+Catalogue items may specify other catalogue items as **complementary items**. A complementary item can only be applied for
+- when the **top-level catalogue item** is also included on the same application,
+- or the applicant is already completed an application to the top-level catalogue item and has been granted entitlement to it's resource.
+
+To use this feature, configure `:enable-catalogue-hierarchy` to `true`. 
+
+A top-level catalogue item may have many complementary items, and there can only be one top-level item for a given complementary item. A catalogue item that is already referenced by a top-level item may not have complementary items of it's own. 
+
+Once the applicant has been given entitlement to the resource of a top-level item, it's complementary items become applicable on their own as ordinary catalogue items.
+
+The items may have different workflows to accomodate e.g. a comprehensive workflow for the top-level item, and a straightforward workflow for the complementary items, perhaps using the Approver Bot. On the other hand, if you wish the applicants would send a single application for the top-level item and some subset of the complementary items, please note that an application can only have a single workflow.
 
 ## Disabling, and archiving items
 

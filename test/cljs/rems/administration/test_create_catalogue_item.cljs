@@ -102,7 +102,7 @@
           "when creating, doesn't filter")
       (is (= [id-2 id-5 id-6-diff-wfid]
              (filter-possible-child-items nil catalogue)))
-      (is (= [id-5]
+      (is (= [id-5 id-6-diff-wfid]
              (filter-possible-child-items id-2 [id-5 id-6-diff-wfid])
              (filter-possible-child-items id-2 catalogue))
           "when editing, filters by parent workflow id"))
