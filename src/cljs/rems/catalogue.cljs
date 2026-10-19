@@ -115,20 +115,24 @@
       :else
       (rf/dispatch [:rems.cart/add-item item]))))
 
+(defn- cart->bundles [cart]
+  (update-vals (group-by :wfid cart)
+               catalogue-items->ids))
+
 (rf/reg-sub
  ::catalogue-table-rows
  :<- [::catalogue]
  :<- [:rems.cart/cart]
  :<- [::entitlements->catalogue-item-ids]
  (fn [[catalogue cart item-ids-with-entitlement] _]
-   (let [cart-item-ids (catalogue-items->ids cart)]
+   (let [cart-item-ids (cart->bundles cart)]
      (mapv (fn [item]
              {:key (:id item)
               :name {:value (get-localized-title item)}
               :commands {:display-value [:div.commands.flex-nowrap.justify-content-end
                                          [catalogue-item-more-info item]
                                          (when @roles/logged-in?
-                                           [row-command item cart-item-ids item-ids-with-entitlement])]}})
+                                           [row-command item (get cart-item-ids (:wfid item)) item-ids-with-entitlement])]}})
            catalogue))))
 
 (defn draft-application-list []
@@ -156,7 +160,7 @@
                    :default-sort-column :name}])
 
 (defn- catalogue-tree []
-  (let [cart-item-ids (catalogue-items->ids @(rf/subscribe [:rems.cart/cart]))
+  (let [bundles (cart->bundles @(rf/subscribe [:rems.cart/cart]))
         item-ids-with-entitlement @(rf/subscribe [::entitlements->catalogue-item-ids])
         get-row-details-id (fn [id]
                              (str (name ::catalogue-tree) "-" id "-details"))
@@ -184,7 +188,7 @@
                                           [:div.commands.flex-nowrap.justify-content-end
                                            [catalogue-item-more-info %]
                                            (when @roles/logged-in?
-                                             [row-command % cart-item-ids item-ids-with-entitlement])])
+                                             [row-command % (get bundles (:wfid %)) item-ids-with-entitlement])])
                               :aria-label (text :t.actions/commands)
                               :sortable? false
                               :filterable? false}]
@@ -195,9 +199,9 @@
                                    true ; always pass categories
                                    (and (:enabled row)
                                         (not (:expired row)))))
-                   :row-action (fn [row]
+                   :row-action (fn [{item :value :as _row}]
                                  (when @roles/logged-in?
-                                   (perform-row-command (:value row) cart-item-ids ::catalogue-tree)))
+                                   (perform-row-command item (get bundles (:wfid item)) ::catalogue-tree)))
                    :row-aria-label (fn [{:keys [value] :as _row}]
                                      (cond
                                        (:category/id value) (str (text :t.administration/category)
