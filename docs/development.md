@@ -43,6 +43,12 @@ The best setup for development is to populate the database with test data by run
 lein run test-data
 ```
 
+For local performance testing data with 2000 catalogue items and 3000 applications, run
+```
+docker stop rems_test
+dev_db.sh perf
+```
+
 ## Running the application
 
 To start the (Clojure) backend:
@@ -282,6 +288,8 @@ lein run user-simulator http://localhost:3000/ alice,elsa,frank
 ```
 
 This will set local REMS instance as the target and start 3 concurrent browser instances, each logging in as alice, elsa or frank.
+
+See also the [rems.test-performance](https://github.com/CSCfi/rems/blob/master/test/clj/rems/test_performance.clj) namespace and the rich comment forms at the end.
 
 ## CircleCI
 
