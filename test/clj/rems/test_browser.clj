@@ -1386,7 +1386,7 @@
       (btu/scroll-and-click :approve-reject-action-button))
     (testing "add a comment and two attachments"
       (is (btu/eventually-visible? :comment-approve-reject))
-      (btu/fill-human :comment-approve-reject "this is a comment")
+      (-> (btu/fill-human :comment-approve-reject "this is a comment") (btu/context-assoc-element-text! :comment-approve-reject))
       (btu/upload-file :upload-approve-reject-input "test-data/test.txt")
       (is (btu/eventually-visible? [{:css ".attachment-link"}]))
       (btu/upload-file :upload-approve-reject-input "test-data/test-fi.txt")
