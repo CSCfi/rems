@@ -136,18 +136,34 @@
   original string, except that all substrings that resemble a link have
   been changed to hiccup links."
   [s]
+  (let [splitted (-> s
+                     (str/replace link-regex #(str "\t" %1 "\t"))
+                     (str/split "\t"))
+        link? (fn [s] (re-matches link-regex s))
+        text-to-url (fn [s] (if (re-matches #"^(http://|https://).*" s)
+                              s
+                              (str "http://" s)))]
+    (map #(if (link? %)
+            ^{:key %} [:a {:target :_blank :href (text-to-url %)} %]
+            %)
+         splitted)))
+
+(defn label->hiccup
+  "Given a label string, return a vector that, when concatenated, forms the
+  original string, except that recognised substrings have been converted
+  to higher level hiccup items (e.g. URLs converted to <a> links, and
+  newlines to <br>s)."
+  [s]
   (when s
-    (let [splitted (-> s
-                       (str/replace link-regex #(str "\t" %1 "\t"))
-                       (str/split "\t"))
-          link? (fn [s] (re-matches link-regex s))
-          text-to-url (fn [s] (if (re-matches #"^(http://|https://).*" s)
-                                s
-                                (str "http://" s)))]
-      (map #(if (link? %)
-              ^{:key %} [:a {:target :_blank :href (text-to-url %)} %]
-              %)
-           splitted))))
+    (let [make-br (fn [] ^{:key (gensym "br")} [:br])]
+      (transduce
+       (map linkify)
+       (completing (fn [acc line]
+                     (concat acc
+                             (when-not (empty? acc)
+                               [(make-br)])
+                             line)))
+       (str/split s #"\n" -1)))))
 
 (defn visibility-ratio
   "Given a DOM node, return a number from 0.0 to 1.0 describing how much of an element is inside the viewport."
