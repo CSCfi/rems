@@ -18,7 +18,6 @@ The catalogue items that can be assigned as complementary items to another shoul
 - not be archived
 - not already have their own complementary items or another top-level item
 - be writable by the organization owner
-- have the same workflow, to follow the same logic as bundling items in the shopping cart
 
 This would be straightforward to implement as a new table in the database with a foreign key to the top-level catalogue item and another for the complementary item, and using constraints to maintain the aforementioned restrictions. However, a similar concept already exists as the catalogue tree and a considerable amount of prior work can be reused for this feature as well.
 

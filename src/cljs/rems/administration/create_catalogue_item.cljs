@@ -160,7 +160,7 @@
                                                                   :on-success #(rf/dispatch [::update-loading!])})
 (fetcher/reg-fetcher ::categories "/api/categories")
 
-(defn filter-possible-child-items [{:keys [id wfid] :as selected-catalogue-item} catalogue]
+(defn filter-possible-child-items [{:keys [id] :as selected-catalogue-item} catalogue]
   (let [xform (comp (filter roles/can-modify-organization-item?)
                     (remove :archived)
                     (remove :children)
@@ -169,8 +169,7 @@
     (into []
           (cond-> xform
             selected-catalogue-item
-            (comp (remove (comp #{id} :id))
-                  (filter (comp #{wfid} :wfid))))
+            (comp (remove (comp #{id} :id))))
           catalogue)))
 
 (rf/reg-sub

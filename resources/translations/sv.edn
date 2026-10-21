@@ -127,7 +127,6 @@
                             :self-as-subcategory-disallowed "Kategori kan inte vara en underkategori till sig själv"
                             :ancestor-as-subcategory-disallowed "Kategori kan inte vara en underkategori, eftersom den skulle skapa en loop"
                             :self-as-child-catalogue-item-disallowed "Katalogposten kan inte vara en underkatalogpost till sig själv"
-                            :unbundlable-workflow-id "Olika arbetsflöden är inte tillåtet"
                             :multi-level-hierarchy-disallowed "Katalogposten kan inte vara en underkatalogpost, eftersom den redan har sig egen underkatalogpost"}
                    :export-applications "exportera ansökningar"
                    :external-title "Namn"
