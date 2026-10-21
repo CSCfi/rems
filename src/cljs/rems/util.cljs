@@ -131,7 +131,7 @@
 
 (def ^:private link-regex #"(?:http://|https://|www\.\w).*?(?=[^a-zA-Z0-9_/]*(?: |$))")
 
-(defn- linkify-links
+(defn linkify
   "Given a string, return a vector that, when concatenated, forms the
   original string, except that all substrings that resemble a link have
   been changed to hiccup links."
@@ -148,22 +148,22 @@
             %)
          splitted)))
 
-(defn linkify
-  "Given a string, return a vector that, when concatenated, forms the
-  original string, except that all substrings that resemble a link have
-  been changed to hiccup links, and all newlines have been changed to
-  hiccup line breaks."
+(defn label->hiccup
+  "Given a label string, return a vector that, when concatenated, forms the
+  original string, except that recognised substrings have been converted
+  to higher level hiccup items (e.g. URLs converted to <a> links, and
+  newlines to <br>s)."
   [s]
   (when s
-(let [make-br (fn [] ^{:key (gensym "br")} [:br])]
-    (transduce
-     (map linkify-links)
-     (completing (fn [acc line]
-                   (concat acc
-                           (when-not (empty? acc)
-                             [(make-br)])
-                           line)))
-     (str/split s #"\n" -1)))))
+    (let [make-br (fn [] ^{:key (gensym "br")} [:br])]
+      (transduce
+       (map linkify)
+       (completing (fn [acc line]
+                     (concat acc
+                             (when-not (empty? acc)
+                               [(make-br)])
+                             line)))
+       (str/split s #"\n" -1)))))
 
 (defn visibility-ratio
   "Given a DOM node, return a number from 0.0 to 1.0 describing how much of an element is inside the viewport."
