@@ -2682,120 +2682,118 @@
                  (into []
                        (map btu/value-of-el)
                        (-> (btu/query [{:class :application-resources}])
-                           (btu/children {:fn/has-class :application-resource}))))))
+                           (btu/children {:fn/has-class :application-resource})))))
 
-        (btu/context-assoc! :application-id (Integer/parseInt (get-application-id))))
+          (btu/context-assoc! :application-id (Integer/parseInt (get-application-id)))
 
-      (testing "with different workflows"
-        (let [org {:organization/id (btu/context-getx :organization-id)}]
-          (btu/context-assoc! :child-x-title (test-helpers/make-localized (str "complementary1 " (btu/get-seed)))
-                              :parent-title (test-helpers/make-localized (str "top-level1 " (btu/get-seed))))
-          (btu/context-assoc! :child-x (test-helpers/create-catalogue-item!
-                                        {:title (btu/context-getx :child-x-title)
-                                         :resource-id (test-helpers/create-resource! {:organization org})
-                                         :organization org}))
-          (btu/context-assoc! :parent-x (test-helpers/create-catalogue-item!
-                                         {:title (btu/context-getx :parent-title)
-                                          :resource-id (test-helpers/create-resource! {:organization org})
-                                          :workflow-id (btu/context-getx :workflow)
-                                          :organization org
-                                          :children [{:catalogue-item/id (btu/context-getx :child-x)}]})))
-        (logout)
-        (login-as "alice")
-        (go-to-catalogue)
+          (testing "invited user cannot join application of complementary item without also having entitlement to top-level item"
+            (test-helpers/command! {:type :application.command/invite-member
+                                    :actor "alice"
+                                    :application-id (btu/context-getx :application-id)
+                                    :member {:name "Frank" :email "frank@example.com"}})
+            (btu/context-assoc! :invitation-token (-> (btu/context-getx :application-id)
+                                                      rems.db.applications/get-application-internal
+                                                      :application/invitation-tokens
+                                                      first
+                                                      key))
+            (logout)
+            (login-as "frank")
+            (btu/go (str (btu/get-server-url) "application/accept-invitation/" (btu/context-getx :invitation-token)))
+            (btu/wait-page-loaded)
+            (btu/screenshot "after-accept-invitation-fail")
+            (btu/eventually-exists? :flash-message-top)
+            (is (= ["Accept invitation: Failed"
+                    (str "Missing top-level item: " (btu/context-getx :parent-2-id))]
+                   (get-error-summary :top)))
+            (is (empty? (rems.db.entitlements/get-entitlements "frank")))
 
-        (btu/screenshot "empty-cart")
-        (is (btu/disabled? (->add-to-cart-button-q (:en (btu/context-getx :child-x-title)))))
-        (is (not (btu/disabled? (->add-to-cart-button-q (:en (btu/context-getx :parent-title))))))
-        (add-to-cart (:en (btu/context-getx :parent-title)))
-        (is (btu/disabled? (->add-to-cart-button-q (:en (btu/context-getx :child-x-title))))
-            "remains disabled because it can't be bundled with parent, and without entitlement to parent, a child item is not applicable on it's own")
-        (btu/screenshot "parent-in-cart")
-        (click-cart-apply-single)
-        (wait-page-title (->> (get-application-from-api (get-application-id) "alice")
-                              :application/external-id
-                              (format "Application %s – REMS")))
-        (btu/context-assoc! :application-id (Integer/parseInt (get-application-id)))
-        (test-helpers/submit-application {:application-id (btu/context-getx :application-id)
-                                          :actor "alice"})
-        (test-helpers/command! {:type :application.command/approve
-                                :application-id (btu/context-getx :application-id)
-                                :actor "handler"})
-        (go-to-catalogue)
-        (is (not (btu/disabled? (->add-to-cart-button-q (:en (btu/context-getx :child-x-title)))))
-            "not disabled anymore with entitlement to parent")))
+            (testing "with entitlement granted for invited user"
+              (create-and-approve-application! {:actor "frank"
+                                                :catalogue-item-ids [(btu/context-getx :parent-2-id)]})
+              (btu/go (str (btu/get-server-url) "application/accept-invitation/" (btu/context-getx :invitation-token)))
+              (is (btu/eventually-visible? {:fn/has-string "Frank Roleless joined to the application."})
+                  "Frank can now join")
+              (btu/screenshot "after-accept-invitation-success")
+              (is (= {:event/type :application.event/member-joined
+                      :event/actor "frank"}
+                     (-> (btu/context-getx :application-id)
+                         rems.db.applications/get-application-internal
+                         :application/events
+                         last
+                         (select-keys [:event/actor :event/type])))))
 
+            (testing "cannot change resource to a complementary item, when invited member doesn't have entitlement to it's parent"
+              (create-and-approve-application! {:actor "alice"
+                                                :catalogue-item-ids [(btu/context-getx :parent-3-id)]})
+              (is (match? [{:resourceid (btu/context-getx :resource-4)}]
+                          (filterv (comp #{(btu/context-getx :resource-4)} :resourceid)
+                                   (rems.db.entitlements/get-entitlements "alice")))
+                  "Alice now has entitlement to parent 3, so she could apply for child 5 on it's own.")
+              (is (= []
+                     (filterv (comp #{(btu/context-getx :resource-4)} :resourceid)
+                              (rems.db.entitlements/get-entitlements "frank ")))
+                  "Frank doesn't have entitlement, and with him as a member, the application's resources cannot be changed to include child 5.")
+              (logout)
+              (login-as "alice")
+              (go-to-application (btu/context-getx :application-id))
+              (btu/scroll-and-click :change-resources-action-button)
+              (btu/wait-page-loaded)
+              (select-option-id :change-resources-dropdown (btu/context-getx :child-5-name))
+              (btu/screenshot "about-to-change-resources")
+              (btu/scroll-and-click :change-resources)
+              (btu/wait-page-loaded)
+              (is (btu/eventually-visible? [:flash-message-change-resources]))
+              (is (= (str "Missing top-level item: " (btu/context-getx :parent-3-id))
+                     (btu/get-element-text [:flash-message-change-resources]))
+                  (str "flash message contains parent id: " (btu/context-getx :parent-3-id)))
+              (btu/screenshot "after-change-resources")
+              (btu/scroll-and-click :cancel-change-resources)
+              (btu/scroll-and-click :change-resources-action-button)
+              (select-option-id :change-resources-dropdown (btu/context-getx :parent-3-name))
+              (btu/wait-page-loaded)
+              (btu/screenshot "about-to-change-resources")
+              (btu/scroll-and-click :change-resources)
+              (btu/wait-page-loaded)
+              (is (btu/eventually-visible? [:flash-message-change-resources {:id :status-success}]))
+              (btu/screenshot "after-change-resources"))))))
 
-    (testing "invited user cannot join application of complementary item without also having entitlement to top-level item"
-      (test-helpers/command! {:type :application.command/invite-member
-                              :actor "alice"
-                              :application-id (btu/context-getx :application-id)
-                              :member {:name "Frank" :email "frank@example.com"}})
-      (btu/context-assoc! :invitation-token (-> (btu/context-getx :application-id)
-                                                rems.db.applications/get-application-internal
-                                                :application/invitation-tokens
-                                                first
-                                                key))
+    (testing "with different workflows"
+      (let [org {:organization/id (btu/context-getx :organization-id)}]
+        (btu/context-assoc! :child-x-title (test-helpers/make-localized (str "complementary1 " (btu/get-seed)))
+                            :parent-title (test-helpers/make-localized (str "top-level1 " (btu/get-seed))))
+        (btu/context-assoc! :child-x (test-helpers/create-catalogue-item!
+                                      {:title (btu/context-getx :child-x-title)
+                                       :resource-id (test-helpers/create-resource! {:organization org})
+                                       :organization org}))
+        (btu/context-assoc! :parent-x (test-helpers/create-catalogue-item!
+                                       {:title (btu/context-getx :parent-title)
+                                        :resource-id (test-helpers/create-resource! {:organization org})
+                                        :workflow-id (btu/context-getx :workflow)
+                                        :organization org
+                                        :children [{:catalogue-item/id (btu/context-getx :child-x)}]})))
       (logout)
-      (login-as "frank")
-      (btu/go (str (btu/get-server-url) "application/accept-invitation/" (btu/context-getx :invitation-token)))
-      (btu/wait-page-loaded)
-      (btu/screenshot "after-accept-invitation-fail")
-      (btu/eventually-exists? :flash-message-top)
-      (is (= ["Accept invitation: Failed"
-              (str "Missing top-level item: " (btu/context-getx :parent-2-id))]
-             (get-error-summary :top)))
-      (is (empty? (rems.db.entitlements/get-entitlements "frank")))
-
-      (testing "with entitlement granted for invited user"
-        (create-and-approve-application! {:actor "frank"
-                                          :catalogue-item-ids [(btu/context-getx :parent-2-id)]})
-        (btu/go (str (btu/get-server-url) "application/accept-invitation/" (btu/context-getx :invitation-token)))
-        (is (btu/eventually-visible? {:fn/has-string "Frank Roleless joined to the application."})
-            "Frank can now join")
-        (btu/screenshot "after-accept-invitation-success")
-        (is (= {:event/type :application.event/member-joined
-                :event/actor "frank"}
-               (-> (btu/context-getx :application-id)
-                   rems.db.applications/get-application-internal
-                   :application/events
-                   last
-                   (select-keys [:event/actor :event/type])))))
-
-      (testing "cannot change resource to a complementary item, when invited member doesn't have entitlement to it's parent"
-        (create-and-approve-application! {:actor "alice"
-                                          :catalogue-item-ids [(btu/context-getx :parent-3-id)]})
-        (is (match? [{:resourceid (btu/context-getx :resource-4)}]
-                    (filterv (comp #{(btu/context-getx :resource-4)} :resourceid)
-                             (rems.db.entitlements/get-entitlements "alice")))
-            "Alice now has entitlement to parent 3, so she could apply for child 5 on it's own.")
-        (is (= []
-               (filterv (comp #{(btu/context-getx :resource-4)} :resourceid)
-                        (rems.db.entitlements/get-entitlements "frank ")))
-            "Frank doesn't have entitlement, and with him as a member, the application's resources cannot be changed to include child 5.")
-        (logout)
-        (login-as "alice")
-        (go-to-application (btu/context-getx :application-id))
-        (btu/scroll-and-click :change-resources-action-button)
-        (btu/wait-page-loaded)
-        (select-option-id :change-resources-dropdown (btu/context-getx :child-5-name))
-        (btu/screenshot "about-to-change-resources")
-        (btu/scroll-and-click :change-resources)
-        (btu/wait-page-loaded)
-        (is (btu/eventually-visible? [:flash-message-change-resources]))
-        (is (= (str "Missing top-level item: " (btu/context-getx :parent-3-id))
-               (btu/get-element-text [:flash-message-change-resources]))
-            (str "flash message contains parent id: " (btu/context-getx :parent-3-id)))
-        (btu/screenshot "after-change-resources")
-        (btu/scroll-and-click :cancel-change-resources)
-        (btu/scroll-and-click :change-resources-action-button)
-        (select-option-id :change-resources-dropdown (btu/context-getx :parent-3-name))
-        (btu/wait-page-loaded)
-        (btu/screenshot "about-to-change-resources")
-        (btu/scroll-and-click :change-resources)
-        (btu/wait-page-loaded)
-        (is (btu/eventually-visible? [:flash-message-change-resources {:id :status-success}]))
-        (btu/screenshot "after-change-resources")))
+      (login-as "alice")
+      (go-to-catalogue)
+      (btu/screenshot "empty-cart")
+      (is (btu/disabled? (->add-to-cart-button-q (:en (btu/context-getx :child-x-title)))))
+      (is (not (btu/disabled? (->add-to-cart-button-q (:en (btu/context-getx :parent-title))))))
+      (add-to-cart (:en (btu/context-getx :parent-title)))
+      (is (btu/disabled? (->add-to-cart-button-q (:en (btu/context-getx :child-x-title))))
+          "remains disabled because it can't be bundled with parent, and without entitlement to parent, a child item is not applicable on it's own")
+      (btu/screenshot "parent-in-cart")
+      (click-cart-apply-single)
+      (wait-page-title (->> (get-application-from-api (get-application-id) "alice")
+                            :application/external-id
+                            (format "Application %s – REMS")))
+      (btu/context-assoc! :application-id (Integer/parseInt (get-application-id)))
+      (test-helpers/submit-application {:application-id (btu/context-getx :application-id)
+                                        :actor "alice"})
+      (test-helpers/command! {:type :application.command/approve
+                              :application-id (btu/context-getx :application-id)
+                              :actor "handler"})
+      (go-to-catalogue)
+      (is (not (btu/disabled? (->add-to-cart-button-q (:en (btu/context-getx :child-x-title)))))
+          "not disabled anymore with entitlement to parent"))
 
     (testing "with feature flag off"
       (try
