@@ -11,7 +11,8 @@
   (:require [clj-http.client :as http]
             [clojure.set :as set]
             [clojure.string :as str]
-            [clojure.test :refer [compose-fixtures deftest is are testing use-fixtures]]
+            [clojure.test :refer [compose-fixtures deftest is testing
+                                  use-fixtures]]
             [etaoin.keys]
             [matcher-combinators.matchers :as m]
             [matcher-combinators.test]
@@ -23,11 +24,13 @@
             [rems.config]
             [rems.db.api-key]
             [rems.db.applications]
+            [rems.db.catalogue]
             [rems.db.entitlements]
             [rems.db.test-data-helpers :as test-helpers]
             [rems.db.test-data-users :as test-users]
             [rems.db.testing :refer [save-cache-statistics!]]
             [rems.db.user-settings]
+            [rems.db.workflow]
             [rems.handler]
             [rems.main]
             [rems.service.application]
@@ -2758,42 +2761,46 @@
               (btu/screenshot "after-change-resources"))))))
 
     (testing "with different workflows"
-      (let [org {:organization/id (btu/context-getx :organization-id)}]
-        (btu/context-assoc! :child-x-title (test-helpers/make-localized (str "complementary1 " (btu/get-seed)))
-                            :parent-title (test-helpers/make-localized (str "top-level1 " (btu/get-seed))))
-        (btu/context-assoc! :child-x (test-helpers/create-catalogue-item!
-                                      {:title (btu/context-getx :child-x-title)
-                                       :resource-id (test-helpers/create-resource! {:organization org})
-                                       :organization org}))
-        (btu/context-assoc! :parent-x (test-helpers/create-catalogue-item!
-                                       {:title (btu/context-getx :parent-title)
-                                        :resource-id (test-helpers/create-resource! {:organization org})
+      (testing "it is allowed to create hierarchical items with different workflow"
+        (btu/context-assoc! :child-6-title (test-helpers/make-localized (str "complementary1 " (btu/get-seed)))
+                            :parent-4-title (test-helpers/make-localized (str "top-level1 " (btu/get-seed))))
+        (btu/context-assoc! :child-6 (test-helpers/create-catalogue-item!
+                                      {:title (btu/context-getx :child-6-title)
+                                       :resource-id (test-helpers/create-resource! {:organization {:organization/id (btu/context-getx :organization-id)}})
+                                       :organization {:organization/id (btu/context-getx :organization-id)}}))
+        (btu/context-assoc! :parent-4 (test-helpers/create-catalogue-item!
+                                       {:title (btu/context-getx :parent-4-title)
+                                        :resource-id (test-helpers/create-resource! {:organization {:organization/id (btu/context-getx :organization-id)}})
                                         :workflow-id (btu/context-getx :workflow)
-                                        :organization org
-                                        :children [{:catalogue-item/id (btu/context-getx :child-x)}]})))
-      (logout)
-      (login-as "alice")
-      (go-to-catalogue)
-      (btu/screenshot "empty-cart")
-      (is (btu/disabled? (->add-to-cart-button-q (:en (btu/context-getx :child-x-title)))))
-      (is (not (btu/disabled? (->add-to-cart-button-q (:en (btu/context-getx :parent-title))))))
-      (add-to-cart (:en (btu/context-getx :parent-title)))
-      (is (btu/disabled? (->add-to-cart-button-q (:en (btu/context-getx :child-x-title))))
-          "remains disabled because it can't be bundled with parent, and without entitlement to parent, a child item is not applicable on it's own")
-      (btu/screenshot "parent-in-cart")
-      (click-cart-apply-single)
-      (wait-page-title (->> (get-application-from-api (get-application-id) "alice")
-                            :application/external-id
-                            (format "Application %s – REMS")))
-      (btu/context-assoc! :application-id (Integer/parseInt (get-application-id)))
-      (test-helpers/submit-application {:application-id (btu/context-getx :application-id)
-                                        :actor "alice"})
-      (test-helpers/command! {:type :application.command/approve
-                              :application-id (btu/context-getx :application-id)
-                              :actor "handler"})
-      (go-to-catalogue)
-      (is (not (btu/disabled? (->add-to-cart-button-q (:en (btu/context-getx :child-x-title)))))
-          "not disabled anymore with entitlement to parent"))
+                                        :organization {:organization/id (btu/context-getx :organization-id)}
+                                        :children [{:catalogue-item/id (btu/context-getx :child-6)}]}))
+        (is (not= (-> (btu/context-get :parent-4) rems.db.catalogue/get-catalogue-item :wfid rems.db.workflow/get-workflow :id)
+                  (-> (btu/context-get :child-6) rems.db.catalogue/get-catalogue-item :wfid rems.db.workflow/get-workflow :id))))
+
+      (testing "as applicant"
+        (logout)
+        (login-as "alice")
+        (go-to-catalogue)
+        (btu/screenshot "empty-cart")
+        (is (btu/disabled? (->add-to-cart-button-q (:en (btu/context-getx :child-6-title)))))
+        (is (not (btu/disabled? (->add-to-cart-button-q (:en (btu/context-getx :parent-4-title))))))
+        (add-to-cart (:en (btu/context-getx :parent-4-title)))
+        (is (btu/disabled? (->add-to-cart-button-q (:en (btu/context-getx :child-6-title))))
+            "remains disabled because it can't be bundled with parent, and without entitlement to parent, a child item is not applicable on it's own")
+        (btu/screenshot "parent-in-cart")
+        (click-cart-apply-single)
+        (wait-page-title (->> (get-application-from-api (get-application-id) "alice")
+                              :application/external-id
+                              (format "Application %s – REMS")))
+        (btu/context-assoc! :application-id (Integer/parseInt (get-application-id)))
+        (test-helpers/submit-application {:application-id (btu/context-getx :application-id)
+                                          :actor "alice"})
+        (test-helpers/command! {:type :application.command/approve
+                                :application-id (btu/context-getx :application-id)
+                                :actor "handler"})
+        (go-to-catalogue)
+        (is (not (btu/disabled? (->add-to-cart-button-q (:en (btu/context-getx :child-6-title)))))
+            "not disabled anymore with entitlement to parent")))
 
     (testing "with feature flag off"
       (try
