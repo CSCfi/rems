@@ -2848,14 +2848,23 @@
       (is (btu/eventually-visible? {:fn/text "test-update-catalogue-item 1 EN"}))
       (is (btu/eventually-visible? {:fn/text "test-update-catalogue-item 2 EN"}))
       (is (btu/eventually-visible? {:fn/text "test-update-catalogue-item 3 EN"}))
-      (is (btu/eventually-disabled? {:tag :button :fn/text "Update catalogue item"})))
+      (is (btu/eventually-disabled? {:tag :button :id "update-catalogue-item"})))
+
+   (testing "update button reflects number of selected items"
+            (btu/scroll-and-click {:fn/text "test-update-catalogue-item 1 EN"})
+            (is (btu/eventually-visible? {:tag :button :id "update-catalogue-item" :fn/text "Update 1 catalogue item"}))
+            (btu/scroll-and-click {:fn/text "test-update-catalogue-item 2 EN"})
+            (is (btu/eventually-enabled? {:tag :button :id "update-catalogue-item" :fn/text "Update 2 catalogue items"}))
+            (btu/scroll-and-click {:fn/text "test-update-catalogue-item 1 EN"})
+            (btu/scroll-and-click {:fn/text "test-update-catalogue-item 2 EN"})
+            (is (btu/eventually-visible? {:tag :button :id "update-catalogue-item" :fn/text "Update catalogue item"})))
 
     (testing "select to go to update"
       (btu/scroll-and-click {:fn/text "test-update-catalogue-item 1 EN"})
       (btu/scroll-and-click {:fn/text "test-update-catalogue-item 2 EN"})
       (btu/scroll-and-click {:fn/text "test-update-catalogue-item 3 EN"})
-      (is (btu/eventually-enabled? {:tag :button :fn/text "Update catalogue item"}))
-      (btu/scroll-and-click {:tag :button :fn/text "Update catalogue item"})
+      (is (btu/eventually-enabled? {:tag :button :id "update-catalogue-item"}))
+      (btu/scroll-and-click {:tag :button :id "update-catalogue-item"})
       (wait-page-title "Update catalogue item – REMS"))
 
     (testing "initial state"
@@ -2943,12 +2952,12 @@
                (every? #(= "View" (get % "commands"))))))
 
     (testing "update is disabled when not owner of selected items"
-      (is (btu/eventually-disabled? {:tag :button :fn/text "Update catalogue item"}))
+      (is (btu/eventually-disabled? {:tag :button :id "update-catalogue-item"}))
       (btu/scroll-and-click {:fn/text "test-update-catalogue-item 4 EN"})
       (btu/scroll-and-click {:fn/text "test-update-catalogue-item 1 EN"})
-      (is (btu/eventually-disabled? {:tag :button :fn/text "Update catalogue item"}))
+      (is (btu/eventually-disabled? {:tag :button :id "update-catalogue-item"}))
       (btu/scroll-and-click {:fn/text "test-update-catalogue-item 1 EN"})
-      (btu/wait-enabled {:tag :button :fn/text "Update catalogue item"})
+      (btu/wait-enabled {:tag :button :id "update-catalogue-item"})
 
       (testing "update remains disabled when selecting all items with toggle-all"
         (btu/scroll-and-click {:id ":rems.administration.catalogue-items/catalogue-selection-toggle-all"})
@@ -2957,7 +2966,7 @@
         (btu/scroll-and-click {:id ":rems.administration.catalogue-items/catalogue-selection-toggle-all"})
         (btu/wait-page-loaded)
         (is (not-empty (slurp-tds [:catalogue {:css "tr:has(td.selection *[aria-checked=true])"}])))
-        (is (btu/eventually-disabled? {:tag :button :fn/text "Update catalogue item"})))
+        (is (btu/eventually-disabled? {:tag :button :id "update-catalogue-item"})))
 
       (testing "update is enabled when selecting all items under the user's organization with toggle-all"
         (btu/scroll-and-click {:id ":rems.administration.catalogue-items/catalogue-selection-toggle-all"})
@@ -2967,7 +2976,7 @@
         (is (= ["test-update-catalogue-item 4 EN"]
                (mapv #(get % "name")
                      (slurp-tds [:catalogue {:css "tr:has(td.selection *[aria-checked=true])"}]))))
-        (is (btu/eventually-enabled? {:tag :button :fn/text "Update catalogue item"}))))
+        (is (btu/eventually-enabled? {:tag :button :id "update-catalogue-item"}))))
 
     (testing "edit buttons are not visible"
       (btu/scroll-and-click {:fn/text "Own organization only"})
