@@ -2850,14 +2850,14 @@
       (is (btu/eventually-visible? {:fn/text "test-update-catalogue-item 3 EN"}))
       (is (btu/eventually-disabled? {:tag :button :id "update-catalogue-item"})))
 
-   (testing "update button reflects number of selected items"
-            (btu/scroll-and-click {:fn/text "test-update-catalogue-item 1 EN"})
-            (is (btu/eventually-visible? {:tag :button :id "update-catalogue-item" :fn/text "Update 1 catalogue item"}))
-            (btu/scroll-and-click {:fn/text "test-update-catalogue-item 2 EN"})
-            (is (btu/eventually-enabled? {:tag :button :id "update-catalogue-item" :fn/text "Update 2 catalogue items"}))
-            (btu/scroll-and-click {:fn/text "test-update-catalogue-item 1 EN"})
-            (btu/scroll-and-click {:fn/text "test-update-catalogue-item 2 EN"})
-            (is (btu/eventually-visible? {:tag :button :id "update-catalogue-item" :fn/text "Update catalogue item"})))
+    (testing "update button reflects number of selected items"
+      (btu/scroll-and-click {:fn/text "test-update-catalogue-item 1 EN"})
+      (is (btu/eventually-visible? {:tag :button :id "update-catalogue-item" :fn/text "Update 1 catalogue item"}))
+      (btu/scroll-and-click {:fn/text "test-update-catalogue-item 2 EN"})
+      (is (btu/eventually-enabled? {:tag :button :id "update-catalogue-item" :fn/text "Update 2 catalogue items"}))
+      (btu/scroll-and-click {:fn/text "test-update-catalogue-item 1 EN"})
+      (btu/scroll-and-click {:fn/text "test-update-catalogue-item 2 EN"})
+      (is (btu/eventually-visible? {:tag :button :id "update-catalogue-item" :fn/text "Update catalogue item"})))
 
     (testing "select to go to update"
       (btu/scroll-and-click {:fn/text "test-update-catalogue-item 1 EN"})
