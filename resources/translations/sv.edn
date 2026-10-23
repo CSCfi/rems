@@ -173,6 +173,9 @@
                    :type "Typ"
                    :unarchive "Avarkivera"
                    :update-catalogue-item "Uppdatera katalogposten"
+                   :update-catalogue-item-one "Uppdatera 1 katalogpost"
+                   ;; %1 - number
+                   :update-catalogue-item-plural "Uppdatera %1 katalogposter"
                    :user "Användare"
                    :userid "Användarnamn"
                    :user-role "Användarensroll"
