@@ -177,6 +177,8 @@
                    :type "Type"
                    :unarchive "Dearkiver"
                    :update-catalogue-item nil
+                   :update-catalogue-item-one nil
+                   :update-catalogue-item-plural nil
                    :user "Bruger"
                    :userid "Brugernavn"
                    :user-role "Brugerrolle"
