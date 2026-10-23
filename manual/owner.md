@@ -160,21 +160,23 @@ Create a catalogue item by choosing an application form, a workflow and a resour
 
 Give your catalogue item a descriptive name. Thus, it will be easier for the applicants to recognise which catalogue item they want access to. The name is required to be in Finnish, in English and in Swedish.
 
+:exclamation: Note! After saving the catalogue item, you cannot edit the connected resource.
+
 **After you have created a catalogue item, you have to enable it**. The catalogue item is disabled at first so that you can edit it before anyone will be able to apply access to it. After enabling, the applicant will see it as a resource in Catalogue tab and can apply for access to it.
 
 :point_up: Pro tip: If you want to see how an applicant sees the catalogue items, you can navigate to the Catalogue tab.
 
 #### Editing catalogue items
 
-You can edit the catalogue item’s name, organization and links to additional information by selecting edit.
+You can edit the catalogue item’s name, organization and links to additional information by selecting Modify>Edit.
 
-:exclamation: Note! After saving, you cannot edit form, workflow or resource connected to the catalogue item. Editing is also not possible when some part of the catalogue item is disabled.
+If you want to change the catalogue item’s application form or workflow, select the catalogue item(s) you want to edit and then **Update n catalogue items**.
 
-If you want to only change the catalogue item’s application form, select the catalogue item you want to edit and then **Change form**.
+![Update catalogue item](img/updatecatalogueitems.png)
 
-![Change form](img/changeform.png)
+This will **disable and archive the old catalogue item** and create a new catalogue item that has a different form and/or workflow but is otherwise the same as the old catalogue item. This means that the applicants cannot see or apply for access to the old catalogue item anymore.
 
-This will **disable and archive the old catalogue item** and create a new catalogue item that has a different form but is otherwise the same as the old catalogue item. This means that the applicants cannot see or apply for access to the old catalogue item anymore.
+:exclamation: Editing is not possible when some part of the catalogue item is disabled.
 
 #### Catalogue item hierarchy
 
