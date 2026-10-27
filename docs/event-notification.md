@@ -40,6 +40,36 @@ Applications that reach an "end state" are such that there will be one of these 
 
 NB: `DecidedEvent` is sent when a potential decider has marked the decision they've made. The application is not yet considered approved or rejected.
 
+## Forwarding the user's access token
+
+With `:send-access-token? true` in the target configuration, REMS
+sends the OIDC access token of the logged-in user whose action caused
+the event in the `Authorization` header (`Bearer <token>`, or
+`DPoP <token>` when `:oidc-dpop` is used and the token is DPoP-bound).
+
+- The token belongs to the user who did the action, i.e. the
+  `event/actor`. For example an `ApprovedEvent` carries the handler's
+  token, not the applicant's. Use `event/application` to find out the
+  applicant.
+- The token is only sent for events whose actor is the logged-in
+  user, so events caused by bots during the same request are sent
+  without a token. For example, an application approved by the
+  `approver-bot` sends the `ApprovedEvent` without a token.
+- Events caused by API key requests or by scheduled jobs don't have a
+  token.
+- The token is stored in the outbox encrypted with a key that only
+  exists in the memory of the running REMS. If the token expires, or
+  REMS restarts, before the notification has been delivered, the
+  notification is not sent anymore.
+- For DPoP-bound tokens, REMS adds a `DPoP` proof header for the
+  `PUT` request. The recipient should validate the proof (`htm` is
+  `PUT`, `htu` is the target url, `ath` matches the token) and check
+  that the token's `cnf.jkt` matches the thumbprint of the proof's
+  `jwk`. The recipient can use a DPoP-bound token to call other
+  services only if the DPoP key (`:oidc-dpop-private-key`) is shared
+  between REMS and the recipient, because each call needs a new proof
+  signed with that key.
+
 ## Event Types
 
 The body of the HTTP PUT request will be a JSON object that contains at a minimum:

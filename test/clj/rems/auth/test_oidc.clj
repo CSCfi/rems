@@ -2,6 +2,7 @@
   (:require [clj-http.client]
             [clojure.test :refer [deftest is testing use-fixtures]]
             [rems.api.testing :refer [api-fixture]]
+            [rems.auth.dpop :as dpop]
             [rems.auth.oidc :as oidc]
             [rems.config]
             [rems.ga4gh]
@@ -182,3 +183,74 @@
                       :session {:access-token "special.access-token"
                                 :identity {:userid "user" :name "User" :email "user@example.com"}}}
                      response)))))))))
+
+(defn- with-dpop-setup [{:keys [token-type]} f]
+  (let [requests (atom [])]
+    (with-redefs [rems.config/env (assoc rems.config/env
+                                         :oidc-dpop :required
+                                         :oidc-userid-attributes [{:attribute "sub"}]
+                                         :log-authentication-details false
+                                         :public-url "http://special:3000/"
+                                         :oidc-client-id "special.client-id"
+                                         :oidc-client-secret "special.client-secret")
+                  rems.config/oidc-configuration {:token_endpoint "https://special.case/token"
+                                                  :issuer "https://special.case/issuer"
+                                                  :userinfo_endpoint "https://special.case/user-info"}
+                  clj-http.client/post (fn [url request]
+                                         (swap! requests conj {:url url :request request})
+                                         {:status 200
+                                          :body (json/generate-string {:access_token "dpop.access-token"
+                                                                       :token_type token-type
+                                                                       :expires_in 300
+                                                                       :id_token "special.id-token"})})
+                  rems.jwt/validate (fn [_id-token _issuer _audience _now]
+                                      {:sub "dpop-user" :name "DPoP User" :email "dpop-user@example.com"})
+                  clj-http.client/get (fn [url request]
+                                        (swap! requests conj {:url url :request request})
+                                        {:status 200 :body "{}"})
+                  rems.ga4gh/passport->researcher-status-by (constantly nil)]
+      (with-fake-login-users {} (f requests)))))
+
+(deftest test-dpop
+  (with-dpop-setup {:token-type "DPoP"}
+    (fn [requests]
+      (testing "authorization request is bound to the DPoP key"
+        (is (.endsWith (get-in (oidc/oidc-login {}) [:headers "Location"])
+                       (str "&dpop_jkt=" (dpop/jkt)))))
+
+      (testing "callback"
+        (let [response (oidc/oidc-callback {:params {:code "special-case-code"}})
+              [token-request user-info-request & more] @requests]
+          (is (empty? more))
+
+          (testing "token request has a DPoP proof"
+            (is (= "https://special.case/token" (:url token-request)))
+            (let [[header claims] (rems.jwt/show (get-in token-request [:request :headers "DPoP"]))]
+              (is (= "dpop+jwt" (:typ header)))
+              (is (= {:htm "POST" :htu "https://special.case/token"}
+                     (select-keys claims [:htm :htu :ath])))))
+
+          (testing "user info is requested with the DPoP-bound token"
+            (is (= "https://special.case/user-info" (:url user-info-request)))
+            (is (= "DPoP dpop.access-token" (get-in user-info-request [:request :headers "Authorization"])))
+            (let [[_header claims] (rems.jwt/show (get-in user-info-request [:request :headers "DPoP"]))]
+              (is (= {:htm "GET"
+                      :htu "https://special.case/user-info"
+                      :ath (dpop/access-token-hash "dpop.access-token")}
+                     (select-keys claims [:htm :htu :ath])))))
+
+          (testing "token type and expiry are stored in the session"
+            (is (= {:access-token "dpop.access-token"
+                    :access-token-type "DPoP"
+                    :identity {:userid "dpop-user" :name "DPoP User" :email "dpop-user@example.com"}}
+                   (dissoc (:session response) :access-token-expires-at)))
+            (is (< (System/currentTimeMillis)
+                   (* 1000 (get-in response [:session :access-token-expires-at]))
+                   (+ (System/currentTimeMillis) (* 301 1000)))))))))
+
+  (testing "a Bearer token is refused when DPoP is required"
+    (with-dpop-setup {:token-type "Bearer"}
+      (fn [_requests]
+        (is (thrown-with-msg? clojure.lang.ExceptionInfo
+                              #"did not issue a DPoP-bound access token"
+                              (oidc/oidc-callback {:params {:code "special-case-code"}})))))))

@@ -110,6 +110,16 @@
  :oidc-logout-redirect-url "/"
  ;; Should REMS POST to the revocation_endpoint received from OIDC metadata?
  :oidc-perform-revoke-on-logout true
+ ;; Should REMS use DPoP (RFC 9449) sender-constrained access tokens?
+ ;;   nil       - no DPoP (default)
+ ;;   :optional - send DPoP proofs, but accept a Bearer token if the OIDC provider doesn't issue a DPoP-bound one
+ ;;   :required - fail the login if the OIDC provider doesn't issue a DPoP-bound access token
+ :oidc-dpop nil
+ ;; Key for signing DPoP proofs.
+ ;; Format: path to file containing a private key in JWK (Json Web Key) format, e.g. EC P-256 for ES256.
+ ;; If not set, REMS generates a new key every time it starts. This is fine for a single
+ ;; REMS instance, since sessions don't survive restarts anyway.
+ :oidc-dpop-private-key nil
  ;; Should REMS use `state` parameter in the OIDC login.
  ;; If set to `:csrf-token` then REMS will send the `state` parameter
  ;; and check the return value in the callback. (default is not to send)
@@ -154,6 +164,10 @@
  ;;   :timeout (optional) - timeout for the PUT in seconds. Defaults to 60s.
  ;;   :headers (optional) - a map of additional HTTP headers to send.
  ;;   :send-application? (optional) - should application be sent in `:event/application` (defaults to true)
+ ;;   :send-access-token? (optional) - forward the OIDC access token of the logged-in user whose action
+ ;;       caused the event in the Authorization header (defaults to false). The token is only sent for
+ ;;       events whose actor is the logged-in user, e.g. not for events of bots. DPoP-bound tokens are sent
+ ;;       with a DPoP proof made for the request. Can't be combined with an Authorization header in :headers.
  ;;
  ;; See also: docs/event-notification.md
  ;;

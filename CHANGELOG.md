@@ -8,6 +8,13 @@ have notable changes.
 
 Changes since v2.40
 
+### Additions
+- OIDC login can use DPoP (RFC 9449) sender-constrained access tokens. See `:oidc-dpop` and `:oidc-dpop-private-key` in [config-defaults.edn](resources/config-defaults.edn).
+- Event notifications can forward the access token of the logged-in user with `:send-access-token?`. See [docs/event-notification.md](docs/event-notification.md).
+
+### Fixes
+- The `:oidc-perform-revoke-on-logout` configuration was ignored and the access token was never revoked on logout. Now the token is revoked by default, as documented.
+
 ## v2.40 "Länsilinkki" 2026-09-29
 
 ### Additions
