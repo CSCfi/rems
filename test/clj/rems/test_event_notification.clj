@@ -3,7 +3,12 @@
             [clojure.test :refer :all]
             [rems.config]
             [rems.service.command :as command]
+            [clojure.string :as str]
             [rems.api.testing :refer [api-fixture api-call]]
+            [rems.auth.dpop :as dpop]
+            [rems.context :as context]
+            [rems.db.outbox]
+            [rems.jwt]
             [rems.db.events]
             [rems.service.test-data :as test-data]
             [rems.db.test-data-helpers :as test-helpers]
@@ -288,3 +293,81 @@
         (event-notification/process-outbox!)
         (let [notifications (get-notifications)]
           (is (apply < (mapv :event/id notifications))))))))
+
+(deftest test-send-access-token
+  (with-open [server (stub/start! (into {} (for [path ["/bearer" "/dpop" "/opt-in" "/bot" "/no-session" "/expired"]]
+                                             [path {:status 200}])))]
+    (let [now (.getEpochSecond (java.time.Instant/now))
+          event {:event/id 1
+                 :event/type :application.event/created
+                 :event/actor "alice"
+                 :application/id 1}
+          send! (fn [path session event & [target]]
+                  (let [url (str (:uri server) path)]
+                    (with-redefs [rems.config/env (assoc rems.config/env
+                                                         :event-notification-targets [(merge {:url url
+                                                                                              :send-access-token? true
+                                                                                              :send-application? false}
+                                                                                             target)])]
+                      (binding [context/*request* {:session session}]
+                        (event-notification/queue-notifications! [event])))
+                    (when-let [token (:access-token session)]
+                      (is (not (str/includes? (pr-str (rems.db.outbox/get-entries {:type :event-notification})) token))
+                          "token is not stored in plain text"))
+                    (event-notification/process-outbox!)
+                    (->> (stub/recorded-requests server)
+                         (filter #(= path (:path %)))
+                         (mapv :headers))))]
+
+      (testing "Bearer token"
+        (let [[headers & more] (send! "/bearer" {:access-token "bearer-token"
+                                                 :access-token-expires-at (+ now 300)
+                                                 :identity {:userid "alice"}}
+                                      event)]
+          (is (empty? more))
+          (is (= "Bearer bearer-token" (:authorization headers)))
+          (is (nil? (:dpop headers)))))
+
+      (testing "DPoP-bound token"
+        (let [url (str (:uri server) "/dpop")
+              [headers & more] (send! "/dpop" {:access-token "dpop-token"
+                                               :access-token-type "DPoP"
+                                               :identity {:userid "alice"}}
+                                      event)
+              [proof-header claims] (rems.jwt/show (:dpop headers))]
+          (is (empty? more))
+          (is (= "DPoP dpop-token" (:authorization headers)))
+          (is (= "dpop+jwt" (:typ proof-header)))
+          (is (= {:htm "PUT" :htu url :ath (dpop/access-token-hash "dpop-token")}
+                 (select-keys claims [:htm :htu :ath])))))
+
+      (testing "not sent unless the target opts in"
+        (let [[headers & more] (send! "/opt-in" {:access-token "plain-token-value" :identity {:userid "alice"}}
+                                      event
+                                      {:send-access-token? false})]
+          (is (empty? more))
+          (is (nil? (:authorization headers)))))
+
+      (testing "not sent for events of other actors"
+        (let [[headers & more] (send! "/bot" {:access-token "plain-token-value" :identity {:userid "alice"}}
+                                      (assoc event :event/actor "approver-bot"))]
+          (is (empty? more))
+          (is (nil? (:authorization headers)))))
+
+      (testing "no session"
+        (let [[headers & more] (send! "/no-session" nil event)]
+          (is (empty? more))
+          (is (nil? (:authorization headers)))))
+
+      (testing "expired token is not sent"
+        (is (empty? (send! "/expired" {:access-token "expired-token"
+                                       :access-token-expires-at (- now 1)
+                                       :identity {:userid "alice"}}
+                           event)))
+        (let [[entry & more] (filter #(= (str (:uri server) "/expired")
+                                         (get-in % [:outbox/event-notification :target :url]))
+                                     (rems.db.outbox/get-entries {:type :event-notification}))]
+          (is (empty? more))
+          (is (nil? (:outbox/next-attempt entry)) "not retried")
+          (is (= "failed: access token expired" (:outbox/latest-error entry)))
+          (is (not (contains? (:outbox/event-notification entry) :access-token)) "token is removed"))))))

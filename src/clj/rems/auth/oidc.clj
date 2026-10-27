@@ -5,6 +5,7 @@
             [clojure.tools.logging :as log]
             [compojure.core :refer [GET defroutes]]
             [medley.core :refer [dissoc-in find-first]]
+            [rems.auth.dpop :as dpop]
             [rems.common.util :refer [andstr getx]]
             [rems.config :refer [env oidc-configuration]]
             [rems.db.user-mappings]
@@ -30,7 +31,9 @@
        "&redirect_uri=" (getx env :public-url) "oidc-callback"
        "&scope=" (getx env :oidc-scopes)
        (getx env :oidc-additional-authorization-parameters)
-       (andstr "&state=" oidc-csrf-token)))
+       (andstr "&state=" oidc-csrf-token)
+       (when (dpop/enabled?)
+         (str "&dpop_jkt=" (dpop/jkt)))))
 
 (defn logout-url []
   "/oidc-logout")
@@ -147,6 +150,59 @@
       (throw (IllegalArgumentException. (pr-str {:original-csrf-token original-csrf-token
                                                  :received-csrf-token received-csrf-token}))))))
 
+(defn- check-status! [response url]
+  (when-not (http/unexceptional-status? (:status response))
+    (throw (ex-info (str "HTTP status " (:status response) " from " url)
+                    (if (:log-authentication-details env)
+                      (select-keys response [:status :body])
+                      (select-keys response [:status])))))
+  response)
+
+(defn- request-tokens [code]
+  (let [url (:token_endpoint oidc-configuration)
+        request {;; NOTE Some IdPs don't support client id and secret in form params,
+                 ;;      and require us to use HTTP basic auth
+                 :basic-auth [(str (getx env :oidc-client-id))
+                              (getx env :oidc-client-secret)]
+                 :form-params {:grant_type "authorization_code"
+                               :code code
+                               :redirect_uri (str (getx env :public-url) "oidc-callback")}
+                 ;; Setting these will cause the exceptions raised by http/post to contain
+                 ;; the request body, useful for debugging failures.
+                 :save-request? (getx env :log-authentication-details)
+                 :debug-body (getx env :log-authentication-details)}
+        response (if (dpop/enabled?)
+                   (-> (dpop/with-nonce-retry url
+                         (fn [nonce]
+                           (http/post url (-> request
+                                              (assoc :throw-exceptions false)
+                                              (assoc-in [:headers "DPoP"] (dpop/proof {:htm :post :htu url :nonce nonce}))))))
+                       (check-status! url))
+                   (http/post url request))
+        ;; FIXME Complains about Invalid cookie header in logs
+        ;; TODO Unhandled responses for token endpoint:
+        ;;      403 {\"error\":\"invalid_grant\",\"error_description\":\"Invalid authorization code\"} when reusing codes
+        tokens (json/parse-string (:body response))]
+    (when (dpop/enabled?)
+      (when-not (dpop/dpop-token-type? (:token_type tokens))
+        (if (= :required (dpop/mode))
+          (throw (ex-info "OIDC provider did not issue a DPoP-bound access token" {:token-type (:token_type tokens)}))
+          (log/warn "OIDC provider did not issue a DPoP-bound access token, token type" (pr-str (:token_type tokens))))))
+    tokens))
+
+(defn- fetch-user-info [access-token token-type]
+  (when-let [url (:userinfo_endpoint oidc-configuration)]
+    (-> (if (dpop/dpop-token-type? token-type)
+          (-> (dpop/with-nonce-retry url
+                (fn [nonce]
+                  (http/get url {:headers {"Authorization" (dpop/authorization-header token-type access-token)
+                                           "DPoP" (dpop/proof {:htm :get :htu url :access-token access-token :nonce nonce})}
+                                 :throw-exceptions false})))
+              (check-status! url))
+          (http/get url {:headers {"Authorization" (str "Bearer " access-token)}}))
+        :body
+        json/parse-string)))
+
 (defn oidc-callback [request]
   (let [error (get-in request [:params :error])
         code (get-in request [:params :code])]
@@ -161,24 +217,9 @@
           :else
           (let [_ (maybe-check-csrf-token request)
 
-                response (-> (http/post (:token_endpoint oidc-configuration)
-                                        ;; NOTE Some IdPs don't support client id and secret in form params,
-                                        ;;      and require us to use HTTP basic auth
-                                        {:basic-auth [(str (getx env :oidc-client-id))
-                                                      (getx env :oidc-client-secret)]
-                                         :form-params {:grant_type "authorization_code"
-                                                       :code code
-                                                       :redirect_uri (str (getx env :public-url) "oidc-callback")}
-                                         ;; Setting these will cause the exceptions raised by http/post to contain
-                                         ;; the request body, useful for debugging failures.
-                                         :save-request? (getx env :log-authentication-details)
-                                         :debug-body (getx env :log-authentication-details)})
-                             ;; FIXME Complains about Invalid cookie header in logs
-                             ;; TODO Unhandled responses for token endpoint:
-                             ;;      403 {\"error\":\"invalid_grant\",\"error_description\":\"Invalid authorization code\"} when reusing codes
-                             (:body)
-                             (json/parse-string))
+                response (request-tokens code)
                 access-token (:access_token response)
+                token-type (:token_type response)
                 id-token (:id_token response)
                 issuer (:issuer oidc-configuration)
                 audience (getx env :oidc-client-id)
@@ -189,10 +230,7 @@
                 ;; locale – could be used to set preferred lang on first login
                 ;; email – non-unique (!) email
                 id-data (jwt/validate id-token issuer audience now)
-                user-info (when-let [url (:userinfo_endpoint oidc-configuration)]
-                            (-> (http/get url {:headers {"Authorization" (str "Bearer " access-token)}})
-                                :body
-                                json/parse-string))
+                user-info (fetch-user-info access-token token-type)
                 researcher-status (ga4gh/passport->researcher-status-by user-info)
                 user-data (merge id-data user-info researcher-status)
                 user-data (plugins/transform :extension-point/transform-user-data user-data)
@@ -205,9 +243,13 @@
                 (assoc :session (:session request))
                 (dissoc-in [:session :oidc-csrf-token]) ; cleanup, not used again
                 (assoc-in [:session :access-token] access-token)
+                (cond-> token-type
+                  (assoc-in [:session :access-token-type] token-type))
+                (cond-> (:expires_in response)
+                  (assoc-in [:session :access-token-expires-at] (+ (.getEpochSecond now) (:expires_in response))))
                 (assoc-in [:session :identity] user))))))
 
-(defn- oidc-revoke [token]
+(defn- oidc-revoke [token token-type]
   (when token
     (let [endpoint (:revocation_endpoint oidc-configuration)]
       (when (:log-authentication-details env)
@@ -218,6 +260,8 @@
                                   {:basic-auth [(getx env :oidc-client-id)
                                                 (getx env :oidc-client-secret)]
                                    :form-params {:token token}
+                                   :headers (when (dpop/dpop-token-type? token-type)
+                                              {"DPoP" (dpop/proof {:htm :post :htu endpoint})})
                                    :throw-exceptions false})]
           (when (:log-authentication-details env)
             (log/info "performed revocation" (:status response)))
@@ -236,14 +280,14 @@
     (when (:log-authentication-details env)
       (log/info "logging out" (:identity session)))
 
-    (when (:oidc-perform-revoke-in-logout env)
-      (oidc-revoke (:access-token session)))
+    (when (:oidc-perform-revoke-on-logout env)
+      (oidc-revoke (:access-token session) (:access-token-type session)))
 
     (when (:log-authentication-details env)
       (log/info "redirecting to" redirect-url))
 
     (assoc (redirect redirect-url)
-           :session (dissoc session :identity :access-token))))
+           :session (dissoc session :identity :access-token :access-token-type :access-token-expires-at))))
 
 (defroutes routes
   (GET "/oidc-login" req (oidc-login req))
