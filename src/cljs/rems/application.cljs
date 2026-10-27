@@ -663,7 +663,7 @@
          (when (contains? permissions :application.command/add-licenses)
            [:<>
             [:div.commands [add-licenses-action-button]]
-            [add-licenses-form application-id (partial reload! application-id)]])
+            [add-licenses-form application-id (partial reload! application-id) licenses]])
          (if (accepted-licenses? application userid)
            [:div#has-accepted-licenses (text :t.form/has-accepted-licenses)]
            (when (contains? permissions :application.command/accept-licenses)
