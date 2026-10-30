@@ -98,8 +98,8 @@
   (let [selected-licenses @(rf/subscribe [::selected-licenses])
         all-potential-licenses @(rf/subscribe [::potential-licenses])
         potential-licenses (->> all-potential-licenses (remove #(or (contains? (set (map :license/id added-terms)) (:id %))
-                                      (contains? selected-licenses %))))
-        comment @(rf/subscribe [:rems.actions.components/comment action-form-id]) ]
+                                                                    (contains? selected-licenses %))))
+        comment @(rf/subscribe [:rems.actions.components/comment action-form-id])]
     [add-licenses-view {:selected-licenses selected-licenses
                         :potential-licenses potential-licenses
                         :on-set-licenses #(rf/dispatch [::set-selected-licenses %])
