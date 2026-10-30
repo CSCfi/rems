@@ -5,17 +5,16 @@
 
   NB: requires `graphviz` and `clj-kondo` to be installed on the machine.
   NB: Work in progress. You should run `graph` manually currently."
-  (:require [clojure.java.io :as io]
+  (:require [clojure.edn :as edn]
+            [clojure.java.io :as io]
             [clojure.java.shell :as sh]
-            [clojure.edn :as edn]
             [clojure.string :as str]
-            [clojure.tools.logging]
             [clojure.test :refer [deftest is]]
+            [clojure.tools.logging]
             [medley.core :refer [index-by]]
-            [tangle.core]
+            [rems.db.test-data-helpers :as test-helpers]
             [rems.trace]
-            [rems.db.test-data-helpers :as test-helpers]))
-
+            [tangle.core]))
 
 (defn interesting-ns? [s]
   (and (str/starts-with? s "rems.")
