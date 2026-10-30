@@ -1,21 +1,20 @@
-(ns rems.test-layers
+(ns ^:integration rems.test-layers
   "Test REMS layer architecture automatically.
 
   Generates an architecture diagram.
 
   NB: requires `graphviz` and `clj-kondo` to be installed on the machine.
   NB: Work in progress. You should run `graph` manually currently."
-  (:require [clojure.java.io :as io]
+  (:require [clojure.edn :as edn]
+            [clojure.java.io :as io]
             [clojure.java.shell :as sh]
-            [clojure.edn :as edn]
             [clojure.string :as str]
+            [clojure.test :refer [are deftest testing]]
             [clojure.tools.logging]
-            [clojure.test :refer [deftest is]]
             [medley.core :refer [index-by]]
-            [tangle.core]
+            [rems.db.test-data-helpers :as test-helpers]
             [rems.trace]
-            [rems.db.test-data-helpers :as test-helpers]))
-
+            [tangle.core]))
 
 (defn interesting-ns? [s]
   (and (str/starts-with? s "rems.")
@@ -32,16 +31,17 @@
        ;; not interesting right now
        (not (str/starts-with? s "rems.main"))
 
-       (or (= s "rems.main")
-           (= s "rems.cli")
+       (or (= "rems.main" s)
+           (= "rems.cli" s)
            (str/starts-with? s "rems.ext.")
            ;;(str/starts-with? s "rems.cli")
            (str/starts-with? s "rems.db.")
            (str/starts-with? s "rems.service.")
            (str/starts-with? s "rems.api"))))
 
-;; use to see what for future namespace renaming could look like
-(defn rename-ns [s]
+(defn rename-ns
+  "use to see what for future namespace renaming could look like"
+  [s]
   (-> s
       (str/replace "rems.db.fix-userid" "rems.service.fix-userid")))
 
@@ -58,6 +58,7 @@
     [:db :core] (= "rems.db.core" (:name to))
     [:api :api] (= "rems.api" (:name from))
     false))
+
 (defn analyze-code []
   (let [ret (sh/sh "clj-kondo" "--lint" "src" "--parallel" "--config" "{:output {:format :edn} :analysis true}")
         analysis (-> ret :out edn/read-string :analysis)
@@ -105,13 +106,17 @@
 (defn graph []
   (let [{nodes :namespaces edges :namespace-usages} (analyze-code)
         dot (tangle.core/graph->dot nodes edges {:directed? true
-                                                 :graph {:rankdir :LR
+                                                 :graph {:rankdir :TD
                                                          :ranksep 3.5
                                                          :rank :min
                                                          :dpi 150
-                                                         :layout :dot}
+                                                         :layout :dot
+                                                         :splines :ortho
+                                                         :overlap false}
                                                  :edge {:penwidth 2}
-                                                 :node {:shape :box}
+                                                 :node {:shape :box
+                                                        :fontname "Courier New"
+                                                        :fontstyle :bold}
                                                  :node->id :name
                                                  :node->descriptor (fn [node]
                                                                      (when-let [layer (:layer node)]
@@ -123,34 +128,40 @@
 
                                                                          :api
                                                                          {:style :filled
-                                                                          :fontcolor :white
-                                                                          :fillcolor "red"}
+                                                                          :fillcolor "#f7c0b0"}
 
                                                                          :service
                                                                          {:style :filled
-                                                                          :fillcolor "#00ff00"}
+                                                                          :fillcolor "#bdfab6"}
 
                                                                          :db
                                                                          {:style :filled
-                                                                          :fontcolor :white
-                                                                          :fillcolor "blue"}
+                                                                          :fillcolor "#abd9ff"}
 
                                                                          :core
                                                                          {:style :filled
-                                                                          :fillcolor "cyan"}
+                                                                          :fillcolor "#70f9ff"}
 
                                                                          :ext
                                                                          {:style :filled
                                                                           :fillcolor "cyan"})))})]
-    (clojure.java.io/copy dot (clojure.java.io/file "docs/rems-layers.dot"))
-    (clojure.java.io/copy (tangle.core/dot->svg dot) (clojure.java.io/file "docs/rems-layers.svg"))
-    (clojure.java.io/copy (tangle.core/dot->image dot "png") (clojure.java.io/file "docs/rems-layers.png"))))
+    (io/copy dot (clojure.java.io/file "docs/rems-layers.dot"))
+    (io/copy (tangle.core/dot->svg dot) (clojure.java.io/file "docs/rems-layers.svg"))
+    (io/copy (tangle.core/dot->image dot "png") (clojure.java.io/file "docs/rems-layers.png"))))
 
 (comment
   (graph))
 
 (deftest test-architecture-layers
-  (is true)) ; TODO implement as test
+  (testing "write architecture diagram"
+    ;; do not actually test anything worthwhile, only use test automation to regenerate the files
+    (graph)
+    (are [filename] (.exists (io/file filename))
+      "docs/rems-layers.dot"
+      "docs/rems-layers.svg"
+      "docs/rems-layers.png")))
+
+;;; here be wip
 
 (defn- sym->id [sym]
   (pr-str sym))
