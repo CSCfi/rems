@@ -106,13 +106,17 @@
 (defn graph []
   (let [{nodes :namespaces edges :namespace-usages} (analyze-code)
         dot (tangle.core/graph->dot nodes edges {:directed? true
-                                                 :graph {:rankdir :LR
+                                                 :graph {:rankdir :TD
                                                          :ranksep 3.5
                                                          :rank :min
                                                          :dpi 150
-                                                         :layout :dot}
+                                                         :layout :dot
+                                                         :splines :ortho
+                                                         :overlap false}
                                                  :edge {:penwidth 2}
-                                                 :node {:shape :box}
+                                                 :node {:shape :box
+                                                        :fontname "Courier New"
+                                                        :fontstyle :bold}
                                                  :node->id :name
                                                  :node->descriptor (fn [node]
                                                                      (when-let [layer (:layer node)]
@@ -124,34 +128,34 @@
 
                                                                          :api
                                                                          {:style :filled
-                                                                          :fontcolor :white
-                                                                          :fillcolor "red"}
+                                                                          :fillcolor "#f7c0b0"}
 
                                                                          :service
                                                                          {:style :filled
-                                                                          :fillcolor "#00ff00"}
+                                                                          :fillcolor "#bdfab6"}
 
                                                                          :db
                                                                          {:style :filled
-                                                                          :fontcolor :white
-                                                                          :fillcolor "blue"}
+                                                                          :fillcolor "#abd9ff"}
 
                                                                          :core
                                                                          {:style :filled
-                                                                          :fillcolor "cyan"}
+                                                                          :fillcolor "#70f9ff"}
 
                                                                          :ext
                                                                          {:style :filled
                                                                           :fillcolor "cyan"})))})]
-    (clojure.java.io/copy dot (clojure.java.io/file "docs/rems-layers.dot"))
-    (clojure.java.io/copy (tangle.core/dot->svg dot) (clojure.java.io/file "docs/rems-layers.svg"))
-    (clojure.java.io/copy (tangle.core/dot->image dot "png") (clojure.java.io/file "docs/rems-layers.png"))))
+    (io/copy dot (clojure.java.io/file "docs/rems-layers.dot"))
+    (io/copy (tangle.core/dot->svg dot) (clojure.java.io/file "docs/rems-layers.svg"))
+    (io/copy (tangle.core/dot->image dot "png") (clojure.java.io/file "docs/rems-layers.png"))))
 
 (comment
   (graph))
 
 (deftest test-architecture-layers
   (is true)) ; TODO implement as test
+
+;;; here be wip
 
 (defn- sym->id [sym]
   (pr-str sym))
