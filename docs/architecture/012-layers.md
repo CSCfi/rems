@@ -47,6 +47,8 @@ DB/EXT layer       | license  |         | workflow |        | user-settings |   
                                 '----'
 ```
 
+See also [docs/rems-layers.svg](docs/rems-layers.svg)[|.png|.dot] for the full namespace-level generated diagram
+
 ### The API Layer
 
 The API layer takes in a HTTP request and transforms it into ideally

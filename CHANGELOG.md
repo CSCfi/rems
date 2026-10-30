@@ -24,6 +24,12 @@ This release rolls back the changes introduced in v2.40 due to a performance reg
 
 v2.41 is functionally equivalent to v2.39.1
 
+### Additions
+- REMS now automatically generates a namespace-level architecture diagram. The diagram is available in SVG, PNG, and GraphViz DOT formats:
+  - [docs/rems-layers.svg](docs/rems-layers.svg)
+  - [docs/rems-layers.png](docs/rems-layers.png)
+  - [docs/rems-layers.dot](docs/rems-layers.dot)
+
 ## v2.40 "Länsilinkki" 2026-09-29
 
 ### Additions
