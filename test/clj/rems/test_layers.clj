@@ -31,8 +31,8 @@
        ;; not interesting right now
        (not (str/starts-with? s "rems.main"))
 
-       (or (= s "rems.main")
-           (= s "rems.cli")
+       (or (= "rems.main" s)
+           (= "rems.cli" s)
            (str/starts-with? s "rems.ext.")
            ;;(str/starts-with? s "rems.cli")
            (str/starts-with? s "rems.db.")
