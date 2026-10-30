@@ -730,3 +730,31 @@
   [coll]
   (some-> (seq coll)
           (rand-nth)))
+
+(defn nil-if-empty [m]
+  (when-not (empty? m)
+    m))
+
+(deftest test-nil-if-empty
+  (is (nil? (nil-if-empty nil)))
+  (is (nil? (nil-if-empty (list))))
+  (is (nil? (nil-if-empty [])))
+  (is (nil? (nil-if-empty #{})))
+  (is (nil? (nil-if-empty {})))
+
+  (is (some? (nil-if-empty (range 3))))
+  (is (some? (nil-if-empty (list 1 2 3))))
+  (is (some? (nil-if-empty [1 2 3])))
+  (is (some? (nil-if-empty #{1 2 3})))
+  (is (some? (nil-if-empty {:a 42}))))
+
+(defn dissoc-if-empty [m k]
+  (if (empty? (get m k))
+    (dissoc m k)
+    m))
+
+(deftest test-dissoc-if-empty
+  (is (empty? (dissoc-if-empty nil :foo)))
+  (is (empty? (dissoc-if-empty {:foo []} :foo)))
+  (is (some? (dissoc-if-empty {:foo []} :bar)))
+  (is (some? (dissoc-if-empty {:foo [1]} :foo))))

@@ -2192,6 +2192,10 @@
   (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success")))
 
 (deftest test-create-catalogue-item
+  (test-helpers/create-user! {:userid "organization-owner1"
+                              :name "Organization Owner 1"
+                              :email "organization-owner1@example.com"
+                              :organizations [{:organization/id "Default"}]})
   (btu/with-postmortem
     (testing "create objects"
       (login-as "owner")
@@ -3152,7 +3156,7 @@
                     :let [column-id (keyword (format "columns-%s-key" i))
                           label-id (comp keyword (partial format "columns-%s-label-%s" i) name)]]
               (btu/scroll-and-click (field-component :add-column))
-              (btu/wait-visible (field-component column-id))
+              (btu/wait-visible (field-component (label-id :sv)))
               (btu/fill-human (field-component column-id) (format "table-column-%s" i))
               (btu/fill-human (field-component (label-id :en)) (format "Table column %s (EN)" i))
               (btu/fill-human (field-component (label-id :fi)) (format "Table column %s (FI)" i))
@@ -3514,6 +3518,7 @@
 
           (btu/scroll-and-click (field-component :add-option))
           (is (btu/eventually-visible? (field-component :options-1-key)))
+          (btu/wait-visible (field-component :options-1-label-sv))
           (btu/fill-human (field-component :options-1-key) "y")
           (btu/fill-human (field-component :options-1-label-en) "Y")
           (btu/fill-human (field-component :options-1-label-fi) "Y")
@@ -3521,6 +3526,7 @@
 
           (btu/scroll-and-click (field-component :add-option))
           (is (btu/eventually-visible? (field-component :options-2-key)))
+          (btu/wait-visible (field-component :options-2-label-sv))
           (btu/fill-human (field-component :options-2-key) "z")
           (btu/fill-human (field-component :options-2-label-en) "Z")
           (btu/fill-human (field-component :options-2-label-fi) "Z")
