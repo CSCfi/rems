@@ -1,4 +1,4 @@
-(ns rems.test-layers
+(ns ^:integration rems.test-layers
   "Test REMS layer architecture automatically.
 
   Generates an architecture diagram.
