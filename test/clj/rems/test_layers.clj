@@ -39,8 +39,9 @@
            (str/starts-with? s "rems.service.")
            (str/starts-with? s "rems.api"))))
 
-;; use to see what for future namespace renaming could look like
-(defn rename-ns [s]
+(defn rename-ns
+  "use to see what for future namespace renaming could look like"
+  [s]
   (-> s
       (str/replace "rems.db.fix-userid" "rems.service.fix-userid")))
 
@@ -57,6 +58,7 @@
     [:db :core] (= "rems.db.core" (:name to))
     [:api :api] (= "rems.api" (:name from))
     false))
+
 (defn analyze-code []
   (let [ret (sh/sh "clj-kondo" "--lint" "src" "--parallel" "--config" "{:output {:format :edn} :analysis true}")
         analysis (-> ret :out edn/read-string :analysis)
