@@ -9,7 +9,7 @@
             [clojure.java.io :as io]
             [clojure.java.shell :as sh]
             [clojure.string :as str]
-            [clojure.test :refer [deftest is]]
+            [clojure.test :refer [are deftest testing]]
             [clojure.tools.logging]
             [medley.core :refer [index-by]]
             [rems.db.test-data-helpers :as test-helpers]
@@ -153,7 +153,13 @@
   (graph))
 
 (deftest test-architecture-layers
-  (is true)) ; TODO implement as test
+  (testing "write architecture diagram"
+    ;; do not actually test anything worthwhile, only use test automation to regenerate the files
+    (graph)
+    (are [filename] (.exists (io/file filename))
+      "docs/rems-layers.dot"
+      "docs/rems-layers.svg"
+      "docs/rems-layers.png")))
 
 ;;; here be wip
 
