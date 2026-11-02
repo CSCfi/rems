@@ -328,12 +328,20 @@
                     edit-application
                     (fn [response]
                       (rf/dispatch [::fetch-application (:application/id application) false])
-                      (handle-validations! response description application {:on-success #(do (rf/dispatch [::set-autosaving false])
-                                                                                              (flash-message/show-quiet-success! :actions [text :t.form/autosave-confirmed] {:content [[text-format :t.form/last-save (localize-time-with-seconds (time-core/now))]]}))
-                                                                             :default-success? false
-                                                                             :focus? false
-                                                                             :warn-about-missing? false}))
-                    {:error-handler (fn [err]
+                      (handle-validations! response
+                                           description
+                                           application
+                                           {:on-success #(do (rf/dispatch [::set-autosaving false])
+                                                             (flash-message/show-quiet-success!
+                                                              :actions
+                                                              [text :t.form/autosave-confirmed]
+                                                              {:content [[text-format
+                                                                          :t.form/last-save
+                                                                          (localize-time-with-seconds (time-core/now))]]}))
+                                            :default-success? false
+                                            :focus? false
+                                            :warn-about-missing? false}))
+                    {:error-handler (fn [_err]
                                       (rf/dispatch [::set-autosaving false]))})
        {:db (-> db
                 (assoc ::autosaving true)
