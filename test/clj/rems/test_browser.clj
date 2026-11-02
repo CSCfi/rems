@@ -4400,6 +4400,8 @@
       (btu/scroll-and-click {:fn/text "View"})
       (btu/scroll-and-click {:fn/text "Add terms of use"})
 
+      (btu/dropdown-contains-value :add-lincenses-dropdown "E2E license with external links (EN)")
+
       (btu/scroll-and-click :add-licenses-dropdown)
       (is (boolean
            (some #(and (btu/visible-el? %)
