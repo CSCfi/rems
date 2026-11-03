@@ -155,6 +155,14 @@
          :mode mode
          :seed (random-seed)))
 
+(defn init-driver-2!
+  "Same as `init-driver` but doesn't quit an existing session, and doesn't store it in test context."
+  [& [browser-id url mode]]
+  (et/with-wait-timeout 60
+    (-> browser-id
+        (et/boot-driver (get-driver-config mode))
+        (init-session! url))))
+
 (defn init-driver-fixture
   "Executes a test running a fresh driver except when in development."
   [f]
@@ -300,18 +308,22 @@
 (def get-element-value (wrap-etaoin et/get-element-value))
 (def get-title (wrap-etaoin et/get-title))
 (def get-url (wrap-etaoin et/get-url))
+(def get-window-handles (wrap-etaoin et/get-window-handles))
 (def go (wrap-etaoin et/go))
 (def has-class-el? (wrap-etaoin et/has-class-el?))
 (def has-class? (wrap-etaoin et/has-class?))
 (def has-text? (wrap-etaoin et/has-text?))
 (def js-async (wrap-etaoin et/js-async))
 (def js-execute (wrap-etaoin et/js-execute))
+(def new-window (wrap-etaoin et/new-window))
 (def query (wrap-etaoin et/query))
 (def query-all (wrap-etaoin et/query-all))
 (def query-tree (wrap-etaoin et/query-tree))
 (def reload (wrap-etaoin et/reload))
 (def scroll-query (wrap-etaoin et/scroll-query))
 (def set-window-rect (wrap-etaoin et/set-window-rect))
+(def switch-window (wrap-etaoin et/switch-window))
+(def switch-window-next (wrap-etaoin et/switch-window-next))
 (def upload-file (wrap-etaoin et/upload-file))
 (def visible? (wrap-etaoin et/visible?))
 (def wait-disabled (wrap-etaoin et/wait-disabled))
@@ -613,6 +625,12 @@
   (doto (get-driver)
     (et/perform-actions (-> (et/make-key-input)
                             (et/add-key-press etaoin.keys/enter)))
+    (et/release-actions)))
+
+(defn press-tab []
+  (doto (get-driver)
+    (et/perform-actions (-> (et/make-key-input)
+                            (et/add-key-press etaoin.keys/tab)))
     (et/release-actions)))
 
 (defn context-assoc-element-text!

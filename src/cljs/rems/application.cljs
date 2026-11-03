@@ -669,7 +669,8 @@
                 {:class "locked" :style {:position :relative :padding "0.5rem" :margin "-0.5rem" :margin-bottom "1rem" :border-radius "0.25rem"}}
                 {:class "mb-4"})
          (when other-editor
-           [:div {:style {:position :absolute :top 0 :bottom 0 :left 0 :right 0 :pointer-events :none :z-index 1 :text-align :right :line-height "1.5" :margin "0.5rem"}}
+           [:div {:id (str (fields/field-name field) "-other-editor-info")
+                  :style {:position :absolute :top 0 :bottom 0 :left 0 :right 0 :pointer-events :none :z-index 1 :text-align :right :line-height "1.5" :margin "0.5rem"}}
             [text-format :t.applications/is-editing (get-in other-editor [:user :name])]])
 
          [fields/field (merge field
