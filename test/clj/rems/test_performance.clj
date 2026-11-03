@@ -8,16 +8,20 @@
             [rems.common.util :refer [recursive-keys to-keyword]]
             [rems.config]
             [rems.db.applications]
+            [rems.db.catalogue]
             [rems.db.events]
+            [rems.db.test-data-users :refer [+fake-user-data+ +fake-users+]]
             [rems.db.user-settings]
-            [rems.db.test-data-users :refer [+fake-users+ +fake-user-data+]]
             [rems.email.template]
             [rems.locales]
             [rems.markdown]
             [rems.service.application]
             [rems.service.caches]
+            [rems.service.catalogue]
+            [rems.service.dependencies :as dependencies]
             [rems.service.test-data :as test-data]
             [rems.tempura]
+            [rems.testing-util :as testing-util]
             [rems.text])
   (:import [java.util Locale]))
 
@@ -65,19 +69,12 @@
         test-get-my-applications #(doall (rems.db.applications/get-my-applications-full "alice"))
         ;; developer can view much more applications than alice, so it takes longer to filter reviews from all apps
         test-get-todos #(doall (rems.service.application/get-todos "developer"))
-        no-cache (fn []
-                   (mount/stop #'rems.db.applications/all-applications-cache
-                               #'rems.db.events/low-level-events-cache)
-                   (rems.service.caches/reset-all-caches!))
         cached (fn []
                  (mount/stop #'rems.db.applications/all-applications-cache #'rems.db.events/low-level-events-cache)
                  (mount/start #'rems.db.applications/all-applications-cache #'rems.db.events/low-level-events-cache)
                  (rems.service.caches/start-all-caches!)
                  (test-get-all-unrestricted-applications))]
-    (run-benchmarks [{:name "get-all-unrestricted-applications, no cache"
-                      :benchmark test-get-all-unrestricted-applications
-                      :setup no-cache}
-                     {:name "get-all-unrestricted-applications, cached"
+    (run-benchmarks [{:name "get-all-unrestricted-applications, cached"
                       :benchmark test-get-all-unrestricted-applications
                       :setup cached}
                      {:name "get-all-applications, cached"
@@ -93,6 +90,16 @@
                       :benchmark test-get-todos
                       :setup cached}])
     (println "cache size" (mm/measure rems.db.applications/all-applications-cache))))
+
+(defn benchmark-get-catalogue []
+  (let [test-get-catalogue-table #(doall (testing-util/with-user "alice"
+                                           (rems.service.catalogue/get-catalogue-table)))
+        test-get-catalogue-tree #(doall (testing-util/with-user "alice"
+                                          (rems.service.catalogue/get-catalogue-tree)))]
+    (run-benchmarks [{:name "get-catalogue-table"
+                      :benchmark test-get-catalogue-table}
+                     {:name "get-catalogue-tree"
+                      :benchmark test-get-catalogue-tree}])))
 
 (defn benchmark-get-application []
   (let [test-get-application #(rems.db.applications/get-application-for-user "developer" 12)]
@@ -274,6 +281,10 @@
                                 (map count)
                                 (reduce + 0))})))
 
+(defn benchmark-dependency-graph []
+  (run-benchmarks [{:name "db-dependency-tree"
+                    :benchmark #(doall (dependencies/db-dependency-graph))}]))
+
 (comment
   (benchmark-get-events)
   (benchmark-get-all-applications)
@@ -312,5 +323,21 @@
                              (mapv (juxt :name :size :statistics)))})]
       (println row)))
 
+  (let [catalogue-items (seq (rems.db.catalogue/get-catalogue-items))]
+    (println "")
+    (println "Catalogue size")
+    (println (count catalogue-items) "catalogue items, of which")
+    (println "•" (count (keep :children catalogue-items)) "are top-level items")
+    (println "•" (count (mapcat :children catalogue-items)) "are complementary items"))
+
+  (benchmark-get-catalogue)
+
+  (benchmark-dependency-graph)
+
   (prof/clear-results)
+
+  (prof/profile
+   ;; replace with the function call you need to profile
+   (benchmark-get-catalogue))
+
   (prof/serve-ui 8080))

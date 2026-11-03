@@ -82,9 +82,33 @@
 (defn catalogue-items->ids [items]
   (into #{} (map :id) items))
 
+(deftest test-catalogue-items->ids
+  (is (= #{1 2 3}
+         (catalogue-items->ids [{:id 1
+                                 :resource-id 1}
+                                {:id 2
+                                 :resource-id 2}
+                                {:id 3
+                                 :resource-id 3
+                                 :children [{:catalogue-item/id 1}]}]))))
+
+(def ->catalogue-item-id
+  (comp (partial hash-map :catalogue-item/id) :id))
+
+(deftest test-->catalogue-item-id
+  (is (= {:catalogue-item/id 1}
+         (->catalogue-item-id {:id 1
+                               :children [{:catalogue-item/id 2}]}))))
 (def top-level-item-ids
   (comp (keep :part-of)
         (map :catalogue-item/id)))
+
+(deftest test-top-level-item-ids
+  (is (= #{1 2}
+         (into #{}
+               top-level-item-ids
+               [{:id 3 :part-of {:catalogue-item/id 1}}
+                {:id 4 :part-of {:catalogue-item/id 2}}]))))
 
 (defn missing-top-level-items [catalogue-items]
   (let [top-level-items (into #{} top-level-item-ids catalogue-items)]

@@ -1,0 +1,3 @@
+{:ns rems.migrations.catalogue-item-hierarchy
+ :up-fn migrate-up
+ :down-fn migrate-down}

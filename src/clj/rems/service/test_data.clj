@@ -677,6 +677,37 @@
                                                                        :organization {:organization/id "perf"}
                                                                        :workflow-id workflow-id
                                                                        :categories [category]}))))))
+
+        hierarchical-items (vec (in-parallel
+                                  ;; create 10 top-level items with 100 complementary items each
+                                 (for [n (range-1 10)]
+                                   (fn []
+                                     (let [children (for [y (range-1 100)]
+                                                      {:catalogue-item/id (test-helpers/create-catalogue-item!
+                                                                           {:actor "owner"
+                                                                            :title {:en (str "Performance test resource child " n "#" y)
+                                                                                    :fi (str "Suorituskykytestiresurssi alataso" n "#" y)
+                                                                                    :sv (str "Prestandatest underkatalogpost " n "#" y)}
+                                                                            :resource-id (test-helpers/create-resource! {:organization {:organization/id "perf"}
+                                                                                                                         :license-ids [license-id]})
+                                                                            :form-id form-id
+                                                                            :organization {:organization/id "perf"}
+                                                                            :workflow-id workflow-id
+                                                                            :categories [category]})})]
+                                       (cons
+                                        (test-helpers/create-catalogue-item! {:actor "owner"
+                                                                              :title {:en (str "Performance test resource (top-level) " n)
+                                                                                      :fi (str "Suorituskykytestiresurssi (ylätaso) " n)
+                                                                                      :sv (str "Licens för prestand (övre) " n)}
+                                                                              :resource-id (test-helpers/create-resource! {:organization {:organization/id "perf"}
+                                                                                                                           :license-ids [license-id]})
+                                                                              :form-id form-id
+                                                                              :organization {:organization/id "perf"}
+                                                                              :workflow-id workflow-id
+                                                                              :categories [category]
+                                                                              :children children})
+                                        (map :catalogue-item/id children)))))))
+
         user-ids (vec (in-parallel
                        (for [n (range-1 user-count)]
                          (fn []
@@ -735,7 +766,7 @@
                                   :resource-count 1000
                                   :user-count 1000})
       (let [delta-time (/ (- (System/currentTimeMillis) start-time) 1000.0)]
-        (log/infof "Performance test applications created in %.2fs (%.2f/s)"
+        (log/infof "Performance test applications created in %.2fs (%.2f applications/s)"
                    delta-time
                    (/ application-count delta-time))))))
 
