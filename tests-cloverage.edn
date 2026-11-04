@@ -1,0 +1,7 @@
+#kaocha/v1
+ #meta-merge [{:kaocha/plugins ^:append [:kaocha.plugin/cloverage]
+               :cloverage/opts {:ns-exclude-regex ["rems.user-simulator" ;; ignore development utilities
+                                                   "rems.trace"]
+                                :output "target/coverage"
+                                :html? true}}
+              #include "tests.edn"]

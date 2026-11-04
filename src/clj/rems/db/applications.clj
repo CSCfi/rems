@@ -371,7 +371,7 @@
       (vals)))
 
 (defn get-all-applications-full
-  "Returns all full, personalized applications for `userid`. Optional `xf` can be applied 
+  "Returns all full, personalized applications for `userid`. Optional `xf` can be applied
    to list of application ids before transformation, e.g. search filter."
   [userid & [xf]] ; full i.e. not overview
   (let [cache (refresh-all-applications-cache!)
@@ -456,8 +456,9 @@
 (defn delete-application!
   [app-id]
   (refresh-all-applications-cache!) ; NB: try make sure the cache is up to date so we have any new applications present
-  (assert (application-util/draft? (get-application app-id))
-          (str "Tried to delete application " app-id " which is not a draft!"))
+  (let [application (get-application app-id)]
+    (assert (application-util/deletable? env application)
+            (str "Tried to delete application " app-id " in state " (:application/state application) " which is not deletable!")))
   (delete-from-all-applications-cache! app-id)
   (rems.db.attachments/delete-application-attachments! app-id)
   (rems.db.events/delete-application-events! app-id)

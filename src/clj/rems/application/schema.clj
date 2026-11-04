@@ -129,6 +129,9 @@
   (assoc CommandBase
          :expires-on DateTime))
 
+(s/defschema SoftDeleteCommand
+  CommandBase)
+
 (s/defschema SubmitCommand
   CommandBase)
 
@@ -174,6 +177,7 @@
    :application.command/revoke RevokeCommand
    :application.command/save-draft SaveDraftCommand
    :application.command/send-expiration-notifications SendExpirationNotificationsCommand
+   :application.command/soft-delete SoftDeleteCommand
    :application.command/submit SubmitCommand
    :application.command/uninvite-member UninviteMemberCommand
    :application.command/vote VoteCommand})

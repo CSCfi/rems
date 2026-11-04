@@ -337,6 +337,18 @@ WHERE 1=1
 /*~ ) ~*/
 ORDER BY entitlement.userId, res.resId, catAppId, entitlement.start, entitlement.endt;
 
+-- :name get-entitlements-for-deletion :? :*
+-- :doc
+-- Straightforward select by app id without considering `active-at` like in `get-entitlements`, because the results are to be deleted to not cause a reference error when deleting the application.
+-- Params:
+--   :application -- Application id
+SELECT id, catAppId, userId, resId FROM entitlement
+WHERE catAppId = :application;
+
+-- :name delete-entitlement! :! :n
+DELETE FROM entitlement
+WHERE id = :id;
+
 -- :name save-attachment! :insert
 INSERT INTO attachment
 (appId, userid, filename, type, data)

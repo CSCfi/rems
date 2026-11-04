@@ -93,6 +93,14 @@ Revoking will add the applicant and all the members to a blacklist. This means t
 
 A resource owner can edit the blacklist.
 
+### Deleting an application
+
+You can mark an application for later deletion (soft-delete) by issuing the `application.commands/soft-delete` command via the API. 
+
+The search API can be queried for applications that meet certain criteria, such as when the applicant has been active. See [docs/search.md](../docs/search.md) for details. The search API returns application ids which can then be supplied as parameters for the soft-delete command.
+
+A resource owner can configure the [Expirer bot](../docs/bots.md) to process soft-deleted applications further (send a reminder to the applicant, delete the application from the database permanently).
+
 ## Email notifications
 
 You will receive email notifications about other REMS users’ actions.

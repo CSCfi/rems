@@ -1,5 +1,6 @@
 (ns rems.common.application-util
   (:require [clojure.set]
+            [clojure.set :as set]
             [clojure.test :refer [deftest is testing]]
             [medley.core :refer [find-first]]
             [rems.common.roles :refer [+applying-roles+ +handling-roles+]]
@@ -17,11 +18,22 @@
     :application.state/rejected
     :application.state/returned
     :application.state/revoked
+    :application.state/soft-deleted
     :application.state/submitted})
-;; TODO deleted state?
 
 (defn draft? [application]
   (= :application.state/draft (:application/state application)))
+
+(defn deletable-states [config]
+  (set/union #{:application.state/draft} ;; drafts are always deletable for the applicant
+             (-> config :application-expiration keys set)))
+
+(defn deletable?
+  "Whether the application is a draft, or in a state for which the expirer bot is configured"
+  [config application]
+  (contains? (set/union #{:application.state/deleted} ; the application is briefly in this state after handling `:application.event/deleted`
+                        (deletable-states config))
+             (:application/state application)))
 
 (defn accepted-licenses? [application userid]
   (let [application-licenses (map :license/id (:application/licenses application))
