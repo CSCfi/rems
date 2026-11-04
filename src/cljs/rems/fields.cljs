@@ -12,7 +12,7 @@
             [rems.guide-util :refer [component-info example lipsum-short lipsum-paragraphs]]
             [rems.spinner :as spinner]
             [rems.text :refer [localized text text-format]]
-            [rems.util :refer [linkify format-file-size event-value]]))
+            [rems.util :refer [label->hiccup format-file-size event-value]]))
 
 (defn field-name [field]
   (str "form-" (getx field :form/id) "-field-" (getx field :field/id)))
@@ -67,7 +67,7 @@
   The value will be trimmed and linkified."
   [{:keys [id value]}]
   (readonly-field-raw {:id id
-                       :value (linkify (str/trim (str value)))}))
+                       :value (label->hiccup (str/trim (str value)))}))
 
 (defn- field-label [{info-text :field/info-text
                      max-length :field/max-length
@@ -78,7 +78,7 @@
   (let [raw-title (localized title)
         info-text (localized info-text)
         label (->> (conj []
-                         (linkify raw-title)
+                         (label->hiccup raw-title)
                          (when max-length (text-format :t.form/maxlength (str max-length)))
                          (if optional
                            (text :t.form/optional)
@@ -91,7 +91,7 @@
         info-collapsible (when (not-blank info-text)
                            [collapsible/minimal {:id (str the-field-name "-collapsible")
                                                  :class "info-collapsible"
-                                                 :collapse [:div.mb-2 (linkify info-text)]}])]
+                                                 :collapse [:div.mb-2 (label->hiccup info-text)]}])]
     [:<>
      (if fieldset ; XXX: currently only used by multiselect-field
        [:legend.application-field-label label info-toggle]
@@ -248,7 +248,7 @@
               (localized label)]))]))
 
 (defn label [opts]
-  (let [title (-> opts :field/title localized linkify)]
+  (let [title (-> opts :field/title localized label->hiccup)]
     [non-field-wrapper opts [:label title]]))
 
 (defn multiselect-field [{:keys [validation on-change] :as opts}]
@@ -366,7 +366,7 @@
                            :status (:field/attachment-status opts)}]])
 
 (defn header-field [opts]
-  (let [title (-> opts :field/title localized linkify)]
+  (let [title (-> opts :field/title localized label->hiccup)]
     [non-field-wrapper opts [:h3 title]]))
 
 (defn- table-view [{:keys [id readonly columns rows on-change]}]

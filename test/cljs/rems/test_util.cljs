@@ -4,7 +4,7 @@
             [cljs-time.format :as format]
             [rems.text :refer [time-format localize-time]]
             [rems.testing :refer [init-spa-fixture]]
-            [rems.util :refer [linkify]]))
+            [rems.util :refer [linkify label->hiccup]]))
 
 (use-fixtures :each init-spa-fixture)
 
@@ -50,4 +50,31 @@
              (linkify "(See http://www.abc.com?)"))))
     (testing "a link without http-prefix"
       (is (= ["(See www-page at " [:a {:target :_blank :href "http://www.abc.com"} "www.abc.com"] ".)"]
-             (linkify "(See www-page at www.abc.com.)"))))))
+             (linkify "(See www-page at www.abc.com.)"))))
+    ))
+
+(deftest test-label->hiccup
+  (let [link [:a {:target :_blank :href "http://www.abc.com"} "http://www.abc.com"]]
+    (testing "retain original string"
+      (is (= ["a b c"]
+             (label->hiccup "a b c"))))
+    (testing "change link strings to hiccup links"
+      (is (= ["See " link]
+             (label->hiccup "See http://www.abc.com")))
+      (is (= ["See " [:a {:target :_blank :href "https://www.abc.com"} "https://www.abc.com"]]
+             (label->hiccup "See https://www.abc.com"))))
+    (testing "change newlines to hiccup line breaks"
+      (is (= ["a" [:br] "b"]
+             (label->hiccup "a\nb")))
+      (is (= ["a" [:br] "b" [:br] "c"]
+             (label->hiccup "a\nb\nc"))))
+    (testing "retain empty lines around line breaks"
+      (is (= ["" [:br] "a"]
+             (label->hiccup "\na")))
+      (is (= ["a" [:br] ""]
+             (label->hiccup "a\n")))
+      (is (= ["a" [:br] "" [:br] "b"]
+             (label->hiccup "a\n\nb"))))
+    (testing "combine links and line breaks"
+      (is (= ["See " link [:br] "and more"]
+             (label->hiccup "See http://www.abc.com\nand more"))))))

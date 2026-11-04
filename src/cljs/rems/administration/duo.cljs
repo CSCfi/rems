@@ -8,7 +8,7 @@
             [rems.dropdown :as dropdown]
             [rems.fetcher :as fetcher]
             [rems.text :refer [localized text text-format]]
-            [rems.util :refer [linkify]]))
+            [rems.util :refer [label->hiccup]]))
 
 (defn duo-restriction-info-field [& [opts]]
   (let [restriction-type (:type opts)
@@ -61,7 +61,7 @@
   [:div.solid-group
    (when-some [title (:catalogue-item/title info)]
      [:p (text-format :t.label/default (text :t.applications/resource) (localized title))])
-   [:p (linkify (localized (:more-info info)))]])
+   [:p (label->hiccup (localized (:more-info info)))]])
 
 (defn duo-info-field
   "Read-only field for displaying DUO code.
