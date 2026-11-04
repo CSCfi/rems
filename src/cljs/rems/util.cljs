@@ -144,7 +144,7 @@
                               s
                               (str "http://" s)))]
     (map #(if (link? %)
-            ^{:key %} [:a {:target :_blank :href (text-to-url %)} %]
+            ^{:key (gensym "link")} [:a {:target :_blank :href (text-to-url %)} %]
             %)
          splitted)))
 
