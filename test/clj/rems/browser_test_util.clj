@@ -423,10 +423,9 @@
   "Checks if a value is found in the dropdown list"
   [element-key text-val]
   (scroll-and-click element-key)
-  (boolean
-   (some #(and (visible-el? %)
-               (= text-val  (get-element-text-el %)))
-         (query-all {:css ".dropdown-select__option"}))))
+  (some #(and (visible-el? %)
+              (= text-val  (get-element-text-el %)))
+        (query-all {:css ".dropdown-select__option"})))
 
 (defn wait-page-loaded []
   (wait-for-idle)

@@ -94,10 +94,10 @@
        :multi? true
        :on-change on-set-licenses}]]]])
 
-(defn add-licenses-form [application-id on-finished added-terms]
+(defn add-licenses-form [application-id on-finished added-licenses]
   (let [selected-licenses @(rf/subscribe [::selected-licenses])
         all-potential-licenses @(rf/subscribe [::potential-licenses])
-        potential-licenses (->> all-potential-licenses (remove #(or (contains? (set (map :license/id added-terms)) (:id %))
+        potential-licenses (->> all-potential-licenses (remove #(or (contains? (set (map :license/id added-licenses)) (:id %))
                                                                     (contains? selected-licenses %))))
         comment @(rf/subscribe [:rems.actions.components/comment action-form-id])]
     [add-licenses-view {:selected-licenses selected-licenses

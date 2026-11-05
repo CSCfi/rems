@@ -4406,10 +4406,8 @@
       (btu/scroll-and-click :add-licenses))
 
     (testing "added licenses are no longer visible in dropdown"
-      (is (not (boolean
-                (some #(and (btu/visible-el? %)
-                            (= "E2E license with external links (EN)"  (btu/get-element-text-el %)))
-                      (btu/query-all {:css ".dropdown-select__option"}))))))))
+      (btu/scroll-and-click {:fn/text "Add terms of use"})
+      (is (not (btu/dropdown-contains-value :add-licenses-dropdown "Demo license"))))))
 
 (deftest test-extra-pages
   (btu/with-postmortem
