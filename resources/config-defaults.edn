@@ -176,7 +176,7 @@
  :application-id-column :external-id
 
  ;; List of supported languages. They will be selectable in the UI.
- :languages [:en :fi]
+ :languages [:en "English" :fi "Suomi"]
  :default-language :en
 
  ;; Path to a directory with translations for additional languages.

@@ -263,8 +263,15 @@
   (btu/scroll-and-click {:fn/text "Manage categories"})
   (is (btu/eventually-visible? :categories)))
 
+(defn language-label [language]
+  (case language
+    :en "English"
+    :fi "Suomi"
+    :sv "Svenska"))
+
 (defn change-language [language]
-  (btu/scroll-and-click [{:css ".language-switcher"} {:fn/text (.toUpperCase (name language))}])
+  (btu/scroll-and-click [{:css ".language-switcher"}
+                         {:fn/text (language-label language)}])
   ;; wait for the new language to take effect
   (btu/wait-predicate #(= (btu/value-of [{:css ".footer-text"}])
                           (with-language language
@@ -4083,7 +4090,7 @@
     (btu/wait-invisible :small-navbar) ; menu should be hidden
     (wait-page-title "Applications – REMS")
     (btu/scroll-and-click {:css ".navbar-toggler"})
-    (btu/scroll-and-click [:small-navbar {:tag :button :fn/text "FI"}])
+    (btu/scroll-and-click [:small-navbar {:tag :button :fn/text "Suomi"}])
     (btu/wait-invisible :small-navbar) ; menu should be hidden
     (wait-page-title "Hakemukset – REMS")
     (rems.db.user-settings/delete-user-settings! "alice"))) ; clear language settings

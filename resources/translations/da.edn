@@ -631,7 +631,10 @@
                :applications "Ansøgninger"
                :catalogue "Katalog"
                ;; %1 - name of language
-               :change-language "Skift sprog til %1"
+               :change-language {:fi "Vaihda kieleksi suomi"
+                                 :en "Change language to English"
+                                 :sv "Byt språk till svenska"
+                                 :de "Skift sprog til dansk"}
                :home "Hjem"
                :logout "Log ud"
                :navigation "Navigation"

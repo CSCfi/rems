@@ -49,8 +49,14 @@
          (map read-string)
          set)))
 
+(def ^:private dynamic-translation-keys
+  (into #{}
+        (for [lang [:fi :en :sv :de]]
+          (keyword "t.navigation.change-language" (name lang)))))
+
 (deftest test-translation-keywords-in-use
-  (let [keys-in-source (set (translation-keywords-in-use))]
+  (let [keys-in-source (into (set (translation-keywords-in-use))
+                             dynamic-translation-keys)]
     (assert (seq keys-in-source))
     (doseq [lang [:en :fi :sv]]
       (testing lang
