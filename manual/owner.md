@@ -184,7 +184,7 @@ Catalogue items can be grouped under **Categories** that display as folding sub-
 
 Catalogue items may specify other catalogue items as **complementary items**. A complementary item can only be applied for
 - when the **top-level catalogue item** is also included on the same application,
-- or the applicant is already completed an application to the top-level catalogue item and has been granted entitlement to it's resource.
+- or the applicant has already completed an application to the top-level catalogue item and has been granted entitlement to it's resource.
 
 To use this feature, configure `:enable-catalogue-hierarchy` to `true`. 
 
