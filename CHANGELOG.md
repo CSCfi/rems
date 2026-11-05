@@ -12,6 +12,10 @@ Changes since v2.41
 - Reinstated all changes of v2.40: catalogue item hierarchy, new field in search index etc.
 - Removed restriction that hierarchical catalogue items must have the same workflow. (#3500)
 - Form labels can now have line breaks (#3481)
+- REMS now automatically generates a namespace-level architecture diagram. The diagram is available in SVG, PNG, and GraphViz DOT formats:
+  - [docs/rems-layers.svg](docs/rems-layers.svg)
+  - [docs/rems-layers.png](docs/rems-layers.png)
+  - [docs/rems-layers.dot](docs/rems-layers.dot)
 
 ### Fixes
 - Fixed the catalogue page performance degradation (#3499)
@@ -23,12 +27,6 @@ Changes since v2.41
 This release rolls back the changes introduced in v2.40 due to a performance regression in the catalogue page.
 
 v2.41 is functionally equivalent to v2.39.1
-
-### Additions
-- REMS now automatically generates a namespace-level architecture diagram. The diagram is available in SVG, PNG, and GraphViz DOT formats:
-  - [docs/rems-layers.svg](docs/rems-layers.svg)
-  - [docs/rems-layers.png](docs/rems-layers.png)
-  - [docs/rems-layers.dot](docs/rems-layers.dot)
 
 ## v2.40 "Länsilinkki" 2026-09-29
 
