@@ -183,10 +183,7 @@
                                                   :resid (test-helpers/create-resource!
                                                           {:resource-ext-id "urn:4321"
                                                            :organization (:organization default-body)})}))]
-        (is (not (:success parent)))
-        (is (= [{:catalogue-items [{:catalogue-item/id (:id child)}]
-                 :type "t.administration.errors/unbundlable-workflow-id"}]
-               (:errors parent)))))
+        (is (:success parent))))
 
     (testing "create with children that already have children"
       (let [child (create-catalogue-item "owner" default-body)
@@ -494,10 +491,7 @@
                     edit-response (edit-catalogue-item owner {:id (:id parent)
                                                               :localizations {}
                                                               :children [{:catalogue-item/id (:id child-different-wfid)}]})]
-                (is (not (:success edit-response)))
-                (is (= [{:catalogue-items [{:catalogue-item/id (:id child-different-wfid)}]
-                         :type "t.administration.errors/unbundlable-workflow-id"}]
-                       (:errors edit-response)))))
+                (is (:success edit-response))))
 
             (testing "with incorrect organization"
               (let [cat-item-org-1 (create-catalogue-item owner

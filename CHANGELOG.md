@@ -8,6 +8,9 @@ have notable changes.
 
 Changes since v2.40
 
+### Fixes
+- Removed restriction that hierarchical catalogue items must have the same workflow.  (#3500)
+
 ## v2.40 "Länsilinkki" 2026-09-29
 
 ### Additions

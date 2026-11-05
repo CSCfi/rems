@@ -34,7 +34,7 @@
      :errors [{:catalogue-items items
                :type error-type}]}))
 
-(defn validate-children! [{children :children, parent-wfid :wfid, parent-id :id, :as _command}]
+(defn validate-children! [{children :children, parent-id :id, :as _command}]
   (when (seq children)
     (let [child-catalogue-items (sequence (comp (map :catalogue-item/id)
                                                 (map rems.db.catalogue/get-catalogue-item))
@@ -59,11 +59,6 @@
                                           (map ->catalogue-item-id)
                                           child-catalogue-items)
                                 :t.administration.errors/self-as-child-catalogue-item-disallowed)
-
-          (invalid-items->error (eduction (filter (comp not #{parent-wfid} :wfid))
-                                          (map ->catalogue-item-id)
-                                          child-catalogue-items)
-                                :t.administration.errors/unbundlable-workflow-id)
 
           (invalid-items->error (eduction (keep (comp lookup :catalogue-item/id))
                                           (remove (comp #{parent-id} :catalogue-item/id))
@@ -197,7 +192,7 @@
       (util/check-allowed-organization! organization))
 
     (or
-     (validate-children! (merge command {:wfid (:wfid target-item)}))
+     (validate-children! command)
      (do
        (rems.db.catalogue/edit-catalogue-item! id {:categories categories
                                                    :children children
