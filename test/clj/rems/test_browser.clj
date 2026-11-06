@@ -4436,7 +4436,23 @@
                           (select-button-by-label "View"))
         (is (btu/eventually-visible? :back))
         (is (not (btu/visible? :disable)))
-        (is (not (btu/visible? :archive)))))))
+        (is (not (btu/visible? :archive)))))
+
+    (testing "adding licenses to application"
+      (logout)
+      (login-as "handler")
+      (go-to-actions)
+      (btu/scroll-and-click {:fn/text "View"})
+      (btu/scroll-and-click {:fn/text "Add terms of use"})
+
+      (is (btu/dropdown-contains-value :add-licenses-dropdown "E2E license with external links (EN)"))
+
+      (select-option "Add terms of use" "E2E license with external links (EN)")
+      (btu/scroll-and-click :add-licenses))
+
+    (testing "added licenses are no longer visible in dropdown"
+      (btu/scroll-and-click {:fn/text "Add terms of use"})
+      (is (not (btu/dropdown-contains-value :add-licenses-dropdown "E2E license with external links (EN)"))))))
 
 (deftest test-extra-pages
   (btu/with-postmortem
