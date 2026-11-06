@@ -683,8 +683,9 @@
                :administration "Administration"
                :applications "Applications"
                :catalogue "Catalogue"
-               ;; %1 - name of language
-               :change-language "Change language to %1"
+               :change-language {:fi "Vaihda kieleksi suomi"
+                                 :en "Change language to English"
+                                 :sv "Byt språk till svenska"}
                :home "Home"
                :logout "Sign out"
                :navigation "Navigation"

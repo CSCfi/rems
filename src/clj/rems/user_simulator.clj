@@ -64,7 +64,7 @@
                 (et/delete-cookies (btu/get-driver))
                 (btu/go (btu/get-server-url))
                 (et/refresh (btu/get-driver))
-                (btu/scroll-and-click [{:css ".language-switcher"} {:fn/text "EN"}]) ; make sure language is stable
+                (btu/scroll-and-click [{:css ".language-switcher"} {:fn/text "English"}]) ; make sure language is stable
                 (action)))))
 
         (catch InterruptedException e

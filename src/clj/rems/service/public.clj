@@ -27,6 +27,7 @@
                     :entitlement-default-length-days
                     :extra-pages
                     :languages
+                    :language-names
                     :oidc-extra-attributes
                     :enable-assign-external-id-ui
                     :enable-doi
