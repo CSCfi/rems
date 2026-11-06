@@ -51,7 +51,7 @@
 
 (def ^:private dynamic-translation-keys
   (into #{}
-        (for [lang [:fi :en :sv :de]]
+        (for [lang [:fi :en :sv :da]]
           (keyword "t.navigation.change-language" (name lang)))))
 
 (deftest test-translation-keywords-in-use
