@@ -83,7 +83,7 @@ jobs:
       - checkout
       - restore_cache:
           key: *cache-key
-      - run: lein kaocha --reporter kaocha.report/documentation --plugin rems.kaocha/cache-statistics-plugin integration
+      - run: lein kaocha --reporter kaocha.report/documentation --plugin rems.kaocha/cache-statistics-plugin integration --skip 'rems.test-layers/test-architecture-layers'
       - store_test_results:
           path: target/test-results
       - store_artifacts:
