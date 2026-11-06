@@ -170,7 +170,7 @@ Give your catalogue item a descriptive name. Thus, it will be easier for the app
 
 You can edit the catalogue item’s name, organization and links to additional information by selecting Modify>Edit.
 
-If you want to change the catalogue item’s application form or workflow, select the catalogue item(s) you want to edit and then **Update n catalogue items**.
+If you want to change the catalogue item’s application form or workflow, select the catalogue item(s) you want to edit and then **Update catalogue items (n selected)**.
 
 ![Update catalogue item](img/updatecatalogueitems.png)
 

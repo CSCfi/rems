@@ -93,9 +93,8 @@
     :on-click (fn []
                 (rf/dispatch [:rems.administration.update-catalogue-item/enter-page items])
                 (navigate! "/administration/catalogue-items/update-catalogue-item"))
-    :label (case (count items)
-                 0 [text :t.administration/update-catalogue-item]
-                 1 [text :t.administration/update-catalogue-item-one]
+    :label (if (= 1 (count items))
+                 [text :t.administration/update-catalogue-item-singular]
                  (text-format :t.administration/update-catalogue-item-plural (count items)))}])
 
 (defn- categories-button []

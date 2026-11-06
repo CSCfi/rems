@@ -173,9 +173,9 @@
                    :type "Tyyppi"
                    :unarchive "Palauta arkistosta"
                    :update-catalogue-item "Päivitä aineistoa"
-                   :update-catalogue-item-one "Päivitä 1 aineisto"
+                   :update-catalogue-item-singular "Päivitä aineistoja (1 valittuna)"
                    ;; %1 - number
-                   :update-catalogue-item-plural "Päivitä %1 aineistoa"
+                   :update-catalogue-item-plural "Päivitä aineistoja (%1 valittuna)"
                    :user "Käyttäjä"
                    :userid "Käyttäjätunnus"
                    :user-role "Käyttäjän rooli"
