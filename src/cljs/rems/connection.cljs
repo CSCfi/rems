@@ -1,4 +1,5 @@
-(ns rems.connection)
+(ns rems.connection
+  :require [re-frame.core :as rf])
 
 (rf/reg-sub ::server-connection (fn [db _] (::server-connection db)))
 (rf/reg-event-db ::set-server-connection (fn [db [_ x]] (assoc db ::server-connection x)))
