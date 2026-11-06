@@ -585,8 +585,7 @@
                :catalogue "Aineistoluettelo"
                :change-language {:fi "Vaihda kieleksi suomi"
                                  :en "Change language to English"
-                                 :sv "Byt språk till svenska"
-                                 :da "Skift sprog til dansk"}
+                                 :sv "Byt språk till svenska"}
                :home "Etusivu"
                :logout "Kirjaudu ulos"
                :navigation "Navigaatio"

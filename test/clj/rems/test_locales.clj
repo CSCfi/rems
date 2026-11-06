@@ -49,16 +49,20 @@
          (map read-string)
          set)))
 
-(def ^:private dynamic-translation-keys
+(defn dynamic-translation-keys
+  "Those translation keys that are concatenated and therefore don't get picked
+   up by `translation-keywords-in-use`"
+  [translation-keys]
   (into #{}
-        (for [lang [:fi :en :sv :da]]
+        (for [lang translation-keys]
           (keyword "t.navigation.change-language" (name lang)))))
 
 (deftest test-translation-keywords-in-use
-  (let [keys-in-source (into (set (translation-keywords-in-use))
-                             dynamic-translation-keys)]
+  (let [translation-keys [:fi :sv :en]
+        keys-in-source (set/union (translation-keywords-in-use)
+                                  (dynamic-translation-keys translation-keys))]
     (assert (seq keys-in-source))
-    (doseq [lang [:en :fi :sv]]
+    (doseq [lang translation-keys]
       (testing lang
         (let [dictionary (-> (locales/load-translations {:languages [lang]
                                                          :translations-directory "translations/"})

@@ -584,8 +584,7 @@
                :catalogue "Katalog"
                :change-language {:fi "Vaihda kieleksi suomi"
                                  :en "Change language to English"
-                                 :sv "Byt språk till svenska"
-                                 :da "Skift sprog til dansk"}
+                                 :sv "Byt språk till svenska"}
                :home "Ingångssida"
                :logout "Logga ut"
                :navigation "Navigering"
