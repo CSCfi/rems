@@ -688,7 +688,7 @@
                :change-language {:fi "Vaihda kieleksi suomi"
                                  :en "Change language to English"
                                  :sv "Byt språk till svenska"
-                                 :de "Skift sprog til dansk"}
+                                 :da "Skift sprog til dansk"}
                :home "Home"
                :logout "Sign out"
                :navigation "Navigation"
