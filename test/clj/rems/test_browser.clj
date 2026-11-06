@@ -4560,49 +4560,43 @@
          (finally
            (swap-driver! original-driver#))))))
 
-(deftest test-multiplayer
-  (let [form-id (test-data/create-all-field-types-example-form!
+(deftest ^:multiplayer test-multiplayer
+  (let [frank (get test-users/+fake-user-data+ "frank")
+        form-id (test-data/create-all-field-types-example-form!
                  "owner"
                  {:organization/id "nbn"}
                  "Example form with all field types" {:en "Example form with all field types"
                                                       :fi "Esimerkkilomake kaikin kenttätyypein"
                                                       :sv "Exempelblankett med alla fälttyper"})
         catalogue-item (test-helpers/create-catalogue-item! {:form-id form-id :organization {:organization/id "nbn"}})
-        application-id (test-helpers/create-application! {:actor "alice" :catalogue-item-ids [catalogue-item]})
-        {[{token :invitation/token}] :events} (test-helpers/command! {:type :application.command/invite-member
-                                                                      :actor "alice"
-                                                                      :application-id application-id
-                                                                      :member {:name "Frank" :email "frank@example.com"}})
-        _ (test-helpers/command! {:type :application.command/accept-invitation
-                                  :actor "frank"
-                                  :application-id application-id
-                                  :token token})]
+        application-id (test-helpers/create-application! {:actor "alice" :catalogue-item-ids [catalogue-item]})]
+    (test-helpers/create-user! frank)
+    (test-helpers/invite-and-accept-member! {:actor "alice"
+                                             :application-id application-id
+                                             :member frank})
     (btu/context-assoc! :application-id application-id))
-  (let [frank-driver (btu/init-driver-2! :chrome "http://localhost:3000/")]
-    (testing "when Alice is editing"
-      (login-as "alice")
-      (go-to-application (btu/context-getx :application-id))
-      (btu/context-assoc-element-text!
-       (fill-form-field "Application title field" "This is Alice.") :title-field)
-      (with-driver frank-driver
-        (testing "Frank can see that Alice is editing"
-          (is (= "Alice Applicant is editing"
-                 (btu/get-element-text {:id (keyword (str (get-form-field-id "Application title field") "-other-editor-info"))}))))
-        (testing "Frank can see what Alice typed"
-          (is (= (btu/context-getx :title-field)
-                 (btu/get-element-value (keyword (get-form-field-id "Application title field"))))))
-        (testing "the field is locked for Frank"
-          (is "locked"
-              "todo")))
-      (testing "the field unlocks when Alice is done editing"
-        (btu/press-tab) ;; move focus somewhere else
-        (is "unlocked"
-            "todo"))))
 
-  (comment
-    (testing "with two windows"
-      (let [w2 (btu/new-window :window)]
-        (btu/switch-window (second (btu/get-window-handles)))
-        (btu/switch-window-next)
-        (login-as "alice")
-        (-> (fill-form-field "Application title field" "Test name") (btu/context-assoc-element-text! :title-field))))))
+  (btu/context-assoc! :frank-driver (btu/init-driver-2! :chrome))
+
+  (testing "when Alice is editing"
+    (login-as "alice")
+    (go-to-application (btu/context-getx :application-id))
+    (btu/context-assoc-element-text!
+     (fill-form-field "Application title field" "This is Alice.") :title-field)
+    (with-driver (btu/context-getx :frank-driver)
+      (login-as "frank")
+      (go-to-application (btu/context-getx :application-id))
+      (Thread/sleep 1000) ;; wait for long poll
+      (testing "Frank can see that Alice is editing"
+        (is (= "Alice Applicant is editing"
+               (btu/get-element-text {:id (keyword (str (get-form-field-id "Application title field") "-other-editor-info"))}))))
+      (testing "Frank can see what Alice typed"
+        (is (= (btu/context-getx :title-field)
+               (btu/get-element-value (keyword (get-form-field-id "Application title field"))))))
+      (testing "the field is locked for Frank"
+        (is "locked"
+            "todo")))
+    (testing "the field unlocks when Alice is done editing"
+      (btu/press-tab) ;; move focus somewhere else
+      (is "unlocked"
+          "todo"))))
