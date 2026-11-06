@@ -39,7 +39,9 @@
          (when-let [key-file (get-file config :ga4gh-visa-private-key)]
            {:ga4gh-visa-private-key (json/parse-string (slurp key-file))})
          (when-let [key-file (get-file config :ga4gh-visa-public-key)]
-           {:ga4gh-visa-public-key (json/parse-string (slurp key-file))})))
+           {:ga4gh-visa-public-key (json/parse-string (slurp key-file))})
+         (when-let [key-file (get-file config :oidc-dpop-private-key)]
+           {:oidc-dpop-private-key (json/parse-string (slurp key-file))})))
 
 (defn- parse-config [config]
   (-> config
@@ -107,7 +109,10 @@
                 (pr-str target)
                 ":"
                 (pr-str invalid-events))
-      (log/warn "Supported event types:" (pr-str events/event-types))))
+      (log/warn "Supported event types:" (pr-str events/event-types)))
+    (assert (not (and (:send-access-token? target)
+                      (some #(.equalsIgnoreCase "Authorization" (name %)) (keys (:headers target)))))
+            (str "Event notification target can't have both :send-access-token? and an Authorization header: " (:url target))))
   (when-let [unrecognized-keys (seq (->> (keys config)
                                          (remove (known-config-keys))
                                          (remove (system-properties-keys)) ; don't complain about system properties
