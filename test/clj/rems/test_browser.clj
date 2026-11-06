@@ -42,7 +42,8 @@
             [rems.service.test-data :as test-data]
             [rems.service.workflow]
             [rems.testing-util :refer [with-fake-login-users with-user]]
-            [rems.text :refer [localize-time text with-language]]))
+            [rems.text :refer [localize-time text with-language]]
+            [etaoin.api :as api]))
 
 (comment ; convenience for development testing
   (btu/init-driver! :chrome "http://localhost:3000/" :development))
@@ -2195,6 +2196,10 @@
   (is (str/includes? (btu/get-element-text {:css ".alert-success"}) "Success")))
 
 (deftest test-create-catalogue-item
+  (test-helpers/create-user! {:userid "organization-owner1"
+                              :name "Organization Owner 1"
+                              :email "organization-owner1@example.com"
+                              :organizations [{:organization/id "Default"}]})
   (btu/with-postmortem
     (testing "create objects"
       (login-as "owner")
@@ -3197,7 +3202,7 @@
                     :let [column-id (keyword (format "columns-%s-key" i))
                           label-id (comp keyword (partial format "columns-%s-label-%s" i) name)]]
               (btu/scroll-and-click (field-component :add-column))
-              (btu/wait-visible (field-component column-id))
+              (btu/wait-visible (field-component (label-id :sv)))
               (btu/fill-human (field-component column-id) (format "table-column-%s" i))
               (btu/fill-human (field-component (label-id :en)) (format "Table column %s (EN)" i))
               (btu/fill-human (field-component (label-id :fi)) (format "Table column %s (FI)" i))
@@ -3559,6 +3564,7 @@
 
           (btu/scroll-and-click (field-component :add-option))
           (is (btu/eventually-visible? (field-component :options-1-key)))
+          (btu/wait-visible (field-component :options-1-label-sv))
           (btu/fill-human (field-component :options-1-key) "y")
           (btu/fill-human (field-component :options-1-label-en) "Y")
           (btu/fill-human (field-component :options-1-label-fi) "Y")
@@ -3566,6 +3572,7 @@
 
           (btu/scroll-and-click (field-component :add-option))
           (is (btu/eventually-visible? (field-component :options-2-key)))
+          (btu/wait-visible (field-component :options-2-label-sv))
           (btu/fill-human (field-component :options-2-key) "z")
           (btu/fill-human (field-component :options-2-label-en) "Z")
           (btu/fill-human (field-component :options-2-label-fi) "Z")
@@ -4592,3 +4599,65 @@
         (is (= ["/administration/workflows"
                 "/catalogue"]
                (btu/js-execute "return window.test_navigations;")))))))
+
+
+(comment
+  (def driver1 (btu/get-driver))
+  (def driver2 (btu/init-driver-2! :chrome "http://localhost:3000/" :development))
+  (doseq [driver [driver1 driver2]]
+    (etaoin.api/quit driver)))
+
+(defn swap-driver! [driver]
+  (swap! btu/global-test-context assoc :driver driver))
+
+(defmacro with-driver
+  "Execute `body` with `driver` temporarily swapped into test context."
+  [driver & body]
+  `(do
+     (let [original-driver# (btu/get-driver)]
+       (try
+         (swap-driver! ~driver)
+         ~@body
+         (finally
+           (swap-driver! original-driver#))))))
+
+(deftest ^:multiplayer test-multiplayer
+  (let [frank (get test-users/+fake-user-data+ "frank")
+        form-id (test-data/create-all-field-types-example-form!
+                 "owner"
+                 {:organization/id "nbn"}
+                 "Example form with all field types" {:en "Example form with all field types"
+                                                      :fi "Esimerkkilomake kaikin kenttätyypein"
+                                                      :sv "Exempelblankett med alla fälttyper"})
+        catalogue-item (test-helpers/create-catalogue-item! {:form-id form-id :organization {:organization/id "nbn"}})
+        application-id (test-helpers/create-application! {:actor "alice" :catalogue-item-ids [catalogue-item]})]
+    (test-helpers/create-user! frank)
+    (test-helpers/invite-and-accept-member! {:actor "alice"
+                                             :application-id application-id
+                                             :member frank})
+    (btu/context-assoc! :application-id application-id))
+
+  (btu/context-assoc! :frank-driver (btu/init-driver-2! :chrome))
+
+  (testing "when Alice is editing"
+    (login-as "alice")
+    (go-to-application (btu/context-getx :application-id))
+    (btu/context-assoc-element-text!
+     (fill-form-field "Application title field" "This is Alice.") :title-field)
+    (with-driver (btu/context-getx :frank-driver)
+      (login-as "frank")
+      (go-to-application (btu/context-getx :application-id))
+      (Thread/sleep 1000) ;; wait for long poll
+      (testing "Frank can see that Alice is editing"
+        (is (= "Alice Applicant is editing"
+               (btu/get-element-text {:id (keyword (str (get-form-field-id "Application title field") "-other-editor-info"))}))))
+      (testing "Frank can see what Alice typed"
+        (is (= (btu/context-getx :title-field)
+               (btu/get-element-value (keyword (get-form-field-id "Application title field"))))))
+      (testing "the field is locked for Frank"
+        (is "locked"
+            "todo")))
+    (testing "the field unlocks when Alice is done editing"
+      (btu/press-tab) ;; move focus somewhere else
+      (is "unlocked"
+          "todo"))))

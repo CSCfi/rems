@@ -15,6 +15,7 @@
             [rems.db.user-mappings]
             [rems.email.core :as email]
             [rems.event-notification :as event-notification]
+            [rems.subscriptions]
             [rems.util :refer [secure-token]])
   (:import rems.TryAgainException))
 
@@ -76,5 +77,9 @@
                         (pr-str {:cmd cmd2 :result result :parent-cmd cmd}))
                 (log/error "process manager command failed"
                            (pr-str {:cmd cmd2 :result result :parent-cmd cmd}))))))
+
+        (rems.subscriptions/notify-update {:application-update {:application app
+                                                                :command cmd
+                                                                :result result}})
         (assoc result :events events-from-db)) ; replace with events with id
       result)))

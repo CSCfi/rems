@@ -12,6 +12,7 @@
   (:require [clj-http.client :as http]
             [clojure.pprint]
             [clojure.string :as str]
+            [clojure.test :refer [deftest is]]
             [clojure.tools.logging.readable :as logr]
             [etaoin.api :as et]
             [mount.core :as mount]
@@ -96,12 +97,12 @@
                (subs 1))]
     (str base "/" path)))
 
-(comment
-  (= "http://localhost:3000/api/applications"
-     (join-url "http://localhost:3000" "api/applications")
-     (join-url "http://localhost:3000" "/api/applications")
-     (join-url "http://localhost:3000/" "api/applications")
-     (join-url "http://localhost:3000/" "/api/applications")))
+(deftest test-join-url
+  (is (= "http://localhost:3000/api/applications"
+      (join-url "http://localhost:3000" "api/applications")
+      (join-url "http://localhost:3000" "/api/applications")
+      (join-url "http://localhost:3000/" "api/applications")
+      (join-url "http://localhost:3000/" "/api/applications"))))
 
 (defn- api-get [path & [{:keys [api-key user-id]}]]
   (let [url (join-url (btu/get-server-url) path)
