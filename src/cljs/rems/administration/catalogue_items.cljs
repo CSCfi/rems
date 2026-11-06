@@ -11,7 +11,7 @@
             [rems.common.util :refer [select-vals]]
             [rems.spinner :as spinner]
             [rems.table :as table]
-            [rems.text :refer [localize-time text get-localized-title localized]]
+            [rems.text :refer [localize-time text get-localized-title localized text-format]]
             [rems.util :refer [navigate! fetch put!]]))
 
 (rf/reg-event-fx
@@ -93,7 +93,9 @@
     :on-click (fn []
                 (rf/dispatch [:rems.administration.update-catalogue-item/enter-page items])
                 (navigate! "/administration/catalogue-items/update-catalogue-item"))
-    :label [text :t.administration/update-catalogue-item]}])
+    :label (if (= 1 (count items))
+                 [text :t.administration/update-catalogue-item-singular]
+                 (text-format :t.administration/update-catalogue-item-plural (count items)))}])
 
 (defn- categories-button []
   [atoms/link {:class "btn btn-primary" :id :manage-categories}
