@@ -20,6 +20,7 @@
   (-> env
       (select-keys [:alternative-login-url
                     :application-id-column
+                    :application-intro
                     :authentication
                     :catalogue-is-public
                     :default-language
