@@ -437,6 +437,15 @@
  :application-list-hidden-columns []
 
  :show-resources-section true ; should resources section be shown in the application UI
+
+ ;; Optional override for the application page intro text, keyed by language.
+ ;; Falls back to the :t.applications/intro translation when not set for the current language.
+ ;; Supports strings or hiccup vectors, same as translations.
+ ;; Example:
+ ;; :application-intro {:en [:div.intro [:p "Custom application instructions."]]
+ ;;                     :fi [:div.intro [:p "Mukautetut hakuohjeet."]]}
+ :application-intro nil
+
  :show-attachment-zip-action true ; should the attachment download be shown in the application actions UI
  :show-pdf-action true ; should PDF button be shown in the application actions UI
  :enable-handler-emails true ; should notification emails be sent to the handlers. Invitation emails and requests will be sent regardless, reminders are also sent if configured.
