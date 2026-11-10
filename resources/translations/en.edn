@@ -176,6 +176,9 @@
                    :type "Type"
                    :unarchive "Unarchive"
                    :update-catalogue-item "Update catalogue item"
+                   :update-catalogue-item-singular "Update catalogue items (1 selected)"
+                   ;; %1 - number
+                   :update-catalogue-item-plural "Update catalogue items (%1 selected)"
                    :user "User"
                    :userid "User id"
                    :user-role "User role"
