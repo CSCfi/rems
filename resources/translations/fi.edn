@@ -582,7 +582,9 @@
                :administration "Ylläpito"
                :applications "Hakemukset"
                :catalogue "Aineistoluettelo"
-               :change-language "Vaihda kieleksi %1"
+               :change-language {:fi "Vaihda kieleksi suomi"
+                                 :en "Change language to English"
+                                 :sv "Byt språk till svenska"}
                :home "Etusivu"
                :logout "Kirjaudu ulos"
                :navigation "Navigaatio"

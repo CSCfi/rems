@@ -33,6 +33,7 @@
    :attachment-max-size (s/maybe s/Int)
    :entitlement-default-length-days (s/maybe s/Int)
    :languages [s/Keyword]
+   :language-names {s/Keyword s/Str}
    :default-language s/Keyword
    :oidc-extra-attributes [{:attribute s/Str
                             s/Keyword s/Any}]
