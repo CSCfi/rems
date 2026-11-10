@@ -99,10 +99,10 @@
 
 (deftest test-join-url
   (is (= "http://localhost:3000/api/applications"
-      (join-url "http://localhost:3000" "api/applications")
-      (join-url "http://localhost:3000" "/api/applications")
-      (join-url "http://localhost:3000/" "api/applications")
-      (join-url "http://localhost:3000/" "/api/applications"))))
+         (join-url "http://localhost:3000" "api/applications")
+         (join-url "http://localhost:3000" "/api/applications")
+         (join-url "http://localhost:3000/" "api/applications")
+         (join-url "http://localhost:3000/" "/api/applications"))))
 
 (defn- api-get [path & [{:keys [api-key user-id]}]]
   (let [url (join-url (btu/get-server-url) path)
