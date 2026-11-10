@@ -1,6 +1,7 @@
 (ns rems.application.test-master-workflow
   (:require [clojure.test :refer :all]
             [rems.application.master-workflow :refer [application-permissions-view]]
+            [rems.config]
             [rems.permissions :as permissions]))
 
 (deftest test-calculate-permissions
@@ -55,27 +56,28 @@
                           :application.command/accept-invitation)))))
 
   (testing "applicant change"
-    (let [original (reduce application-permissions-view nil [{:event/type :application.event/created
-                                                              :event/actor "applicant"}
-                                                             {:event/type :application.event/submitted
-                                                              :event/actor "applicant"}
-                                                             {:event/type :application.event/member-added
-                                                              :event/actor "handler"
-                                                              :application/member {:userid "new"}}])
-          changed (reduce application-permissions-view original [{:event/type :application.event/applicant-changed
-                                                                  :event/actor "handler"
-                                                                  :application/applicant {:userid "new"}}])]
-      (is (= #{:application.command/copy-as-new
-               :application.command/remove-member
-               :application.command/accept-licenses
-               :application.command/uninvite-member}
-             (permissions/user-permissions original "applicant")))
-      (is (= #{:application.command/copy-as-new :application.command/accept-licenses}
-             (permissions/user-permissions original "new")))
-      (is (= #{:application.command/copy-as-new :application.command/accept-licenses}
-             (permissions/user-permissions changed "applicant")))
-      (is (= #{:application.command/copy-as-new
-               :application.command/remove-member
-               :application.command/accept-licenses
-               :application.command/uninvite-member}
-             (permissions/user-permissions changed "new"))))))
+    (with-redefs [rems.config/env {:member-created-permissions [:application.command/copy-as-new :application.command/accept-licenses]}]
+      (let [original (reduce application-permissions-view nil [{:event/type :application.event/created
+                                                                :event/actor "applicant"}
+                                                               {:event/type :application.event/submitted
+                                                                :event/actor "applicant"}
+                                                               {:event/type :application.event/member-added
+                                                                :event/actor "handler"
+                                                                :application/member {:userid "new"}}])
+            changed (reduce application-permissions-view original [{:event/type :application.event/applicant-changed
+                                                                    :event/actor "handler"
+                                                                    :application/applicant {:userid "new"}}])]
+        (is (= #{:application.command/copy-as-new
+                 :application.command/remove-member
+                 :application.command/accept-licenses
+                 :application.command/uninvite-member}
+               (permissions/user-permissions original "applicant")))
+        (is (= #{:application.command/copy-as-new :application.command/accept-licenses}
+               (permissions/user-permissions original "new")))
+        (is (= #{:application.command/copy-as-new :application.command/accept-licenses}
+               (permissions/user-permissions changed "applicant")))
+        (is (= #{:application.command/copy-as-new
+                 :application.command/remove-member
+                 :application.command/accept-licenses
+                 :application.command/uninvite-member}
+               (permissions/user-permissions changed "new")))))))
