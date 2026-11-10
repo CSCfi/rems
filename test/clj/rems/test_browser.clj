@@ -9,9 +9,13 @@
 
   NB: Don't use etaoin directly but use it from the `browser-test-util` library that removes the need to pass the driver."
   (:require [clj-http.client :as http]
+            [clojure.pprint :as pp]
             [clojure.set :as set]
             [clojure.string :as str]
-            [clojure.test :refer [compose-fixtures deftest is testing use-fixtures]]
+            [clojure.test :refer [compose-fixtures deftest is testing
+                                  use-fixtures]]
+            [clojure.tools.logging.readable :as logr]
+            [etaoin.api :as et]
             [etaoin.keys]
             [matcher-combinators.matchers :as m]
             [matcher-combinators.test]
@@ -20,6 +24,7 @@
             [rems.api.testing :refer [standalone-fixture]]
             [rems.browser-test-util :as btu]
             [rems.common.util :refer [getx not-blank]]
+            [rems.concurrency :as concurrency]
             [rems.config]
             [rems.db.api-key]
             [rems.db.applications]
@@ -29,6 +34,7 @@
             [rems.db.testing :refer [save-cache-statistics!]]
             [rems.db.user-settings]
             [rems.handler]
+            [rems.logging]
             [rems.main]
             [rems.service.application]
             [rems.service.catalogue]
@@ -40,7 +46,7 @@
             [rems.service.workflow]
             [rems.testing-util :refer [with-fake-login-users with-user]]
             [rems.text :refer [localize-time text with-language]]
-            [etaoin.api :as api]))
+            [rems.user-simulator]))
 
 (comment ; convenience for development testing
   (btu/init-driver! :chrome "http://localhost:3000/" :development))
@@ -4540,27 +4546,62 @@
                (btu/js-execute "return window.test_navigations;")))))))
 
 
-(comment
-  (def driver1 (btu/get-driver))
-  (def driver2 (btu/init-driver-2! :chrome "http://localhost:3000/" :development))
-  (doseq [driver [driver1 driver2]]
-    (etaoin.api/quit driver)))
+(def thread-pool (atom nil))
 
-(defn swap-driver! [driver]
-  (swap! btu/global-test-context assoc :driver driver))
+(defn submit-all! [& fns]
+  (let [pool (or @thread-pool
+                 (reset! thread-pool (concurrency/cached-thread-pool {:thread-prefix "test-multiplayer"})))]
+    (concurrency/submit! pool fns)))
 
-(defmacro with-driver
-  "Execute `body` with `driver` temporarily swapped into test context."
-  [driver & body]
-  `(do
-     (let [original-driver# (btu/get-driver)]
-       (try
-         (swap-driver! ~driver)
-         ~@body
-         (finally
-           (swap-driver! original-driver#))))))
+(def task-counter (atom 0))
 
-(deftest ^:multiplayer test-multiplayer
+(defn create-task
+  [{:keys [test-fns user-id application-id driver-mode]
+    :as opts}]
+  (logr/info #'create-task "with opts" opts)
+  (binding [btu/*test-context* (atom (assoc (btu/create-test-context)
+                                            :url (btu/get-server-url)))
+            btu/screenshot (constantly nil)
+            btu/screenshot-element (constantly nil)
+            btu/check-axe (constantly nil)
+            btu/postmortem-handler (constantly nil)]
+    (bound-fn execute-multiplayer-task []
+      (try
+        (logr/info "Multiplayer thread starting")
+        (btu/init-driver! :chrome
+                          (btu/get-server-url)
+                          driver-mode) ;; pass on `:development` mode if set, otherwise use headless
+        (btu/context-assoc! :user-id user-id
+                            :application-id application-id)
+        (Thread/sleep (+ 200 (rand-int 300)))
+        (login-as (btu/context-getx :user-id))
+        (go-to-application (btu/context-getx :application-id))
+        (logr/info "Running test as" (btu/context-getx :user-id) ", application id" (btu/context-getx :application-id))
+        (doseq [f test-fns
+
+                :let [ff (var-get f)]]
+          (ff))
+        (catch InterruptedException e
+          (.interrupt (Thread/currentThread))
+          (logr/info e "Multiplayer thread interrupted"))
+        (catch Throwable t
+          (logr/error t "Internal error" (with-out-str
+                                           (pp/pprint (merge {::context @(btu/test-ctx)}
+                                                             (ex-data t))))))
+        (finally
+          (logr/info "Multiplayer thread shutting down")
+          (some-> (btu/get-driver)
+                  et/stop-driver))))))
+
+(defn fill-title-field []
+  (fill-form-field "Application title field" "This is Alice."))
+
+(defn view-application []
+  (logr/info "viewing application")
+  (btu/wait-page-loaded)
+  (is (btu/eventually-visible? {:fn/has-string "Frank joined to the application."})))
+
+(deftest test-multiplayer-parallel
   (let [frank (get test-users/+fake-user-data+ "frank")
         form-id (test-data/create-all-field-types-example-form!
                  "owner"
@@ -4575,28 +4616,15 @@
                                              :application-id application-id
                                              :member frank})
     (btu/context-assoc! :application-id application-id))
-
-  (btu/context-assoc! :frank-driver (btu/init-driver-2! :chrome))
-
   (testing "when Alice is editing"
-    (login-as "alice")
-    (go-to-application (btu/context-getx :application-id))
-    (btu/context-assoc-element-text!
-     (fill-form-field "Application title field" "This is Alice.") :title-field)
-    (with-driver (btu/context-getx :frank-driver)
-      (login-as "frank")
-      (go-to-application (btu/context-getx :application-id))
-      (Thread/sleep 1000) ;; wait for long poll
-      (testing "Frank can see that Alice is editing"
-        (is (= "Alice Applicant is editing"
-               (btu/get-element-text {:id (keyword (str (get-form-field-id "Application title field") "-other-editor-info"))}))))
-      (testing "Frank can see what Alice typed"
-        (is (= (btu/context-getx :title-field)
-               (btu/get-element-value (keyword (get-form-field-id "Application title field"))))))
-      (testing "the field is locked for Frank"
-        (is "locked"
-            "todo")))
-    (testing "the field unlocks when Alice is done editing"
-      (btu/press-tab) ;; move focus somewhere else
-      (is "unlocked"
-          "todo"))))
+    (let [do-as (fn [as-user & test-fns]
+                  (create-task {:application-id (btu/context-getx :application-id)
+                                :driver-mode (btu/test-ctx :mode)
+                                :user-id as-user
+                                :test-fns test-fns}))]
+      (submit-all!
+       (do-as "frank" #'view-application)
+       (do-as "alice" #'view-application)))))
+
+(defn stop! []
+  (some-> @thread-pool concurrency/shutdown-now!))

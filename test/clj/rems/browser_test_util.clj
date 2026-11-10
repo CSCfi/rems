@@ -155,14 +155,6 @@
          :mode mode
          :seed (random-seed)))
 
-(defn init-driver-2!
-  "Same as `init-driver` but doesn't quit an existing session, and doesn't store it in test context."
-  [& [browser-id url mode]]
-  (et/with-wait-timeout 60
-    (-> browser-id
-        (et/boot-driver (get-driver-config mode))
-        (init-session! url))))
-
 (defn init-driver-fixture
   "Executes a test running a fresh driver except when in development."
   [f]
