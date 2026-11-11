@@ -3112,6 +3112,11 @@
 
       (testing "add and remove a field"
         (add-form-field! {:expected-field-index 0})
+        (testing "add field title with line breaks"
+          (fill-localized-title! "This\nfield\n\nhas\nline breaks (%s)")
+          (is (= "This\nfield\n\nhas\nline breaks (EN)"
+                 (btu/get-element-text [(field-preview) {:class :application-field-label}])))
+          (is (= 4 (count (btu/query-all [(field-preview) {:class :application-field-label} {:tag :br}])))))
         (btu/scroll-and-click [(field-editor) {:css ".form-field-controls .remove"}])
         (btu/wait-has-alert)
         (btu/accept-alert)
