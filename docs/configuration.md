@@ -54,6 +54,8 @@ The `:oidc` authentication method has the following configuration options:
 * `:oidc-additional-authorization-parameters` - additional query parameters to add to the OIDC authorization_endpoint url when logging in
 * `:oidc-logout-redirect-url` - to which URL a user is redirected to after a successful logout? (defaults to "/")
 * `:oidc-perform-revoke-on-logout` - should REMS POST to the `revocation_endpoint` received from OIDC metadata? (defaults to true)
+* `:oidc-dpop` - (optional) use DPoP (RFC 9449) sender-constrained access tokens. `:optional` sends DPoP proofs but also accepts Bearer tokens, `:required` fails the login unless the OIDC provider issues a DPoP-bound token. (default is not to use DPoP)
+* `:oidc-dpop-private-key` - (optional) path to a JWK file containing the private key for signing DPoP proofs. If not set, a new key is generated whenever REMS starts, which is enough for a single REMS instance: access tokens are bound to the key, but they are lost with the sessions on restart anyway. Configure a key if several REMS instances need to use the same tokens, or if event notification recipients use forwarded DPoP-bound tokens to call other services.
 * `:oidc-use-state` – (optional) when the value is `:csrf-token`, REMS will pass a random CSRF token to login server using `state` parameter. Then REMS will check the return value in callback. (default is not to send)
 
 See details and formats from [config-defaults.edn](https://github.com/CSCfi/rems/blob/master/resources/config-defaults.edn).
