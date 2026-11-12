@@ -12,7 +12,7 @@
     "btn btn-link"))
 
 (defn get-language-name [language]
-  (or (get (@rems.globals/config :language-names) language)
+  (or (text-format (keyword "t.navigation.language-names" (name language)))
       (str/upper-case (name language))))
 
 (defn language-button [language]
