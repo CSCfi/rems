@@ -224,7 +224,7 @@ In a non-version-controlled directory, write the config file `nvd-config.edn` an
 
 Issue the following command substituting `REMS DIR` with the path where you have cloned the REMS repository
 ```
-clojure -J-Dclojure.main.report=stderr -Tnvd nvd.task/check :classpath \""$(cd <REMS DIR>; lein with-profile -user,-dev classpath)\"" :config-filename \""nvd-config.edn\""
+clojure -J-Dclojure.main.report=stderr -Tnvd nvd.task/check :classpath \""$(cd <REMS DIR>; lein with-profile uberjar classpath)\"" :config-filename \""nvd-config.edn\""
 ```
 
 Whenever vulnerabilities are found in libraries you don't recognise, refer to the previous section for tools to inspect them.

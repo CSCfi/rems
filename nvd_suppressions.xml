@@ -21,7 +21,6 @@
    [metosin/scjsv "0.6.2"]
      [com.github.java-json-tools/json-schema-validator "2.2.14"]
        [com.google.guava/guava "28.2-android"] -->
-
   <suppress>
     <notes><![CDATA[
     file name: guava-28.2-android.jar
@@ -30,7 +29,25 @@
     <cpe>cpe:/a:google:guava</cpe>
    <vulnerabilityName>CVE-2023-2976</vulnerabilityName>
    <vulnerabilityName>CVE-2020-8908</vulnerabilityName>
+   <vulnerabilityName>CVE-2026-118042</vulnerabilityName>
+   <vulnerabilityName>CVE-2026-102554</vulnerabilityName>
   </suppress>
+
+  <!-- Same as earlier (ring-swagger -> scjsv)
+ [metosin/ring-swagger "1.1.0"]
+   [metosin/scjsv "0.6.2"]
+     [com.github.java-json-tools/json-schema-validator "2.2.14"]
+       [com.github.java-json-tools/jackson-coreutils-equivalence "1.0"]
+         [com.github.java-json-tools/jackson-coreutils "2.0"] -->
+  <suppress>
+   <notes><![CDATA[
+   file name: jackson-coreutils-2.0.jar
+   ]]></notes>
+   <packageUrl regex="true">^pkg:maven/com\.github\.java-json-tools/jackson-coreutils@.*$</packageUrl>
+   <vulnerabilityName>CVE-2026-86321</vulnerabilityName>
+   <vulnerabilityName>CVE-2026-86511</vulnerabilityName>
+   <vulnerabilityName>CVE-2026-86513</vulnerabilityName>
+</suppress>
 
   <!-- Transitive dependency of ring-mock; only used in tests -->
   <suppress>
@@ -61,6 +78,15 @@
    <packageUrl regex="true">^pkg:maven/org\.apache\.httpcomponents\.core5/httpcore5-h2@.*$</packageUrl>
    <cve>CVE-2026-54399</cve>
    <cve>CVE-2026-54428</cve>
+</suppress>
+
+<suppress>
+   <notes><![CDATA[
+   file name: msgpack-core-0.9.12.jar
+   ]]></notes>
+   <packageUrl regex="true">^pkg:maven/org\.msgpack/msgpack-core@.*$</packageUrl>
+   <cve>CVE-2026-57585</cve> <!-- python version of the same library -->
+   <cve>CVE-2026-54522</cve> <!-- ruby version -->
 </suppress>
 
 </suppressions>
