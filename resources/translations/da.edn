@@ -634,6 +634,7 @@
                :change-language {:fi "Vaihda kieleksi suomi"
                                  :en "Change language to English"
                                  :sv "Byt språk till svenska"}
+               :language-names {:en "English" :fi "Suomi" :sv "Svenska"}
                :home "Hjem"
                :logout "Log ud"
                :navigation "Navigation"

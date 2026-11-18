@@ -13,7 +13,6 @@
                          {:attribute "picture"}
                          {:attribute "organizations"}]
  :languages [:en :fi :sv]
- :language-names {:en "English" :fi "Suomi" :sv "Svenska"}
  :extra-pages [{:id "about"
                 :translations {:fi {:title "Info"
                                     :filename "about-fi.md"}

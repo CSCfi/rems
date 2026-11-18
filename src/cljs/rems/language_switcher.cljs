@@ -1,7 +1,6 @@
 (ns rems.language-switcher
   (:require [clojure.string :as str]
             [rems.config]
-            [rems.globals]
             [rems.guide-util :refer [component-info example]]
             [rems.text :refer [text-format]]
             [rems.user-settings]))
@@ -12,7 +11,7 @@
     "btn btn-link"))
 
 (defn get-language-name [language]
-  (or (get (@rems.globals/config :language-names) language)
+  (or (text-format (keyword "t.navigation.language-names" (name language)))
       (str/upper-case (name language))))
 
 (defn language-button [language]

@@ -54,8 +54,10 @@
    up by `translation-keywords-in-use`"
   [translation-keys]
   (into #{}
-        (for [lang translation-keys]
-          (keyword "t.navigation.change-language" (name lang)))))
+        (for [lang translation-keys
+              key [(keyword "t.navigation.change-language" (name lang))
+                   (keyword "t.navigation.language-names" (name lang))]]
+          key)))
 
 (deftest test-translation-keywords-in-use
   (let [translation-keys [:fi :sv :en]
