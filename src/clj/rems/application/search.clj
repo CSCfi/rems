@@ -154,7 +154,7 @@
 
 (defn- get-application-ids [^IndexSearcher searcher ^TopDocs results]
   (doall (for [^ScoreDoc hit (.-scoreDocs results)]
-           (let [doc (.doc searcher (.-doc hit))
+           (let [doc (.document (.storedFields searcher) (.-doc hit))
                  app-id (.get doc app-id-field)]
              (Long/parseLong app-id)))))
 
