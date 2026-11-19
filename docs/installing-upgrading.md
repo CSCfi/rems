@@ -40,6 +40,11 @@ Some pointers for common tasks:
 1. Get a new `rems.jar`
 1. Stop rems.
 1. Replace your old `rems.jar` with the new `rems.jar` (you might want to keep a backup of the old `rems.jar`)
+1. Configure `:database-url` to connect to your PostgreSQL database. If your installation previously used a Java EE/JNDI datasource, replace that configuration with the database URL in the REMS config. For example:
+
+       :database-url "postgresql://db:5432/rems?user=rems&password=remspassword"
+
+   Use the URL for the same database as before. Configure it for both the REMS server and the `migrate` command.
 1. To migrate data in the database, run rems with the `migrate` command line flag:
 
         java -Drems.config=path/to/your/rems/config -jar rems.jar migrate
