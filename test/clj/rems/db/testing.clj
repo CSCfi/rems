@@ -1,7 +1,5 @@
 (ns rems.db.testing
-  (:require [clojure.java.jdbc :as jdbc]
-            [conman.core :as conman]
-            [luminus-migrations.core :as migrations]
+  (:require [luminus-migrations.core :as migrations]
             [mount.core :as mount]
             [rems.application.search]
             [rems.config :refer [env]]
@@ -67,7 +65,7 @@
 
 (defn rollback-db-fixture [f]
   (reset-caches!)
-  (conman/with-transaction [db/*db* {:isolation :serializable}]
-    (jdbc/db-set-rollback-only! db/*db*)
+  (db/with-transaction [db/*db* {:isolation :serializable
+                                 :rollback-only true}]
     (f))
   (save-cache-statistics!))
