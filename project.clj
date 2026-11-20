@@ -10,7 +10,8 @@
                  [clj-http "3.13.1"]
                  [clj-pdf "2.8.1"]
                  [clj-time "0.15.2"]
-                 ^{:antq/exclude ["0.8.5" "0.8.x" "0.9"]} [conman "0.8.4"] ; 0.8.5 switches to next.jdbc, which breaks stuff and requires proper testing in production
+                 [conman "0.9.6"]
+                 [com.github.seancorfield/next.jdbc "1.4.72"]
                  [com.attendify/schema-refined "0.3.0-alpha5"]
                  [com.clojure-goes-fast/clj-async-profiler "1.8.0"] ; also check extra :jvm-opts https://github.com/clojure-goes-fast/clj-async-profiler?tab=readme-ov-file#tuning-for-better-accuracy
                  [com.clojure-goes-fast/clj-memory-meter "0.5.0"]
@@ -34,7 +35,7 @@
                  [lambdaisland/kaocha-junit-xml "1.17.101"]
                  [luminus-jetty "0.2.3"]
                  [luminus-nrepl "0.1.7"]
-                 ^{:antq/exclude ["0.7.3" "0.7.x"]} [luminus-migrations "0.7.2"] ; 0.7.3 switches to next.jdbc, 0.7.5 fails: No such var: prepare/statement
+                 [luminus-migrations "0.7.5"]
                  [luminus/ring-ttl-session "0.3.3"]
                  [macroz/tangle "0.2.2"]
                  [markdown-clj "1.12.10"]
@@ -42,6 +43,7 @@
                  [metosin/jsonista "1.0.2"]
                  [metosin/ring-swagger "1.1.0"]
                  [metosin/ring-swagger-ui "5.33.0"]
+                 [migratus "1.6.8"]
                  [mount "0.1.24"]
                  [nano-id "1.1.0"]
                  [ns-tracker "1.0.0"]

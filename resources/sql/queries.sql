@@ -114,7 +114,7 @@ UPDATE catalogue_item
 SET catalogueitemdata = :catalogueitemdata::jsonb
 WHERE id = :id;
 
--- :name create-catalogue-item! :insert
+-- :name create-catalogue-item! :returning-execute :1
 -- :doc Create a single catalogue item
 INSERT INTO catalogue_item
 (formid, resid, wfid, organization, enabled, archived, start, catalogueitemdata)
@@ -126,7 +126,8 @@ VALUES (:form, :resid, :wfid, :organization,
 --~ (if (contains? params :start) ":start" "now()")
 ,
 /*~ (if (contains? params :catalogueitemdata) */ :catalogueitemdata::jsonb /*~*/ NULL /*~ ) ~*/
-);
+)
+RETURNING id;
 
 -- :name get-resources :? :*
 SELECT
@@ -161,11 +162,12 @@ WHERE 1=1
 /*~ ) ~*/
 ;
 
--- :name create-resource! :insert
+-- :name create-resource! :returning-execute :1
 -- :doc Create a single resource
 INSERT INTO resource
 (resid, organization, resourcedata)
-VALUES (:resid, :organization, :resourcedata::jsonb);
+VALUES (:resid, :organization, :resourcedata::jsonb)
+RETURNING id;
 
 -- XXX: unused function?
 -- :name update-resource! :!
@@ -230,14 +232,15 @@ SELECT
 FROM form_template
 WHERE id = :id;
 
--- :name save-form-template! :insert
+-- :name save-form-template! :returning-execute :1
 INSERT INTO form_template
 (organization, fields, formdata)
 VALUES
 (:organization,
  :fields::jsonb,
  :formdata::jsonb
-);
+)
+RETURNING id;
 
 -- :name edit-form-template! :!
 UPDATE form_template
@@ -269,7 +272,7 @@ SET archived = :archived
 WHERE
 id = :id;
 
--- :name create-application! :insert
+-- :name create-application! :returning-execute :1
 INSERT INTO catalogue_item_application (id)
 VALUES (nextval('catalogue_item_application_id_seq'))
 RETURNING id;
@@ -337,11 +340,12 @@ WHERE 1=1
 /*~ ) ~*/
 ORDER BY entitlement.userId, res.resId, catAppId, entitlement.start, entitlement.endt;
 
--- :name save-attachment! :insert
+-- :name save-attachment! :returning-execute :1
 INSERT INTO attachment
 (appId, userid, filename, type, data)
 VALUES
-(:application, :user, :filename, :type, :data);
+(:application, :user, :filename, :type, :data)
+RETURNING id;
 
 -- :name update-attachment! :!
 UPDATE attachment
@@ -376,11 +380,12 @@ WHERE appid = :application;
 DELETE FROM attachment
 WHERE id = :id;
 
--- :name create-license! :insert
+-- :name create-license! :returning-execute :1
 INSERT INTO license
 (organization, type)
 VALUES
 (:organization, :type::license_type)
+RETURNING id;
 
 -- :name set-license-enabled! :!
 UPDATE license
@@ -397,11 +402,12 @@ UPDATE license
 SET (organization, type, enabled, archived) = (:organization, :type::license_type, :enabled, :archived)
 WHERE id = :id;
 
--- :name create-license-attachment! :insert
+-- :name create-license-attachment! :returning-execute :1
 INSERT INTO license_attachment
 (userId, filename, type, data, start)
 VALUES
-(:user, :filename, :type, :data, :start);
+(:user, :filename, :type, :data, :start)
+RETURNING id;
 
 -- :name remove-license-attachment! :!
 DELETE FROM license_attachment WHERE id = :id;
@@ -425,14 +431,15 @@ VALUES
 /*~ (if (:attachmentId params) */ :attachmentId /*~*/ NULL /*~ ) ~*/
 );
 
--- :name create-workflow! :insert
+-- :name create-workflow! :returning-execute :1
 INSERT INTO workflow
 (organization, title, workflowBody)
 VALUES
 (:organization,
  :title,
  /*~ (if (:workflow params) */ :workflow::jsonb /*~*/ NULL /*~ ) ~*/
-);
+)
+RETURNING id;
 
 -- :name set-workflow-enabled! :!
 UPDATE workflow
@@ -688,7 +695,7 @@ WHERE prefix = :prefix
 INSERT INTO external_application_id (prefix, suffix)
 VALUES (:prefix, :suffix);
 
--- :name add-blacklist-event! :insert
+-- :name add-blacklist-event! :returning-execute :1
 INSERT INTO blacklist_event (eventdata)
 VALUES (:eventdata::jsonb)
 RETURNING id;
@@ -713,7 +720,7 @@ WHERE 1=1
 /*~ ) ~*/
 ORDER BY id ASC;
 
--- :name put-to-outbox! :insert
+-- :name put-to-outbox! :returning-execute :1
 INSERT INTO outbox (outboxData)
 VALUES (:outboxdata::jsonb)
 RETURNING id;
@@ -782,7 +789,7 @@ SELECT id, data::text as data FROM organization;
 SELECT id, data::text as data FROM organization
 WHERE id = :id;
 
--- :name add-organization! :insert
+-- :name add-organization! :returning-execute :1
 INSERT INTO organization(id, data) VALUES (:id, :data::jsonb)
 ON CONFLICT (id) DO NOTHING
 RETURNING id;
@@ -792,7 +799,7 @@ UPDATE organization
 SET data = :data::jsonb
 WHERE id = :id;
 
--- :name add-invitation! :insert
+-- :name add-invitation! :returning-execute :1
 INSERT INTO invitation (invitationdata)
 VALUES (:invitationdata::jsonb)
 ON CONFLICT (id) DO NOTHING
@@ -828,9 +835,10 @@ WHERE id = :id;
 SELECT id, categorydata::TEXT
 FROM category;
 
--- :name create-category! :insert
+-- :name create-category! :returning-execute :1
 INSERT INTO category (categorydata)
-VALUES (:categorydata::jsonb);
+VALUES (:categorydata::jsonb)
+RETURNING id;
 
 -- :name update-category! :!
 UPDATE category

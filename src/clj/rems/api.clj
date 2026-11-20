@@ -5,7 +5,6 @@
             [clojure.tools.logging :as log]
             [compojure.api.exception :as ex]
             [compojure.api.sweet :refer :all]
-            [conman.core :as conman]
             [rems.api.applications :refer [applications-api my-applications-api]]
             [rems.api.audit-log :refer [audit-log-api]]
             [rems.api.blacklist :refer [blacklist-api]]
@@ -169,8 +168,8 @@
 
 (defn transaction-middleware [handler]
   (fn [request]
-    (conman/with-transaction [rems.db.core/*db* {:isolation :serializable
-                                                 :read-only? (read-only? request)}]
+    (rems.db.core/with-transaction [rems.db.core/*db* {:isolation :serializable
+                                                       :read-only (read-only? request)}]
       (handler request))))
 
 (defn slow-middleware [request]
