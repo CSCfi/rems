@@ -27,17 +27,14 @@
                                                                           {:jdbc-url (:test-database-url env)}))
                              (:database-url env) (conman/connect! (merge (hikaricp-settings)
                                                                          {:jdbc-url (:database-url env)}))
-                             ;; the jndi codepath doesn't use hikari, so we can't use +hikaricp-settings+
-                             ;; TODO figure out another way to set lock_timeout in this case
-                             (:database-jndi-name env) {:name (:database-jndi-name env)}
-                             :else (throw (IllegalArgumentException. ":database-url or :database-jndi-name must be configured")))]
+                             :else (throw (IllegalArgumentException. ":database-url must be configured")))]
                 ;; get a connection from the pool to get errors earlier
                 (with-open [_ (clojure.java.jdbc/get-connection db)]
                   db))
               (catch Exception e
                 (throw (IllegalArgumentException.
                         (str "Can not connect to database. "
-                             "Check the :database-name and :database-jndi-name config variables. "
+                             "Check the :database-url config variable. "
                              "The database might also be unreachable. ")
                         e))))
   :stop (conman/disconnect! *db*))
