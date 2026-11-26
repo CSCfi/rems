@@ -1,11 +1,10 @@
 (ns rems.db.applications
   "Query functions for forms and applications."
   (:require [clojure.core.memoize :refer [memo]]
-            [clojure.java.jdbc :as jdbc]
+            [next.jdbc :as jdbc]
             [clojure.set :as set]
             [clojure.test :refer [deftest is]]
             [clojure.tools.logging :as log]
-            [conman.core :as conman]
             [medley.core :refer [distinct-by filter-vals map-vals]]
             [mount.core :as mount]
             [rems.application.events-cache :as events-cache]
@@ -32,7 +31,7 @@
 ;;; Creating applications
 
 (defn- allocate-external-id! [prefix]
-  (conman/with-transaction [rems.db.core/*db* {:isolation :serializable}]
+  (db/with-transaction [rems.db.core/*db* {:isolation :serializable}]
     ;; avoid conflicts due to serializable isolation; otherwise this transaction would need retry logic
     (jdbc/execute! db/*db* ["LOCK TABLE external_application_id IN SHARE ROW EXCLUSIVE MODE"])
     (let [all (db/get-external-ids {:prefix prefix})

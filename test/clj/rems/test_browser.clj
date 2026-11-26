@@ -4453,7 +4453,7 @@
                     (some #(when (= "Default" (get % "organization"))
                              (get % "commands"))))))
         (click-row-action [:licenses]
-                          {:fn/text "Default"}
+                          {:fn/text "License-EN"}
                           (select-button-by-label "View"))
         (is (btu/eventually-visible? :back))
         (is (not (btu/visible? :disable)))

@@ -1,5 +1,5 @@
 (ns rems.db.events
-  (:require [clojure.java.jdbc :as jdbc]
+  (:require [next.jdbc :as jdbc]
             [clojure.tools.logging :as log]
             [com.rpl.specter :refer [ALL multi-transform multi-path terminal must]]
             [medley.core :refer [dissoc-in update-existing]]
@@ -102,18 +102,16 @@
   (reset! event-cache ::uninitialized))
 
 (defn reload-event-cache! []
-  ;; this is like an application command, processed one at a time
-  ;; protect against seeing old data in application_event table
-  ;; see #'rems.service.command/command!
-  (try
-    (jdbc/execute! db/*db* ["LOCK TABLE application_event IN SHARE ROW EXCLUSIVE MODE"])
-    (catch org.postgresql.util.PSQLException e
-      (if (.contains (.getMessage e) "lock timeout")
-        (throw (TryAgainException. e))
-        (throw e))))
-
   (log/info "Reloading low level event cache")
-  (let [events (db/get-application-events-since {:id 0})
+  (let [events (db/with-transaction [db/*db* {:isolation :serializable}]
+                 ;; Keep the lock until the event snapshot has been read.
+                 (try
+                   (jdbc/execute! db/*db* ["LOCK TABLE application_event IN SHARE ROW EXCLUSIVE MODE"])
+                   (catch org.postgresql.util.PSQLException e
+                     (if (.contains (.getMessage e) "lock timeout")
+                       (throw (TryAgainException. e))
+                       (throw e))))
+                 (db/get-application-events-since {:id 0}))
         new-event-by-id-cache (atom (sorted-map))
         new-events-by-application-cache (atom (sorted-map))]
     (doseq [event events]

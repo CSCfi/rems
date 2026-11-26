@@ -5,12 +5,20 @@
 
   See also: docs/architecture/012-layers.md"
   {:ns-tracker/resource-deps ["sql/queries.sql"]}
-  (:require [clj-time.jdbc] ;; convert db timestamps to joda-time objects
-            [clojure.java.jdbc]
+  (:require [next.jdbc :as jdbc]
+            [next.jdbc.transaction]
             [clojure.string :as str]
             [conman.core :as conman]
             [mount.core :refer [defstate] :as mount]
-            [rems.config :refer [env]]))
+            [rems.config :refer [env]]
+            [rems.db.jdbc-time]))
+
+(defmacro with-transaction
+  "Run a conman transaction with the nested-transaction behavior REMS expects."
+  [[conn & opts] & body]
+  `(binding [next.jdbc.transaction/*nested-tx* :ignore]
+     (conman/with-transaction [~conn ~@opts]
+       ~@body)))
 
 ;; See docs/architecture/010-transactions.md
 (defn- hikaricp-settings []
@@ -32,7 +40,7 @@
                              (:database-jndi-name env) {:name (:database-jndi-name env)}
                              :else (throw (IllegalArgumentException. ":database-url or :database-jndi-name must be configured")))]
                 ;; get a connection from the pool to get errors earlier
-                (with-open [_ (clojure.java.jdbc/get-connection db)]
+                (with-open [_ (jdbc/get-connection db)]
                   db))
               (catch Exception e
                 (throw (IllegalArgumentException.

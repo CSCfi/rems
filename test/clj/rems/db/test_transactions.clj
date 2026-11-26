@@ -1,7 +1,6 @@
 (ns ^:integration rems.db.test-transactions
   (:require [clojure.test :refer :all]
             [clojure.tools.logging :as log]
-            [conman.core :as conman]
             [rems.config]
             [rems.db.core :as db]
             [rems.db.events]
@@ -95,8 +94,8 @@
             write-event (fn [_writer-id app-id x]
                           (try
                             ;; same as transaction middleware
-                            (conman/with-transaction [db/*db* {:isolation :serializable
-                                                               :read-only? false}]
+                            (db/with-transaction [db/*db* {:isolation :serializable
+                                                           :read-only false}]
                               (let [result (test-helpers/command!
                                             {:type :application.command/save-draft
                                              :application-id app-id
@@ -109,22 +108,19 @@
                                 (throw e)))))
             read-app-events (fn [app-id]
                               ;; same as transaction middleware
-                              (conman/with-transaction [db/*db* {:isolation :serializable
-                                                                 :read-only? true}]
+                              (db/with-transaction [db/*db* {:isolation :serializable
+                                                             :read-only true}]
                                 (let [events (rems.db.events/get-application-events app-id)]
                                   (assert (every? (comp number? :event/id) events))
                                   {::app-id app-id
                                    ::events events})))
             read-all-events (fn [_reader-id]
                               ;; same as transaction middleware
-                              (conman/with-transaction [db/*db* {:isolation :serializable
-                                                                 :read-only? true}]
+                              (db/with-transaction [db/*db* {:isolation :serializable
+                                                             :read-only true}]
                                 {::events (rems.db.events/get-all-events-since 0)}))
             cache-invalidater (fn []
-                                ;; same as transaction middleware
-                                (conman/with-transaction [db/*db* {:isolation :serializable
-                                                                   :read-only? false}]
-                                  (rems.db.events/reload-event-cache!)))
+                                (rems.db.events/reload-event-cache!))
             thread-pool (Executors/newCachedThreadPool)
             app-events-readers (submit-all thread-pool (for [app-id app-ids]
                                                          (fn [] (sample-until-interrupted
