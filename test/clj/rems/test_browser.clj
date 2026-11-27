@@ -1875,7 +1875,8 @@
     (testing "approve"
       (btu/scroll-and-click :approve-reject-action-button)
       (is (btu/eventually-visible? :comment-approve-reject))
-      (btu/fill-human :comment-approve-reject "this is a comment")
+      (btu/context-assoc-element-text!
+       (btu/fill-human :comment-approve-reject "this is a comment"))
       (set-date :approve-end "2100-05-06")
       (btu/scroll-and-click :approve)
       (btu/wait-predicate #(= "Approved" (btu/get-element-text :application-state))))
@@ -1884,7 +1885,7 @@
     (testing "event via api"
       (is (= {:application/id (btu/context-getx :application-id)
               :event/type "application.event/approved"
-              :application/comment "this is a comment"
+              :application/comment (btu/context-getx :comment-approve-reject)
               :entitlement/end "2100-05-06T23:59:59.000Z"
               :event/actor "developer"}
              (-> (get-application-from-api (btu/context-getx :application-id) "developer")
