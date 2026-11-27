@@ -925,7 +925,7 @@
                                             :field/value "Option1"}
                                            {:field/type "text"
                                             :field/title {:en "Conditional field. Shown only if first option is selected above."}
-                                            :field/value "Conditional"}
+                                            :field/value (btu/context-getx :conditional-field)}
                                            {:field/type "multiselect"
                                             :field/title {:en "Multi-select list"}
                                             :field/value "Option2 Option3"}
